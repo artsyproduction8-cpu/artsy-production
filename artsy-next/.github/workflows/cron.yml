@@ -1,0 +1,29 @@
+name: Artsy Background Crons (Sub-Daily Schedulers)
+
+on:
+  schedule:
+    # Run payment reconciliation every 15 minutes
+    - cron: '*/15 * * * *'
+    # Run timeout and approval check every hour
+    - cron: '0 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  run-subdaily-crons:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reconcile Payments (Every 15 min)
+        if: github.event.schedule == '*/15 * * * *' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Executing /api/cron/reconcile-payments..."
+          curl -f -s -X GET "${{ secrets.APP_URL }}/api/cron/reconcile-payments" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
+
+      - name: Project Timeouts & Auto-Approval (Hourly)
+        if: github.event.schedule == '0 * * * *' || github.event_name == 'workflow_dispatch'
+        run: |
+          echo "Executing /api/cron/timeouts..."
+          curl -f -s -X GET "${{ secrets.APP_URL }}/api/cron/timeouts" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"

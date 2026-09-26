@@ -1,0 +1,291 @@
+/* ============================================
+   ARTSY PRODUCTION — Auth Page Styles
+   Clean unjob.ai inspired WhatsApp OTP Auth
+   ============================================ */
+
+.auth-page-wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-subtle, #F8F9FA);
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border: 1px solid var(--border-default, #E5E5E5);
+  border-radius: var(--radius-lg, 12px);
+  padding: 32px 28px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-muted, #737373);
+  text-decoration: none;
+  margin-bottom: 16px;
+  transition: color 0.15s ease;
+}
+
+.auth-back-link:hover {
+  color: var(--color-primary-dark, #009B4F);
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 20px;
+  text-decoration: none;
+}
+
+/* Sign In / Sign Up Mode Switcher Tabs */
+.auth-tab-switch {
+  display: flex;
+  background: #F3F4F6;
+  border-radius: var(--radius-sm, 6px);
+  padding: 4px;
+  margin-bottom: 20px;
+  gap: 4px;
+}
+
+.auth-tab-btn {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  border-radius: calc(var(--radius-sm, 6px) - 2px);
+  background: transparent;
+  color: var(--color-text-muted, #737373);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-tab-btn.active {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.auth-h1 {
+  font-size: 20px;
+  font-weight: 800;
+  color: #000000;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.auth-sub {
+  font-size: 13px;
+  color: var(--color-text-muted, #737373);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.role-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.role-card-select {
+  border: 1.5px solid var(--border-default, #E5E5E5);
+  border-radius: var(--radius-sm, 6px);
+  padding: 10px 6px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-card-select:hover {
+  border-color: var(--color-primary, #00BF63);
+}
+
+.role-card-select.selected {
+  border-color: var(--color-primary, #00BF63);
+  background: var(--color-primary-light, #E6FBF1);
+  box-shadow: 0 0 0 1px var(--color-primary, #00BF63);
+}
+
+.role-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+  line-height: 1;
+}
+
+.role-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.role-desc {
+  font-size: 9.5px;
+  color: var(--color-text-muted, #737373);
+  margin-top: 2px;
+}
+
+.input-field-group {
+  margin-bottom: 14px;
+}
+
+.form-label-portal {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.text-input-field {
+  width: 100%;
+  border: 1.5px solid var(--border-default, #E5E5E5);
+  border-radius: var(--radius-sm, 6px);
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #111827;
+  background: #ffffff;
+  transition: border-color 0.15s ease;
+}
+
+.text-input-field:focus {
+  outline: none;
+  border-color: var(--color-primary, #00BF63);
+  box-shadow: 0 0 0 3px rgba(0, 191, 99, 0.12);
+}
+
+.phone-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.country-code-select {
+  width: 90px;
+  border: 1.5px solid var(--border-default, #E5E5E5);
+  border-radius: var(--radius-sm, 6px);
+  padding: 10px 8px;
+  font-size: 13px;
+  background: var(--color-bg-subtle, #F8F9FA);
+  font-weight: 600;
+  color: #111827;
+  outline: none;
+}
+
+.country-code-select:focus {
+  border-color: var(--color-primary, #00BF63);
+}
+
+.phone-number-field {
+  flex: 1;
+  border: 1.5px solid var(--border-default, #E5E5E5);
+  border-radius: var(--radius-sm, 6px);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
+}
+
+.phone-number-field:focus {
+  border-color: var(--color-primary, #00BF63);
+  box-shadow: 0 0 0 3px rgba(0, 191, 99, 0.12);
+}
+
+.btn-auth-submit {
+  width: 100%;
+  background: var(--color-primary, #00BF63);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 13px;
+  border-radius: var(--radius-sm, 6px);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-top: 14px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.btn-auth-submit:hover {
+  background: var(--color-primary-dark, #009B4F);
+}
+
+.btn-auth-submit:active {
+  transform: scale(0.99);
+}
+
+.btn-auth-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.otp-inputs-grid {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.otp-digit-box {
+  width: 46px;
+  height: 52px;
+  border: 1.5px solid var(--border-default, #E5E5E5);
+  border-radius: var(--radius-sm, 6px);
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  color: #000000;
+  background: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.otp-digit-box:focus {
+  outline: none;
+  border-color: var(--color-primary, #00BF63);
+  box-shadow: 0 0 0 3px rgba(0, 191, 99, 0.15);
+}
+
+.demo-hint-box {
+  background: #F0FDF4;
+  border-left: 3px solid var(--color-primary, #00BF63);
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #166534;
+  border-radius: 0 4px 4px 0;
+  margin: 14px 0;
+  line-height: 1.5;
+}
+
+.auth-error-box {
+  background: #FEF2F2;
+  border-left: 3px solid var(--color-sale-red, #EF4444);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: #991B1B;
+  border-radius: 0 4px 4px 0;
+  margin-top: 14px;
+  line-height: 1.4;
+}

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Studio Admin Center | Artsy.ai Post-Production</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/portals.css">
+</head>
+<body class="portal-page">
+
+  <!-- Portal Top Nav -->
+  <nav class="portal-nav">
+    <div class="portal-nav-container">
+      <div class="portal-brand">
+        <a href="index.html" class="nav-brand-logo">
+          <span>artsy</span><span class="logo-dot">.</span>
+        </a>
+        <span class="portal-role-pill pill-admin">🛡️ Studio Admin</span>
+      </div>
+
+      <ul class="portal-nav-links">
+        <li class="portal-nav-link active" onclick="switchAdminTab('queue')">Freelancer Queue <span class="tab-badge" id="badge-freelancer-count">2</span></li>
+        <li class="portal-nav-link" onclick="switchAdminTab('orders')">Orders & Matchmaking <span class="tab-badge">3</span></li>
+        <li class="portal-nav-link" onclick="switchAdminTab('qa')">QA Station <span class="tab-badge">1</span></li>
+        <li class="portal-nav-link" onclick="switchAdminTab('payouts')">Payout Approvals</li>
+      </ul>
+
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <span class="portal-user-name" style="font-size: 13px; font-weight: 600; color: #111827;">Karan (Studio Director)</span>
+        <button onclick="Auth.logout()" class="btn-sm-action" style="background: #F3F4F6; color: #374151;">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="portal-content">
+    <!-- Top Metrics Overview -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">Active Client Projects</div>
+        <div class="metric-value">12</div>
+        <div class="metric-delta">All on track within 7-10d SLA</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Pending Freelancer Approvals</div>
+        <div class="metric-value" style="color: #D97706;">2</div>
+        <div class="metric-delta">Awaiting portfolio review</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Gross Revenue (Month)</div>
+        <div class="metric-value">₹2,48,000</div>
+        <div class="metric-delta">↑ 22% vs last month</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Payout Queue (Friday Batch)</div>
+        <div class="metric-value">₹32,400</div>
+        <div class="metric-delta">TDS Deductions auto-calculated</div>
+      </div>
+    </div>
+
+    <!-- TAB 1: Freelancer Approval Queue (Section 3 Spec) -->
+    <div id="tab-queue-view" class="portal-tab-content">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Freelancer Onboarding Approval Queue</h2>
+            <p style="font-size: 13px; color: var(--color-text-muted);">
+              Review submitted portfolios and sample reels. Approved editors join the auto-match pool.
+            </p>
+          </div>
+          <span class="status-tag in-review">2 Pending Review</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;" id="admin-freelancer-queue">
+          <!-- Applicant 1 -->
+          <div class="panel-card" style="border: 1px solid var(--border-default); margin-bottom: 0;" id="applicant-1">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+              <div>
+                <h3 style="font-size: 17px; font-weight: 700;">Rohan Deshmukh</h3>
+                <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 2px;">
+                  Mumbai, India • 5 Years Experience • Applied 2 hours ago
+                </div>
+              </div>
+              <span class="status-tag in-review">Pending Verification</span>
+            </div>
+
+            <p style="font-size: 13px; color: var(--color-text-dim); line-height: 1.5; margin-bottom: 12px;">
+              "Senior wedding & commercial video editor. Specialized in multi-camera sync, DaVinci Resolve color correction with custom film print LUTs, and emotional sound design."
+            </p>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+              <span class="status-tag" style="background: #F3F4F6;">Software: Premiere Pro, DaVinci Resolve Studio</span>
+              <span class="status-tag" style="background: #F3F4F6;">Skills: Wedding Highlights, ACES Color, Foley</span>
+              <span class="status-tag" style="background: #EFF6FF; color: #1D4ED8;">🔗 Portfolio: vimeo.com/rohan-edits</span>
+            </div>
+
+            <div style="background: var(--color-bg-subtle); padding: 10px 14px; border-radius: 6px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
+              <span>Sample Reels: 2 Wedding Highlights (4K), 1 Fashion UGC</span>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-sm-action btn-reject" onclick="rejectFreelancer('applicant-1', 'Rohan Deshmukh')">Reject with Feedback</button>
+                <button class="btn-sm-action btn-approve" onclick="approveFreelancer('applicant-1', 'Rohan Deshmukh')">✓ Approve Editor</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Applicant 2 -->
+          <div class="panel-card" style="border: 1px solid var(--border-default); margin-bottom: 0;" id="applicant-2">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+              <div>
+                <h3 style="font-size: 17px; font-weight: 700;">Kavya Sharma</h3>
+                <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 2px;">
+                  Bengaluru, India • 3 Years Experience • Applied Yesterday
+                </div>
+              </div>
+              <span class="status-tag in-review">Pending Verification</span>
+            </div>
+
+            <p style="font-size: 13px; color: var(--color-text-dim); line-height: 1.5; margin-bottom: 12px;">
+              "Specialized in high-retention UGC and viral TikTok/Instagram ad creatives for D2C brands. Speed ramping, kinetic typography, and audio hooks."
+            </p>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;">
+              <span class="status-tag" style="background: #F3F4F6;">Software: Premiere Pro, After Effects, CapCut Pro</span>
+              <span class="status-tag" style="background: #F3F4F6;">Skills: Brand Reels, Motion Graphics, Viral Pacing</span>
+              <span class="status-tag" style="background: #EFF6FF; color: #1D4ED8;">🔗 Portfolio: behance.net/kavya-creates</span>
+            </div>
+
+            <div style="background: var(--color-bg-subtle); padding: 10px 14px; border-radius: 6px; font-size: 12px; display: flex; justify-content: space-between; align-items: center;">
+              <span>Sample Reels: 4 D2C Brand Commercials</span>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-sm-action btn-reject" onclick="rejectFreelancer('applicant-2', 'Kavya Sharma')">Reject with Feedback</button>
+                <button class="btn-sm-action btn-approve" onclick="approveFreelancer('applicant-2', 'Kavya Sharma')">✓ Approve Editor</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Orders & Matchmaking -->
+    <div id="tab-orders-view" class="portal-tab-content" style="display: none;">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Active Orders & Editor Matchmaking</h2>
+            <p style="font-size: 13px; color: var(--color-text-muted);">
+              Manage client order ingest and match with approved freelance editors.
+            </p>
+          </div>
+        </div>
+
+        <table class="portal-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Client</th>
+              <th>Service Package</th>
+              <th>Raw Footage Link</th>
+              <th>AI Match Recommendation</th>
+              <th>Deadline</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>#AP-881</strong></td>
+              <td>Sneha Patel (Delhi)</td>
+              <td>Cinematic Wedding Teaser (60s)</td>
+              <td><a href="#" style="color: var(--color-primary-dark); text-decoration: underline;">Google Drive (45GB)</a></td>
+              <td>
+                <strong>Aakash Verma</strong>
+                <div style="font-size: 11px; color: var(--color-primary-dark);">98% Match (Wedding Specialist)</div>
+              </td>
+              <td>3 Days</td>
+              <td>
+                <button class="btn-sm-action btn-approve" onclick="alert('Order #AP-881 assigned to Aakash Verma. Time-limited Google Drive access token dispatched via WhatsApp.')">
+                  Assign Match
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>#AP-882</strong></td>
+              <td>Lumina Labs Inc.</td>
+              <td>UGC Ad Creative (3 Reels)</td>
+              <td><a href="#" style="color: var(--color-primary-dark); text-decoration: underline;">Dropbox Cloud (18GB)</a></td>
+              <td>
+                <strong>Kavya Sharma</strong>
+                <div style="font-size: 11px; color: var(--color-primary-dark);">95% Match (D2C Brand Specialist)</div>
+              </td>
+              <td>48 Hours</td>
+              <td>
+                <button class="btn-sm-action btn-approve" onclick="alert('Order #AP-882 assigned to Kavya Sharma.')">
+                  Assign Match
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>#AP-880</strong></td>
+              <td>Apex Tech Global</td>
+              <td>Corporate Keynote Recap</td>
+              <td><a href="#" style="color: var(--color-primary-dark); text-decoration: underline;">AWS S3 Ingest (80GB)</a></td>
+              <td>
+                <span class="status-tag approved">Assigned: In-House Core</span>
+              </td>
+              <td>4 Days</td>
+              <td>
+                <span style="font-size: 12px; color: var(--color-text-muted);">In Progress</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: QA Review Station -->
+    <div id="tab-qa-view" class="portal-tab-content" style="display: none;">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Studio QA Review Station</h2>
+            <p style="font-size: 13px; color: var(--color-text-muted);">
+              Inspect cuts submitted by editors before delivering to client dashboards.
+            </p>
+          </div>
+          <span class="status-tag in-review">1 Cut Pending QA</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+          <div>
+            <div class="review-player-wrap">
+              <video controls poster="images/portfolio-brand-1.jpg">
+                <source src="images/showreel.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <h3 style="font-size: 16px; font-weight: 700;">Draft 1 — Lumina Skincare Viral Hook</h3>
+                <div style="font-size: 12px; color: var(--color-text-muted);">Editor: Aakash Verma • Duration: 0:42 • 4K DCI Rec.709</div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-sm-action btn-reject" onclick="alert('Revision request sent to Aakash Verma with feedback.')">Request Revisions</button>
+                <button class="btn-sm-action btn-approve" onclick="alert('✓ QA Approved! The cut has been delivered to client Sneha Patel\'s dashboard.')">Approve for Client Delivery</button>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="panel-card" style="background: #F8FAFC; padding: 16px;">
+              <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">Automated QA Diagnostics</h4>
+              <div style="font-size: 12px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Loudness (LUFS):</span>
+                  <strong style="color: var(--color-primary-dark);">-14.2 LUFS (Compliant)</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Resolution:</span>
+                  <strong>3840 x 2160 (4K UHD)</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Bitrate & Codec:</span>
+                  <strong>Apple ProRes 422 HQ</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Color Gamut:</span>
+                  <strong style="color: var(--color-primary-dark);">Rec.709 Conformed</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Payout Approvals -->
+    <div id="tab-payouts-view" class="portal-tab-content" style="display: none;">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Freelancer Payout Approvals & NEFT Batch</h2>
+            <p style="font-size: 13px; color: var(--color-text-muted);">
+              Weekly payout ledger with automated TDS (1% u/s 194C) calculation.
+            </p>
+          </div>
+          <button class="btn-sm-action btn-approve" onclick="alert('NEFT payout batch of ₹32,400 successfully approved for Friday processing via RazorpayX / Bank API.')">
+            Approve All Payouts (₹32,400)
+          </button>
+        </div>
+
+        <table class="portal-table">
+          <thead>
+            <tr>
+              <th>Editor</th>
+              <th>PAN Number</th>
+              <th>Bank Account / IFSC</th>
+              <th>Completed Orders</th>
+              <th>Gross Earned</th>
+              <th>TDS (1%)</th>
+              <th>Net Due</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Aakash Verma</strong></td>
+              <td>ABCDE1234F</td>
+              <td>HDFC Bank • HDFC0001234</td>
+              <td>3 Projects</td>
+              <td>₹18,500</td>
+              <td>-₹185</td>
+              <td><strong>₹18,315</strong></td>
+              <td><span class="status-tag in-review">Approved for Batch</span></td>
+            </tr>
+            <tr>
+              <td><strong>Kavya Sharma</strong></td>
+              <td>KLMNO5678P</td>
+              <td>ICICI Bank • ICIC0000456</td>
+              <td>2 Projects</td>
+              <td>₹14,000</td>
+              <td>-₹140</td>
+              <td><strong>₹13,860</strong></td>
+              <td><span class="status-tag in-review">Approved for Batch</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      Auth.requireAuth('admin');
+    });
+
+    function switchAdminTab(tabId) {
+      document.querySelectorAll('.portal-nav-link').forEach((link, idx) => {
+        const tabs = ['queue', 'orders', 'qa', 'payouts'];
+        link.classList.toggle('active', tabs[idx] === tabId);
+      });
+
+      document.querySelectorAll('.portal-tab-content').forEach(el => el.style.display = 'none');
+      const target = document.getElementById(`tab-${tabId}-view`);
+      if (target) target.style.display = 'block';
+    }
+
+    function approveFreelancer(cardId, name) {
+      const card = document.getElementById(cardId);
+      if (card) {
+        card.style.background = '#ECFDF5';
+        card.innerHTML = `<div style="padding: 18px; text-align: center; color: var(--color-primary-dark); font-weight: 700;">✓ ${name} Approved! Welcome message and access credentials sent via WhatsApp. Editor added to the job-matching engine.</div>`;
+        setTimeout(() => {
+          card.style.display = 'none';
+          const badge = document.getElementById('badge-freelancer-count');
+          if (badge) badge.textContent = Math.max(0, parseInt(badge.textContent) - 1);
+        }, 1500);
+      }
+    }
+
+    function rejectFreelancer(cardId, name) {
+      const reason = prompt(`Enter rejection reason or guidance for ${name}:`, 'Portfolio needs higher resolution sample reels in 4K.');
+      if (reason) {
+        const card = document.getElementById(cardId);
+        if (card) {
+          card.style.display = 'none';
+          alert(`Applicant ${name} rejected. Feedback notification dispatched via WhatsApp.`);
+          const badge = document.getElementById('badge-freelancer-count');
+          if (badge) badge.textContent = Math.max(0, parseInt(badge.textContent) - 1);
+        }
+      }
+    }
+  </script>
+</body>
+</html>

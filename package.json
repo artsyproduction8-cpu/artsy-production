@@ -1,0 +1,16 @@
+{
+  "name": "artsy-web",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npm --prefix artsy-next run dev",
+    "build": "npm --prefix artsy-next run build",
+    "lint": "npm --prefix artsy-next run lint",
+    "test:e2e": "npm --prefix artsy-next run test:e2e"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

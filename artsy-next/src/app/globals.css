@@ -1,0 +1,125 @@
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./animations.css";
+
+@theme {
+  --color-canvas: #FFFFFF;
+  --color-canvas-subtle: #F5F5F7;
+  --color-surface: #FFFFFF;
+  --color-surface-container: #F5F5F7;
+  --color-surface-container-low: #FFFFFF;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-high: #EBEBED;
+  --color-surface-container-highest: #E5E5E7;
+  --color-surface-subtle: #F5F5F7;
+
+  --color-text-main: #1D1D1F;
+  --color-text-muted: #86868B;
+  --color-text-subtle: #A1A1A6;
+  --color-on-surface: #1D1D1F;
+  --color-on-surface-variant: #86868B;
+
+  --color-accent: #3B82F6;
+  --color-accent-hover: #2563EB;
+  --color-accent-subtle: rgba(59, 130, 246, 0.1);
+  --color-primary: #3B82F6;
+
+  --color-border-subtle: #E5E5E7;
+  --color-border-divider: #F5F5F7;
+
+  --font-sans: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-inter: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono-data: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+}
+
+/* ── Typography & Global Rendering ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #FFFFFF;
+  color: #1D1D1F;
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1D1D1F;
+  background-color: #FFFFFF;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+  position: relative;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-inter), 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: -0.03em;
+  color: #1D1D1F;
+  font-weight: 700;
+}
+
+p {
+  line-height: 1.6;
+}
+
+/* ── Soft diffuse shadows for minimalist elevation ── */
+.shadow-diffuse {
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+.shadow-diffuse-lg {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Subtle Custom Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFFFFF;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #E5E5E7;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #86868B;
+}
+
+/* ── 3D Coverflow Styles ── */
+.coverflow-stage {
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+}
+
+.coverflow-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), filter 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.55s ease;
+  will-change: transform, opacity, z-index;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.coverflow-card.is-dragging {
+  transition: none !important;
+}

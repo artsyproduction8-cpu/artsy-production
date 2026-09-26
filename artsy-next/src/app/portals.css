@@ -1,0 +1,371 @@
+/* ============================================
+   ARTSY PRODUCTION — Portals & Dashboards Styles
+   Client, Artsy Creator & Studio Admin
+   ============================================ */
+
+/* ── Portal Layout ── */
+.portal-page {
+  background-color: #F8FAFC;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.portal-nav {
+  height: 64px;
+  background: #ffffff;
+  border-bottom: 1px solid #E2E8F0;
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+}
+
+.portal-nav-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.portal-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.portal-role-pill {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+.pill-admin {
+  background: #0F172A;
+  color: #ffffff;
+}
+
+.pill-freelancer {
+  background: #EFF6FF;
+  color: #2563EB;
+  border: 1px solid #DBEAFE;
+}
+
+.pill-client {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+}
+
+.portal-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  list-style: none;
+}
+
+.portal-nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748B;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.portal-nav-link:hover,
+.portal-nav-link.active {
+  color: #0F172A;
+  font-weight: 600;
+}
+
+/* ── Main Portal Body ── */
+.portal-content {
+  flex: 1;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+/* ── Metric Grid ── */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 900px) {
+  .metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metric-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.metric-delta {
+  font-size: 12px;
+  color: #2563EB;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+/* ── Tabbed Containers ── */
+.portal-tabs-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #E2E8F0;
+  margin-bottom: 24px;
+}
+
+.portal-tab-btn {
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748B;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.portal-tab-btn:hover {
+  color: #0F172A;
+}
+
+.portal-tab-btn.active {
+  color: #2563EB;
+  border-bottom-color: #2563EB;
+}
+
+.tab-badge {
+  background: #EFF6FF;
+  color: #2563EB;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-left: 6px;
+}
+
+.portal-tab-btn.active .tab-badge {
+  background: #2563EB;
+  color: #ffffff;
+}
+
+/* ── Cards & Panels ── */
+.panel-card {
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  margin-bottom: 24px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.panel-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+/* ── Tables & Lists ── */
+.portal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.portal-table th {
+  text-align: left;
+  padding: 12px 16px;
+  background: #F8FAFC;
+  color: #64748B;
+  font-weight: 600;
+  font-size: 12px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.portal-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #F1F5F9;
+  vertical-align: middle;
+}
+
+.portal-table tr:hover td {
+  background: #F8FAFC;
+}
+
+/* ── Status Badges ── */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+.status-tag.approved,
+.status-tag.completed,
+.status-tag.active {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.status-tag.pending,
+.status-tag.in-review {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.status-tag.editing {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.status-tag.rejected {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+/* ── Action Buttons ── */
+.btn-sm-action {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.btn-approve {
+  background: #2563EB;
+  color: #ffffff;
+}
+
+.btn-approve:hover {
+  background: #1D4ED8;
+}
+
+.btn-reject {
+  background: #ffffff;
+  border-color: #EF4444;
+  color: #EF4444;
+}
+
+.btn-reject:hover {
+  background: #EF4444;
+  color: #ffffff;
+}
+
+.btn-assign {
+  background: #0F172A;
+  color: #ffffff;
+}
+
+.btn-assign:hover {
+  background: #1E293B;
+}
+
+/* ── Video Player with Timestamped Comments ── */
+.review-player-wrap {
+  position: relative;
+  background: #000000;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.review-player-wrap video {
+  width: 100%;
+  max-height: 480px;
+  object-fit: contain;
+}
+
+.comments-timeline-box {
+  background: #F8FAFC;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  padding: 16px;
+}
+
+.comment-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #E2E8F0;
+}
+
+.comment-timestamp-chip {
+  background: #0F172A;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.comment-timestamp-chip:hover {
+  background: #2563EB;
+}
+
+.comment-text {
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.4;
+}

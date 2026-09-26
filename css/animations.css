@@ -1,0 +1,80 @@
+/* ============================================
+   ARTSY PRODUCTION — Animations
+   Quick Commerce UI (unjob.ai inspired)
+   ============================================ */
+
+/* ── Ribbon Coupon Shine (unjob signature) ── */
+@keyframes coupon-shine-kf {
+  0% {
+    transform: translateX(-100%) skewX(-20deg);
+  }
+  20%, 100% {
+    transform: translateX(300%) skewX(-20deg);
+  }
+}
+
+.coupon-shine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent);
+  pointer-events: none;
+  animation: coupon-shine-kf 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ── Infinite Marquee Ticker ── */
+@keyframes marquee-scroll {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marquee-scroll 45s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ── Floating Bar Slide Up ── */
+@keyframes slide-up-bar {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.floating-checkout-bar.active {
+  display: flex !important;
+  animation: slide-up-bar 0.3s var(--ease-fast) forwards;
+}
+
+/* ── Pulse Badge ── */
+@keyframes soft-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.6; transform: scale(0.95); }
+}
+
+.pulse-badge {
+  animation: soft-pulse 2s ease-in-out infinite;
+}
+
+/* ── Button Click Pop ── */
+@keyframes btn-pop {
+  0%   { transform: scale(0.92); }
+  50%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.btn-pop-anim {
+  animation: btn-pop 0.25s var(--ease-fast);
+}

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor Workspace | Artsy.ai Post-Production</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/portals.css">
+</head>
+<body class="portal-page">
+
+  <!-- Portal Top Nav -->
+  <nav class="portal-nav">
+    <div class="portal-nav-container">
+      <div class="portal-brand">
+        <a href="index.html" class="nav-brand-logo">
+          <span>artsy</span><span class="logo-dot">.</span>
+        </a>
+        <span class="portal-role-pill pill-freelancer">✂️ Pro Editor</span>
+      </div>
+
+      <ul class="portal-nav-links">
+        <li class="portal-nav-link active" onclick="switchFreelancerTab('jobs')">Available Jobs <span class="tab-badge" id="badge-jobs-count">2</span></li>
+        <li class="portal-nav-link" onclick="switchFreelancerTab('active')">Active Workspace</li>
+        <li class="portal-nav-link" onclick="switchFreelancerTab('onboarding')">My Profile & Skills</li>
+        <li class="portal-nav-link" onclick="switchFreelancerTab('payouts')">Earnings & Payouts</li>
+      </ul>
+
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--color-primary-dark); background: var(--color-primary-light); padding: 4px 10px; border-radius: 9999px;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: var(--color-primary);"></span>
+          <span>Matching Active</span>
+        </div>
+        <span class="portal-user-name" style="font-size: 13px; font-weight: 600; color: #111827;">Aakash Verma</span>
+        <button onclick="Auth.logout()" class="btn-sm-action" style="background: #F3F4F6; color: #374151;">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="portal-content">
+    <!-- Top Metrics Overview -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">Total Earnings (YTD)</div>
+        <div class="metric-value">₹48,500</div>
+        <div class="metric-delta">↑ ₹8,500 this month</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Projects Completed</div>
+        <div class="metric-value">14</div>
+        <div class="metric-delta">100% On-Time Delivery</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Editor Rating</div>
+        <div class="metric-value">★ 4.95</div>
+        <div class="metric-delta">Top 1% Tier Status</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Pending Payout</div>
+        <div class="metric-value" style="color: var(--color-primary);">₹7,600</div>
+        <div class="metric-delta">Next NEFT: Friday</div>
+      </div>
+    </div>
+
+    <!-- TAB 1: Available Jobs Queue (Anonymized) -->
+    <div id="tab-jobs-view" class="portal-tab-content">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Available Matched Opportunities</h2>
+            <p style="font-size: 13px; color: var(--color-text-muted); margin-top: 2px;">
+              Anonymized client briefs matched to your skills. Accept before the timer expires.
+            </p>
+          </div>
+          <span class="status-tag active">● Auto-Matching Engine ON</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;" id="available-jobs-list">
+          <!-- Job Card 1 -->
+          <div class="panel-card" style="margin-bottom: 0; border: 1.5px solid var(--border-default); background: #ffffff;" id="job-card-881">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+              <div>
+                <span class="status-tag editing" style="margin-bottom: 6px;">💍 Wedding Vertical</span>
+                <h3 style="font-size: 16px; font-weight: 700;">Job #AP-881: Golden Hour Seaside Wedding Teaser (60s)</h3>
+                <p style="font-size: 13px; color: var(--color-text-dim); margin-top: 4px;">
+                  Cut 45GB Sony FX9 raw footage into an emotional 60s Instagram & YouTube reel. Sync dialogue vow stems, add film grain & warm golden color grade.
+                </p>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 20px; font-weight: 800; color: var(--color-primary-dark);">₹5,500</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">Payout on approval</div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-default); padding-top: 12px; margin-top: 12px;">
+              <div style="display: flex; gap: 12px; font-size: 12px; color: var(--color-text-muted);">
+                <span>⏱️ Internal Turnaround: <strong>4 Days</strong></span>
+                <span>📦 Deliverable: <strong>4K ProRes + 9:16 Reel</strong></span>
+                <span>🎵 Audio: <strong>Licensed Music Provided</strong></span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-sm-action btn-reject" onclick="declineJob('job-card-881')">Decline</button>
+                <button class="btn-sm-action btn-approve" onclick="acceptJob('job-card-881', 'Golden Hour Seaside Wedding Teaser (60s)')">Accept Assignment</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Job Card 2 -->
+          <div class="panel-card" style="margin-bottom: 0; border: 1.5px solid var(--border-default); background: #ffffff;" id="job-card-882">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+              <div>
+                <span class="status-tag approved" style="margin-bottom: 6px;">📱 Brand & UGC Vertical</span>
+                <h3 style="font-size: 16px; font-weight: 700;">Job #AP-882: Skincare UGC Viral Hook & B-Roll Edit</h3>
+                <p style="font-size: 13px; color: var(--color-text-dim); margin-top: 4px;">
+                  Create 3 variations of hook pacing for an e-commerce campaign. Kinetic captions, speed ramping, product macro cutaways, and SFX pop sound effects.
+                </p>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 20px; font-weight: 800; color: var(--color-primary-dark);">₹3,800</div>
+                <div style="font-size: 11px; color: var(--color-text-muted);">Payout on approval</div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--border-default); padding-top: 12px; margin-top: 12px;">
+              <div style="display: flex; gap: 12px; font-size: 12px; color: var(--color-text-muted);">
+                <span>⏱️ Internal Turnaround: <strong>48 Hours</strong></span>
+                <span>📦 Deliverable: <strong>3x 9:16 TikTok Reels</strong></span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-sm-action btn-reject" onclick="declineJob('job-card-882')">Decline</button>
+                <button class="btn-sm-action btn-approve" onclick="acceptJob('job-card-882', 'Skincare UGC Viral Hook & B-Roll Edit')">Accept Assignment</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Active Workspace -->
+    <div id="tab-active-view" class="portal-tab-content" style="display: none;">
+      <div class="panel-card">
+        <div class="panel-header">
+          <h2 class="panel-title">Active Project Timeline</h2>
+          <span class="status-tag editing">● Work in Progress</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 24px;">
+          <!-- Left: Project Info & Upload -->
+          <div>
+            <h3 style="font-size: 18px; font-weight: 700;" id="active-project-title">
+              Engaging Talking-Head Reel (Alex M.)
+            </h3>
+            <p style="font-size: 13px; color: var(--color-text-muted); margin-top: 4px;">
+              Deliverable due in: <strong style="color: #DC2626;">26 Hours Remaining</strong>
+            </p>
+
+            <!-- Secure Drive Access -->
+            <div style="background: var(--color-bg-subtle); border: 1px dashed var(--border-default); border-radius: var(--radius-sm); padding: 16px; margin: 18px 0;">
+              <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">🔒 Secure Raw Footage Ingest Folder</div>
+              <p style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 12px;">
+                Time-limited access granted. Download raw ProRes/BRAW footage and client audio stems.
+              </p>
+              <a href="https://drive.google.com" target="_blank" class="btn-sm-action btn-assign" style="display: inline-flex; align-items: center; gap: 6px;">
+                <span>Open Artsy Drive Folder</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </a>
+            </div>
+
+            <!-- Submit Draft for QA -->
+            <div class="panel-card" style="padding: 16px; margin-bottom: 0;">
+              <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">Submit Draft Cut for Studio QA</h4>
+              <div class="form-input-group">
+                <label class="form-label-portal" for="draft-video-url">Video Review Link (Vimeo / Frame.io / Drive)</label>
+                <input type="url" id="draft-video-url" class="form-input-portal" placeholder="https://vimeo.com/... or https://drive.google.com/..." value="https://vimeo.com/artsy-demo-cut">
+              </div>
+              <div class="form-input-group">
+                <label class="form-label-portal" for="draft-notes">Editor Notes for QA Team</label>
+                <textarea id="draft-notes" class="form-input-portal" rows="3" placeholder="Notes on pacing, color space used, LUT applied..."></textarea>
+              </div>
+              <button class="btn-sm-action btn-approve" style="padding: 10px 20px; font-size: 13px;" onclick="submitDraftForQA()">
+                Submit for QA Review →
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Daily Check-in & QA Protocols -->
+          <div>
+            <div class="panel-card" style="background: #F8FAFC;">
+              <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 8px;">Daily Check-In Tracker</h4>
+              <p style="font-size: 12px; color: var(--color-text-muted); margin-bottom: 14px;">
+                Keep the studio updated. A daily confirmation ensures your project status remains healthy and prevents automated reassignment.
+              </p>
+              <button id="btn-daily-checkin" class="btn-sm-action btn-assign" style="width: 100%; justify-content: center; padding: 10px;" onclick="handleDailyCheckin()">
+                ✓ I Have Started Editing Today
+              </button>
+              <div id="checkin-status" style="font-size: 11px; color: var(--color-primary-dark); text-align: center; margin-top: 8px; font-weight: 600;">
+                Today's check-in logged at 09:30 AM
+              </div>
+            </div>
+
+            <div class="panel-card" style="background: #F8FAFC; margin-bottom: 0;">
+              <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 6px;">QA Checklist</h4>
+              <ul style="font-size: 12px; color: var(--color-text-dim); line-height: 1.7; padding-left: 16px;">
+                <li>Audio mastered to -14 LUFS</li>
+                <li>No flash frames or black gap cuts</li>
+                <li>Color conforms to Rec.709 / ACES</li>
+                <li>Lower thirds within 9:16 safe zones</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Onboarding & Profile Spec (Phase 3 Spec) -->
+    <div id="tab-onboarding-view" class="portal-tab-content" style="display: none;">
+      <div class="panel-card">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Freelancer Editor Profile & Capabilities</h2>
+            <p style="font-size: 13px; color: var(--color-text-muted);">
+              Manage your editing specializations, software stack, and payout bank details.
+            </p>
+          </div>
+          <span class="status-tag approved">✓ Verified & Approved</span>
+        </div>
+
+        <!-- Stepper Visual -->
+        <div class="stepper-steps-bar">
+          <div class="step-node completed">
+            <div class="step-bubble">✓</div>
+            <span class="step-title">Personal</span>
+          </div>
+          <div class="step-node completed">
+            <div class="step-bubble">✓</div>
+            <span class="step-title">Software</span>
+          </div>
+          <div class="step-node completed">
+            <div class="step-bubble">✓</div>
+            <span class="step-title">Skills</span>
+          </div>
+          <div class="step-node completed">
+            <div class="step-bubble">✓</div>
+            <span class="step-title">Sample Reels</span>
+          </div>
+          <div class="step-node completed">
+            <div class="step-bubble">✓</div>
+            <span class="step-title">Financial/Bank</span>
+          </div>
+        </div>
+
+        <form id="freelancer-profile-form" onsubmit="event.preventDefault(); alert('Profile updated successfully!');">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-input-group">
+              <label class="form-label-portal">Full Display Name</label>
+              <input type="text" class="form-input-portal" value="Aakash Verma">
+            </div>
+            <div class="form-input-group">
+              <label class="form-label-portal">Years of Editing Experience</label>
+              <select class="form-input-portal">
+                <option value="3-5" selected>4–6 Years (Senior Editor)</option>
+                <option value="1-3">1–3 Years</option>
+                <option value="7+">7+ Years (Master Editor)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-input-group">
+            <label class="form-label-portal">Software Stack</label>
+            <div class="chips-selector">
+              <span class="chip-select-btn selected">Premiere Pro</span>
+              <span class="chip-select-btn selected">DaVinci Resolve Studio</span>
+              <span class="chip-select-btn selected">After Effects</span>
+              <span class="chip-select-btn">Final Cut Pro</span>
+              <span class="chip-select-btn selected">CapCut Pro</span>
+            </div>
+          </div>
+
+          <div class="form-input-group">
+            <label class="form-label-portal">Specializations</label>
+            <div class="chips-selector">
+              <span class="chip-select-btn selected">Wedding Highlights</span>
+              <span class="chip-select-btn selected">Color Grading (LUT/ACES)</span>
+              <span class="chip-select-btn selected">Sound Design & Foley</span>
+              <span class="chip-select-btn selected">Viral UGC Hooks</span>
+              <span class="chip-select-btn">3D Product Motion</span>
+            </div>
+          </div>
+
+          <div class="form-input-group">
+            <label class="form-label-portal">Portfolio / Showreel URL</label>
+            <input type="url" class="form-input-portal" value="https://behance.net/aakash-edits">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-input-group">
+              <label class="form-label-portal">PAN Card Number</label>
+              <input type="text" class="form-input-portal" value="ABCDE1234F">
+            </div>
+            <div class="form-input-group">
+              <label class="form-label-portal">UPI ID or Bank Account (for NEFT)</label>
+              <input type="text" class="form-input-portal" value="aakash@okhdfcbank">
+            </div>
+          </div>
+
+          <button type="submit" class="btn-sm-action btn-assign" style="padding: 10px 24px;">Save Profile Changes</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB 4: Earnings & Payouts -->
+    <div id="tab-payouts-view" class="portal-tab-content" style="display: none;">
+      <div class="panel-card">
+        <div class="panel-header">
+          <h2 class="panel-title">Payouts & Financial Ledger</h2>
+          <span style="font-size: 13px; color: var(--color-primary-dark); font-weight: 700;">Direct NEFT Transfer</span>
+        </div>
+
+        <table class="portal-table">
+          <thead>
+            <tr>
+              <th>Project ID</th>
+              <th>Project Title</th>
+              <th>Completed Date</th>
+              <th>Gross Amount</th>
+              <th>TDS (1%)</th>
+              <th>Net Payout</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#AP-872</td>
+              <td>Lumina Skincare Global Campaign</td>
+              <td>10 Sep 2026</td>
+              <td>₹8,000</td>
+              <td>-₹80</td>
+              <td><strong>₹7,920</strong></td>
+              <td><span class="status-tag approved">✓ Paid (NEFT #8932)</span></td>
+            </tr>
+            <tr>
+              <td>#AP-864</td>
+              <td>Traditional Palace Indian Wedding Cut</td>
+              <td>04 Sep 2026</td>
+              <td>₹16,000</td>
+              <td>-₹160</td>
+              <td><strong>₹15,840</strong></td>
+              <td><span class="status-tag approved">✓ Paid (NEFT #8112)</span></td>
+            </tr>
+            <tr>
+              <td>#AP-880</td>
+              <td>Aero Chrono Series Product Video</td>
+              <td>Yesterday</td>
+              <td>₹7,600</td>
+              <td>-₹76</td>
+              <td><strong>₹7,524</strong></td>
+              <td><span class="status-tag in-review">⏳ Processing Payout</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      Auth.requireAuth('freelancer');
+    });
+
+    function switchFreelancerTab(tabId) {
+      document.querySelectorAll('.portal-nav-link').forEach((link, idx) => {
+        const tabs = ['jobs', 'active', 'onboarding', 'payouts'];
+        link.classList.toggle('active', tabs[idx] === tabId);
+      });
+
+      document.querySelectorAll('.portal-tab-content').forEach(el => el.style.display = 'none');
+      const target = document.getElementById(`tab-${tabId}-view`);
+      if (target) target.style.display = 'block';
+    }
+
+    function acceptJob(cardId, title) {
+      const card = document.getElementById(cardId);
+      if (card) {
+        card.style.opacity = '0.5';
+        card.innerHTML = `<div style="padding: 20px; text-align: center; color: var(--color-primary-dark); font-weight: 700;">✓ Job Accepted! Added to your Active Workspace. Time-limited Google Drive access initiated.</div>`;
+        setTimeout(() => {
+          card.style.display = 'none';
+          document.getElementById('active-project-title').textContent = title;
+          switchFreelancerTab('active');
+        }, 1000);
+      }
+    }
+
+    function declineJob(cardId) {
+      const card = document.getElementById(cardId);
+      if (card) {
+        card.style.display = 'none';
+        alert('Job declined. The project has been returned to the studio matching pool.');
+      }
+    }
+
+    function handleDailyCheckin() {
+      const btn = document.getElementById('btn-daily-checkin');
+      btn.disabled = true;
+      btn.innerHTML = '✓ Daily Check-in Recorded for Studio QA';
+      btn.style.background = '#059669';
+      document.getElementById('checkin-status').textContent = 'Today\'s check-in logged just now. Studio SLA is green.';
+    }
+
+    function submitDraftForQA() {
+      const url = document.getElementById('draft-video-url').value;
+      if (!url) {
+        alert('Please enter your review video link.');
+        return;
+      }
+      alert('🚀 Draft cut successfully submitted to Studio QA!\n\nThe Studio Director has been notified to review your cut in the Admin Station.');
+    }
+  </script>
+</body>
+</html>

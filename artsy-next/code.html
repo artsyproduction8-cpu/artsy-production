@@ -1,0 +1,762 @@
+<!DOCTYPE html><html class="light" lang="en" style="width: 1280px; min-height: 100%; position: relative;"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_standard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&amp;display=swap" rel="stylesheet">
+<style>
+@layer base {
+  html, body { margin: 0; padding: 0; }
+  body { overscroll-behavior: none; }
+}
+::-webkit-scrollbar { display: none; }
+.film-noise {
+  background-image: radial-gradient(rgba(0,0,0,0.035) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+html, body, *, *::before, *::after, h1, h2, h3, h4, h5, h6, p, span, a, button, input, div, [class*="font-"] {
+  font-family: 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.font-mono-data {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+/* 3D Coverflow Styles */
+.coverflow-stage {
+  perspective: 1400px;
+  perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
+}
+.coverflow-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), filter 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.55s ease;
+  will-change: transform, opacity, z-index;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.coverflow-card.is-dragging {
+  transition: none !important;
+}
+</style>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{
+  "background":"#F4F5F7",
+  "surface":"#FFFFFF",
+  "surface-subtle":"#F8F9FB",
+  "outline-border":"#DCDFE3",
+  "on-surface":"#0A0A0A",
+  "on-surface-muted":"#4B5563",
+  "brand-blue":"#47739E",
+  "brand-blue-deep":"#1B4C87",
+  "brand-blue-subtle":"#EAF1F8"
+}}}};</script>
+</head>
+<body class="bg-[#F4F5F7] text-[#0A0A0A] antialiased relative min-h-screen">
+<div class="fixed inset-0 pointer-events-none z-[100] film-noise opacity-30"></div>
+<!-- ========================================================================= -->
+<!-- 00. TOP NAVIGATION                                                        -->
+<!-- ========================================================================= -->
+<header class="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-[#FFFFFF]/10 shadow-lg">
+<div class="h-16 max-w-7xl mx-auto px-6 sm:px-8 flex items-center justify-between"><a class="flex flex-col items-start leading-none select-none group" data-path="services" href="#"><span class="text-[17px] font-extrabold uppercase tracking-tight text-[#FFFFFF] leading-none group-hover:text-[#DCDFE3] transition-colors"><span class="" style="caret-color: rgb(255, 255, 255); color: rgb(255, 255, 255); font-family: &quot;Inter Tight&quot;, Inter, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif; font-size: 28px; letter-spacing: -0.7px; text-align: center;">ARTSY</span></span><span class="font-mono-data text-[8.5px] font-semibold tracking-widest uppercase text-[#DCDFE3]/80 mt-1 leading-none"><span class="" style="caret-color: rgb(220, 223, 227); color: rgb(220, 223, 227); font-family: &quot;Inter Tight&quot;, Inter, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif; font-size: 10px; letter-spacing: 1px; text-align: center;">PLACE FOR PERSPECTIVE</span></span></a><nav class="hidden md:flex items-center gap-7"><a class="text-[12.5px] font-semibold text-[#FFFFFF] hover:text-[#DCDFE3] transition-colors uppercase tracking-wider py-1" data-path="book-now" href="#">BOOK NOW</a><a class="text-[12.5px] font-semibold text-[#FFFFFF] hover:text-[#DCDFE3] transition-colors uppercase tracking-wider py-1" data-path="services" href="#">SERVICES</a><a class="text-[12.5px] font-semibold text-[#FFFFFF] hover:text-[#DCDFE3] transition-colors uppercase tracking-wider py-1" data-path="work" href="#">WORK</a><a class="text-[12.5px] font-semibold text-[#FFFFFF] hover:text-[#DCDFE3] transition-colors uppercase tracking-wider py-1" data-path="about" href="#">ABOUT</a></nav><div class="flex items-center gap-4"><div class="relative flex items-center" id="nav-search-container"><button aria-label="Search" class="flex items-center justify-center w-8 h-8 text-[#FFFFFF] hover:text-[#DCDFE3] border border-transparent hover:border-[#FFFFFF]/20 bg-transparent transition-colors" id="search-toggle-btn" onclick="const box = document.getElementById('search-expandable-box'); const input = document.getElementById('nav-search-input'); if(box.classList.contains('hidden')){ box.classList.remove('hidden'); box.classList.add('flex'); input.focus(); } else { box.classList.add('hidden'); box.classList.remove('flex'); }" type="button"><span class="material-symbols-outlined text-[19px] leading-none text-[#FFFFFF]">search</span></button><div class="absolute right-0 top-1/2 -translate-y-1/2 bg-[#0A0A0A] border border-[#FFFFFF]/30 shadow-sm items-center h-9 px-3 gap-2 z-50 w-[280px] sm:w-[320px] hidden" id="search-expandable-box"><span class="material-symbols-outlined text-[17px] text-[#FFFFFF] leading-none select-none">search</span><input class="w-full bg-transparent border-0 p-0 text-[11px] font-mono-data tracking-wider uppercase text-[#FFFFFF] placeholder-[#6B7280] focus:ring-0 focus:outline-none" id="nav-search-input" onkeydown="if(event.key === 'Escape'){ document.getElementById('search-expandable-box').classList.add('hidden'); document.getElementById('search-expandable-box').classList.remove('flex'); }" placeholder="SEARCH REELS, SPECS, ARCHIVE..." type="text"><button aria-label="Close search" class="text-[#DCDFE3] hover:text-[#FFFFFF] flex items-center justify-center p-0.5" onclick="document.getElementById('search-expandable-box').classList.add('hidden'); document.getElementById('search-expandable-box').classList.remove('flex');" type="button"><span class="material-symbols-outlined text-[16px] leading-none">close</span></button></div></div><a class="inline-flex items-center justify-center px-4 py-2 font-mono-data text-[11px] font-semibold uppercase tracking-wider text-[#FFFFFF] bg-transparent border border-[#FFFFFF]/40 hover:border-[#FFFFFF] hover:bg-[#FFFFFF] hover:text-[#0A0A0A] transition-all" data-path="find-job" href="#">FIND JOB</a><a class="inline-flex items-center justify-center px-4 py-2 font-mono-data text-[11px] font-semibold uppercase tracking-wider text-[#FFFFFF] bg-transparent border border-[#FFFFFF]/40 hover:border-[#FFFFFF] hover:bg-[#FFFFFF] hover:text-[#0A0A0A] transition-all" data-path="login" href="#">LOGIN</a></div></div>
+</header>
+<main class="w-full pt-16 bg-[#F4F5F7] min-h-screen">
+<div class="flex flex-col w-full">
+<!-- ========================================================================= -->
+<!-- 01. HERO SECTION                                                          -->
+<!-- ========================================================================= -->
+<section class="relative w-full overflow-hidden border-b border-[#DCDFE3] px-6 sm:px-8 py-16 lg:py-20 bg-[#F4F5F7]">
+<!-- Background Monolith / Ghost watermark -->
+<div class="absolute right-4 top-1/2 -translate-y-1/2 select-none pointer-events-none opacity-[0.03] text-[#0A0A0A] text-[120px] lg:text-[180px] font-extrabold whitespace-nowrap tracking-tighter leading-none z-0">
+        POST // 24FPS
+      </div>
+<div class="relative z-10 max-w-7xl mx-auto flex flex-col gap-6">
+<div class="inline-flex items-center gap-2">
+</div>
+<!-- Refined Hero Headline -->
+<h1 class="text-4xl sm:text-5xl lg:text-[58px] lg:leading-[62px] font-extrabold text-[#0A0A0A] uppercase tracking-tight max-w-4xl"><span class="font-display-lg text-display-lg md:text-[88px] md:leading-[84px] text-[#0A0A0A] uppercase tracking-tight max-w-5xl" style="font-family: &quot;Inter Tight&quot;, Inter, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif; font-size: 88px; margin: 0px; max-width: 64rem; line-height: 84px; color: rgb(10, 10, 10); outline: medium !important; box-shadow: none !important;">CINEMATIC</span><div class="">POST-PRODUCTION FOR</div><span class="font-display-lg text-display-lg md:text-[88px] md:leading-[84px] text-[#0A0A0A] uppercase tracking-tight max-w-5xl" style="font-family: &quot;Inter Tight&quot;, Inter, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif; margin: 0px; color: rgb(10, 10, 10); outline: medium !important; box-shadow: none !important;"><span class="text-[#47739E] underline decoration-[#47739E] decoration-4 underline-offset-8" style="font-family: &quot;Inter Tight&quot;, Inter, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif !important;">MODERN CREATIVE&nbsp;</span></span><div class=""><span class="text-[#47739E] underline decoration-[#47739E] decoration-2 underline-offset-4">&nbsp;TEAMS</span>
+</div></h1>
+<!-- Balanced Editorial Subtext -->
+<p class="text-[15px] sm:text-[16px] leading-relaxed text-[#4B5563] max-w-2xl font-normal">
+          Two-sided post-production studio and technological platform. Curated elite film editors, seamless cloud workflow, and transparent pricing for weddings, high-growth brands, and corporate cinema.
+        </p>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- 02. PRODUCTIZED SERVICE CATALOG                                           -->
+<!-- ========================================================================= -->
+<section class="w-full px-6 sm:px-8 py-14 lg:py-16 border-b border-[#DCDFE3] bg-[#F4F5F7]" id="services-catalog">
+<div class="max-w-7xl mx-auto flex flex-col gap-8">
+<!-- Section Header -->
+<div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-[#DCDFE3] pb-4 gap-2">
+<div>
+<h2 class="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-[#0A0A0A]">
+              PRODUCTIZED EDITORIAL SERVICES
+            </h2>
+</div>
+</div>
+<!-- 4-Card Tight Asymmetrical Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#DCDFE3] border border-[#DCDFE3]">
+<!-- Card 01 -->
+<div class="bg-[#FFFFFF] p-6 sm:p-7 flex flex-col justify-between hover:bg-[#F9FAFB] transition-colors group">
+<div class="flex flex-col gap-3.5">
+<div class="flex items-center justify-between">
+<span class="font-mono-data text-[10.5px] px-2 py-0.5 bg-[#47739E]/10 text-[#47739E] border border-[#47739E]/40 font-semibold tracking-wider">SLA: 7–10 DAYS</span>
+</div>
+<h3 class="text-[19px] sm:text-[20px] font-bold uppercase tracking-tight text-[#0A0A0A] group-hover:text-[#47739E] transition-colors leading-snug">
+                WEDDING &nbsp;</h3>
+<p class="text-[13.5px] leading-relaxed text-[#4B5563]">
+                Story-driven emotional rhythm with bespoke pacing, multi-angle audio sync, licensed score curation, and custom Rec.709 film LUT application.
+              </p>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[3–5 MIN CUT]</span>
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[MULTI-ANGLE SYNC]</span>
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[COLOR GRADE INCL]</span>
+</div>
+</div>
+<div class="mt-8 pt-4 border-t border-[#DCDFE3] flex items-center justify-between">
+<div class="flex flex-col">
+
+
+</div>
+<button class="px-3.5 py-1.5 bg-[#FFFFFF] border border-[#0A0A0A] text-[#0A0A0A] font-mono-data text-[11px] font-semibold uppercase tracking-wider group-hover:bg-[#47739E] group-hover:border-[#47739E] group-hover:text-[#FFFFFF] transition-all">
+                CONFIGURE &nbsp;</button>
+</div>
+</div>
+<!-- Card 02 -->
+<div class="bg-[#FFFFFF] p-6 sm:p-7 flex flex-col justify-between hover:bg-[#F9FAFB] transition-colors group">
+<div class="flex flex-col gap-3.5">
+<div class="flex items-center justify-between">
+<span class="font-mono-data text-[10.5px] px-2 py-0.5 bg-[#47739E]/10 text-[#47739E] border border-[#47739E]/40 font-semibold tracking-wider">SLA: 48–72H RUSH</span>
+</div>
+<h3 class="text-[19px] sm:text-[20px] font-bold uppercase tracking-tight text-[#0A0A0A] group-hover:text-[#47739E] transition-colors leading-snug">
+                BRAND &amp; UGC CONVERSION</h3>
+<p class="text-[13.5px] leading-relaxed text-[#4B5563]">
+                Fast-cut narrative pacing, dynamic kinetic typography, and motion sound design engineered explicitly for retention and ad conversion funnels.
+              </p>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[9:16 VERTICAL]</span>
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[RETENTION HOOKS]</span>
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[A/B VARIANTS]</span>
+</div>
+</div>
+<div class="mt-8 pt-4 border-t border-[#DCDFE3] flex items-center justify-between">
+<div class="flex flex-col">
+
+
+</div>
+<button class="px-3.5 py-1.5 bg-[#FFFFFF] border border-[#0A0A0A] text-[#0A0A0A] font-mono-data text-[11px] font-semibold uppercase tracking-wider group-hover:bg-[#47739E] group-hover:border-[#47739E] group-hover:text-[#FFFFFF] transition-all">
+                LAUNCH EDIT &nbsp;</button>
+</div>
+</div>
+<!-- Card 03 -->
+<div class="bg-[#FFFFFF] p-6 sm:p-7 flex flex-col justify-between hover:bg-[#F9FAFB] transition-colors group">
+<div class="flex flex-col gap-3.5">
+<div class="flex items-center justify-between">
+<span class="font-mono-data text-[10.5px] px-2 py-0.5 bg-[#47739E]/10 text-[#47739E] border border-[#47739E]/40 font-semibold tracking-wider">SLA: 5–7 DAYS</span>
+</div>
+<h3 class="text-[19px] sm:text-[20px] font-bold uppercase tracking-tight text-[#0A0A0A] group-hover:text-[#47739E] transition-colors leading-snug">
+                STORE &amp; PRODUCT SHOWCASE
+              </h3>
+<p class="text-[13.5px] leading-relaxed text-[#4B5563]">
+                Sleek lighting enhancements, clean object tracking, macro speed ramps, and rhythmic foley sync to spotlight physical merchandise and retail flagships.
+              </p>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[E-COMMERCE READY]</span>
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[PER-SKU PRICING]</span>
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[MACRO SPEED RAMPS]</span>
+</div>
+</div>
+<div class="mt-8 pt-4 border-t border-[#DCDFE3] flex items-center justify-between">
+<div class="flex flex-col">
+
+
+</div>
+<button class="px-3.5 py-1.5 bg-[#FFFFFF] border border-[#0A0A0A] text-[#0A0A0A] font-mono-data text-[11px] font-semibold uppercase tracking-wider group-hover:bg-[#47739E] group-hover:border-[#47739E] group-hover:text-[#FFFFFF] transition-all">
+                SUBMIT BRIEF &nbsp;</button>
+</div>
+</div>
+<!-- Card 04 -->
+<div class="bg-[#FFFFFF] p-6 sm:p-7 flex flex-col justify-between hover:bg-[#F9FAFB] transition-colors group">
+<div class="flex flex-col gap-3.5">
+<div class="flex items-center justify-between">
+<span class="font-mono-data text-[10.5px] px-2 py-0.5 bg-[#47739E]/10 text-[#47739E] border border-[#47739E]/40 font-semibold tracking-wider">SLA: 5–8 DAYS</span>
+</div>
+<h3 class="text-[19px] sm:text-[20px] font-bold uppercase tracking-tight text-[#0A0A0A] group-hover:text-[#47739E] transition-colors leading-snug">
+                CORPORATE &amp; EVENT KEYNOTE&nbsp;</h3>
+<p class="text-[13.5px] leading-relaxed text-[#4B5563]">
+                Polished event summaries, summit recaps, and executive sizzle reels with comprehensive audio remastering, noise reduction, and branded slide overlays.
+              </p>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[MULTI-CAM 4K]</span>
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[SPEECH DE-NOISE]</span>
+<span class="font-mono-data text-[9.5px] px-2 py-0.5 bg-[#F4F5F7] text-[#0A0A0A] border border-[#DCDFE3]">[EXECUTIVE SIZZLE]</span>
+</div>
+</div>
+<div class="mt-8 pt-4 border-t border-[#DCDFE3] flex items-center justify-between">
+<div class="flex flex-col">
+
+
+</div>
+<button class="px-3.5 py-1.5 bg-[#FFFFFF] border border-[#0A0A0A] text-[#0A0A0A] font-mono-data text-[11px] font-semibold uppercase tracking-wider group-hover:bg-[#47739E] group-hover:border-[#47739E] group-hover:text-[#FFFFFF] transition-all">
+                REQUEST QUOTE&nbsp;</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- 03. 3D COVERFLOW INTERACTIVE CAROUSEL                                     -->
+<!-- ========================================================================= -->
+<section class="w-full py-14 lg:py-16 border-b border-[#DCDFE3] bg-[#F4F5F7] overflow-hidden relative" id="featured-reels">
+<div class="max-w-7xl mx-auto px-6 sm:px-8 mb-6 flex flex-col sm:flex-row sm:items-end justify-between border-b border-[#DCDFE3] pb-4 gap-2">
+<div>
+<div class="flex items-center gap-2 mb-1.5">
+<span class="font-mono-data text-[10px] px-2 py-0.5 bg-[#47739E]/15 text-[#47739E] border border-[#47739E]/40 font-semibold uppercase tracking-wider">WORK REFERENCES // RECENT CUTS</span>
+</div>
+<h2 class="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-[#0A0A0A]">
+            FEATURED REELS &amp; EDIT CUTS
+          </h2>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-mono-data text-[11px] text-[#6B7280] uppercase tracking-wider" id="coverflow-counter">04 / 07</span>
+</div>
+</div>
+<!-- 3D Coverflow Container with Controls -->
+<div class="relative w-full max-w-7xl mx-auto px-4 sm:px-8 py-4 select-none cursor-grab active:cursor-grabbing touch-pan-y" id="coverflow-carousel-wrapper">
+<!-- Navigation Arrow Buttons -->
+
+
+<!-- 3D Stage Viewport -->
+<div class="coverflow-stage relative w-full h-[470px] sm:h-[510px] flex items-center justify-center overflow-hidden pointer-events-none" id="coverflow-stage">
+<!-- Reel 0: 16:9 Wedding Highlight Cinema -->
+<div class="coverflow-card w-[380px] sm:w-[500px] aspect-[16/9] rounded-xl overflow-hidden shadow-2xl bg-[#0A0A0A] cursor-pointer pointer-events-auto border border-[#DCDFE3]/50 group" data-index="0" style="transform: translate(-50%, -50%) translate3d(-480px, 0px, -180px) scale(0.68) rotateY(42deg); z-index: 10; opacity: 0.18; filter: brightness(0.55); pointer-events: auto;">
+<img alt="Wedding Highlight Cinema" class="w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsePdAcGwWqpL-SkBwBLh5a0FqLCSt-7v4fcCiruks69vIlQHey_Acj9wuPRilidGL9aGbBnfaiM8GbxpCcad9J30VYh8D9OGuMnjayfqGclLO0CiJjSwq_rxH2cSzZS15TxpGB5FQRvXHs7mis2cUHHgl-VsW2x4MGT7l9vEZTzqC19ALhxQP7XbJ4MwneC8CggMllvZF2TRtyTlcjIWD8w2CnzVvKZYg43dJwSzUFQzeHGS5FEH4">
+
+</div>
+<!-- Reel 1: 9:16 Neon Fashion & Commercial -->
+<div class="coverflow-card w-[240px] sm:w-[280px] aspect-[9/16] rounded-xl overflow-hidden shadow-2xl bg-[#0A0A0A] cursor-pointer pointer-events-auto border border-[#DCDFE3]/50 group" data-index="1" style="transform: translate(-50%, -50%) translate3d(-325px, 0px, -120px) scale(0.74) rotateY(42deg); z-index: 15; opacity: 0.32; filter: brightness(0.56); pointer-events: auto;">
+<img alt="Neon Fashion Editorial" class="w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpI5MP3dVCXWXyLoYZKPXGoMh_WvsEz_d6Rpc9xPOuwmWLZIkdxNe2YiptKh2IS82_-J88MwUSb__Hhc_fND3NCwqVNY6MEX9jIY1trqM-Qm_V365HnFvCiJeFk1JtmhD3rW198e__qJmoTsv63SXKY-hOeCYmmfKBkvyQeQkBZe5ZPNTqckBwO1mA3yWmj08u7kTzIiK6B5VjFzjjZsteBozYUbqu0V15lwUf31MJhoL3DROKdHUP">
+
+</div>
+<!-- Reel 2: 16:9 Electric Supercar & Automotive -->
+<div class="coverflow-card w-[380px] sm:w-[500px] aspect-[16/9] rounded-xl overflow-hidden shadow-2xl bg-[#0A0A0A] cursor-pointer pointer-events-auto border border-[#DCDFE3]/50 group" data-index="2" style="transform: translate(-50%, -50%) translate3d(-170px, 0px, -60px) scale(0.85) rotateY(42deg); z-index: 20; opacity: 0.6; filter: brightness(0.72); pointer-events: auto;">
+<img alt="Automotive Cinema" class="w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDElzw9QaziKz5RF63bUMiuSoO0-dyPiK5hwkz7ngHhk2lt5vtXZlMxobJhjXktsk-tUNqIm1v6UqMRnADqM8Dvj2WdY6cAp5oW20XR_DXIfj2eKIVccL_G_tU2J04ut5bn3-kp8hzNyLizMPC_ljjidb8A778SiYr1N0e5wClqoKUbd5K29mHZNpwla8AJ-4Qc8d5nyz4_4Lu-ZGJb-r40Vh1nKzsZCFJNuyxlLj4-LnlU4uNRGL2R">
+
+</div>
+<!-- Reel 3: 16:9 Luxury Product Macro Studio -->
+<div class="coverflow-card w-[380px] sm:w-[500px] aspect-[16/9] rounded-xl overflow-hidden shadow-2xl bg-[#0A0A0A] cursor-pointer pointer-events-auto border border-[#DCDFE3]/50 group ring-2 ring-[#47739E] ring-offset-4 ring-offset-[#F4F5F7] shadow-[0_20px_50px_rgba(0,0,0,0.3)]" data-index="3" style="transform: translate(-50%, -50%) translate3d(0px, 0px, 90px) scale(1.08) rotateY(0deg); z-index: 35; opacity: 1; filter: brightness(1); pointer-events: auto;">
+<img alt="Luxury Commercial Showcase" class="w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARvF24AxWfj3cpIJAYkN_W8A4TxtWOMd9JejwujwxseHhgQhmojzRG12-KrAZ_dz2DT-T4-ed3-r6YnxWFbhxn7LWf_PLXkxYWVj4FmKwFFSr-avEV3iJjedjGWY6OAp8rss8lxsjx_FN5z3cYCfT329abnulJVuQNKtJhxcdBI-tvSUaDwFHgxlKnvoTAgcpCenhzASjIf6dC4pupYauAmGVFvp32gMEz13T4RmQkJpFr1361hXdB">
+
+</div>
+<!-- Reel 4: 9:16 DJ Electronic Festival Music Video -->
+<div class="coverflow-card w-[240px] sm:w-[280px] aspect-[9/16] rounded-xl overflow-hidden shadow-2xl bg-[#0A0A0A] cursor-pointer pointer-events-auto border border-[#DCDFE3]/50 group" data-index="4" style="transform: translate(-50%, -50%) translate3d(170px, 0px, -60px) scale(0.85) rotateY(-42deg); z-index: 20; opacity: 0.6; filter: brightness(0.72); pointer-events: auto;">
+<img alt="Music Festival Reel" class="w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCq4piQDZ9MvG-CUpgr4q1foB0d1Q_0b1iPaYDgQfu0x_8Fx3yhvZM1Myj6m-rbir9dcVIhAAG47d6l_mPKIUFKjlap9-2adc2CLQub09Jyuxo2RAfsNr9HIbzpOn4FdWLmEeTbFQeMbbenZZ2padJZ9Rhp3e7TzOmNRBIrtcxSpu2G87SnYGo2YbiKe9OJk6L61dTkjppFGaXd5Kb-nlp2UPL7LcW5po3hfNPFt534OVzKoE0SBPb6">
+
+</div>
+<!-- Reel 5: 16:9 Stage Concert Rock Silhouette -->
+<div class="coverflow-card w-[380px] sm:w-[500px] aspect-[16/9] rounded-xl overflow-hidden shadow-2xl bg-[#0A0A0A] cursor-pointer pointer-events-auto border border-[#DCDFE3]/50 group" data-index="5" style="transform: translate(-50%, -50%) translate3d(325px, 0px, -120px) scale(0.74) rotateY(-42deg); z-index: 15; opacity: 0.32; filter: brightness(0.56); pointer-events: auto;">
+<img alt="Concert Stage Film" class="w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2yDxIaEQsco7BvgqgjsYw6AUcelED49ltrW7CqNdUIllW7tyLTGvqcW5UsQtcJZT0sCIafRXXXAwv6P4dpuhUQEyXX3diXZNuuCBsyIgFRrKTs14Jbv1YkrlNspCdswPDOtaMZH0-JXCCU44g6o9fqW_VmVOqT1Ew5VSMQD5rF_1oRFG5sdAIdSnQ1knVKn5A2KYVFtXuYqX5a91GoTxRTjekDLH0I7GPbum0uKJHPBVaBmcDUC5-">
+
+</div>
+<!-- Reel 6: 9:16 Creator Aesthetic & Studio -->
+<div class="coverflow-card w-[240px] sm:w-[280px] aspect-[9/16] rounded-xl overflow-hidden shadow-2xl bg-[#0A0A0A] cursor-pointer pointer-events-auto border border-[#DCDFE3]/50 group" data-index="6" style="transform: translate(-50%, -50%) translate3d(480px, 0px, -180px) scale(0.68) rotateY(-42deg); z-index: 10; opacity: 0.18; filter: brightness(0.55); pointer-events: auto;">
+<img alt="Creator Aesthetic Video" class="w-full h-full object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaYLvJR5WfRNu4nSg0FVFAh0hGh7CokNl92q1ZTfExVyGDxifTFlO17bP5hq0Hx006nD_jPAnsbtZoHskAdqxigTXcsisgggYzRcFQUXKz4DcACvGhDP4u_FOmA1GpKpmIi0Nm5tylXjK71wGz9FVz8UuKobTwZlNUYtGNRNOZXGYEryrlYJxhFcz1fRwFaELI93NSXN1GWl_4Iogq6jENgnzfuHnvTebPD6_0fLDF7upNw_GOCrWu">
+
+</div>
+</div>
+<!-- Bottom Pagination Dots & Progress Indicator -->
+<div class="flex items-center justify-center gap-2 mt-4" id="coverflow-dots"><button type="button" aria-label="Go to slide 1" class="h-2 w-2.5 bg-[#DCDFE3] hover:bg-[#47739E]/60 rounded-full transition-all duration-300"></button><button type="button" aria-label="Go to slide 2" class="h-2 w-2.5 bg-[#DCDFE3] hover:bg-[#47739E]/60 rounded-full transition-all duration-300"></button><button type="button" aria-label="Go to slide 3" class="h-2 w-2.5 bg-[#DCDFE3] hover:bg-[#47739E]/60 rounded-full transition-all duration-300"></button><button type="button" aria-label="Go to slide 4" class="h-2 w-8 bg-[#47739E] rounded-full transition-all duration-300"></button><button type="button" aria-label="Go to slide 5" class="h-2 w-2.5 bg-[#DCDFE3] hover:bg-[#47739E]/60 rounded-full transition-all duration-300"></button><button type="button" aria-label="Go to slide 6" class="h-2 w-2.5 bg-[#DCDFE3] hover:bg-[#47739E]/60 rounded-full transition-all duration-300"></button><button type="button" aria-label="Go to slide 7" class="h-2 w-2.5 bg-[#DCDFE3] hover:bg-[#47739E]/60 rounded-full transition-all duration-300"></button></div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- 04. VERIFIED PRODUCTION ARCHIVE                                           -->
+<!-- ========================================================================= -->
+<!-- ========================================================================= -->
+<!-- 05. PLATFORM MECHANICS / HOW IT WORKS                                     -->
+<!-- ========================================================================= -->
+<!-- ========================================================================= -->
+<!-- 06. FAQ & COMPLIANCE SECTION                                              -->
+<!-- ========================================================================= -->
+<section class="w-full px-6 sm:px-8 py-10 lg:py-12 border-b border-[#DCDFE3] bg-[#F4F5F7]" id="verified-production-archive">
+<div class="max-w-7xl mx-auto flex flex-col gap-6">
+<!-- Section Header -->
+<div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-[#DCDFE3] pb-3 gap-2">
+<div>
+<h2 class="text-xl sm:text-2xl font-bold uppercase tracking-tight text-[#0A0A0A]">
+          VERIFIED PRODUCTION ARCHIVE
+        </h2>
+</div>
+</div>
+<!-- 3 Curated Case Studies -->
+<div class="flex flex-col gap-4 sm:gap-5">
+<!-- Case Study 01 -->
+<div class="bg-[#FFFFFF] border border-[#DCDFE3] hover:border-[#47739E] transition-all grid grid-cols-1 lg:grid-cols-12 overflow-hidden shadow-sm">
+<div class="lg:col-span-6 relative h-48 sm:h-56 lg:h-auto overflow-hidden bg-[#0A0A0A]">
+<img alt="The Rajasthan Palace Wedding" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsePdAcGwWqpL-SkBwBLh5a0FqLCSt-7v4fcCiruks69vIlQHey_Acj9wuPRilidGL9aGbBnfaiM8GbxpCcad9J30VYh8D9OGuMnjayfqGclLO0CiJjSwq_rxH2cSzZS15TxpGB5FQRvXHs7mis2cUHHgl-VsW2x4MGT7l9vEZTzqC19ALhxQP7XbJ4MwneC8CggMllvZF2TRtyTlcjIWD8w2CnzVvKZYg43dJwSzUFQzeHGS5FEH4">
+</div>
+<div class="lg:col-span-6 p-4 sm:p-5 flex flex-col justify-between gap-4">
+<div class="flex flex-col gap-2">
+<span class="font-mono-data text-[10px] font-semibold text-[#47739E] uppercase tracking-wider">WEDDING CINEMA</span>
+<h3 class="text-base sm:text-lg font-bold uppercase tracking-tight text-[#0A0A0A] leading-snug">THE RAJASTHAN PALACE WEDDING</h3>
+<p class="text-[12.5px] leading-relaxed text-[#4B5563]">Multi-day footage ingest across 4 operational cameras, Precision sync on non-timecode ambient audio, graded with bespoke film emulations to accentuate architectural golden hours.</p>
+</div>
+<div class="pt-3 border-t border-[#DCDFE3] grid grid-cols-2 gap-3 font-mono-data">
+<div>
+<span class="text-[#6B7280] uppercase block text-[9px] tracking-wider">ASSIGNED CUTTER:</span>
+<span class="text-[#0A0A0A] font-semibold uppercase mt-0.5 block text-[11px]">IN-HOUSE SENIOR FELLOW</span>
+</div>
+<div>
+<span class="text-[#6B7280] uppercase block text-[9px] tracking-wider">DELIVERY TIMELINE:</span>
+<span class="text-[#0A0A0A] font-semibold uppercase mt-0.5 block text-[11px]">06 CALENDAR DAYS</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Case Study 02 -->
+<div class="bg-[#FFFFFF] border border-[#DCDFE3] hover:border-[#47739E] transition-all grid grid-cols-1 lg:grid-cols-12 overflow-hidden shadow-sm">
+<div class="lg:col-span-6 p-4 sm:p-5 flex flex-col justify-between gap-4 order-2 lg:order-1">
+<div class="flex flex-col gap-2">
+<span class="font-mono-data text-[10px] font-semibold text-[#47739E] uppercase tracking-wider">STREETWEAR COMMERCIAL</span>
+<h3 class="text-base sm:text-lg font-bold uppercase tracking-tight text-[#0A0A0A] leading-snug">NOMAD LABS APPAREL CAMPAIGN</h3>
+<p class="text-[12.5px] leading-relaxed text-[#4B5563]">High-intensity vertical editorial constructed from 100fps runway clips. Custom rhythmic sound foley synced directly with textile cuts and speed ramps to spike TikTok/Meta hook rate past 42%.</p>
+</div>
+<div class="pt-3 border-t border-[#DCDFE3] grid grid-cols-2 gap-3 font-mono-data">
+<div>
+<span class="text-[#6B7280] uppercase block text-[9px] tracking-wider">AUDIO POST:</span>
+<span class="text-[#0A0A0A] font-semibold uppercase mt-0.5 block text-[11px]">DYNAMIC FOLEY DESIGN</span>
+</div>
+<div>
+<span class="text-[#6B7280] uppercase block text-[9px] tracking-wider">EXPORT VARIANTS:</span>
+<span class="text-[#0A0A0A] font-semibold uppercase mt-0.5 block text-[11px]">6X A/B HOOK VERSIONS</span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-6 relative h-48 sm:h-56 lg:h-auto overflow-hidden bg-[#0A0A0A] order-1 lg:order-2">
+<img alt="Nomad Labs Apparel Campaign" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpI5MP3dVCXWXyLoYZKPXGoMh_WvsEz_d6Rpc9xPOuwmWLZIkdxNe2YiptKh2IS82_-J88MwUSb__Hhc_fND3NCwqVNY6MEX9jIY1trqM-Qm_V365HnFvCiJeFk1JtmhD3rW198e__qJmoTsv63SXKY-hOeCYmmfKBkvyQeQkBZe5ZPNTqckBwO1mA3yWmj08u7kTzIiK6B5VjFzjjZsteBozYUbqu0V15lwUf31MJhoL3DROKdHUP">
+</div>
+</div>
+<!-- Case Study 03 -->
+<div class="bg-[#FFFFFF] border border-[#DCDFE3] hover:border-[#47739E] transition-all grid grid-cols-1 lg:grid-cols-12 overflow-hidden shadow-sm">
+<div class="lg:col-span-6 relative h-48 sm:h-56 lg:h-auto overflow-hidden bg-[#0A0A0A]">
+<img alt="Solaris Electric Motorcycle Launch" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDElzw9QaziKz5RF63bUMiuSoO0-dyPiK5hwkz7ngHhk2lt5vtXZlMxobJhjXktsk-tUNqIm1v6UqMRnADqM8Dvj2WdY6cAp5oW20XR_DXIfj2eKIVccL_G_tU2J04ut5bn3-kp8hzNyLizMPC_ljjidb8A778SiYr1N0e5wClqoKUbd5K29mHZNpwla8AJ-4Qc8d5nyz4_4Lu-ZGJb-r40Vh1nKzsZCFJNuyxlLj4-LnlU4uNRGL2R">
+</div>
+<div class="lg:col-span-6 p-4 sm:p-5 flex flex-col justify-between gap-4">
+<div class="flex flex-col gap-2">
+<span class="font-mono-data text-[10px] font-semibold text-[#47739E] uppercase tracking-wider">AUTOMOTIVE LAUNCH</span>
+<h3 class="text-base sm:text-lg font-bold uppercase tracking-tight text-[#0A0A0A] leading-snug">SOLARIS ELECTRIC MOTORCYCLE LAUNCH</h3>
+<p class="text-[12.5px] leading-relaxed text-[#4B5563]">Multi-layer CG asset integration, subtle 2D technical typography overlays, and visceral synthesized electric engine acoustic design calibrated for worldwide web broadcast.</p>
+</div>
+<div class="pt-3 border-t border-[#DCDFE3] grid grid-cols-2 gap-3 font-mono-data">
+<div>
+<span class="text-[#6B7280] uppercase block text-[9px] tracking-wider">VFX SUPERVISION:</span>
+<span class="text-[#0A0A0A] font-semibold uppercase mt-0.5 block text-[11px]">ARMY OF ARTISTS LAB</span>
+</div>
+<div>
+<span class="text-[#6B7280] uppercase block text-[9px] tracking-wider">MASTER RESOLUTION:</span>
+<span class="text-[#0A0A0A] font-semibold uppercase mt-0.5 block text-[11px]">3840 X 2160 UHD</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section><section class="w-full px-6 sm:px-8 py-14 lg:py-16 border-b border-[#DCDFE3] bg-[#FFFFFF]">
+<div class="max-w-4xl mx-auto flex flex-col gap-6">
+<!-- Section Header -->
+<div class="flex flex-col border-b border-[#DCDFE3] pb-4 gap-1">
+<h2 class="text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-[#0A0A0A]">
+            FREQUENTLY ENCOUNTERED QUESTIONS
+          </h2>
+</div>
+<!-- Compact FAQ Rows -->
+<div class="flex flex-col divide-y divide-[#DCDFE3] border-b border-[#DCDFE3]"><details class="group py-4 border-t border-[#DCDFE3] first:border-t-0 cursor-pointer" open="">
+<summary class="flex items-center justify-between font-bold text-[16px] uppercase tracking-tight text-[#0A0A0A] group-hover:text-[#47739E] transition-colors list-none select-none outline-none group-open:text-[#47739E]">
+<span class="">WHAT IS ARTSY?</span>
+<span class="font-mono-data text-[18px] text-[#47739E] transition-transform duration-200 group-open:rotate-45 leading-none">+</span>
+</summary>
+<p class="pt-3 text-[13.5px] leading-relaxed text-[#4B5563]">
+    Artsy Production is a curated two-sided post-production studio and technological platform pairing high-growth brands, creators, and cinema productions with elite, verified video and photo editors under transparent productized pricing.
+  </p>
+</details>
+<details class="group py-4 border-t border-[#DCDFE3] cursor-pointer" open="">
+<summary class="flex items-center justify-between font-bold text-[16px] uppercase tracking-tight text-[#0A0A0A] group-hover:text-[#47739E] transition-colors list-none select-none outline-none group-open:text-[#47739E]">
+<span class="">WHAT IS THE DELIVERY TIMELINE?</span>
+<span class="font-mono-data text-[18px] text-[#47739E] transition-transform duration-200 group-open:rotate-45 leading-none">+</span>
+</summary>
+<p class="pt-3 text-[13.5px] leading-relaxed text-[#4B5563]">
+    Standard delivery ranges from 7 to 10 calendar days depending on project footage volume and camera complexity. For urgent brand, store, and UGC cuts, an expedited 48–72h rush SLA is available with an immutable deadline guarantee.
+  </p>
+</details>
+<details class="group py-4 border-t border-[#DCDFE3] cursor-pointer">
+<summary class="flex items-center justify-between font-bold text-[16px] uppercase tracking-tight text-[#0A0A0A] group-hover:text-[#47739E] transition-colors list-none select-none outline-none group-open:text-[#47739E]">
+<span class="">HOW DO YOU ENSURE QUALITY?</span>
+<span class="font-mono-data text-[18px] text-[#47739E] transition-transform duration-200 group-open:rotate-45 leading-none">+</span>
+</summary>
+<p class="pt-3 text-[13.5px] leading-relaxed text-[#4B5563]">
+    All editors undergo strict portfolio vetting and admin approval. Every cut passes through in-house senior QC before client delivery, supported by an integrated frame-accurate review player allowing timestamped comments and two complimentary revision rounds.
+  </p>
+</details>
+<details class="group py-4 border-t border-[#DCDFE3] cursor-pointer">
+<summary class="flex items-center justify-between font-bold text-[16px] uppercase tracking-tight text-[#0A0A0A] group-hover:text-[#47739E] transition-colors list-none select-none outline-none group-open:text-[#47739E]">
+<span class="">WHAT IS YOUR REFUND POLICY?</span>
+<span class="font-mono-data text-[18px] text-[#47739E] transition-transform duration-200 group-open:rotate-45 leading-none">+</span>
+</summary>
+<p class="pt-3 text-[13.5px] leading-relaxed text-[#4B5563]">
+    Pre-production cancellations receive a full 100% refund. Once editing has commenced, refunds are scaled transparently to project progress and logged as compensatory ledger entries under administrator review.
+  </p>
+</details>
+<details class="group py-4 border-t border-[#DCDFE3] cursor-pointer">
+<summary class="flex items-center justify-between font-bold text-[16px] uppercase tracking-tight text-[#0A0A0A] group-hover:text-[#47739E] transition-colors list-none select-none outline-none group-open:text-[#47739E]">
+<span class="">WHO CAN BOOK SERVICES ON ARTSY?</span>
+<span class="font-mono-data text-[18px] text-[#47739E] transition-transform duration-200 group-open:rotate-45 leading-none">+</span>
+</summary>
+<p class="pt-3 text-[13.5px] leading-relaxed text-[#4B5563]">
+    Artsy serves creative directors, marketing agencies, wedding cinematographers, e-commerce stores, brand founders, and corporate enterprise teams seeking turnkey, studio-grade post-production without hiring overhead.
+  </p>
+</details>
+<details class="group py-4 border-t border-[#DCDFE3] cursor-pointer">
+<summary class="flex items-center justify-between font-bold text-[16px] uppercase tracking-tight text-[#0A0A0A] group-hover:text-[#47739E] transition-colors list-none select-none outline-none group-open:text-[#47739E]">
+<span class="">CAN I BOOK THE SAME FREELANCER AGAIN?</span>
+<span class="font-mono-data text-[18px] text-[#47739E] transition-transform duration-200 group-open:rotate-45 leading-none">+</span>
+</summary>
+<p class="pt-3 text-[13.5px] leading-relaxed text-[#4B5563]">
+    Yes. When placing repeat briefs or recurring catalog orders, you can specify your preferred editor or in-house fellow, and our intelligent matching engine prioritizes their schedule and direct assignment.
+  </p>
+</details></div>
+</div>
+</section>
+<!-- ========================================================================= -->
+<!-- 07. FINAL CTA                                                             -->
+<!-- ========================================================================= -->
+</div>
+</main>
+<!-- ========================================================================= -->
+<!-- 08. FOOTER                                                                -->
+<!-- ========================================================================= -->
+<footer class="w-full bg-[#0A0A0A] border-t border-[#1c2230] relative overflow-hidden">
+<div class="w-full max-w-7xl mx-auto px-6 sm:px-8 pt-10 pb-4 relative z-10">
+<!-- Main Footer Columns -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 pb-8 border-b border-[#1c2230]">
+<!-- Brand & Mission -->
+<div class="lg:col-span-5 flex flex-col gap-3">
+<a class="flex flex-col leading-none select-none group" data-path="services" href="#">
+<span class="text-[16px] font-extrabold uppercase tracking-tight text-[#FFFFFF] leading-none group-hover:text-[#47739E] transition-colors">ARTSY</span>
+<span class="font-mono-data text-[8.5px] font-semibold tracking-widest uppercase text-[#DCDFE3] mt-1 leading-none">PLACE FOR PERSPECTIVE</span>
+</a>
+<p class="text-[13px] leading-relaxed text-[#DCDFE3] max-w-sm font-normal">
+    High-performance editorial post-production studio pairing elite creative editors with international cinema, commercial campaigns, and creators.
+  </p><div><br></div><p></p>
+</div>
+<!-- First: Services Links -->
+<div class="lg:col-span-2 flex flex-col gap-2.5">
+<h4 class="text-[13px] uppercase font-bold text-[#FFFFFF] tracking-wider font-mono-data">Services</h4>
+<ul class="flex flex-col gap-1.5 font-mono-data text-[11.5px] text-[#DCDFE3]">
+<li class=""><a class="hover:text-[#FFFFFF] transition-colors" href="#">Video Editing</a></li>
+<li class="hover:text-[#FFFFFF] transition-colors cursor-pointer">Photo Editing</li>
+<li class="hover:text-[#FFFFFF] transition-colors cursor-pointer">Design</li>
+</ul>
+</div>
+<!-- Second: Support Links -->
+<div class="lg:col-span-2 flex flex-col gap-2.5">
+<h4 class="text-[13px] uppercase font-bold text-[#FFFFFF] tracking-wider font-mono-data">Support</h4>
+<ul class="flex flex-col gap-1.5 font-mono-data text-[11.5px] text-[#DCDFE3]">
+<li class=""><a class="hover:text-[#FFFFFF] transition-colors" href="#">Contact Us</a></li>
+<li class=""><a class="hover:text-[#FFFFFF] transition-colors" href="#">Privacy Policy</a></li>
+<li class=""><a class="hover:text-[#FFFFFF] transition-colors" href="#">Terms &amp; Conditions</a></li>
+<li class=""><a class="hover:text-[#FFFFFF] transition-colors" href="#">Refund Policy</a></li>
+</ul>
+</div>
+<!-- Third: Customer Support -->
+<div class="lg:col-span-3 flex flex-col gap-2.5">
+<h4 class="text-[13px] uppercase font-bold text-[#FFFFFF] tracking-wider font-mono-data">Customer Support</h4>
+<div class="flex flex-col gap-1.5 font-mono-data text-[11.5px] text-[#DCDFE3]">
+<p class=""><span class="text-[#FFFFFF] font-semibold">Email:</span> <a class="hover:text-[#FFFFFF] transition-colors" href="mailto:artsyproduction8@gmail.com">artsyproduction8@gmail.com</a></p>
+<p class=""><span class="text-[#FFFFFF] font-semibold">Phone:</span> <a class="hover:text-[#FFFFFF] transition-colors" href="tel:+918369251112">+91 836 925 1112</a></p>
+<p class=""><span class="text-[#FFFFFF] font-semibold">Support Hours:</span> Monday to Friday, 9:00 AM – 6:00 PM IST</p>
+</div>
+</div>
+</div>
+<!-- Bottom Copyright & Protocol -->
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-5 text-[#DCDFE3] font-mono-data text-[10.5px]">
+<div class="">© 2025 ARTSY PRODUCTION GMBH. ALL RIGHTS RESERVED.</div>
+</div>
+</div>
+</footer>
+<!-- ========================================================================= -->
+<!-- 3D COVERFLOW LOGIC SCRIPT                                                 -->
+<!-- ========================================================================= -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const stage = document.getElementById('coverflow-stage');
+    const carouselWrapper = document.getElementById('coverflow-carousel-wrapper');
+    const dotsContainer = document.getElementById('coverflow-dots');
+    const prevBtn = document.getElementById('coverflow-prev-btn');
+    const nextBtn = document.getElementById('coverflow-next-btn');
+    const counterEl = document.getElementById('coverflow-counter');
+
+    if (!stage || !carouselWrapper) return;
+
+    const cards = Array.from(stage.querySelectorAll('.coverflow-card'));
+    const total = cards.length;
+    let currentIndex = 2; // initial active centered slide
+    let autoPlayTimer = null;
+    const AUTOPLAY_INTERVAL = 3800;
+
+    // Interaction & Drag state
+    let isPointerDown = false;
+    let startX = 0;
+    let currentDeltaX = 0;
+    let hasDragged = false;
+    let isHovered = false;
+
+    function formatNumber(num) {
+      return num < 10 ? '0' + num : '' + num;
+    }
+
+    function updateCoverflow(visualOffset = 0) {
+      if (counterEl) {
+        counterEl.textContent = `${formatNumber(currentIndex + 1)} / ${formatNumber(total)}`;
+      }
+
+      cards.forEach((card, idx) => {
+        let diff = idx - currentIndex;
+        // Circular loop wrapping
+        if (diff > total / 2) diff -= total;
+        if (diff < -total / 2) diff += total;
+
+        // Apply fine visualOffset for live drag feedback
+        const effectiveDiff = diff + visualOffset;
+        const absDiff = Math.abs(effectiveDiff);
+
+        if (absDiff < 0.5) {
+          // Centered active card
+          const scale = 1.08 - absDiff * 0.1;
+          const rotateY = effectiveDiff * -22;
+          const translateZ = 90 - absDiff * 80;
+          const translateX = effectiveDiff * 200;
+
+          card.style.transform = `translate(-50%, -50%) translate3d(${translateX}px, 0, ${translateZ}px) scale(${scale}) rotateY(${rotateY}deg)`;
+          card.style.zIndex = 35;
+          card.style.opacity = '1';
+          card.style.filter = 'brightness(1)';
+          card.style.pointerEvents = 'auto';
+          card.classList.add('ring-2', 'ring-[#47739E]', 'ring-offset-4', 'ring-offset-[#F4F5F7]', 'shadow-[0_20px_50px_rgba(0,0,0,0.3)]');
+        } else if (absDiff <= 3.2) {
+          // Flanking visible cards
+          const sign = effectiveDiff > 0 ? 1 : -1;
+          const normDist = absDiff;
+          const translateX = sign * (170 + (normDist - 1) * 155);
+          const rotateY = sign * -42;
+          const translateZ = -60 * normDist;
+          const scale = Math.max(0.68, 0.96 - normDist * 0.11);
+          const opacityVal = Math.max(0.18, 0.88 - normDist * 0.28);
+          const brightnessVal = Math.max(0.55, 0.88 - normDist * 0.16);
+
+          card.style.transform = `translate(-50%, -50%) translate3d(${translateX}px, 0, ${translateZ}px) scale(${scale}) rotateY(${rotateY}deg)`;
+          card.style.zIndex = `${Math.round(25 - absDiff * 5)}`;
+          card.style.opacity = `${opacityVal}`;
+          card.style.filter = `brightness(${brightnessVal})`;
+          card.style.pointerEvents = 'auto';
+          card.classList.remove('ring-2', 'ring-[#47739E]', 'ring-offset-4', 'ring-offset-[#F4F5F7]', 'shadow-[0_20px_50px_rgba(0,0,0,0.3)]');
+        } else {
+          // Far hidden cards
+          card.style.transform = `translate(-50%, -50%) translate3d(0, 0, -280px) scale(0.55)`;
+          card.style.zIndex = 0;
+          card.style.opacity = '0';
+          card.style.pointerEvents = 'none';
+          card.classList.remove('ring-2', 'ring-[#47739E]', 'ring-offset-4', 'ring-offset-[#F4F5F7]', 'shadow-[0_20px_50px_rgba(0,0,0,0.3)]');
+        }
+      });
+
+      // Update Dots
+      if (dotsContainer) {
+        const dots = dotsContainer.querySelectorAll('button');
+        dots.forEach((dot, idx) => {
+          if (idx === currentIndex) {
+            dot.className = 'h-2 w-8 bg-[#47739E] rounded-full transition-all duration-300';
+          } else {
+            dot.className = 'h-2 w-2.5 bg-[#DCDFE3] hover:bg-[#47739E]/60 rounded-full transition-all duration-300';
+          }
+        });
+      }
+    }
+
+    // Build Dots
+    if (dotsContainer) {
+      dotsContainer.innerHTML = '';
+      cards.forEach((_, idx) => {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.setAttribute('aria-label', `Go to slide ${idx + 1}`);
+        dot.className = idx === currentIndex
+          ? 'h-2 w-8 bg-[#47739E] rounded-full transition-all duration-300'
+          : 'h-2 w-2.5 bg-[#DCDFE3] hover:bg-[#47739E]/60 rounded-full transition-all duration-300';
+        dot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          currentIndex = idx;
+          updateCoverflow();
+          resetAutoPlay();
+        });
+        dotsContainer.appendChild(dot);
+      });
+    }
+
+    function nextSlide() {
+      currentIndex = (currentIndex + 1) % total;
+      updateCoverflow();
+    }
+
+    function prevSlide() {
+      currentIndex = (currentIndex - 1 + total) % total;
+      updateCoverflow();
+    }
+
+    // Arrow Button Handlers
+    if (prevBtn) {
+      prevBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        prevSlide();
+        resetAutoPlay();
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        nextSlide();
+        resetAutoPlay();
+      });
+    }
+
+    // Card Click Handler
+    cards.forEach((card, idx) => {
+      card.addEventListener('click', (e) => {
+        if (hasDragged) {
+          e.preventDefault();
+          return;
+        }
+        e.stopPropagation();
+        if (currentIndex !== idx) {
+          currentIndex = idx;
+          updateCoverflow();
+          resetAutoPlay();
+        }
+      });
+    });
+
+    // Auto Play Logic
+    function startAutoPlay() {
+      stopAutoPlay();
+      if (!isHovered && !isPointerDown) {
+        autoPlayTimer = setInterval(nextSlide, AUTOPLAY_INTERVAL);
+      }
+    }
+
+    function stopAutoPlay() {
+      if (autoPlayTimer) {
+        clearInterval(autoPlayTimer);
+        autoPlayTimer = null;
+      }
+    }
+
+    function resetAutoPlay() {
+      stopAutoPlay();
+      startAutoPlay();
+    }
+
+    // Hover detection
+    carouselWrapper.addEventListener('mouseenter', () => {
+      isHovered = true;
+      stopAutoPlay();
+    });
+    carouselWrapper.addEventListener('mouseleave', () => {
+      isHovered = false;
+      if (!isPointerDown) startAutoPlay();
+    });
+
+    // Drag & Swipe Logic with momentum / live track
+    const DRAG_SENSITIVITY = 260; // px to traverse one slide
+    const SWIPE_THRESHOLD = 40;  // min px to commit slide switch
+
+    function getPointerX(e) {
+      return e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+    }
+
+    function handleStart(e) {
+      if (e.target.closest('#coverflow-dots') || e.target.closest('button')) return;
+      isPointerDown = true;
+      hasDragged = false;
+      startX = getPointerX(e);
+      currentDeltaX = 0;
+      stopAutoPlay();
+      cards.forEach(card => card.classList.add('is-dragging'));
+    }
+
+    function handleMove(e) {
+      if (!isPointerDown) return;
+      const currentX = getPointerX(e);
+      currentDeltaX = currentX - startX;
+
+      if (Math.abs(currentDeltaX) > 6) {
+        hasDragged = true;
+      }
+
+      // Convert delta to visual fractional offset clamped for stability
+      const offsetFraction = -currentDeltaX / DRAG_SENSITIVITY;
+      const clampedOffset = Math.max(-0.85, Math.min(0.85, offsetFraction));
+      updateCoverflow(clampedOffset);
+    }
+
+    function handleEnd() {
+      if (!isPointerDown) return;
+      isPointerDown = false;
+      cards.forEach(card => card.classList.remove('is-dragging'));
+
+      if (Math.abs(currentDeltaX) >= SWIPE_THRESHOLD) {
+        if (currentDeltaX > 0) {
+          prevSlide();
+        } else {
+          nextSlide();
+        }
+      } else {
+        updateCoverflow(0);
+      }
+
+      currentDeltaX = 0;
+      setTimeout(() => {
+        hasDragged = false;
+      }, 50);
+
+      resetAutoPlay();
+    }
+
+    // Mouse events
+    carouselWrapper.addEventListener('mousedown', handleStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+
+    // Touch events
+    carouselWrapper.addEventListener('touchstart', handleStart, { passive: true });
+    window.addEventListener('touchmove', handleMove, { passive: true });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
+
+    // Keyboard Arrow Keys
+    window.addEventListener('keydown', (e) => {
+      const rect = carouselWrapper.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight && rect.bottom > 0;
+      if (!inView) return;
+
+      if (e.key === 'ArrowLeft') {
+        prevSlide();
+        resetAutoPlay();
+      } else if (e.key === 'ArrowRight') {
+        nextSlide();
+        resetAutoPlay();
+      }
+    });
+
+    // Initial render
+    updateCoverflow();
+    startAutoPlay();
+  });
+</script>
+
+
+</body></html>

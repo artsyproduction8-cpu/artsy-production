@@ -1,0 +1,86 @@
+/* ============================================
+   ARTSY PRODUCTION — Design Tokens
+   Quick Commerce UI (unjob.ai inspired)
+   ============================================ */
+
+:root {
+  /* ── Brand & Quick-Commerce Colors ── */
+  --color-primary:       #00BF63; /* Signature unjob.ai Green */
+  --color-primary-dark:  #009B4F;
+  --color-primary-light: #E6FBF1;
+  --color-primary-glow:  rgba(0, 191, 99, 0.25);
+
+  /* ── Accent & Sale Colors ── */
+  --color-sale-red:      #EF4444;
+  --color-sale-red-dark: #DC2626;
+  --color-star-yellow:   #FBBF24;
+  --color-discount-blue: #3B82F6;
+
+  /* ── Category Pastel Colors (unjob signature) ── */
+  --cat-video-pink:      #F9A8D4; /* Video Editing */
+  --cat-design-cyan:     #93E7FF; /* Thumbnails & Design */
+  --cat-ai-lime:         #F5FF94; /* AI & UGC Creatives */
+  --cat-color-lavender:  #D8B4FE; /* 4K Color & Sound */
+  --cat-banner-navy:     #15158A; /* Hero Banner Dark Blue */
+
+  /* ── Surfaces & Backgrounds ── */
+  --color-bg:            #FFFFFF;
+  --color-bg-subtle:     #F8F9FA;
+  --color-bg-alt:        #F5F5F5;
+  --color-bg-card:       #FFFFFF;
+  --color-bg-dark:       #0A0A0F;
+  --color-bg-black:      #000000;
+
+  /* ── Typography & Text Colors ── */
+  --color-text:          #121212;
+  --color-text-dim:      #4B5563;
+  --color-text-muted:    #737373;
+  --color-text-faint:    #9CA3AF;
+  --color-text-white:    #FFFFFF;
+
+  /* ── Borders & Outlines ── */
+  --border-subtle:       #F3F4F6;
+  --border-default:      #E5E5E5;
+  --border-hover:        #D1D5DB;
+  --border-green:        #00BF63;
+
+  /* ── Typography ── */
+  --font-main:           'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono:           'JetBrains Mono', 'Fira Code', monospace;
+
+  --text-2xs:            10px;
+  --text-xs:             12px;
+  --text-sm:             13.5px;
+  --text-base:           15px;
+  --text-md:             17px;
+  --text-lg:             20px;
+  --text-xl:             24px;
+  --text-2xl:            30px;
+  --text-3xl:            38px;
+  --text-4xl:            48px;
+
+  /* ── Spacing ── */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;
+  --space-4: 16px;  --space-5: 20px;  --space-6: 24px;
+  --space-8: 32px;  --space-10: 40px; --space-12: 48px;
+  --space-16: 64px; --space-20: 80px;
+
+  /* ── Radii ── */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-banner: 32px;
+  --radius-full: 9999px;
+
+  /* ── Shadows (unjob style) ── */
+  --shadow-card:   0px 2px 10.2px 0px rgba(0, 0, 0, 0.08);
+  --shadow-hover:  0px 8px 24px 0px rgba(0, 0, 0, 0.12);
+  --shadow-drawer: -4px 0 24px rgba(0, 0, 0, 0.15);
+  --shadow-badge:  0 2px 6px rgba(220, 38, 38, 0.35);
+
+  /* ── Transitions ── */
+  --ease-fast:   cubic-bezier(0.16, 1, 0.3, 1);
+  --duration:    0.2s;
+}

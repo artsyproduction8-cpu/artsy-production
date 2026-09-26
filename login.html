@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In & Sign Up | Artsy.ai Post-Production</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/portals.css">
+  <style>
+    .auth-page-wrap {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-bg-subtle);
+      padding: 24px;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      box-shadow: var(--shadow-hover);
+      position: relative;
+    }
+    .auth-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      text-decoration: none;
+      margin-bottom: 16px;
+      transition: color 0.15s ease;
+    }
+    .auth-back-link:hover {
+      color: var(--color-primary-dark);
+    }
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      margin-bottom: 20px;
+      text-decoration: none;
+    }
+    
+    /* Sign In / Sign Up Mode Switcher Tabs */
+    .auth-tab-switch {
+      display: flex;
+      background: #F3F4F6;
+      border-radius: var(--radius-sm);
+      padding: 4px;
+      margin-bottom: 20px;
+      gap: 4px;
+    }
+    .auth-tab-btn {
+      flex: 1;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      border-radius: calc(var(--radius-sm) - 2px);
+      background: transparent;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .auth-tab-btn.active {
+      background: #ffffff;
+      color: #000000;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .auth-h1 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #000000;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .auth-sub {
+      font-size: 13px;
+      color: var(--color-text-muted);
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .role-options-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .role-card-select {
+      border: 1.5px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 10px 6px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--duration) ease;
+      background: #ffffff;
+    }
+    .role-card-select:hover {
+      border-color: var(--color-primary);
+    }
+    .role-card-select.selected {
+      border-color: var(--color-primary);
+      background: var(--color-primary-light);
+      box-shadow: 0 0 0 1px var(--color-primary);
+    }
+    .role-icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+    .role-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: #000000;
+    }
+    .role-desc {
+      font-size: 9.5px;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+    
+    .input-field-group {
+      margin-bottom: 14px;
+    }
+    .form-label-portal {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+    .text-input-field {
+      width: 100%;
+      border: 1.5px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #111827;
+      transition: border-color 0.15s ease;
+    }
+    .text-input-field:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+
+    .phone-input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .country-code-select {
+      width: 90px;
+      border: 1.5px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      font-size: 13px;
+      background: var(--color-bg-subtle);
+      font-weight: 600;
+    }
+    .phone-number-field {
+      flex: 1;
+      border: 1.5px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .phone-number-field:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+    .btn-auth-submit {
+      width: 100%;
+      background: var(--color-primary);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 13px;
+      border-radius: var(--radius-sm);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color var(--duration) ease, transform 0.1s ease;
+    }
+    .btn-auth-submit:hover {
+      background: var(--color-primary-dark);
+    }
+    .btn-auth-submit:active {
+      transform: scale(0.99);
+    }
+    .otp-inputs-grid {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .otp-digit-box {
+      width: 46px;
+      height: 52px;
+      border: 1.5px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: #000000;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .otp-digit-box:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(0, 191, 99, 0.15);
+    }
+    .demo-hint-box {
+      background: #F0FDF4;
+      border-left: 3px solid var(--color-primary);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #166534;
+      border-radius: 0 4px 4px 0;
+      margin: 14px 0;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="auth-page-wrap">
+    <div class="auth-card">
+      <a href="index.html" class="auth-back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+        <span>Back to Artsy Marketplace</span>
+      </a>
+
+      <!-- Brand Logo -->
+      <a href="index.html" class="auth-logo">
+        <span class="nav-brand-logo">artsy<span class="logo-dot">.</span></span>
+        <span class="nav-ai-badge">.AI</span>
+      </a>
+
+      <!-- Sign In vs Sign Up Tab Switcher -->
+      <div class="auth-tab-switch">
+        <button class="auth-tab-btn active" id="tab-btn-signin" onclick="switchAuthMode('signin')">Sign In</button>
+        <button class="auth-tab-btn" id="tab-btn-signup" onclick="switchAuthMode('signup')">Sign Up / Join</button>
+      </div>
+
+      <!-- STEP 1: Phone & Role Form -->
+      <div id="step-phone-section">
+        <h1 class="auth-h1" id="auth-main-title">Welcome back to Artsy</h1>
+        <p class="auth-sub" id="auth-main-sub">Sign in with your WhatsApp number</p>
+
+        <!-- Role Select -->
+        <label class="form-label-portal">Account Type / Portal</label>
+        <div class="role-options-grid">
+          <div class="role-card-select selected" data-role="client" onclick="selectRole('client')">
+            <div class="role-icon">👤</div>
+            <div class="role-name">Client</div>
+            <div class="role-desc">Book Edits</div>
+          </div>
+          <div class="role-card-select" data-role="freelancer" onclick="selectRole('freelancer')">
+            <div class="role-icon">✂️</div>
+            <div class="role-name">Editor</div>
+            <div class="role-desc">Earn & Cut</div>
+          </div>
+          <div class="role-card-select" data-role="admin" onclick="selectRole('admin')">
+            <div class="role-icon">🛡️</div>
+            <div class="role-name">Admin</div>
+            <div class="role-desc">Studio Ops</div>
+          </div>
+        </div>
+
+        <!-- Full Name (Shown when Sign Up is selected) -->
+        <div class="input-field-group" id="group-signup-name" style="display: none;">
+          <label class="form-label-portal" for="signup-name">Your Full Name</label>
+          <input type="text" id="signup-name" class="text-input-field" placeholder="e.g. Sneha Patel or Aakash Verma">
+        </div>
+
+        <!-- Phone Input -->
+        <div class="input-field-group">
+          <label class="form-label-portal" for="login-phone">WhatsApp Mobile Number</label>
+          <div class="phone-input-row">
+            <select class="country-code-select" id="country-code">
+              <option value="+91">🇮🇳 +91</option>
+              <option value="+1">🇺🇸 +1</option>
+              <option value="+44">🇬🇧 +44</option>
+              <option value="+971">🇦🇪 +971</option>
+            </select>
+            <input type="tel" id="login-phone" class="phone-number-field" placeholder="98765 43210" value="9876543210" required>
+          </div>
+        </div>
+
+        <div class="demo-hint-box">
+          💬 Instant WhatsApp Verification: A test 6-digit code (<strong>123456</strong>) will be simulated for fast testing.
+        </div>
+
+        <button class="btn-auth-submit" id="btn-send-otp" onclick="handleSendOtp()">
+          <span id="btn-send-label">Send WhatsApp OTP</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <!-- STEP 2: OTP Verification -->
+      <div id="step-otp-section" style="display: none;">
+        <h1 class="auth-h1">Enter WhatsApp Code</h1>
+        <p class="auth-sub" id="otp-sent-to-text">Code sent to +91 98765 43210</p>
+
+        <div class="demo-hint-box">
+          🔑 Test OTP Code: <strong>123456</strong> (Auto-filled below for one-click access)
+        </div>
+
+        <div class="otp-inputs-grid">
+          <input type="text" maxlength="1" class="otp-digit-box" id="otp-1" autofocus>
+          <input type="text" maxlength="1" class="otp-digit-box" id="otp-2">
+          <input type="text" maxlength="1" class="otp-digit-box" id="otp-3">
+          <input type="text" maxlength="1" class="otp-digit-box" id="otp-4">
+          <input type="text" maxlength="1" class="otp-digit-box" id="otp-5">
+          <input type="text" maxlength="1" class="otp-digit-box" id="otp-6">
+        </div>
+
+        <button class="btn-auth-submit" id="btn-verify-otp" onclick="handleVerifyOtp()">
+          <span>Verify & Access Portal</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+
+        <div style="margin-top: 18px; text-align: center; font-size: 12.5px; color: var(--color-text-muted);">
+          <span style="cursor: pointer; text-decoration: underline;" onclick="resetOtpStep()">← Change phone number</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    let authMode = 'signin'; // 'signin' or 'signup'
+    let selectedRole = 'client';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupOtpAutoAdvance();
+    });
+
+    function switchAuthMode(mode) {
+      authMode = mode;
+      document.getElementById('tab-btn-signin').classList.toggle('active', mode === 'signin');
+      document.getElementById('tab-btn-signup').classList.toggle('active', mode === 'signup');
+
+      const nameGroup = document.getElementById('group-signup-name');
+      const title = document.getElementById('auth-main-title');
+      const sub = document.getElementById('auth-main-sub');
+      const btnLabel = document.getElementById('btn-send-label');
+
+      if (mode === 'signup') {
+        nameGroup.style.display = 'block';
+        title.textContent = 'Create an Artsy Account';
+        sub.textContent = 'Join our video creator & post-production network';
+        btnLabel.textContent = 'Send WhatsApp OTP to Register';
+      } else {
+        nameGroup.style.display = 'none';
+        title.textContent = 'Welcome back to Artsy';
+        sub.textContent = 'Sign in with your WhatsApp number';
+        btnLabel.textContent = 'Send WhatsApp OTP';
+      }
+    }
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.querySelectorAll('.role-card-select').forEach(card => {
+        card.classList.toggle('selected', card.getAttribute('data-role') === role);
+      });
+    }
+
+    async function handleSendOtp() {
+      const code = document.getElementById('country-code').value;
+      const num = document.getElementById('login-phone').value.trim();
+      const fullName = (document.getElementById('signup-name') ? document.getElementById('signup-name').value.trim() : '');
+
+      if (!num) {
+        alert('Please enter your WhatsApp mobile number.');
+        return;
+      }
+
+      if (authMode === 'signup' && !fullName) {
+        alert('Please enter your full name to create an account.');
+        return;
+      }
+
+      const fullPhone = `${code} ${num}`;
+      const btn = document.getElementById('btn-send-otp');
+      btn.disabled = true;
+      btn.innerHTML = 'Sending Code...';
+
+      const res = await Auth.sendOtp(fullPhone, selectedRole, fullName, authMode);
+
+      btn.disabled = false;
+      document.getElementById('btn-send-label').textContent = (authMode === 'signup' ? 'Send WhatsApp OTP to Register' : 'Send WhatsApp OTP');
+
+      document.getElementById('step-phone-section').style.display = 'none';
+      document.getElementById('step-otp-section').style.display = 'block';
+      document.getElementById('otp-sent-to-text').textContent = `Code sent to ${fullPhone} (${selectedRole.toUpperCase()} Portal)`;
+
+      // Auto prefill demo OTP 123456
+      document.getElementById('otp-1').value = '1';
+      document.getElementById('otp-2').value = '2';
+      document.getElementById('otp-3').value = '3';
+      document.getElementById('otp-4').value = '4';
+      document.getElementById('otp-5').value = '5';
+      document.getElementById('otp-6').value = '6';
+      document.getElementById('otp-6').focus();
+    }
+
+    function resetOtpStep() {
+      document.getElementById('step-otp-section').style.display = 'none';
+      document.getElementById('step-phone-section').style.display = 'block';
+    }
+
+    function setupOtpAutoAdvance() {
+      const boxes = document.querySelectorAll('.otp-digit-box');
+      boxes.forEach((box, i) => {
+        box.addEventListener('input', (e) => {
+          if (box.value && i < boxes.length - 1) {
+            boxes[i + 1].focus();
+          }
+        });
+        box.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !box.value && i > 0) {
+            boxes[i - 1].focus();
+          }
+        });
+      });
+    }
+
+    async function handleVerifyOtp() {
+      let code = '';
+      for (let i = 1; i <= 6; i++) {
+        code += (document.getElementById(`otp-${i}`).value || '');
+      }
+
+      if (code.length < 6) {
+        alert('Please enter all 6 digits of the OTP.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-verify-otp');
+      btn.disabled = true;
+      btn.innerHTML = 'Verifying...';
+
+      try {
+        const res = await Auth.verifyOtp(code);
+        btn.innerHTML = '✓ Success! Redirecting...';
+        btn.style.background = '#00BF63';
+
+        setTimeout(() => {
+          window.location.href = res.redirectUrl;
+        }, 500);
+      } catch (err) {
+        alert(err.message || 'Verification failed');
+        btn.disabled = false;
+        btn.innerHTML = 'Verify & Access Portal';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+artsy-next/node_modules/
+
+# Next.js Build Outputs
+artsy-next/.next/
+artsy-next/out/
+artsy-next/build/
+
+# Environment Variables & Secrets
+.env*
+artsy-next/.env*
+!.env.example
+!artsy-next/.env.local.example
+*.pem
+*.key
+
+# Local / Temp Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+.DS_Store
+Thumbs.db
+.claude/
+backup/
+scratch/
+artsy-next/scratch/
+artsy-next/.baileys_auth/
+
+# Large Raw Media Files
+*.mp4
+*.mov
+*.mkv
+original-c8c5b0b43653e5590b39a8810bfe1995.mp4
+
+# Vercel & TypeScript Cache
+.vercel/
+artsy-next/.vercel/
+*.tsbuildinfo
+next-env.d.ts

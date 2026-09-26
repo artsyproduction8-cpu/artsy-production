@@ -1,0 +1,13 @@
+-- ==============================================================================
+-- DEPRECATION AND REDIRECTION NOTICE
+-- ==============================================================================
+-- This legacy file (formerly supabase_schema.sql v0) has been ARCHIVED to:
+-- ./docs/archive/supabase_schema_legacy_v0.sql
+--
+-- The single source of truth for the Artsy Production database schema is now:
+-- ./supabase/migrations/000_canonical_master_schema.sql
+--
+-- All 26 tables, integer paise precision, immutable financial tables, RLS policies,
+-- audit logs, and trigger definitions are defined in the canonical migrations.
+-- DO NOT RUN OR MODIFY THIS FILE.
+-- ==============================================================================

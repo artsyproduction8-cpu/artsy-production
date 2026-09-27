@@ -50,8 +50,16 @@ export default function VerifyPage() {
       if (res.success) {
         setSuccess(true);
         let redirectUrl = '/client';
-        if (res.user.role === 'admin') redirectUrl = '/admin';
-        else if (res.user.role === 'freelancer') redirectUrl = '/freelancer';
+        if (res.user.role === 'admin') {
+          redirectUrl = '/admin';
+        } else if (res.user.role === 'freelancer') {
+          const hasProfile = typeof window !== 'undefined' && localStorage.getItem('artsy_creator_profile');
+          if (!hasProfile && res.user.onboarding_status !== 'approved' && res.user.onboarding_status !== 'pending_review' && res.user.id !== 'usr-editor-002') {
+            redirectUrl = '/freelancer/onboarding';
+          } else {
+            redirectUrl = '/freelancer';
+          }
+        }
 
         setCurrentUser(res.user);
 
@@ -64,6 +72,24 @@ export default function VerifyPage() {
     } catch {
       // Offline fallback
       setSuccess(true);
+      const hasProfile = typeof window !== 'undefined' && localStorage.getItem('artsy_creator_profile');
+      let fallbackOnboardingStatus: any = 'incomplete';
+      let redirectUrl = '/client';
+      if (role === 'admin') {
+        redirectUrl = '/admin';
+      } else if (role === 'freelancer') {
+        if (hasProfile) {
+          fallbackOnboardingStatus = 'pending_review';
+          redirectUrl = '/freelancer';
+        } else if (phoneNumber === '9876543211' || fullName.includes('Aarav')) {
+          fallbackOnboardingStatus = 'approved';
+          redirectUrl = '/freelancer';
+        } else {
+          fallbackOnboardingStatus = 'incomplete';
+          redirectUrl = '/freelancer/onboarding';
+        }
+      }
+
       const fallbackUser: ArtsyUser = {
         id: crypto.randomUUID(),
         email: `${(phoneNumber || '9876543210').replace(/\D/g, '')}@artsyprod.studio`,
@@ -71,12 +97,13 @@ export default function VerifyPage() {
         full_name: fullName.trim() || (role === 'client' ? 'Sneha Patel' : role === 'freelancer' ? 'Aarav Sen' : 'Studio Director'),
         role,
         status: 'active',
+        onboarding_status: fallbackOnboardingStatus,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
       setCurrentUser(fallbackUser);
       setTimeout(() => {
-        router.push(role === 'admin' ? '/admin' : role === 'freelancer' ? '/freelancer' : '/client');
+        router.push(redirectUrl);
       }, 1200);
     } finally {
       setIsLoading(false);

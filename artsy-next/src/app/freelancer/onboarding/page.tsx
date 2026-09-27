@@ -33,6 +33,8 @@ export default function FreelancerOnboarding() {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const [trackingId, setTrackingId] = useState('ART-2026-VET-982');
+
   const toggleSoftware = (item: string) => {
     setSoftware((prev) =>
       prev.includes(item) ? prev.filter((s) => s !== item) : [...prev, item]
@@ -45,7 +47,7 @@ export default function FreelancerOnboarding() {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ndaAccepted) {
       alert('Please accept the Non-Disclosure & Footage Retention Pact');
@@ -54,6 +56,41 @@ export default function FreelancerOnboarding() {
     setSubmitting(true);
     // Record legal agreement acceptance
     recordAgreementAcceptance('both', '1.0');
+
+    const currentUser = getCurrentUser();
+    const candidateUserId = currentUser?.id || `usr-creator-${Date.now().toString().slice(-6)}`;
+    const candidateEmail = currentUser?.email || 'artsyproduction8@gmail.com';
+    const candidatePhone = currentUser?.phone || '+91 9876543211';
+
+    try {
+      const res = await fetch('/api/freelancer/onboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: candidateUserId,
+          alias,
+          legalName,
+          email: candidateEmail,
+          phone: candidatePhone,
+          showreelUrl,
+          philosophy,
+          software,
+          experience,
+          capacity,
+          languages,
+          reels,
+          pan,
+          agreementAccepted: true,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.trackingId) {
+        setTrackingId(data.trackingId);
+      }
+    } catch (err) {
+      console.warn('Onboarding dispatch non-fatal fallback:', err);
+    }
 
     const creatorPayload = {
       alias,
@@ -68,15 +105,34 @@ export default function FreelancerOnboarding() {
       legalName,
       agreementAccepted: true,
       agreementVersion: '1.0',
-      submittedAt: new Date().toISOString()
+      status: 'pending_review',
+      submittedAt: new Date().toISOString(),
     };
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('artsy_creator_profile', JSON.stringify(creatorPayload));
     }
-    setTimeout(() => {
-      setSubmitting(false);
-      setShowModal(true);
-    }, 600);
+
+    // Update active user state to pending_review
+    const pendingUser = {
+      ...(currentUser || {}),
+      id: candidateUserId,
+      email: candidateEmail,
+      full_name: legalName || alias || 'Editor Candidate',
+      phone: candidatePhone,
+      role: 'freelancer' as const,
+      status: 'active' as const,
+      onboarding_status: 'pending_review' as const,
+      agreement_accepted: true,
+      agreement_accepted_at: new Date().toISOString(),
+      agreement_version: '1.0',
+      created_at: currentUser?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setCurrentUser(pendingUser);
+
+    setSubmitting(false);
+    setShowModal(true);
   };
 
   return (
@@ -559,20 +615,17 @@ export default function FreelancerOnboarding() {
               </div>
               <div className="bg-[#F5F5F7] p-3.5 rounded-xl border border-[#E5E5E7] text-xs flex justify-between items-center">
                 <span className="text-[#86868B] font-medium">TRACKING ID</span>
-                <span className="font-mono font-bold text-[#1D1D1F]">ART-2025-VET-982</span>
+                <span className="font-mono font-bold text-[#1D1D1F]">{trackingId}</span>
               </div>
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => {
-                    if (!getCurrentUser()) {
-                      setCurrentUser(PRESET_USERS.freelancer);
-                    }
                     router.push('/freelancer');
                   }}
-                  className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-semibold py-3 px-4 rounded-xl transition-all cursor-pointer"
+                  className="w-full bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold py-3 px-4 rounded-xl transition-all cursor-pointer text-center"
                 >
-                  Open Creator Dashboard
+                  View Application Status →
                 </button>
                 <button
                   type="button"

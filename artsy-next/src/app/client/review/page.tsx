@@ -29,6 +29,40 @@ export default function ClientReviewPage() {
   const [includedRounds, setIncludedRounds] = useState(1);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [showChangeOrderModal, setShowChangeOrderModal] = useState(false);
+  const [showStudioModal, setShowStudioModal] = useState(false);
+  const [studioProfile, setStudioProfile] = useState({
+    studioName: 'S. Kapoor Studios',
+    legalName: 'S. Kapoor Studios Private Limited',
+    gstin: '07AAAAA0000A1Z5',
+    ingestProvider: 'Google Drive Enterprise',
+    ingestLink: 'https://drive.google.com/drive/folders/artsy-raw-ingest-8841',
+    brandLuts: 'Kodak 2383 Film Print Emulation, Warm Sangeet Tones',
+    collaborators: 'director@kapoorstudios.in, producer@kapoorstudios.in',
+  });
+  const [studioSavedNotice, setStudioSavedNotice] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('artsy_client_profile');
+        if (stored) {
+          setStudioProfile((prev) => ({ ...prev, ...JSON.parse(stored) }));
+        }
+      } catch {}
+    }
+  }, []);
+
+  const handleSaveStudioProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('artsy_client_profile', JSON.stringify(studioProfile));
+    }
+    setStudioSavedNotice(true);
+    setTimeout(() => {
+      setStudioSavedNotice(false);
+      setShowStudioModal(false);
+    }, 1000);
+  };
   const [refundReason, setRefundReason] = useState('');
   const [refundRequested, setRefundRequested] = useState(false);
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -277,6 +311,18 @@ export default function ClientReviewPage() {
               >
                 Tax Invoices &amp; Escrow
               </div>
+
+              <div className="text-[10px] uppercase font-bold text-[#86868B] px-3 pt-5">
+                Studio Setup
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowStudioModal(true)}
+                className="w-full text-left px-3 py-2 text-xs font-medium rounded-xl text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors cursor-pointer flex items-center justify-between"
+              >
+                <span>Studio &amp; Ingest</span>
+                <span className="text-[9px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-1.5 py-0.5 rounded">Setup</span>
+              </button>
             </nav>
           </div>
 
@@ -964,6 +1010,142 @@ export default function ClientReviewPage() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* STUDIO ONBOARDING & PREFERENCES MODAL */}
+      {showStudioModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 border border-[#E5E5E7] shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between border-b border-[#F5F5F7] pb-4">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#3B82F6] tracking-wider">
+                  Client Station Preferences
+                </span>
+                <h3 className="text-xl font-extrabold text-[#1D1D1F] mt-1 tracking-tight">
+                  Studio Workspace &amp; Ingest
+                </h3>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Configure default cloud storage, billing identity, and creative LUT kit.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowStudioModal(false)}
+                className="text-[#86868B] hover:text-[#1D1D1F] text-lg font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {studioSavedNotice && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-2">
+                <span>✓</span>
+                <span>Studio preferences saved successfully!</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSaveStudioProfile} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider">
+                  Studio / Brand Moniker
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={studioProfile.studioName}
+                  onChange={(e) => setStudioProfile({ ...studioProfile, studioName: e.target.value })}
+                  className="w-full bg-[#F5F5F7] px-4 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all font-semibold"
+                  placeholder="e.g. S. Kapoor Studios"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider">
+                    Legal Entity Name
+                  </label>
+                  <input
+                    type="text"
+                    value={studioProfile.legalName}
+                    onChange={(e) => setStudioProfile({ ...studioProfile, legalName: e.target.value })}
+                    className="w-full bg-[#F5F5F7] px-4 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
+                    placeholder="Registered Company Name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider">
+                    GSTIN (Tax Invoices)
+                  </label>
+                  <input
+                    type="text"
+                    value={studioProfile.gstin}
+                    onChange={(e) => setStudioProfile({ ...studioProfile, gstin: e.target.value })}
+                    className="w-full bg-[#F5F5F7] px-4 py-2.5 text-xs text-[#1D1D1F] font-mono rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
+                    placeholder="07AAAAA0000A1Z5"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider">
+                  Default Cloud Raw Ingest Link
+                </label>
+                <input
+                  type="url"
+                  value={studioProfile.ingestLink}
+                  onChange={(e) => setStudioProfile({ ...studioProfile, ingestLink: e.target.value })}
+                  className="w-full bg-[#F5F5F7] px-4 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
+                  placeholder="https://drive.google.com/... or Backblaze / Dropbox"
+                />
+                <span className="text-[10px] text-[#86868B]">
+                  Preferred ingest pipe: Google Drive, Backblaze B2, Frame.io, or Dropbox
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider">
+                  Brand Color &amp; LUT Guidelines
+                </label>
+                <textarea
+                  rows={2}
+                  value={studioProfile.brandLuts}
+                  onChange={(e) => setStudioProfile({ ...studioProfile, brandLuts: e.target.value })}
+                  className="w-full bg-[#F5F5F7] p-3 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all resize-none"
+                  placeholder="e.g. Kodak 2383 emulation, warm golden skin tones, avoid over-saturated greens"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider">
+                  Reviewer Collaborator Emails
+                </label>
+                <input
+                  type="text"
+                  value={studioProfile.collaborators}
+                  onChange={(e) => setStudioProfile({ ...studioProfile, collaborators: e.target.value })}
+                  className="w-full bg-[#F5F5F7] px-4 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
+                  placeholder="director@studio.in, producer@studio.in"
+                />
+              </div>
+
+              <div className="pt-3 flex gap-3">
+                <button
+                  type="submit"
+                  className="flex-1 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold py-3 px-4 rounded-xl transition-all cursor-pointer shadow-sm text-center"
+                >
+                  Save Studio Preferences
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowStudioModal(false)}
+                  className="px-5 bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold rounded-xl border border-[#E5E5E7] cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

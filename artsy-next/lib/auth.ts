@@ -240,3 +240,26 @@ export const recordAgreementAcceptance = (
 
   return updated;
 };
+
+// Check if creator is verified and approved
+export const isCreatorApproved = (user?: ArtsyUser | null): boolean => {
+  const u = user !== undefined ? user : getCurrentUser();
+  if (!u || u.role !== 'freelancer') return false;
+  return u.onboarding_status === 'approved';
+};
+
+// Check if creator application is pending review
+export const isCreatorPending = (user?: ArtsyUser | null): boolean => {
+  const u = user !== undefined ? user : getCurrentUser();
+  if (!u || u.role !== 'freelancer') return false;
+  return u.onboarding_status === 'pending_review';
+};
+
+// Update current user's onboarding status
+export const updateCurrentUserOnboarding = (status: OnboardingStatus): ArtsyUser | null => {
+  const user = getCurrentUser();
+  if (!user) return null;
+  const updated: ArtsyUser = { ...user, onboarding_status: status };
+  setCurrentUser(updated);
+  return updated;
+};

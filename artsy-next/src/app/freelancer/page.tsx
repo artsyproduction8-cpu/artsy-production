@@ -1,11 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth, logout, hasAcceptedAgreement, recordAgreementAcceptance } from '@/lib/auth';
 
 export default function FreelancerDashboard() {
   const { user, role } = useAuth();
+  const [profileData, setProfileData] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('artsy_creator_profile');
+        if (stored) setProfileData(JSON.parse(stored));
+      } catch {}
+    }
+  }, []);
+
   const [currentCadence, setCurrentCadence] = useState<number>(3);
   const [progressPercent, setProgressPercent] = useState<number>(65);
   const [dailyNotes, setDailyNotes] = useState<string>(
@@ -17,6 +28,10 @@ export default function FreelancerDashboard() {
   const [showAgreementModal, setShowAgreementModal] = useState<boolean>(false);
   const [ndaChecked, setNdaChecked] = useState<boolean>(false);
   const [pendingJobToAccept, setPendingJobToAccept] = useState<string | null>(null);
+
+  const isApproved = user?.onboarding_status === 'approved' || user?.id === 'usr-editor-002';
+  const isPending = !isApproved && (user?.onboarding_status === 'pending_review' || !!profileData);
+  const isIncomplete = !isApproved && !isPending;
 
   const handleAcceptJob = (jobId: string) => {
     if (!hasAcceptedAgreement(user)) {
@@ -55,6 +70,199 @@ export default function FreelancerDashboard() {
 
   const creatorName = user?.full_name || 'Aarav Sen';
   const creatorInitials = creatorName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'AS';
+
+  if (isIncomplete) {
+    return (
+      <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
+        <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A] border-b border-[#262626]">
+          <div className="h-16 w-full px-6 md:px-8 flex items-center justify-between">
+            <Link href="/" className="flex flex-col select-none group">
+              <span className="font-extrabold text-[15px] leading-tight tracking-[0.18em] text-white group-hover:text-blue-400 transition-colors uppercase">
+                ARTSY
+              </span>
+              <span className="font-mono text-[7.5px] leading-none tracking-[0.24em] text-[#86868B] uppercase">
+                CREATOR ONBOARDING REQUIRED
+              </span>
+            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="text-xs font-semibold uppercase px-2.5 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-2xl mx-auto pt-36 pb-16 px-6">
+          <div className="bg-white rounded-3xl p-8 sm:p-10 border border-[#E5E5E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)] text-center space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto text-2xl font-bold">
+              🎬
+            </div>
+            <div className="space-y-2">
+              <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-wider">
+                STEP 1 OF 3: CREATOR PROFILE
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
+                Complete Creator Onboarding
+              </h1>
+              <p className="text-sm text-[#86868B] max-w-lg mx-auto leading-relaxed">
+                Before accessing active client cuts and earning payouts, please submit your showreel, editing software, and banking details for Studio Director verification.
+              </p>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/freelancer/onboarding"
+                className="px-6 py-3.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+              >
+                Start Creator Onboarding →
+              </Link>
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="px-6 py-3.5 bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] text-xs font-semibold rounded-xl border border-[#E5E5E7] transition-all"
+              >
+                Sign In With Another Account
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isPending) {
+    return (
+      <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
+        <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A] border-b border-[#262626]">
+          <div className="h-16 w-full px-6 md:px-8 flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <Link href="/" className="flex flex-col select-none group">
+                <span className="font-extrabold text-[15px] leading-tight tracking-[0.18em] text-white group-hover:text-blue-400 transition-colors uppercase">
+                  ARTSY
+                </span>
+                <span className="font-mono text-[7.5px] leading-none tracking-[0.24em] text-[#86868B] uppercase">
+                  PLACE FOR PERSPECTIVE
+                </span>
+              </Link>
+              <span className="inline-flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-md font-semibold">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                APPLICATION UNDER REVIEW
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="text-xs font-semibold uppercase px-2.5 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-4xl mx-auto pt-32 pb-20 px-6">
+          <div className="space-y-6">
+            {/* Top Review Banner */}
+            <div className="bg-white rounded-3xl p-8 sm:p-10 border border-[#E5E5E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-8 border-b border-[#F5F5F7]">
+                <div className="space-y-3">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold rounded-full">
+                    <span>STAGE 2 OF 3: STUDIO DIRECTOR MANUAL CURATION</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
+                    Candidate Profile &amp; Reel Vetting In Progress
+                  </h1>
+                  <p className="text-sm text-[#86868B] max-w-2xl leading-relaxed">
+                    Welcome, <strong className="text-[#1D1D1F]">{creatorName}</strong>. Your creator portfolio, software proficiency, and categorical sample cuts have been dispatched to our Studio Director. Artsy operates an invite-only vetted roster to maintain boutique cinematic standards for commercial and wedding clients.
+                  </p>
+                </div>
+
+                <div className="bg-[#F5F5F7] p-5 rounded-2xl border border-[#E5E5E7] shrink-0 text-right md:min-w-[190px]">
+                  <div className="text-[10px] uppercase font-bold text-[#86868B]">ESTIMATED REVIEW TIME</div>
+                  <div className="text-2xl font-extrabold text-[#1D1D1F] mt-1">~24 Hours</div>
+                  <div className="text-[11px] text-emerald-600 font-semibold mt-1">Curation Queue Active</div>
+                </div>
+              </div>
+
+              {/* 3-Stage Progress Pipeline */}
+              <div className="pt-8">
+                <div className="text-xs uppercase font-bold text-[#86868B] mb-4 tracking-wider">
+                  Vetting Lifecycle
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-emerald-700">
+                      <span>01. Application Ingest</span>
+                      <span>✓ Completed</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-600 leading-snug">
+                      Reels, NLE tools, NDA &amp; PAN/banking credentials saved.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-amber-50/80 border border-amber-300 rounded-2xl flex flex-col gap-1.5 relative overflow-hidden shadow-xs">
+                    <div className="flex items-center justify-between text-xs font-bold text-amber-900">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                        02. Editorial Review
+                      </span>
+                      <span className="text-[10px] uppercase bg-amber-200/80 px-2 py-0.5 rounded font-extrabold text-amber-800">Active</span>
+                    </div>
+                    <p className="text-[11px] text-amber-800 leading-snug">
+                      Studio Director evaluates pacing, audio ducking &amp; color conform.
+                    </p>
+                  </div>
+
+                  <div className="p-4 bg-[#F5F5F7] border border-[#E5E5E7] rounded-2xl flex flex-col gap-1.5 opacity-75">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#86868B]">
+                      <span>03. Roster Dispatch</span>
+                      <span>🔒 Locked</span>
+                    </div>
+                    <p className="text-[11px] text-[#86868B] leading-snug">
+                      Automated Resend Email + WhatsApp activation link dispatched.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Candidate Info Slate */}
+              <div className="mt-8 p-5 bg-[#F5F5F7] rounded-2xl border border-[#E5E5E7] flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-xs">
+                    {creatorInitials}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-[#1D1D1F]">{creatorName}</div>
+                    <div className="text-[11px] text-[#86868B]">Tracking: ART-2026-VET-8841</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/freelancer/onboarding"
+                    className="px-4 py-2 bg-white hover:bg-slate-50 text-[#1D1D1F] text-xs font-semibold rounded-xl border border-[#E5E5E7] transition-all"
+                  >
+                    Edit Submitted Portfolio
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => logout()}
+                    className="px-4 py-2 bg-white hover:bg-red-50 text-red-600 text-xs font-semibold rounded-xl border border-red-200 transition-all"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">

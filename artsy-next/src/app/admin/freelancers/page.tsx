@@ -142,6 +142,18 @@ export default function AdminFreelancersList() {
 
   const handleApprove = async (freelancerId: string, name: string) => {
     try {
+      await fetch('/api/admin/freelancers/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: freelancerId,
+          name,
+          email: 'artsyproduction8@gmail.com',
+          phone: '+91 9876543211',
+          action: 'approve',
+        }),
+      });
+
       await supabase
         .from('creator_profiles')
         .update({
@@ -153,16 +165,44 @@ export default function AdminFreelancersList() {
       // Mock mode
     }
 
+    // Also update locally stored creator profile or active user if matching
+    if (typeof window !== 'undefined') {
+      try {
+        const storedUser = localStorage.getItem('artsy_auth_user');
+        if (storedUser) {
+          const u = JSON.parse(storedUser);
+          if (u.role === 'freelancer') {
+            u.onboarding_status = 'approved';
+            localStorage.setItem('artsy_auth_user', JSON.stringify(u));
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     setFreelancers((prev) =>
       prev.map((f) => (f.id === freelancerId ? { ...f, approval_status: 'approved' } : f))
     );
-    setActionNotice(`Candidate ${name} approved to platform roster. Onboarding pact dispatched.`);
-    setTimeout(() => setActionNotice(null), 4000);
+    setActionNotice(`Candidate ${name} approved. Welcome email & WhatsApp notification dispatched!`);
+    setTimeout(() => setActionNotice(null), 5000);
   };
 
   const handleReject = async (freelancerId: string, name: string) => {
     const reason = 'Portfolio needs additional high-resolution raw timeline proof';
     try {
+      await fetch('/api/admin/freelancers/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          creatorId: freelancerId,
+          name,
+          email: 'artsyproduction8@gmail.com',
+          action: 'reject',
+          rejectionReason: reason,
+        }),
+      });
+
       await supabase
         .from('creator_profiles')
         .update({
@@ -179,7 +219,7 @@ export default function AdminFreelancersList() {
         f.id === freelancerId ? { ...f, approval_status: 'rejected', rejection_reason: reason } : f
       )
     );
-    setActionNotice(`Candidate ${name} archived.`);
+    setActionNotice(`Candidate ${name} archived. Status notification dispatched.`);
     setTimeout(() => setActionNotice(null), 4000);
   };
 

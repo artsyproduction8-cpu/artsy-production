@@ -264,16 +264,16 @@ function LoginFormContent() {
   const paramRole = searchParams.get('role') as UserRole | null;
   const redirectTarget = searchParams.get('redirect');
 
-  const [phoneNumber, setPhoneNumber] = useState('9876543210');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [selectedRole, setSelectedRole] = useState<UserRole>(paramRole || 'client');
   const [identifiedUser, setIdentifiedUser] = useState<{
     name: string | null;
     role: UserRole;
     isNewUser: boolean;
   }>({
-    name: 'Sneha Patel',
+    name: null,
     role: 'client',
-    isNewUser: false,
+    isNewUser: true,
   });
 
   const [countryCode, setCountryCode] = useState('+91');
@@ -562,37 +562,6 @@ function LoginFormContent() {
             </p>
           </div>
 
-          {/* Instant 1-Click Fast Track Testing Bar */}
-          <div className="p-3 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]/80 space-y-1.5">
-            <div className="flex items-center justify-between text-[10px] font-bold text-[#86868B] uppercase tracking-wider">
-              <span>Instant Test Entry</span>
-              <span className="text-[#3B82F6]">Auto-Recognized</span>
-            </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleQuickSignIn('client')}
-                className="py-1.5 px-2 bg-white hover:bg-gray-100 rounded-lg text-[11px] font-semibold text-[#1D1D1F] border border-[#E5E5E7] text-center transition-colors cursor-pointer"
-              >
-                ⚡ Sneha (Client)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickSignIn('freelancer')}
-                className="py-1.5 px-2 bg-white hover:bg-gray-100 rounded-lg text-[11px] font-semibold text-[#1D1D1F] border border-[#E5E5E7] text-center transition-colors cursor-pointer"
-              >
-                ⚡ Aarav (Editor)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickSignIn('admin')}
-                className="py-1.5 px-2 bg-white hover:bg-gray-100 rounded-lg text-[11px] font-semibold text-[#1D1D1F] border border-[#E5E5E7] text-center transition-colors cursor-pointer"
-              >
-                ⚡ Director
-              </button>
-            </div>
-          </div>
-
           {/* Error Message */}
           {error && (
             <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium">
@@ -600,7 +569,7 @@ function LoginFormContent() {
             </div>
           )}
 
-          {/* STEP 1: Phone Input Stage with Role Recognition */}
+          {/* STEP 1: Phone Input Stage */}
           {otpStep === 'phone' ? (
             <form
               onSubmit={(e) => {
@@ -610,30 +579,9 @@ function LoginFormContent() {
               className="space-y-4"
             >
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-[#1D1D1F]">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  {/* Dynamic Role / Workspace Recognition Badge */}
-                  <div className="flex items-center gap-1.5">
-                    {identifiedUser.isNewUser ? (
-                      <span className="text-[10.5px] font-semibold text-[#6E6E73] bg-[#F5F5F7] px-2 py-0.5 rounded-md border border-[#E5E5E7]">
-                        Default: Client Workspace
-                      </span>
-                    ) : (
-                      <span className={`text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border flex items-center gap-1 ${
-                        identifiedUser.role === 'freelancer'
-                          ? 'bg-purple-50 text-purple-700 border-purple-200'
-                          : identifiedUser.role === 'admin'
-                          ? 'bg-amber-50 text-amber-800 border-amber-200'
-                          : 'bg-blue-50 text-blue-700 border-blue-200'
-                      }`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                        {identifiedUser.role === 'freelancer' ? 'Creator Suite' : identifiedUser.role === 'admin' ? 'Admin Portal' : 'Client Workspace'}
-                      </span>
-                    )}
-                  </div>
-                </div>
+                <label className="block text-xs font-semibold text-[#1D1D1F] mb-1.5">
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
 
                 <div className="relative flex h-11 w-full items-stretch rounded-xl border border-[#E5E5E7] bg-white transition-colors focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10">
                   <div className="flex h-full items-center gap-1.5 rounded-l-xl border-r border-[#E5E5E7] px-3 text-xs font-semibold text-[#1D1D1F] bg-[#F5F5F7] select-none">
@@ -649,23 +597,6 @@ function LoginFormContent() {
                     className="h-full w-full rounded-r-xl bg-transparent px-3 text-xs sm:text-sm font-semibold text-[#1D1D1F] placeholder:text-[#86868B] focus:outline-none"
                   />
                 </div>
-
-                {/* Identity Context Banner */}
-                {phoneNumber.length === 10 && (
-                  <div className="mt-2 flex items-center justify-between px-3 py-2 rounded-lg bg-[#F5F5F7] border border-[#E5E5E7] text-[11px] text-[#1D1D1F]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[#3B82F6] font-bold">●</span>
-                      <span>
-                        {identifiedUser.name
-                          ? `Identified Member: ${identifiedUser.name}`
-                          : 'New Member: Connecting to Client Workspace'}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-[#86868B]">
-                      {identifiedUser.role === 'freelancer' ? 'Editor' : identifiedUser.role === 'admin' ? 'Admin' : 'Client'}
-                    </span>
-                  </div>
-                )}
               </div>
 
               <label className="flex items-start gap-2.5 text-xs text-[#86868B] leading-snug cursor-pointer select-none">
@@ -704,7 +635,7 @@ function LoginFormContent() {
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-[#86868B]">
-                  Code sent to +91 {phoneNumber} ({identifiedUser.role === 'freelancer' ? 'Creator Suite' : identifiedUser.role === 'admin' ? 'Admin Portal' : 'Client Workspace'})
+                  Code sent to +91 {phoneNumber}
                 </span>
                 <button
                   type="button"
@@ -738,14 +669,14 @@ function LoginFormContent() {
                 {isLoading ? (
                   <span>Verifying Credentials...</span>
                 ) : (
-                  <span>Verify &amp; Enter {identifiedUser.role === 'freelancer' ? 'Creator Suite' : identifiedUser.role === 'admin' ? 'Admin Portal' : 'Workspace'} →</span>
+                  <span>Verify &amp; Enter Workspace →</span>
                 )}
               </button>
             </div>
           )}
 
-          {/* Footer Assistance with Dedicated Creator Entry */}
-          <div className="pt-4 border-t border-[#F5F5F7] flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-[#86868B]">
+          {/* Footer Assistance */}
+          <div className="pt-4 border-t border-[#F5F5F7] text-center text-xs text-[#86868B]">
             <span>
               Looking to edit for Artsy?{' '}
               <Link
@@ -755,27 +686,6 @@ function LoginFormContent() {
                 Apply as Creator
               </Link>
             </span>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setPhoneNumber('9876543211');
-                  setIdentifiedUser({
-                    name: 'Aarav Sen',
-                    role: 'freelancer',
-                    isNewUser: false,
-                  });
-                  setSelectedRole('freelancer');
-                }}
-                className="font-semibold text-[#1D1D1F] hover:text-[#3B82F6] transition-colors cursor-pointer"
-              >
-                Editor Sign-in
-              </button>
-              <span>•</span>
-              <Link href="/" className="hover:text-[#1D1D1F] transition-colors">
-                Home
-              </Link>
-            </div>
           </div>
 
         </div>

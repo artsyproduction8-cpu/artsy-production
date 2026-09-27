@@ -52,6 +52,41 @@
   animation: marquee-slide-left 44s linear infinite;
 }
 
+/* ── Portfolio Showcase Vertical Filmstrip Marquees ── */
+@keyframes marquee-slide-up {
+  0%   { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(0, -50%, 0); }
+}
+
+@keyframes marquee-slide-down {
+  0%   { transform: translate3d(0, -50%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.animate-marquee-up-fast {
+  display: flex;
+  flex-direction: column;
+  height: max-content;
+  will-change: transform;
+  animation: marquee-slide-up 30s linear infinite;
+}
+
+.animate-marquee-down-fast {
+  display: flex;
+  flex-direction: column;
+  height: max-content;
+  will-change: transform;
+  animation: marquee-slide-down 34s linear infinite;
+}
+
+.animate-marquee-up-slow {
+  display: flex;
+  flex-direction: column;
+  height: max-content;
+  will-change: transform;
+  animation: marquee-slide-up 38s linear infinite;
+}
+
 .marquee-pause-hover:hover {
   animation-play-state: paused;
 }

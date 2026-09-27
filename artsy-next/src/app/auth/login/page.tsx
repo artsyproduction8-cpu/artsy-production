@@ -218,13 +218,13 @@ const ROTATING_WORDS = [
 
 function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
   return (
-    <div className="w-[240px] sm:w-[280px] lg:w-[310px] h-[150px] sm:h-[175px] lg:h-[195px] relative rounded-2xl overflow-hidden border border-white/10 bg-[#141416] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none">
+    <div className="w-full h-[145px] sm:h-[165px] lg:h-[180px] xl:h-[200px] relative rounded-2xl overflow-hidden border border-white/10 bg-[#141416] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none">
       {/* Background Image */}
       <Image
         src={item.image}
         alt={item.title}
         fill
-        sizes="(max-width: 640px) 240px, (max-width: 1024px) 280px, 310px"
+        sizes="(max-width: 640px) 130px, (max-width: 1024px) 180px, 240px"
         className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-85 group-hover/card:opacity-100"
       />
 
@@ -232,24 +232,24 @@ function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20 pointer-events-none" />
 
       {/* Top Badges */}
-      <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-1.5 z-10">
-        <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white/90 border border-white/10 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
-          {item.genre}
+      <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 z-10">
+        <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-black/65 backdrop-blur-md text-white/90 border border-white/10 flex items-center gap-1 truncate max-w-[58%]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] shrink-0" />
+          <span className="truncate">{item.genre}</span>
         </span>
-        <span className={`text-[9.5px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-md border backdrop-blur-md ${item.badgeColor}`}>
+        <span className={`text-[8.5px] font-extrabold tracking-wider uppercase px-1.5 py-0.5 rounded border backdrop-blur-md shrink-0 ${item.badgeColor}`}>
           {item.badge}
         </span>
       </div>
 
       {/* Bottom Information */}
-      <div className="absolute bottom-3 left-3 right-3 z-10">
-        <h4 className="text-xs sm:text-[13px] font-bold text-white tracking-tight leading-snug truncate drop-shadow-md">
+      <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
+        <h4 className="text-[11px] sm:text-xs font-bold text-white tracking-tight leading-snug truncate drop-shadow-md">
           {item.title}
         </h4>
-        <div className="flex items-center justify-between mt-1 text-[10.5px] text-[#A1A1A6] font-medium">
-          <span>{item.format}</span>
-          <span className="font-mono text-white/90 bg-white/10 px-1.5 py-0.2 rounded text-[10px]">
+        <div className="flex items-center justify-between mt-0.5 text-[9.5px] text-[#A1A1A6] font-medium">
+          <span className="truncate">{item.format}</span>
+          <span className="font-mono text-white/90 bg-white/10 px-1 py-0.2 rounded text-[9px] shrink-0 ml-1">
             {item.duration}
           </span>
         </div>
@@ -264,8 +264,18 @@ function LoginFormContent() {
   const paramRole = searchParams.get('role') as UserRole | null;
   const redirectTarget = searchParams.get('redirect');
 
-  const [selectedRole, setSelectedRole] = useState<UserRole>(paramRole || 'client');
   const [phoneNumber, setPhoneNumber] = useState('9876543210');
+  const [selectedRole, setSelectedRole] = useState<UserRole>(paramRole || 'client');
+  const [identifiedUser, setIdentifiedUser] = useState<{
+    name: string | null;
+    role: UserRole;
+    isNewUser: boolean;
+  }>({
+    name: 'Sneha Patel',
+    role: 'client',
+    isNewUser: false,
+  });
+
   const [countryCode, setCountryCode] = useState('+91');
   const [otpStep, setOtpStep] = useState<'phone' | 'otp'>('phone');
   const [otpDigits, setOtpDigits] = useState<string[]>(['1', '2', '3', '4', '5', '6']);
@@ -283,17 +293,79 @@ function LoginFormContent() {
     return () => clearInterval(timer);
   }, []);
 
+  // Automatic Phone-to-Role Identification (Defaults new users to Client)
   useEffect(() => {
-    if (paramRole && ['client', 'freelancer', 'admin'].includes(paramRole)) {
-      setSelectedRole(paramRole);
+    const clean = phoneNumber.replace(/\D/g, '');
+    if (clean.length === 10) {
+      // Fast local resolution for instant test accounts
+      const testLookup: Record<string, { name: string; role: UserRole }> = {
+        '9876543210': { name: 'Sneha Patel', role: 'client' },
+        '9876543211': { name: 'Aarav Sen', role: 'freelancer' },
+        '9876543212': { name: 'Studio Director', role: 'admin' },
+      };
+
+      if (testLookup[clean]) {
+        const match = testLookup[clean];
+        setIdentifiedUser({
+          name: match.name,
+          role: match.role,
+          isNewUser: false,
+        });
+        setSelectedRole(match.role);
+        return;
+      }
+
+      // Check with backend lookup
+      fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: clean, action: 'lookup' }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.role) {
+            setIdentifiedUser({
+              name: data.name || null,
+              role: (data.role as UserRole) || 'client',
+              isNewUser: Boolean(data.isNewUser),
+            });
+            setSelectedRole((data.role as UserRole) || 'client');
+          }
+        })
+        .catch(() => {
+          // Default unknown numbers to Client
+          setIdentifiedUser({
+            name: null,
+            role: 'client',
+            isNewUser: true,
+          });
+          setSelectedRole('client');
+        });
+    } else {
+      setIdentifiedUser({
+        name: null,
+        role: 'client',
+        isNewUser: true,
+      });
+      setSelectedRole('client');
     }
-  }, [paramRole]);
+  }, [phoneNumber]);
 
   // 1-Click Fast Track Demo Sign-in
   const handleQuickSignIn = (role: UserRole) => {
     setIsLoading(true);
     setError(null);
     const preset = PRESET_USERS[role];
+    if (preset.phone) {
+      const clean = preset.phone.replace(/\D/g, '').slice(-10);
+      setPhoneNumber(clean);
+    }
+    setSelectedRole(role);
+    setIdentifiedUser({
+      name: preset.full_name,
+      role,
+      isNewUser: false,
+    });
     setCurrentUser(preset);
     setTimeout(() => {
       setIsLoading(false);
@@ -374,12 +446,14 @@ function LoginFormContent() {
         admin: 'Studio Director',
       };
 
+      const resolvedRole = (data.user?.role as UserRole) || selectedRole || 'client';
+
       const user: ArtsyUser = {
         id: data.user?.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `u_${Date.now()}`),
         email: data.user?.email || `${phoneNumber.replace(/\D/g, '')}@artsyprod.studio`,
         phone: data.user?.phone || `${countryCode} ${phoneNumber}`,
-        full_name: data.user?.full_name || defaultNames[selectedRole],
-        role: (data.user?.role as UserRole) || selectedRole,
+        full_name: data.user?.full_name || identifiedUser.name || defaultNames[resolvedRole] || 'Valued Member',
+        role: resolvedRole,
         status: (data.user?.status as UserStatus) || 'active',
         created_at: data.user?.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -408,58 +482,56 @@ function LoginFormContent() {
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col lg:flex-row w-full max-w-full overflow-hidden">
       
-      {/* ── LEFT PANEL (60% Width): Cinematic Portfolio Showreel Animation ── */}
+      {/* ── LEFT PANEL (58-60% Width): 3 Straight Vertical Filmstrip Columns (0° Tilt) ── */}
       <div className="relative pt-4 pb-2 lg:pt-0 lg:pb-0 lg:w-[58%] xl:w-[60%] lg:flex-none p-4 sm:p-6 lg:p-6 xl:p-8 flex items-center justify-center">
-        <div className="relative w-full h-[360px] sm:h-[460px] lg:h-[calc(100vh-4rem)] max-h-[860px] rounded-[24px] sm:rounded-[36px] bg-[#0A0A0A] border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] flex items-center overflow-hidden">
+        <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[calc(100vh-4rem)] max-h-[860px] rounded-[24px] sm:rounded-[36px] bg-[#0A0A0A] border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col justify-center">
           
           {/* Top Floating Glassmorphism Badge */}
-          <div className="absolute top-5 left-5 z-20 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/70 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/90 shadow-lg">
+          <div className="absolute top-5 left-5 z-30 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/90 shadow-xl">
             <span className="w-2 h-2 rounded-full bg-[#3B82F6] animate-pulse" />
             <span>ARTSY CINEMATIC PORTFOLIO • 4K HDR PROXIES</span>
           </div>
 
-          {/* Tilted Marquee Matrix Canvas (Like unjob.ai rotated layout) */}
-          <div className="w-full lg:rotate-[-8deg] lg:scale-115 origin-center overflow-hidden space-y-3 sm:space-y-4 py-4 select-none">
+          {/* Top & Bottom Cinematic Fade Vignettes */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 sm:h-24 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A]/75 to-transparent z-20" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 sm:h-24 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/75 to-transparent z-20" />
+
+          {/* 3 Straight Vertical Filmstrip Columns */}
+          <div className="w-full h-full grid grid-cols-3 gap-2.5 sm:gap-3.5 xl:gap-4 p-2.5 sm:p-4 select-none overflow-hidden">
             
-            {/* ROW 1: Scrolling Left */}
-            <div className="overflow-hidden flex">
-              <div className="animate-marquee-left-fast flex gap-3 sm:gap-4 marquee-pause-hover">
+            {/* COLUMN 1: Scrolling Upward */}
+            <div className="overflow-hidden h-full flex flex-col justify-center">
+              <div className="animate-marquee-up-fast flex flex-col gap-2.5 sm:gap-3.5 xl:gap-4 marquee-pause-hover">
                 {ROW_1_WORK.concat(ROW_1_WORK).map((item, idx) => (
-                  <PortfolioMarqueeCard key={`r1-${item.id}-${idx}`} item={item} />
+                  <PortfolioMarqueeCard key={`c1-${item.id}-${idx}`} item={item} />
                 ))}
               </div>
             </div>
 
-            {/* ROW 2: Scrolling Right */}
-            <div className="overflow-hidden flex">
-              <div className="animate-marquee-right-fast flex gap-3 sm:gap-4 marquee-pause-hover">
+            {/* COLUMN 2: Scrolling Downward */}
+            <div className="overflow-hidden h-full flex flex-col justify-center">
+              <div className="animate-marquee-down-fast flex flex-col gap-2.5 sm:gap-3.5 xl:gap-4 marquee-pause-hover">
                 {ROW_2_WORK.concat(ROW_2_WORK).map((item, idx) => (
-                  <PortfolioMarqueeCard key={`r2-${item.id}-${idx}`} item={item} />
+                  <PortfolioMarqueeCard key={`c2-${item.id}-${idx}`} item={item} />
                 ))}
               </div>
             </div>
 
-            {/* ROW 3: Scrolling Left */}
-            <div className="overflow-hidden flex">
-              <div className="animate-marquee-left-slow flex gap-3 sm:gap-4 marquee-pause-hover">
+            {/* COLUMN 3: Scrolling Upward */}
+            <div className="overflow-hidden h-full flex flex-col justify-center">
+              <div className="animate-marquee-up-slow flex flex-col gap-2.5 sm:gap-3.5 xl:gap-4 marquee-pause-hover">
                 {ROW_3_WORK.concat(ROW_3_WORK).map((item, idx) => (
-                  <PortfolioMarqueeCard key={`r3-${item.id}-${idx}`} item={item} />
+                  <PortfolioMarqueeCard key={`c3-${item.id}-${idx}`} item={item} />
                 ))}
               </div>
             </div>
 
           </div>
 
-          {/* Ambient Edge Gradient Masks for Seamless Floating Look */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-14 sm:w-28 bg-gradient-to-r from-[#0A0A0A] via-[#0A0A0A]/85 to-transparent z-10" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-14 sm:w-28 bg-gradient-to-l from-[#0A0A0A] via-[#0A0A0A]/85 to-transparent z-10" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A]/70 to-transparent z-10" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/70 to-transparent z-10" />
-
         </div>
       </div>
 
-      {/* ── RIGHT PANEL (40% Width): Artsy Authentication UI ── */}
+      {/* ── RIGHT PANEL (40% Width): Phone-Based Authentication UI ── */}
       <div className="flex-1 flex justify-center items-center px-6 py-8 sm:py-12 lg:px-10 xl:px-14 lg:w-[42%] xl:w-[40%] lg:flex-none bg-white">
         <div className="w-full max-w-[430px] space-y-6">
           
@@ -486,63 +558,15 @@ function LoginFormContent() {
             </h1>
 
             <p className="text-xs sm:text-[13px] text-[#86868B] mt-1.5 leading-relaxed">
-              Sign in with your registered phone number or test credentials to enter your creative suite.
+              Enter your mobile number to sign in. Your workspace and role are automatically recognized.
             </p>
-          </div>
-
-          {/* Quick Role Switcher Strip */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-[#1D1D1F]">
-                Select Workspace Role
-              </label>
-              <span className="text-[11px] text-[#86868B]">
-                Role-based routing
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 bg-[#F5F5F7] p-1 rounded-xl border border-[#E5E5E7]">
-              <button
-                type="button"
-                onClick={() => setSelectedRole('client')}
-                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  selectedRole === 'client'
-                    ? 'bg-white text-[#1D1D1F] shadow-xs'
-                    : 'text-[#86868B] hover:text-[#1D1D1F]'
-                }`}
-              >
-                Client
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedRole('freelancer')}
-                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  selectedRole === 'freelancer'
-                    ? 'bg-white text-[#1D1D1F] shadow-xs'
-                    : 'text-[#86868B] hover:text-[#1D1D1F]'
-                }`}
-              >
-                Creator
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedRole('admin')}
-                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  selectedRole === 'admin'
-                    ? 'bg-[#1D1D1F] text-white shadow-xs'
-                    : 'text-[#86868B] hover:text-[#1D1D1F]'
-                }`}
-              >
-                Admin
-              </button>
-            </div>
           </div>
 
           {/* Instant 1-Click Fast Track Testing Bar */}
           <div className="p-3 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]/80 space-y-1.5">
             <div className="flex items-center justify-between text-[10px] font-bold text-[#86868B] uppercase tracking-wider">
               <span>Instant Test Entry</span>
-              <span className="text-[#3B82F6]">1-Click Demo</span>
+              <span className="text-[#3B82F6]">Auto-Recognized</span>
             </div>
             <div className="grid grid-cols-3 gap-1.5">
               <button
@@ -576,7 +600,7 @@ function LoginFormContent() {
             </div>
           )}
 
-          {/* STEP 1: Phone Input Stage */}
+          {/* STEP 1: Phone Input Stage with Role Recognition */}
           {otpStep === 'phone' ? (
             <form
               onSubmit={(e) => {
@@ -586,9 +610,31 @@ function LoginFormContent() {
               className="space-y-4"
             >
               <div>
-                <label className="block text-xs font-semibold text-[#1D1D1F] mb-1.5">
-                  Phone Number <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-[#1D1D1F]">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  {/* Dynamic Role / Workspace Recognition Badge */}
+                  <div className="flex items-center gap-1.5">
+                    {identifiedUser.isNewUser ? (
+                      <span className="text-[10.5px] font-semibold text-[#6E6E73] bg-[#F5F5F7] px-2 py-0.5 rounded-md border border-[#E5E5E7]">
+                        Default: Client Workspace
+                      </span>
+                    ) : (
+                      <span className={`text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border flex items-center gap-1 ${
+                        identifiedUser.role === 'freelancer'
+                          ? 'bg-purple-50 text-purple-700 border-purple-200'
+                          : identifiedUser.role === 'admin'
+                          ? 'bg-amber-50 text-amber-800 border-amber-200'
+                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                      }`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
+                        {identifiedUser.role === 'freelancer' ? 'Creator Suite' : identifiedUser.role === 'admin' ? 'Admin Portal' : 'Client Workspace'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
                 <div className="relative flex h-11 w-full items-stretch rounded-xl border border-[#E5E5E7] bg-white transition-colors focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10">
                   <div className="flex h-full items-center gap-1.5 rounded-l-xl border-r border-[#E5E5E7] px-3 text-xs font-semibold text-[#1D1D1F] bg-[#F5F5F7] select-none">
                     <span>🇮🇳</span>
@@ -603,6 +649,23 @@ function LoginFormContent() {
                     className="h-full w-full rounded-r-xl bg-transparent px-3 text-xs sm:text-sm font-semibold text-[#1D1D1F] placeholder:text-[#86868B] focus:outline-none"
                   />
                 </div>
+
+                {/* Identity Context Banner */}
+                {phoneNumber.length === 10 && (
+                  <div className="mt-2 flex items-center justify-between px-3 py-2 rounded-lg bg-[#F5F5F7] border border-[#E5E5E7] text-[11px] text-[#1D1D1F]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[#3B82F6] font-bold">●</span>
+                      <span>
+                        {identifiedUser.name
+                          ? `Identified Member: ${identifiedUser.name}`
+                          : 'New Member: Connecting to Client Workspace'}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-[#86868B]">
+                      {identifiedUser.role === 'freelancer' ? 'Editor' : identifiedUser.role === 'admin' ? 'Admin' : 'Client'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <label className="flex items-start gap-2.5 text-xs text-[#86868B] leading-snug cursor-pointer select-none">
@@ -641,7 +704,7 @@ function LoginFormContent() {
             <div className="space-y-4">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-[#86868B]">
-                  Code sent to +91 {phoneNumber}
+                  Code sent to +91 {phoneNumber} ({identifiedUser.role === 'freelancer' ? 'Creator Suite' : identifiedUser.role === 'admin' ? 'Admin Portal' : 'Client Workspace'})
                 </span>
                 <button
                   type="button"
@@ -675,14 +738,14 @@ function LoginFormContent() {
                 {isLoading ? (
                   <span>Verifying Credentials...</span>
                 ) : (
-                  <span>Verify &amp; Enter Workspace →</span>
+                  <span>Verify &amp; Enter {identifiedUser.role === 'freelancer' ? 'Creator Suite' : identifiedUser.role === 'admin' ? 'Admin Portal' : 'Workspace'} →</span>
                 )}
               </button>
             </div>
           )}
 
-          {/* Footer Assistance */}
-          <div className="pt-4 border-t border-[#F5F5F7] flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#86868B]">
+          {/* Footer Assistance with Dedicated Creator Entry */}
+          <div className="pt-4 border-t border-[#F5F5F7] flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-[#86868B]">
             <span>
               Looking to edit for Artsy?{' '}
               <Link
@@ -692,9 +755,27 @@ function LoginFormContent() {
                 Apply as Creator
               </Link>
             </span>
-            <Link href="/" className="hover:text-[#1D1D1F] transition-colors">
-              Back to Home
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setPhoneNumber('9876543211');
+                  setIdentifiedUser({
+                    name: 'Aarav Sen',
+                    role: 'freelancer',
+                    isNewUser: false,
+                  });
+                  setSelectedRole('freelancer');
+                }}
+                className="font-semibold text-[#1D1D1F] hover:text-[#3B82F6] transition-colors cursor-pointer"
+              >
+                Editor Sign-in
+              </button>
+              <span>•</span>
+              <Link href="/" className="hover:text-[#1D1D1F] transition-colors">
+                Home
+              </Link>
+            </div>
           </div>
 
         </div>

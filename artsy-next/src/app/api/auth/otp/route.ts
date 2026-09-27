@@ -39,6 +39,58 @@ export async function POST(request: NextRequest) {
 
     const identifier = cleanEmail || cleanPhone!;
 
+    const TEST_PERSONAS: Record<string, { role: string; full_name: string }> = {
+      '9876543210': { role: 'client', full_name: 'Sneha Patel' },
+      '9876543211': { role: 'freelancer', full_name: 'Aarav Sen' },
+      '9876543212': { role: 'admin', full_name: 'Studio Director' },
+    };
+
+    // ────────────────────────────────────────────────────────
+    // ACTION: LOOKUP — Identify user role and name by phone
+    // ────────────────────────────────────────────────────────
+    if (action === 'lookup') {
+      if (cleanPhone && TEST_PERSONAS[cleanPhone]) {
+        const persona = TEST_PERSONAS[cleanPhone];
+        return NextResponse.json({
+          exists: true,
+          role: persona.role,
+          name: persona.full_name,
+          isNewUser: false,
+        });
+      }
+
+      if (isSupabaseConfigured && supabase) {
+        try {
+          let userQuery = supabase.from('users').select('id, full_name, email, phone, role, status');
+          if (cleanEmail) {
+            userQuery = userQuery.eq('email', cleanEmail);
+          } else if (cleanPhone) {
+            userQuery = userQuery.or(`phone.eq.${formattedPhone},phone.eq.${cleanPhone}`);
+          }
+          const { data: existingUser } = await userQuery.maybeSingle();
+
+          if (existingUser) {
+            return NextResponse.json({
+              exists: true,
+              role: existingUser.role || 'client',
+              name: existingUser.full_name || 'Valued Member',
+              isNewUser: false,
+            });
+          }
+        } catch (dbErr) {
+          console.warn('User lookup warning:', dbErr);
+        }
+      }
+
+      // Default all new phone numbers to Client
+      return NextResponse.json({
+        exists: false,
+        role: 'client',
+        name: null,
+        isNewUser: true,
+      });
+    }
+
     // ────────────────────────────────────────────────────────
     // ACTION: VERIFY — Check submitted OTP against stored hash
     // ────────────────────────────────────────────────────────
@@ -51,6 +103,10 @@ export async function POST(request: NextRequest) {
 
       // Dev mode shortcut: accept 123456
       if (isDev && code === '123456') {
+        const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
+        const resolvedRole = testPersona ? testPersona.role : (role || 'client');
+        const resolvedName = testPersona ? testPersona.full_name : (cleanEmail ? 'Test User' : 'Valued Client');
+
         return NextResponse.json({
           success: true,
           message: 'OTP verified (dev mode).',
@@ -58,7 +114,8 @@ export async function POST(request: NextRequest) {
             id: cleanEmail ? `user_${cleanEmail.replace(/[^a-z0-9]/g, '_').slice(0, 15)}` : `user_${cleanPhone!.slice(-6)}`,
             email: cleanEmail || undefined,
             phone: formattedPhone || undefined,
-            role,
+            full_name: resolvedName,
+            role: resolvedRole,
             status: 'active',
           },
         });
@@ -106,19 +163,39 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ success: true, message: 'OTP verified.', user: existingUser });
         }
 
+        const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
+        const defaultRole = testPersona ? testPersona.role : (role || 'client');
+
         return NextResponse.json({
           success: true,
           message: 'OTP verified. New user — proceed to profile creation.',
-          user: { email: cleanEmail || undefined, phone: formattedPhone || undefined, role, status: 'new', isNewUser: true },
+          user: { 
+            email: cleanEmail || undefined, 
+            phone: formattedPhone || undefined, 
+            full_name: testPersona ? testPersona.full_name : undefined,
+            role: defaultRole, 
+            status: 'new', 
+            isNewUser: true 
+          },
         });
       }
 
       // Fallback for mock mode without database
       if (code === '123456') {
+        const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
+        const resolvedRole = testPersona ? testPersona.role : (role || 'client');
+        const resolvedName = testPersona ? testPersona.full_name : (cleanEmail ? 'Test User' : 'Valued Client');
+
         return NextResponse.json({
           success: true,
           message: 'OTP verified (mock).',
-          user: { email: cleanEmail || undefined, phone: formattedPhone || undefined, role, status: 'active' },
+          user: { 
+            email: cleanEmail || undefined, 
+            phone: formattedPhone || undefined, 
+            full_name: resolvedName,
+            role: resolvedRole, 
+            status: 'active' 
+          },
         });
       }
       return NextResponse.json({ error: 'Invalid OTP.' }, { status: 401 });

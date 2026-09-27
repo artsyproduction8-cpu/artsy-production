@@ -3,6 +3,15 @@ import crypto from 'crypto';
 import { supabase } from '@/lib/supabase';
 import { calculateFinancialWaterfall } from '@/lib/financial/engine';
 
+export async function GET() {
+  return NextResponse.json({
+    status: 'active',
+    endpoint: '/api/webhooks/razorpay',
+    message: 'Razorpay webhook endpoint is healthy and listening for HMAC-SHA256 signed POST events.',
+    configuredSecret: Boolean(process.env.RAZORPAY_WEBHOOK_SECRET),
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();

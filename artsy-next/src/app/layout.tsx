@@ -41,6 +41,7 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
         />
+        <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
       </head>
       <body
         className="font-sans antialiased text-[#1D1D1F] bg-[#FFFFFF] selection:bg-[#3B82F6] selection:text-white overflow-x-hidden max-w-full w-full min-h-screen relative"

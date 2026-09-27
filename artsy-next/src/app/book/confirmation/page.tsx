@@ -11,19 +11,43 @@ function ConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId') || 'ARTSY-892410';
   const [confirmedOrder, setConfirmedOrder] = useState<any>(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const stored = sessionStorage.getItem('artsy_confirmed_order');
       if (stored) {
-        setConfirmedOrder(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setConfirmedOrder(parsed);
+        // Automatically trigger invoice email delivery
+        if (orderId && !sessionStorage.getItem(`artsy_inv_sent_${orderId}`)) {
+          sessionStorage.setItem(`artsy_inv_sent_${orderId}`, 'true');
+          fetch(`/api/invoices/${orderId}?sendEmail=true`)
+            .then((r) => r.ok && setEmailSent(true))
+            .catch(() => {});
+        }
       }
       // Ensure client role is preserved for this confirmed booking
       if (!getCurrentUser()) {
         setCurrentUser(PRESET_USERS.client);
       }
     }
-  }, []);
+  }, [orderId]);
+
+  const handleSendInvoiceEmail = async () => {
+    setIsSendingEmail(true);
+    try {
+      const res = await fetch(`/api/invoices/${orderId}?sendEmail=true`);
+      if (res.ok) {
+        setEmailSent(true);
+      }
+    } catch {
+      // non-blocking
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   const totalAmount = confirmedOrder?.bookingData?.priceBreakdown?.grandTotal || 8000;
   const serviceName = confirmedOrder?.bookingData?.serviceName || 'Wedding Films';
@@ -71,14 +95,24 @@ function ConfirmationContent() {
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-[#E5E5E7]">
               <span className="text-[#86868B]">Statutory Tax Invoice:</span>
-              <a
-                href={`/api/invoices/${orderId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-[#3B82F6] hover:underline flex items-center gap-1"
-              >
-                <span>View GST Invoice ↗</span>
-              </a>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleSendInvoiceEmail}
+                  disabled={isSendingEmail || emailSent}
+                  className="text-xs font-semibold text-[#3B82F6] hover:underline cursor-pointer disabled:text-emerald-600 disabled:no-underline"
+                >
+                  {emailSent ? '✓ Sent to Email' : isSendingEmail ? 'Sending...' : 'Email Invoice ✉'}
+                </button>
+                <a
+                  href={`/api/invoices/${orderId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[#3B82F6] hover:underline flex items-center gap-1"
+                >
+                  <span>View GST Invoice ↗</span>
+                </a>
+              </div>
             </div>
           </div>
 

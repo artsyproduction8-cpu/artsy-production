@@ -342,7 +342,7 @@ function LoginFormContent() {
     }
   };
 
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     const code = otpDigits.join('');
     if (code.length < 6) {
       setError('Please enter the 6-digit code sent to your mobile.');
@@ -351,8 +351,23 @@ function LoginFormContent() {
     setError(null);
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const res = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: phoneNumber,
+          action: 'verify',
+          code,
+          role: selectedRole,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Invalid or expired verification code.');
+      }
+
       const defaultNames: Record<UserRole, string> = {
         client: 'Sneha Patel',
         freelancer: 'Aarav Sen',
@@ -360,20 +375,24 @@ function LoginFormContent() {
       };
 
       const user: ArtsyUser = {
-        id: crypto.randomUUID(),
-        email: `${phoneNumber.replace(/\D/g, '')}@artsyprod.studio`,
-        phone: `${countryCode} ${phoneNumber}`,
-        full_name: defaultNames[selectedRole],
-        role: selectedRole,
-        status: 'active' as UserStatus,
-        created_at: new Date().toISOString(),
+        id: data.user?.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `u_${Date.now()}`),
+        email: data.user?.email || `${phoneNumber.replace(/\D/g, '')}@artsyprod.studio`,
+        phone: data.user?.phone || `${countryCode} ${phoneNumber}`,
+        full_name: data.user?.full_name || defaultNames[selectedRole],
+        role: (data.user?.role as UserRole) || selectedRole,
+        status: (data.user?.status as UserStatus) || 'active',
+        created_at: data.user?.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
       setCurrentUser(user);
-      const dest = redirectTarget || getRoleHomePath(selectedRole);
+      const dest = redirectTarget || getRoleHomePath(user.role);
       router.push(dest);
-    }, 450);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Verification failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOtpChange = (index: number, value: string) => {

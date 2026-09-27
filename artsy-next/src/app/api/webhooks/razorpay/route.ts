@@ -162,6 +162,26 @@ export async function POST(request: NextRequest) {
                   reference_table: 'orders',
                 },
               ]);
+
+              // Dispatch Tax Invoice via Resend Email and archive to WORM vault
+              if (order.client_email) {
+                try {
+                  const { generateInvoiceData } = await import('@/lib/invoices/generator');
+                  const { archiveInvoiceToVault } = await import('@/lib/invoices/vault');
+                  const { sendInvoiceEmail } = await import('@/lib/email/dispatcher');
+                  const invoice = generateInvoiceData({
+                    orderId: order.order_number || order.id,
+                    clientName: order.client_name || 'Valued Client',
+                    clientPhone: order.client_phone || '',
+                    clientEmail: order.client_email,
+                    totalPaise: amountPaise || order.gross_amount,
+                  });
+                  await archiveInvoiceToVault(invoice);
+                  await sendInvoiceEmail(order.client_email, invoice);
+                } catch (invErr) {
+                  console.warn('Auto invoice email dispatch warning:', invErr);
+                }
+              }
             }
           } catch (processErr) {
             console.warn('Payment capture DB write warning:', processErr);

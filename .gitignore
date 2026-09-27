@@ -38,3 +38,8 @@ original-c8c5b0b43653e5590b39a8810bfe1995.mp4
 artsy-next/.vercel/
 *.tsbuildinfo
 next-env.d.ts
+
+# Internal Tooling & Agent Caches
+.agents/
+.aider-desk/
+skills-lock.json

@@ -1,10 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { generateInvoiceData } from '@/lib/invoices/generator';
+import { supabase } from '@/../lib/supabase';
+import { generateInvoiceData, InvoiceData } from '@/lib/invoices/generator';
+import { archiveInvoiceToVault } from '@/lib/invoices/vault';
+import { sendInvoiceEmail } from '@/lib/email/dispatcher';
+
+async function resolveOrderDetails(orderId: string) {
+  let totalPaise = 800000;
+  let clientName = 'Artsy Client';
+  let clientPhone = '+919876543210';
+  let clientEmail = 'client@artsyproduction.in';
+  let serviceName = 'Wedding Highlight Cinema (Post-Production)';
+
+  if (supabase) {
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
+    
+    let query = supabase.from('orders').select('*, users(full_name, phone, email)');
+    if (isUUID) {
+      query = query.eq('id', orderId);
+    } else {
+      query = query.or(`order_number.eq.${orderId},razorpay_order_id.eq.${orderId}`);
+    }
+
+    const { data: order } = await query.maybeSingle();
+
+    if (order) {
+      totalPaise = order.gross_amount || order.amount_paise || totalPaise;
+      clientName = order.client_name || order.users?.full_name || clientName;
+      clientPhone = order.client_phone || order.users?.phone || clientPhone;
+      clientEmail = order.client_email || order.users?.email || clientEmail;
+      if (order.service_key) {
+        serviceName = order.service_key;
+      }
+    }
+  }
+
+  return {
+    orderId,
+    clientName,
+    clientPhone,
+    clientEmail,
+    serviceName,
+    totalPaise,
+  };
+}
 
 /**
- * GST Tax Invoice Route (§4.3, §15.1)
- * Renders statutory tax invoice with SAC 999613, CGST/SGST/IGST, and Place of Supply
+ * GET /api/invoices/[orderId]
+ * Returns statutory HTML or JSON tax invoice.
+ * Query param ?sendEmail=true triggers delivery via Resend email.
  */
 export async function GET(
   request: NextRequest,
@@ -13,38 +56,15 @@ export async function GET(
   try {
     const { orderId } = await params;
     const format = request.nextUrl.searchParams.get('format') || 'html';
+    const shouldSendEmail = request.nextUrl.searchParams.get('sendEmail') === 'true';
 
-    let totalPaise = 800000;
-    let clientName = 'Artsy Client';
-    let clientPhone = '+919876543210';
-    let clientEmail = 'client@artsyproduction.in';
-    const serviceName = 'Wedding Highlight Cinema (Post-Production)';
+    const orderDetails = await resolveOrderDetails(orderId);
+    const invoice = generateInvoiceData(orderDetails);
 
-    if (supabase) {
-      const { data: order } = await supabase
-        .from('orders')
-        .select('*, users(full_name, phone, email)')
-        .eq('id', orderId)
-        .maybeSingle();
-
-      if (order) {
-        totalPaise = order.amount_paise;
-        if (order.users) {
-          clientName = order.users.full_name || clientName;
-          clientPhone = order.users.phone || clientPhone;
-          clientEmail = order.users.email || clientEmail;
-        }
-      }
+    // If query parameter requests email dispatch, trigger it asynchronously
+    if (shouldSendEmail && orderDetails.clientEmail) {
+      await sendInvoiceEmail(orderDetails.clientEmail, invoice);
     }
-
-    const invoice = generateInvoiceData({
-      orderId,
-      clientName,
-      clientPhone,
-      clientEmail,
-      serviceName,
-      totalPaise
-    });
 
     if (format === 'json') {
       return NextResponse.json(invoice);
@@ -178,10 +198,63 @@ export async function GET(
         'Content-Type': 'text/html; charset=utf-8'
       }
     });
-  } catch (err: any) {
-    console.error('[INVOICE ROUTE ERROR]:', err);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('[INVOICE ROUTE ERROR]:', errorMsg);
     return NextResponse.json(
-      { error: err.message || 'Error generating invoice' },
+      { error: errorMsg || 'Error generating invoice' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/invoices/[orderId]
+ * Explicitly sends the tax invoice via Resend email to the specified or stored recipient.
+ * Body: { email?: string }
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ orderId: string }> }
+) {
+  try {
+    const { orderId } = await params;
+    const body = await request.json().catch(() => ({}));
+    const orderDetails = await resolveOrderDetails(orderId);
+
+    const recipientEmail = body.email || orderDetails.clientEmail;
+    if (!recipientEmail) {
+      return NextResponse.json(
+        { error: 'Recipient email is required to send invoice.' },
+        { status: 400 }
+      );
+    }
+
+    const invoice = generateInvoiceData({
+      ...orderDetails,
+      clientEmail: recipientEmail,
+    });
+
+    // Archive invoice to statutory WORM vault
+    await archiveInvoiceToVault(invoice);
+
+    // Send invoice via Resend email
+    const emailResult = await sendInvoiceEmail(recipientEmail, invoice);
+
+    return NextResponse.json({
+      success: emailResult.success,
+      message: emailResult.success ? 'Invoice sent via Email' : 'Failed to send invoice email',
+      invoiceNumber: invoice.invoiceNumber,
+      orderId,
+      recipient: recipientEmail,
+      emailId: emailResult.id,
+      error: emailResult.error,
+    });
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('[INVOICE SEND ERROR]:', errorMsg);
+    return NextResponse.json(
+      { error: errorMsg || 'Failed to dispatch invoice' },
       { status: 500 }
     );
   }

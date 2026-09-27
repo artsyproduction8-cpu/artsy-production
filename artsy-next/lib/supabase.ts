@@ -3,12 +3,27 @@ import { mockServices } from './mockData'
 
 // Check if Supabase credentials are set
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseAnonKey =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 export let supabase: any
+export let supabaseAdmin: any = null
+
+const isPlaceholder = (val?: string) => {
+  if (!val) return true;
+  const lower = val.toLowerCase();
+  return (
+    lower.includes('your-supabase') ||
+    lower.includes('[paste') ||
+    lower.includes('placeholder') ||
+    val.trim() === ''
+  );
+};
 
 const isValidHttpUrl = (url?: string) => {
-  if (!url || url.includes('your-supabase-url-here')) return false;
+  if (!url || isPlaceholder(url)) return false;
   try {
     const parsed = new URL(url);
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';
@@ -19,11 +34,20 @@ const isValidHttpUrl = (url?: string) => {
 
 export const isSupabaseConfigured =
   isValidHttpUrl(supabaseUrl) &&
-  Boolean(supabaseAnonKey && !supabaseAnonKey.includes('your-supabase-anon-key-here'));
+  Boolean(supabaseAnonKey && !isPlaceholder(supabaseAnonKey));
 
 if (isSupabaseConfigured && supabaseUrl && supabaseAnonKey) {
   // Production mode: real Supabase client
   supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // If service role key is present and not a placeholder, create admin client
+  if (supabaseServiceKey && !isPlaceholder(supabaseServiceKey)) {
+    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+  } else {
+    supabaseAdmin = supabase;
+  }
 } else {
   // Development/mock mode: robust chainable mock Supabase client
   const createMockBuilder = (table: string) => {
@@ -124,8 +148,28 @@ export const signInWithWhatsApp = async (phoneNumber: string, fullName: string =
 }
 
 export const verifyWhatsAppOtp = async (phoneNumber: string, code: string, fullName: string = '', role: 'client' | 'freelancer' | 'admin' = 'client') => {
-  // In production, verify the OTP with WhatsApp Cloud API
-  // Then create/sign in user with Supabase
+  // Client-side: call backend OTP verification API
+  if (typeof window !== 'undefined') {
+    try {
+      const res = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: phoneNumber,
+          action: 'verify',
+          code,
+          role,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        return { success: true, user: data.user };
+      }
+      return { success: false, error: data.error || 'Verification failed' };
+    } catch {
+      // Fall through to fallback
+    }
+  }
 
   // Mock verification - accept 123456 for demo
   if (code === '123456') {

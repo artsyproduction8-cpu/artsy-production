@@ -26,25 +26,38 @@ function CheckoutContent() {
     }
   }, []);
 
-  const handlePayAndConfirm = (e: React.FormEvent) => {
+  const handlePayAndConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
 
-    // Simulate Razorpay escrow capture
-    setTimeout(() => {
-      const orderId = 'ARTSY-' + Math.floor(100000 + Math.random() * 900000);
-      const confirmedOrder = {
-        orderId,
-        clientName,
-        clientPhone,
-        clientEmail,
-        bookingData,
-        paidAt: new Date().toISOString(),
-        paymentStatus: 'captured',
-        gateway: 'Razorpay Escrow (UPI/Cards/NetBanking)'
-      };
+    try {
+      const amountPaise = (bookingData?.priceBreakdown?.grandTotal || 6000) * 100;
 
-      // Generate immutable QuoteSnapshot locked at checkout
+      // 1. Create Razorpay order via server API
+      const orderRes = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceId: bookingData?.serviceKey || 'wedding_highlight',
+          amount: amountPaise,
+          requirements: bookingData?.requirements || {},
+          clientPhone,
+          clientName,
+          clientEmail,
+        }),
+      });
+
+      const orderData = await orderRes.json();
+
+      if (!orderRes.ok || !orderData.success) {
+        alert(orderData.error || 'Failed to create order. Please try again.');
+        setIsProcessing(false);
+        return;
+      }
+
+      const { orderId, razorpayOrderId, razorpayKeyId, mode } = orderData;
+
+      // 2. Generate immutable QuoteSnapshot locked at checkout
       const quote = generateQuoteSnapshot(
         bookingData?.serviceKey || 'wedding',
         bookingData?.requirements || {},
@@ -58,29 +71,99 @@ function CheckoutContent() {
 
       // Log initial immutable audit activity trail
       logProjectStart(orderId, clientEmail || 'client');
-      logStatusChange(orderId, 'system', { oldStatus: 'draft', newStatus: 'in_progress' });
+      logStatusChange(orderId, 'system', { oldStatus: 'draft', newStatus: 'payment_pending' });
 
-      if (typeof window !== 'undefined') {
+      // 3. Open Razorpay Checkout (if SDK loaded) or simulate for mock mode
+      const RazorpayClass = (window as any).Razorpay;
+
+      if (RazorpayClass && mode === 'live') {
+        const rzp = new RazorpayClass({
+          key: razorpayKeyId,
+          amount: amountPaise,
+          currency: 'INR',
+          name: 'Artsy Production',
+          description: bookingData?.serviceName || 'Post-Production Service',
+          order_id: razorpayOrderId,
+          prefill: {
+            name: clientName,
+            email: clientEmail,
+            contact: clientPhone,
+          },
+          theme: { color: '#2563EB' },
+          handler: function (response: any) {
+            // Payment successful — store confirmation
+            const confirmedOrder = {
+              orderId,
+              razorpayOrderId,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              clientName,
+              clientPhone,
+              clientEmail,
+              bookingData,
+              paidAt: new Date().toISOString(),
+              paymentStatus: 'captured',
+              gateway: 'Razorpay (Live)',
+            };
+
+            sessionStorage.setItem('artsy_confirmed_order', JSON.stringify(confirmedOrder));
+            sessionStorage.setItem('artsy_confirmed_quote', JSON.stringify(quote));
+
+            try {
+              const storedQuotes = JSON.parse(localStorage.getItem('artsy_quotes') || '[]');
+              storedQuotes.push(quote);
+              localStorage.setItem('artsy_quotes', JSON.stringify(storedQuotes));
+              const storedLedger = JSON.parse(localStorage.getItem('artsy_financial_ledger') || '[]');
+              storedLedger.push(...ledger);
+              localStorage.setItem('artsy_financial_ledger', JSON.stringify(storedLedger));
+            } catch { /* ignore */ }
+
+            setIsProcessing(false);
+            router.push(`/book/confirmation?orderId=${orderId}`);
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessing(false);
+            },
+          },
+        });
+        rzp.open();
+      } else {
+        // Mock/Demo mode — simulate successful payment after short delay
+        await new Promise((resolve) => setTimeout(resolve, 1200));
+
+        const confirmedOrder = {
+          orderId,
+          razorpayOrderId,
+          clientName,
+          clientPhone,
+          clientEmail,
+          bookingData,
+          paidAt: new Date().toISOString(),
+          paymentStatus: 'captured',
+          gateway: mode === 'live' ? 'Razorpay (SDK not loaded)' : 'Razorpay (Mock Demo)',
+        };
+
         sessionStorage.setItem('artsy_confirmed_order', JSON.stringify(confirmedOrder));
         sessionStorage.setItem('artsy_confirmed_quote', JSON.stringify(quote));
 
-        // Persist to mock storage tables
         try {
           const storedQuotes = JSON.parse(localStorage.getItem('artsy_quotes') || '[]');
           storedQuotes.push(quote);
           localStorage.setItem('artsy_quotes', JSON.stringify(storedQuotes));
-
           const storedLedger = JSON.parse(localStorage.getItem('artsy_financial_ledger') || '[]');
           storedLedger.push(...ledger);
           localStorage.setItem('artsy_financial_ledger', JSON.stringify(storedLedger));
-        } catch {
-          // ignore
-        }
-      }
+        } catch { /* ignore */ }
 
+        setIsProcessing(false);
+        router.push(`/book/confirmation?orderId=${orderId}`);
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      alert('Payment processing failed. Please try again.');
       setIsProcessing(false);
-      router.push(`/book/confirmation?orderId=${orderId}`);
-    }, 1200);
+    }
   };
 
   const grandTotal = bookingData?.priceBreakdown?.grandTotal || 6000;

@@ -27,11 +27,19 @@ export interface VaultRecordResult {
 export async function archiveInvoiceToVault(invoice: InvoiceData): Promise<VaultRecordResult> {
   try {
     if (supabase && typeof supabase.from === 'function') {
+      const isUUID = Boolean(
+        invoice.orderDetails.orderId &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(invoice.orderDetails.orderId)
+      );
+
+      const retentionDate = new Date(Date.now() + 72 * 30 * 24 * 60 * 60 * 1000).toISOString();
+
       const { data, error } = await supabase
         .from('invoice_records')
         .insert([
           {
-            order_id: invoice.orderDetails.orderId,
+            order_id: isUUID ? invoice.orderDetails.orderId : null,
+            order_number: invoice.orderDetails.orderId,
             invoice_number: invoice.invoiceNumber,
             invoice_date: invoice.invoiceDate,
             sac_code: invoice.orderDetails.sacCode,
@@ -48,6 +56,7 @@ export async function archiveInvoiceToVault(invoice: InvoiceData): Promise<Vault
             client_email: invoice.clientDetails.email,
             client_gstin: invoice.clientDetails.gstin || null,
             client_address: invoice.clientDetails.billingAddress || null,
+            statutory_retention_until: retentionDate,
           },
         ])
         .select('id')

@@ -112,84 +112,51 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
       }
     }
 
-    // 2. WhatsApp Cloud API Dispatch (Official Meta HSM Templates)
-    const isWhatsAppTarget = template.targetChannels.includes('whatsapp');
-    let waSuccess = false;
+    // 2. Email Dispatch via Resend (Primary delivery channel while WhatsApp is skipped)
+    let emailToUse = payload.recipientEmail;
+    if (!emailToUse && payload.userId && !payload.userId.startsWith('anon_') && supabase && typeof supabase.from === 'function') {
+      try {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('email')
+          .eq('id', payload.userId)
+          .maybeSingle();
+        if (userData?.email) {
+          emailToUse = userData.email;
+        }
+      } catch (userErr) {
+        console.warn('Failed to resolve user email for notification:', userErr);
+      }
+    }
 
-    if (isWhatsAppTarget && payload.recipientPhone) {
-      const waToken = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_ACCESS_TOKEN;
-      const waPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.META_WHATSAPP_PHONE_ID;
-      const isMockMode = process.env.MOCK_WHATSAPP === 'true' || !waToken || waToken.includes('your-whatsapp');
+    const hasResend = process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.includes('your-resend');
+    if (hasResend && emailToUse) {
+      try {
+        const { sendNotificationEmail } = await import('@/lib/email/dispatcher');
+        await sendNotificationEmail({
+          eventNumber: payload.eventNumber,
+          title: template.title,
+          message: formattedMessage,
+          recipientEmail: emailToUse,
+          actionUrl: payload.actionUrl,
+        });
+      } catch (emailErr) {
+        console.error('Email dispatch error for notification event #' + payload.eventNumber, emailErr);
+      }
+    } else if (hasResend && !emailToUse) {
+      console.log(`[Resend Email Notice] Event #${payload.eventNumber} "${template.title}" has no recipient email provided. Message: "${formattedMessage}"`);
+    }
 
+    // 3. WhatsApp Cloud API Dispatch (MOCKED - Skipped per configuration)
+    const isMockWA = process.env.MOCK_WHATSAPP === 'true' || true;
+    if (payload.recipientPhone) {
+      const cleanPhone = payload.recipientPhone.replace(/\D/g, '');
       const templateDef = WHATSAPP_TEMPLATES[payload.eventNumber];
       const templateName = templateDef?.templateName || 'artsy_general_notification';
-      const templateLang = templateDef?.language || 'en';
+      console.log(`[WhatsApp MOCK (Skipped)] Event #${payload.eventNumber} ("${templateName}") -> ${cleanPhone}: "${formattedMessage}"`);
 
-      // Build parameters array according to template specification
-      const paramKeys = templateDef?.parameterKeys || [];
-      const bodyParameters = paramKeys.map((key) => ({
-        type: 'text',
-        text: String(payload.variables?.[key] || ''),
-      }));
-
-      const cleanPhone = payload.recipientPhone.replace(/\D/g, '');
-      const metaTemplatePayload = {
-        messaging_product: 'whatsapp',
-        to: cleanPhone,
-        type: 'template',
-        template: {
-          name: templateName,
-          language: { code: templateLang },
-          components: [
-            {
-              type: 'body',
-              parameters: bodyParameters,
-            },
-          ],
-        },
-      };
-
-      if (!isMockMode && waPhoneId) {
-        // Live Meta WhatsApp Cloud API call with approved HSM template
+      if (supabase && typeof supabase.from === 'function') {
         try {
-          const res = await fetch(`https://graph.facebook.com/v19.0/${waPhoneId}/messages`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${waToken}`,
-            },
-            body: JSON.stringify(metaTemplatePayload),
-          });
-          const resData = await res.json();
-          const messageId = resData?.messages?.[0]?.id || null;
-          waSuccess = res.ok;
-
-          if (supabase && typeof supabase.from === 'function') {
-            await supabase.from('notification_delivery_log').insert([
-              {
-                notification_id: inAppNotificationId,
-                channel: 'whatsapp',
-                recipient: payload.recipientPhone,
-                event_number: payload.eventNumber,
-                provider_message_id: messageId,
-                status: res.ok ? 'sent' : 'failed',
-                error_message: res.ok ? null : JSON.stringify(resData),
-                created_at: new Date().toISOString(),
-              },
-            ]);
-          }
-        } catch (apiErr: unknown) {
-          console.error('WhatsApp API network error:', apiErr);
-          waSuccess = false;
-        }
-      } else {
-        // Development / Mock mode logging with explicit HSM Template audit
-        console.log(
-          `[WhatsApp HSM DEV] Template: "${templateName}" (${templateLang}) -> ${cleanPhone} | Parameters:`,
-          payload.variables || {}
-        );
-        waSuccess = true;
-        if (supabase && typeof supabase.from === 'function') {
           await supabase.from('notification_delivery_log').insert([
             {
               notification_id: inAppNotificationId,
@@ -197,104 +164,19 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
               recipient: payload.recipientPhone,
               event_number: payload.eventNumber,
               provider_message_id: `mock_wa_${Date.now()}`,
-              status: 'sent',
+              status: 'mock_sent',
               created_at: new Date().toISOString(),
             },
           ]);
+        } catch {
+          // non-blocking
         }
       }
     }
 
-    // 3. SMS Fallback (MSG91) — Triggered if WhatsApp failed or if channel explicitly requested
-    const needsSms = template.targetChannels.includes('sms') || (!waSuccess && template.isCritical && payload.recipientPhone);
-    if (needsSms && payload.recipientPhone) {
-      const msg91AuthKey = process.env.MSG91_AUTH_KEY;
-      const msg91SenderId = process.env.MSG91_SENDER_ID || 'ARTSYP';
-
-      if (msg91AuthKey && !msg91AuthKey.includes('your-msg91')) {
-        try {
-          const cleanPhone = payload.recipientPhone.replace(/\D/g, '');
-          const smsRes = await fetch('https://api.msg91.com/api/v5/flow/', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              authkey: msg91AuthKey,
-            },
-            body: JSON.stringify({
-              template_id: process.env.MSG91_TEMPLATE_ID || '',
-              short_url: '0',
-              recipients: [
-                {
-                  mobiles: cleanPhone.startsWith('91') ? cleanPhone : `91${cleanPhone}`,
-                  message: formattedMessage,
-                  otp: String(payload.variables?.otp || ''),
-                },
-              ],
-            }),
-          });
-          const smsData = await smsRes.json();
-          if (supabase && typeof supabase.from === 'function') {
-            await supabase.from('notification_delivery_log').insert([
-              {
-                notification_id: inAppNotificationId,
-                channel: 'sms',
-                recipient: payload.recipientPhone,
-                event_number: payload.eventNumber,
-                provider_message_id: smsData?.message || null,
-                status: smsRes.ok ? 'sent' : 'failed',
-                error_message: smsRes.ok ? null : JSON.stringify(smsData),
-                created_at: new Date().toISOString(),
-              },
-            ]);
-          }
-        } catch (smsErr) {
-          console.error('MSG91 SMS fallback failed:', smsErr);
-        }
-      } else {
-        console.log(`[SMS MSG91 DEV Fallback] Event #${payload.eventNumber} to ${payload.recipientPhone}: "${formattedMessage}"`);
-      }
-    }
-
-    // 4. Email Fallback / Formal Dispatch (Resend)
-    const isEmailTarget = template.targetChannels.includes('email') || (template.isCritical && !waSuccess && payload.recipientEmail);
-    if (isEmailTarget && payload.recipientEmail) {
-      const resendApiKey = process.env.RESEND_API_KEY;
-      if (resendApiKey && !resendApiKey.includes('your-resend')) {
-        try {
-          const emailRes = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${resendApiKey}`,
-            },
-            body: JSON.stringify({
-              from: process.env.EMAIL_FROM || 'Artsy Production <billing@artsyproduction.com>',
-              to: [payload.recipientEmail],
-              subject: `[Artsy Production] ${template.title}`,
-              text: formattedMessage,
-            }),
-          });
-          const emailData = await emailRes.json();
-          if (supabase && typeof supabase.from === 'function') {
-            await supabase.from('notification_delivery_log').insert([
-              {
-                notification_id: inAppNotificationId,
-                channel: 'email',
-                recipient: payload.recipientEmail,
-                event_number: payload.eventNumber,
-                provider_message_id: emailData?.id || null,
-                status: emailRes.ok ? 'sent' : 'failed',
-                error_message: emailRes.ok ? null : JSON.stringify(emailData),
-                created_at: new Date().toISOString(),
-              },
-            ]);
-          }
-        } catch (emailErr) {
-          console.error('Resend email dispatch error:', emailErr);
-        }
-      } else {
-        console.log(`[Resend Email DEV] Event #${payload.eventNumber} to ${payload.recipientEmail}: "${formattedMessage}"`);
-      }
+    // 4. SMS Fallback (MOCKED - Skipped per configuration)
+    if (template.isCritical && payload.recipientPhone) {
+      console.log(`[SMS MOCK (Skipped)] Event #${payload.eventNumber} to ${payload.recipientPhone}: "${formattedMessage}"`);
     }
 
     return { success: true };

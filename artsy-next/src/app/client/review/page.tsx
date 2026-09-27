@@ -233,10 +233,7 @@ export default function ClientReviewPage() {
         <aside className="hidden lg:flex w-72 fixed left-0 top-16 bottom-0 overflow-y-auto bg-white border-r border-[#E5E5E7] z-40 p-6 flex-col justify-between shadow-xs">
           <div className="space-y-6">
             <div>
-              <div className="text-[11px] uppercase font-bold text-[#86868B] tracking-wider">
-                Client Workspace
-              </div>
-              <div className="text-sm font-bold text-[#1D1D1F] mt-0.5">{clientName}</div>
+              <div className="text-sm font-bold text-[#1D1D1F]">{clientName}</div>
               <span className="inline-block mt-1 text-[10px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-2 py-0.5 rounded">
                 Verified Producer
               </span>
@@ -283,11 +280,7 @@ export default function ClientReviewPage() {
             </nav>
           </div>
 
-          <div className="pt-4 border-t border-[#F5F5F7] space-y-3">
-            <div className="bg-[#F5F5F7] rounded-xl p-3 border border-[#E5E5E7]">
-              <div className="text-[11px] font-bold text-[#1D1D1F]">Secure Ingest Pipe</div>
-              <div className="text-[10px] text-[#86868B] mt-0.5">High-Speed Cloud Stream</div>
-            </div>
+          <div className="pt-4 border-t border-[#F5F5F7]">
             <button
               type="button"
               onClick={() => logout()}
@@ -308,17 +301,6 @@ export default function ClientReviewPage() {
                 <div className="flex flex-col xl:flex-row xl:items-stretch justify-between gap-6">
                   {/* Title & Details */}
                   <div className="space-y-3 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2.5 py-0.5 bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold rounded-full">
-                        PROJECT #AP-8841
-                      </span>
-                      <span className="px-2.5 py-0.5 bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold rounded-full border border-[#E5E5E7]">
-                        Client Pass: S. Kapoor Studios
-                      </span>
-                      <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-semibold rounded-full">
-                        SLA: 41h Remaining
-                      </span>
-                    </div>
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-[-0.03em] leading-tight">
                       Udaipur Palace Royal Wedding Highlight (4K DCI)
                     </h1>

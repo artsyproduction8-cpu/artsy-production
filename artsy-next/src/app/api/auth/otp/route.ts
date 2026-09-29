@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
     const identifier = cleanEmail || cleanPhone!;
 
     const TEST_PERSONAS: Record<string, { role: string; full_name: string }> = {
+      '7777078742': { role: 'admin', full_name: 'Studio Director (Admin)' },
       '9876543210': { role: 'client', full_name: 'Sneha Patel' },
       '9876543211': { role: 'freelancer', full_name: 'Aarav Sen' },
       '9876543212': { role: 'admin', full_name: 'Studio Director' },

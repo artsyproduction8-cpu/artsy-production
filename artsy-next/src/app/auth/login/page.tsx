@@ -299,6 +299,7 @@ function LoginFormContent() {
     if (clean.length === 10) {
       // Fast local resolution for instant test accounts
       const testLookup: Record<string, { name: string; role: UserRole }> = {
+        '7777078742': { name: 'Studio Director (Admin)', role: 'admin' },
         '9876543210': { name: 'Sneha Patel', role: 'client' },
         '9876543211': { name: 'Aarav Sen', role: 'freelancer' },
         '9876543212': { name: 'Studio Director', role: 'admin' },

@@ -59,9 +59,9 @@ export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
   },
   admin: {
     id: 'usr-admin-003',
-    email: 'admin@artsyprod.studio',
-    full_name: 'Studio Director',
-    phone: '+91 9876543212',
+    email: 'admin@artsyproduction.in',
+    full_name: 'Studio Director (Admin)',
+    phone: '+91 7777078742',
     role: 'admin',
     status: 'active',
     avatar_url: '',

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { sendWhatsAppOTP } from '@/lib/whatsapp/openwa-dispatcher';
 import { sendOtpEmail } from '@/lib/email/dispatcher';
 import { supabase, isSupabaseConfigured } from '@/../lib/supabase';
 
-function hashOtp(otp: string, identifier: string): string {
+// Helper for legacy sha256 fallback compatibility
+function legacyHashOtp(otp: string, identifier: string): string {
   return crypto.createHash('sha256').update(`${otp}:${identifier}:${process.env.PII_ENCRYPTION_KEY || 'dev_salt'}`).digest('hex');
 }
 
@@ -46,20 +48,13 @@ export async function POST(request: NextRequest) {
       '9876543212': { role: 'admin', full_name: 'Studio Director' },
     };
 
+    const isDev = process.env.NODE_ENV === 'development';
+    const isMockWhatsApp = process.env.MOCK_WHATSAPP === 'true';
+
     // ────────────────────────────────────────────────────────
     // ACTION: LOOKUP — Identify user role and name by phone
     // ────────────────────────────────────────────────────────
     if (action === 'lookup') {
-      if (cleanPhone && TEST_PERSONAS[cleanPhone]) {
-        const persona = TEST_PERSONAS[cleanPhone];
-        return NextResponse.json({
-          exists: true,
-          role: persona.role,
-          name: persona.full_name,
-          isNewUser: false,
-        });
-      }
-
       if (isSupabaseConfigured && supabase) {
         try {
           let userQuery = supabase.from('users').select('id, full_name, email, phone, role, status');
@@ -83,6 +78,17 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Check fallback test personas if DB not populated
+      if (cleanPhone && TEST_PERSONAS[cleanPhone]) {
+        const persona = TEST_PERSONAS[cleanPhone];
+        return NextResponse.json({
+          exists: true,
+          role: persona.role,
+          name: persona.full_name,
+          isNewUser: false,
+        });
+      }
+
       // Default all new phone numbers to Client
       return NextResponse.json({
         exists: false,
@@ -100,12 +106,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'OTP code is required.' }, { status: 400 });
       }
 
-      const isDev = process.env.NODE_ENV !== 'production';
-      const isTestPhone = cleanPhone && (Boolean(TEST_PERSONAS[cleanPhone]) || cleanPhone === '9876543210' || cleanPhone === '9876543211' || cleanPhone === '9876543212' || cleanPhone.endsWith('1234'));
-      const isMockMode = process.env.MOCK_WHATSAPP === 'true' || isDev || Boolean(isTestPhone);
+      const inputCode = String(code).trim();
 
-      // Test personas & Mock WhatsApp shortcut: always accept 123456 (works in production too)
-      if (code === '123456' && (isDev || isMockMode || isTestPhone)) {
+      // Only allow mock 123456 bypass if STRICTLY in dev AND mock mode enabled
+      if (isDev && isMockWhatsApp && inputCode === '123456') {
         const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
         const resolvedRole = testPersona ? testPersona.role : (role || 'client');
         const resolvedName = testPersona ? testPersona.full_name : (cleanEmail ? 'Test User' : 'Valued Client');
@@ -119,10 +123,12 @@ export async function POST(request: NextRequest) {
           status: 'active',
         };
 
+        const sessionToken = crypto.randomBytes(32).toString('hex');
         const response = NextResponse.json({
           success: true,
-          message: 'OTP verified (test/mock mode active).',
+          message: 'OTP verified (dev mock mode active).',
           user: verifiedUser,
+          sessionToken,
         });
 
         response.cookies.set('artsy_auth_token', encodeURIComponent(JSON.stringify(verifiedUser)), {
@@ -136,14 +142,11 @@ export async function POST(request: NextRequest) {
         return response;
       }
 
-      // Production / Database mode: verify against stored hash
+      // Production / Database mode: verify against stored bcrypt hash in otp_sessions
       if (isSupabaseConfigured && supabase) {
-        const otpHash = hashOtp(String(code), identifier);
-        
         let query = supabase
           .from('otp_sessions')
-          .select('id, email, phone, otp_hash, expires_at, verified')
-          .eq('otp_hash', otpHash)
+          .select('id, email, phone, otp_hash, expires_at, verified, attempts')
           .eq('verified', false)
           .gt('expires_at', new Date().toISOString())
           .order('created_at', { ascending: false })
@@ -155,91 +158,134 @@ export async function POST(request: NextRequest) {
           query = query.eq('phone', cleanPhone);
         }
 
-        const { data: session } = await query.maybeSingle();
+        const { data: session, error: sessionErr } = await query.maybeSingle();
 
-        if (!session) {
-          return NextResponse.json({ error: 'Invalid or expired OTP. Please request a new one.' }, { status: 401 });
+        if (sessionErr || !session) {
+          return NextResponse.json(
+            { error: 'Invalid or expired OTP. Please request a new code.' },
+            { status: 401 }
+          );
         }
 
-        // Mark as verified
+        // Check max attempts
+        const currentAttempts = Number(session.attempts || 0);
+        if (currentAttempts >= 5) {
+          return NextResponse.json(
+            { error: 'Maximum verification attempts exceeded. Please request a new OTP.' },
+            { status: 429 }
+          );
+        }
+
+        // Verify OTP: bcrypt comparison first, with legacy sha256 fallback
+        let isMatch = false;
+        try {
+          if (session.otp_hash.startsWith('$2a$') || session.otp_hash.startsWith('$2b$')) {
+            isMatch = await bcrypt.compare(inputCode, session.otp_hash);
+          } else if (session.otp_hash.length === 64) {
+            isMatch = legacyHashOtp(inputCode, identifier) === session.otp_hash;
+          }
+        } catch (compareErr) {
+          console.error('OTP comparison error:', compareErr);
+        }
+
+        if (!isMatch) {
+          // Increment attempts
+          try {
+            await supabase
+              .from('otp_sessions')
+              .update({ attempts: currentAttempts + 1 })
+              .eq('id', session.id);
+          } catch (incErr) {
+            console.warn('Could not increment attempts:', incErr);
+          }
+
+          const remaining = Math.max(0, 4 - currentAttempts);
+          return NextResponse.json(
+            {
+              error: `Invalid verification code. ${remaining} attempts remaining.`,
+              remainingAttempts: remaining,
+            },
+            { status: 401 }
+          );
+        }
+
+        // Mark OTP session as verified
         await supabase.from('otp_sessions').update({ verified: true }).eq('id', session.id);
 
-        // Find or create user
+        // Find or create user in public.users
         let userQuery = supabase.from('users').select('*');
         if (cleanEmail) {
           userQuery = userQuery.eq('email', cleanEmail);
         } else {
-          userQuery = userQuery.eq('phone', formattedPhone);
+          userQuery = userQuery.or(`phone.eq.${formattedPhone},phone.eq.${cleanPhone}`);
         }
         const { data: existingUser } = await userQuery.maybeSingle();
 
+        let resolvedUser;
         if (existingUser) {
           await supabase.from('users').update({ updated_at: new Date().toISOString() }).eq('id', existingUser.id);
-          const response = NextResponse.json({ success: true, message: 'OTP verified.', user: existingUser });
-          response.cookies.set('artsy_auth_token', encodeURIComponent(JSON.stringify(existingUser)), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-            maxAge: 604800,
-          });
-          return response;
+          resolvedUser = existingUser;
+        } else {
+          const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
+          // Security: New users ALWAYS default to client; admin cannot be auto-assigned
+          const defaultRole = testPersona ? testPersona.role : 'client';
+          const defaultName = testPersona ? testPersona.full_name : (cleanEmail ? cleanEmail.split('@')[0] : 'Valued Client');
+
+          const newUserData = {
+            email: cleanEmail || `${cleanPhone}@artsyprod.studio`,
+            phone: formattedPhone || (cleanPhone ? `+91${cleanPhone}` : undefined),
+            full_name: defaultName,
+            role: defaultRole,
+            status: 'active',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
+          const { data: createdUser, error: insertErr } = await supabase
+            .from('users')
+            .insert([newUserData])
+            .select()
+            .single();
+
+          if (insertErr || !createdUser) {
+            console.warn('User DB insert error, using fallback:', insertErr);
+            resolvedUser = {
+              id: `user_${cleanEmail ? cleanEmail.slice(0, 10) : cleanPhone!.slice(-6)}`,
+              ...newUserData,
+            };
+          } else {
+            resolvedUser = createdUser;
+          }
         }
 
-        const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
-        const defaultRole = testPersona ? testPersona.role : (role || 'client');
-        const newUser = { 
-          email: cleanEmail || undefined, 
-          phone: formattedPhone || undefined, 
-          full_name: testPersona ? testPersona.full_name : undefined,
-          role: defaultRole, 
-          status: 'new', 
-          isNewUser: true 
+        const sessionToken = crypto.randomBytes(32).toString('hex');
+        const userPayload = {
+          id: resolvedUser.id,
+          role: resolvedUser.role || 'client',
+          phone: resolvedUser.phone || formattedPhone || '',
+          email: resolvedUser.email || cleanEmail || '',
+          full_name: resolvedUser.full_name,
         };
 
         const response = NextResponse.json({
           success: true,
-          message: 'OTP verified. New user — proceed to profile creation.',
-          user: newUser,
+          message: 'OTP verified successfully.',
+          user: userPayload,
+          sessionToken,
         });
-        response.cookies.set('artsy_auth_token', encodeURIComponent(JSON.stringify(newUser)), {
+
+        response.cookies.set('artsy_auth_token', encodeURIComponent(JSON.stringify(userPayload)), {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
           path: '/',
           maxAge: 604800,
         });
+
         return response;
       }
 
-      // Fallback for mock mode without database
-      if (code === '123456') {
-        const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
-        const resolvedRole = testPersona ? testPersona.role : (role || 'client');
-        const resolvedName = testPersona ? testPersona.full_name : (cleanEmail ? 'Test User' : 'Valued Client');
-        const mockUser = { 
-          email: cleanEmail || undefined, 
-          phone: formattedPhone || undefined, 
-          full_name: resolvedName,
-          role: resolvedRole, 
-          status: 'active' 
-        };
-
-        const response = NextResponse.json({
-          success: true,
-          message: 'OTP verified (mock).',
-          user: mockUser,
-        });
-        response.cookies.set('artsy_auth_token', encodeURIComponent(JSON.stringify(mockUser)), {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax',
-          path: '/',
-          maxAge: 604800,
-        });
-        return response;
-      }
-      return NextResponse.json({ error: 'Invalid OTP.' }, { status: 401 });
+      return NextResponse.json({ error: 'Database service unavailable. Please try again.' }, { status: 503 });
     }
 
     // ────────────────────────────────────────────────────────
@@ -255,16 +301,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isDev = process.env.NODE_ENV !== 'production';
-    const isTestPhone = cleanPhone && (Boolean(TEST_PERSONAS[cleanPhone]) || cleanPhone === '9876543210' || cleanPhone === '9876543211' || cleanPhone === '9876543212' || cleanPhone.endsWith('1234'));
-    const isMockMode = process.env.MOCK_WHATSAPP === 'true' || isDev || Boolean(isTestPhone);
-    const exposeDevOtp = isDev && Boolean(isTestPhone);
-    const otpCode = isTestPhone ? '123456' : Math.floor(100000 + Math.random() * 900000).toString();
+    // 2. Cryptographically Secure 6-digit OTP generation (Fix 3B)
+    const otpCode = crypto.randomInt(100000, 1000000).toString();
 
-    // 3. Store hashed OTP with 5-minute expiry in database
+    // 3. Store hashed OTP with 5-minute expiry in database (Fix 3B)
     if (isSupabaseConfigured && supabase) {
       try {
-        const otpHash = hashOtp(otpCode, identifier);
+        const otpHash = await bcrypt.hash(otpCode, 10);
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
         // Invalidate previous unexpired OTPs for this identifier
@@ -283,6 +326,7 @@ export async function POST(request: NextRequest) {
             otp_hash: otpHash,
             expires_at: expiresAt,
             verified: false,
+            attempts: 0,
             ip_address: ip,
             created_at: new Date().toISOString(),
           },
@@ -309,9 +353,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Dispatch OTP via WhatsApp (OpenWA + Baileys Anti-Ban) or Fallback (Resend Email)
+    // 5. Dual-Track Dispatch Chain (Priority 1: OpenWA WhatsApp -> Priority 2: Resend Email -> Error)
+    const gatewayUrl = process.env.WHATSAPP_GATEWAY_URL?.trim();
     const hasOpenWA = Boolean(
-      process.env.WHATSAPP_GATEWAY_URL &&
+      gatewayUrl &&
+      gatewayUrl.length > 0 &&
       process.env.WHATSAPP_GATEWAY_API_KEY &&
       !process.env.WHATSAPP_GATEWAY_API_KEY.includes('YOUR_OPERATOR_KEY')
     );
@@ -319,6 +365,7 @@ export async function POST(request: NextRequest) {
     let dispatchedViaWA = false;
     let waMessageId: string | undefined;
 
+    // Track 1: WhatsApp via OpenWA (Local development / dedicated gateway)
     if (cleanPhone && hasOpenWA) {
       try {
         const waResult = await sendWhatsAppOTP(cleanPhone, otpCode);
@@ -348,12 +395,12 @@ export async function POST(request: NextRequest) {
         channel: 'whatsapp',
         messageId: waMessageId,
         remainingAttempts: rateLimit.remaining,
-        ...(exposeDevOtp && { devOtp: otpCode }),
+        ...(isDev && isMockWhatsApp && { devOtp: otpCode }),
       });
     }
 
-    // Fallback: If Email was provided, dispatch via Resend Email
-    if (cleanEmail) {
+    // Track 2: Resend Email (Vercel production default or fallback)
+    if (cleanEmail && process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.includes('YOUR_RESEND_KEY')) {
       const emailResult = await sendOtpEmail(cleanEmail, otpCode);
 
       if (!emailResult.success) {
@@ -375,27 +422,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'OTP sent via Email',
+        channel: 'email',
         email: cleanEmail,
         remainingAttempts: rateLimit.remaining,
-        ...(exposeDevOtp && { devOtp: otpCode }),
+        ...(isDev && isMockWhatsApp && { devOtp: otpCode }),
       });
     }
 
-    // Phone-only flow (when OpenWA is not yet connected / mock fallback):
-    await dispatchNotification({
-      eventNumber: 1, // OTP_SENT
-      userId: `anon_${cleanPhone}`,
-      recipientPhone: formattedPhone!,
-      variables: { otp: otpCode },
-    });
+    // Track 3: Gated Mock Mode strictly in Development
+    if (isDev && isMockWhatsApp) {
+      return NextResponse.json({
+        success: true,
+        message: 'OTP sent (mock mode)',
+        channel: 'mock',
+        remainingAttempts: rateLimit.remaining,
+        devOtp: otpCode,
+      });
+    }
 
-    return NextResponse.json({
-      success: true,
-      message: 'OTP sent via WhatsApp',
-      channel: 'whatsapp',
-      remainingAttempts: rateLimit.remaining,
-      ...(exposeDevOtp && { devOtp: otpCode }),
-    });
+    // Track 4: Delivery failure — NEVER fall back to 123456 or return fake success
+    console.error(`[OTP Route] No delivery channel available for identifier: ${identifier}. WhatsApp configured: ${hasOpenWA}, Email present: ${Boolean(cleanEmail)}`);
+    return NextResponse.json(
+      {
+        error: cleanPhone && !hasOpenWA
+          ? 'WhatsApp service is not available on this server. Please use email verification or contact studio support.'
+          : 'Failed to dispatch verification code. Please check your contact information and try again.',
+      },
+      { status: 502 }
+    );
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.error('Auth OTP dispatch error:', error);

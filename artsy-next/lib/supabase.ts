@@ -139,11 +139,11 @@ export const signInWithWhatsApp = async (phoneNumber: string, fullName: string =
   // 3. Create or fetch user in Supabase
   // 4. Set up session
 
-  // For demo purposes, we'll return mock success
+  // For simulation in development:
   return {
     success: true,
     message: `OTP simulation: In production, this would send OTP via WhatsApp to ${phoneNumber}`,
-    testCode: '123456'
+    ...(process.env.NODE_ENV === 'development' && process.env.MOCK_WHATSAPP === 'true' && { testCode: '123456' }),
   }
 }
 
@@ -171,8 +171,8 @@ export const verifyWhatsAppOtp = async (phoneNumber: string, code: string, fullN
     }
   }
 
-  // Mock verification - accept 123456 for demo
-  if (code === '123456') {
+  // In mock mode strictly within local development:
+  if (process.env.NODE_ENV === 'development' && process.env.MOCK_WHATSAPP === 'true' && code === '123456') {
     // Try to get existing user or create new one
     const { data: existingUser, error: fetchError } = await supabase
       .from('users')
@@ -193,11 +193,9 @@ export const verifyWhatsAppOtp = async (phoneNumber: string, code: string, fullN
 
       return { success: true, user: existingUser }
     } else {
-      // Create new user (this would typically happen after auth.signUp)
-      // For simplicity in this demo, we'll simulate user creation
       const mockUser = {
         id: crypto.randomUUID(),
-        email: `${phoneNumber.replace(/\D/g, '')}@example.com`, // Placeholder email
+        email: `${phoneNumber.replace(/\D/g, '')}@artsyprod.studio`,
         phone: phoneNumber,
         full_name: fullName || `User ${phoneNumber.slice(-4)}`,
         role: role,
@@ -207,12 +205,11 @@ export const verifyWhatsAppOtp = async (phoneNumber: string, code: string, fullN
         updated_at: new Date().toISOString()
       }
 
-      // In reality, you'd use supabase.auth.signUp() and then create profile
       return { success: true, user: mockUser }
     }
   }
 
-  return { success: false, error: 'Invalid OTP. Please try again.' }
+  return { success: false, error: 'Invalid verification code. Please try again.' }
 }
 
 export const signOut = async () => {

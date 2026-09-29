@@ -78,7 +78,7 @@ export const getRoleHomePath = (role: UserRole): string => {
       return '/freelancer';
     case 'client':
     default:
-      return '/client/review';
+      return '/client-dashboard';
   }
 };
 

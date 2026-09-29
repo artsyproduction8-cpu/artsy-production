@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { verifyWhatsAppOtp } from '@/lib/supabase';
-import { setCurrentUser, ArtsyUser } from '@/lib/auth';
+import { setCurrentUser, ArtsyUser, getRoleHomePath } from '@/lib/auth';
 
 export default function VerifyPage() {
   const router = useRouter();
@@ -12,7 +12,7 @@ export default function VerifyPage() {
   const [countryCode, setCountryCode] = useState('+91');
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<'client' | 'freelancer' | 'admin'>('client');
-  const [otp, setOtp] = useState('123456');
+  const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean | null>(null);
@@ -32,7 +32,7 @@ export default function VerifyPage() {
     }
   }, []);
 
-  const fullPhone = `${countryCode} ${phoneNumber || '9876543210'}`;
+  const fullPhone = `${countryCode} ${phoneNumber || ''}`.trim();
 
   const handleVerify = async () => {
     if (!otp.trim() || otp.length < 6) {
@@ -47,17 +47,15 @@ export default function VerifyPage() {
     try {
       const res = await verifyWhatsAppOtp(fullPhone, otp, fullName, role);
 
-      if (res.success) {
+      if (res.success && res.user) {
         setSuccess(true);
-        let redirectUrl = '/client';
-        if (res.user.role === 'admin') {
-          redirectUrl = '/admin';
-        } else if (res.user.role === 'freelancer') {
+        const resolvedRole = res.user.role || 'client';
+        let redirectUrl = getRoleHomePath(resolvedRole);
+
+        if (resolvedRole === 'freelancer') {
           const hasProfile = typeof window !== 'undefined' && localStorage.getItem('artsy_creator_profile');
           if (!hasProfile && res.user.onboarding_status !== 'approved' && res.user.onboarding_status !== 'pending_review' && res.user.id !== 'usr-editor-002') {
             redirectUrl = '/freelancer/onboarding';
-          } else {
-            redirectUrl = '/freelancer';
           }
         }
 
@@ -65,46 +63,13 @@ export default function VerifyPage() {
 
         setTimeout(() => {
           router.push(redirectUrl);
-        }, 1200);
+        }, 1000);
       } else {
         setError(res.error || 'Verification failed. Please check the code.');
       }
-    } catch {
-      // Offline fallback
-      setSuccess(true);
-      const hasProfile = typeof window !== 'undefined' && localStorage.getItem('artsy_creator_profile');
-      let fallbackOnboardingStatus: any = 'incomplete';
-      let redirectUrl = '/client';
-      if (role === 'admin') {
-        redirectUrl = '/admin';
-      } else if (role === 'freelancer') {
-        if (hasProfile) {
-          fallbackOnboardingStatus = 'pending_review';
-          redirectUrl = '/freelancer';
-        } else if (phoneNumber === '9876543211' || fullName.includes('Aarav')) {
-          fallbackOnboardingStatus = 'approved';
-          redirectUrl = '/freelancer';
-        } else {
-          fallbackOnboardingStatus = 'incomplete';
-          redirectUrl = '/freelancer/onboarding';
-        }
-      }
-
-      const fallbackUser: ArtsyUser = {
-        id: crypto.randomUUID(),
-        email: `${(phoneNumber || '9876543210').replace(/\D/g, '')}@artsyprod.studio`,
-        phone: fullPhone,
-        full_name: fullName.trim() || (role === 'client' ? 'Sneha Patel' : role === 'freelancer' ? 'Aarav Sen' : 'Studio Director'),
-        role,
-        status: 'active',
-        onboarding_status: fallbackOnboardingStatus,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setCurrentUser(fallbackUser);
-      setTimeout(() => {
-        router.push(redirectUrl);
-      }, 1200);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Verification failed. Please try again.';
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -143,12 +108,8 @@ export default function VerifyPage() {
             <div className="text-center">
               <h1 className="text-lg font-bold text-[#1D1D1F]">Verify Mobile Number</h1>
               <p className="text-xs text-[#86868B] mt-1">
-                Enter the 6-digit code sent to <strong className="text-[#1D1D1F]">{fullPhone}</strong>
+                Enter the 6-digit code sent to <strong className="text-[#1D1D1F]">{fullPhone || 'your mobile'}</strong>
               </p>
-            </div>
-
-            <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl text-xs text-blue-800 text-center">
-              Demo Access Code: <strong className="font-mono">123456</strong>
             </div>
 
             <div className="flex justify-center gap-2 my-4">
@@ -159,7 +120,7 @@ export default function VerifyPage() {
                   maxLength={1}
                   value={otp[index] || ''}
                   onChange={(e) => {
-                    const char = e.target.value;
+                    const char = e.target.value.replace(/\D/g, '');
                     const newOtp = otp.split('');
                     newOtp[index] = char;
                     setOtp(newOtp.join(''));

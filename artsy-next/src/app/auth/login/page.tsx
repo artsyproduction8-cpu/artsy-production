@@ -402,7 +402,7 @@ function LoginFormContent() {
         throw new Error(data.error || 'Failed to dispatch verification code.');
       }
 
-      if (data.devOtp) {
+      if (data.devOtp && process.env.NODE_ENV === 'development') {
         setOtpDigits(data.devOtp.split(''));
       }
 
@@ -437,30 +437,6 @@ function LoginFormContent() {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        const clean = phoneNumber.replace(/\D/g, '');
-        if (code === '123456' && (clean === '9876543210' || clean === '9876543211' || clean === '9876543212' || clean.length === 10)) {
-          const defaultNames: Record<UserRole, string> = {
-            client: 'Sneha Patel',
-            freelancer: 'Aarav Sen',
-            admin: 'Studio Director',
-          };
-          const resolvedRole = selectedRole || (clean === '9876543211' ? 'freelancer' : clean === '9876543212' ? 'admin' : 'client');
-          const fallbackUser: ArtsyUser = {
-            id: `usr_${clean}`,
-            email: `${clean}@artsyprod.studio`,
-            phone: `${countryCode} ${phoneNumber}`,
-            full_name: identifiedUser.name || defaultNames[resolvedRole] || 'Valued Member',
-            role: resolvedRole,
-            status: 'active',
-            onboarding_status: resolvedRole === 'freelancer' ? 'approved' : undefined,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          setCurrentUser(fallbackUser);
-          const dest = redirectTarget || getRoleHomePath(fallbackUser.role);
-          router.push(dest);
-          return;
-        }
         throw new Error(data.error || 'Invalid or expired verification code.');
       }
 

@@ -99,16 +99,22 @@ export const getCurrentUser = (): ArtsyUser | null => {
   }
 };
 
-// Set current user in localStorage and cookie, and dispatch reactive event
+// Set current user in localStorage and server HttpOnly cookie via session endpoint
 export const setCurrentUser = (user: ArtsyUser | null) => {
   if (typeof window === 'undefined') return;
 
   if (user) {
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-    document.cookie = `artsy_auth_token=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800; SameSite=Lax`;
+    // Sync with server HttpOnly cookie
+    fetch('/api/auth/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user }),
+    }).catch(() => {});
   } else {
     localStorage.removeItem(AUTH_STORAGE_KEY);
-    document.cookie = 'artsy_auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    // Invalidate server HttpOnly cookie
+    fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
   }
 
   // Notify active components in the current window
@@ -136,7 +142,9 @@ export const hasAnyRole = (roles: UserRole[]): boolean => {
 export const logout = (redirectTo: string = '/auth/login') => {
   setCurrentUser(null);
   if (typeof window !== 'undefined') {
-    window.location.href = redirectTo;
+    fetch('/api/auth/session', { method: 'DELETE' }).finally(() => {
+      window.location.href = redirectTo;
+    });
   }
 };
 

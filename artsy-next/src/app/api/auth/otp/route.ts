@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
+import { sendWhatsAppOTP } from '@/lib/whatsapp/openwa-dispatcher';
 import { sendOtpEmail } from '@/lib/email/dispatcher';
 import { supabase, isSupabaseConfigured } from '@/../lib/supabase';
 
@@ -109,18 +110,30 @@ export async function POST(request: NextRequest) {
         const resolvedRole = testPersona ? testPersona.role : (role || 'client');
         const resolvedName = testPersona ? testPersona.full_name : (cleanEmail ? 'Test User' : 'Valued Client');
 
-        return NextResponse.json({
+        const verifiedUser = {
+          id: cleanEmail ? `user_${cleanEmail.replace(/[^a-z0-9]/g, '_').slice(0, 15)}` : `user_${cleanPhone!.slice(-6)}`,
+          email: cleanEmail || `${cleanPhone}@artsyprod.studio`,
+          phone: formattedPhone || undefined,
+          full_name: resolvedName,
+          role: resolvedRole,
+          status: 'active',
+        };
+
+        const response = NextResponse.json({
           success: true,
           message: 'OTP verified (test/mock mode active).',
-          user: {
-            id: cleanEmail ? `user_${cleanEmail.replace(/[^a-z0-9]/g, '_').slice(0, 15)}` : `user_${cleanPhone!.slice(-6)}`,
-            email: cleanEmail || `${cleanPhone}@artsyprod.studio`,
-            phone: formattedPhone || undefined,
-            full_name: resolvedName,
-            role: resolvedRole,
-            status: 'active',
-          },
+          user: verifiedUser,
         });
+
+        response.cookies.set('artsy_auth_token', encodeURIComponent(JSON.stringify(verifiedUser)), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 604800,
+        });
+
+        return response;
       }
 
       // Production / Database mode: verify against stored hash
@@ -162,24 +175,41 @@ export async function POST(request: NextRequest) {
 
         if (existingUser) {
           await supabase.from('users').update({ updated_at: new Date().toISOString() }).eq('id', existingUser.id);
-          return NextResponse.json({ success: true, message: 'OTP verified.', user: existingUser });
+          const response = NextResponse.json({ success: true, message: 'OTP verified.', user: existingUser });
+          response.cookies.set('artsy_auth_token', encodeURIComponent(JSON.stringify(existingUser)), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 604800,
+          });
+          return response;
         }
 
         const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
         const defaultRole = testPersona ? testPersona.role : (role || 'client');
+        const newUser = { 
+          email: cleanEmail || undefined, 
+          phone: formattedPhone || undefined, 
+          full_name: testPersona ? testPersona.full_name : undefined,
+          role: defaultRole, 
+          status: 'new', 
+          isNewUser: true 
+        };
 
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: true,
           message: 'OTP verified. New user — proceed to profile creation.',
-          user: { 
-            email: cleanEmail || undefined, 
-            phone: formattedPhone || undefined, 
-            full_name: testPersona ? testPersona.full_name : undefined,
-            role: defaultRole, 
-            status: 'new', 
-            isNewUser: true 
-          },
+          user: newUser,
         });
+        response.cookies.set('artsy_auth_token', encodeURIComponent(JSON.stringify(newUser)), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 604800,
+        });
+        return response;
       }
 
       // Fallback for mock mode without database
@@ -187,18 +217,27 @@ export async function POST(request: NextRequest) {
         const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
         const resolvedRole = testPersona ? testPersona.role : (role || 'client');
         const resolvedName = testPersona ? testPersona.full_name : (cleanEmail ? 'Test User' : 'Valued Client');
+        const mockUser = { 
+          email: cleanEmail || undefined, 
+          phone: formattedPhone || undefined, 
+          full_name: resolvedName,
+          role: resolvedRole, 
+          status: 'active' 
+        };
 
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: true,
           message: 'OTP verified (mock).',
-          user: { 
-            email: cleanEmail || undefined, 
-            phone: formattedPhone || undefined, 
-            full_name: resolvedName,
-            role: resolvedRole, 
-            status: 'active' 
-          },
+          user: mockUser,
         });
+        response.cookies.set('artsy_auth_token', encodeURIComponent(JSON.stringify(mockUser)), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 604800,
+        });
+        return response;
       }
       return NextResponse.json({ error: 'Invalid OTP.' }, { status: 401 });
     }
@@ -216,10 +255,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Generate 6-digit OTP
     const isDev = process.env.NODE_ENV !== 'production';
     const isTestPhone = cleanPhone && (Boolean(TEST_PERSONAS[cleanPhone]) || cleanPhone === '9876543210' || cleanPhone === '9876543211' || cleanPhone === '9876543212' || cleanPhone.endsWith('1234'));
     const isMockMode = process.env.MOCK_WHATSAPP === 'true' || isDev || Boolean(isTestPhone);
+    const exposeDevOtp = isDev && Boolean(isTestPhone);
     const otpCode = isTestPhone ? '123456' : Math.floor(100000 + Math.random() * 900000).toString();
 
     // 3. Store hashed OTP with 5-minute expiry in database
@@ -270,7 +309,50 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Dispatch OTP via Email (Primary) or WhatsApp/SMS (Mock Fallback)
+    // 5. Dispatch OTP via WhatsApp (OpenWA + Baileys Anti-Ban) or Fallback (Resend Email)
+    const hasOpenWA = Boolean(
+      process.env.WHATSAPP_GATEWAY_URL &&
+      process.env.WHATSAPP_GATEWAY_API_KEY &&
+      !process.env.WHATSAPP_GATEWAY_API_KEY.includes('YOUR_OPERATOR_KEY')
+    );
+
+    let dispatchedViaWA = false;
+    let waMessageId: string | undefined;
+
+    if (cleanPhone && hasOpenWA) {
+      try {
+        const waResult = await sendWhatsAppOTP(cleanPhone, otpCode);
+        if (waResult.success) {
+          dispatchedViaWA = true;
+          waMessageId = waResult.messageId;
+        } else {
+          console.warn('[OTP Route] OpenWA WhatsApp dispatch failed:', waResult.error);
+        }
+      } catch (waErr) {
+        console.error('[OTP Route] OpenWA WhatsApp exception:', waErr);
+      }
+    }
+
+    if (dispatchedViaWA) {
+      // Record notification event #1 (OTP_SENT)
+      await dispatchNotification({
+        eventNumber: 1,
+        userId: `anon_${cleanPhone}`,
+        recipientPhone: formattedPhone!,
+        variables: { otp: otpCode },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'OTP sent via WhatsApp',
+        channel: 'whatsapp',
+        messageId: waMessageId,
+        remainingAttempts: rateLimit.remaining,
+        ...(exposeDevOtp && { devOtp: otpCode }),
+      });
+    }
+
+    // Fallback: If Email was provided, dispatch via Resend Email
     if (cleanEmail) {
       const emailResult = await sendOtpEmail(cleanEmail, otpCode);
 
@@ -282,7 +364,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Log notification event #1
       await dispatchNotification({
         eventNumber: 1, // OTP_SENT
         userId: `anon_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`,
@@ -296,11 +377,11 @@ export async function POST(request: NextRequest) {
         message: 'OTP sent via Email',
         email: cleanEmail,
         remainingAttempts: rateLimit.remaining,
-        ...((isDev || isMockMode || isTestPhone) && { devOtp: otpCode }),
+        ...(exposeDevOtp && { devOtp: otpCode }),
       });
     }
 
-    // Phone-only flow (WhatsApp skipped / mocked)
+    // Phone-only flow (when OpenWA is not yet connected / mock fallback):
     await dispatchNotification({
       eventNumber: 1, // OTP_SENT
       userId: `anon_${cleanPhone}`,
@@ -310,9 +391,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Verification code dispatched to ${formattedPhone}.`,
+      message: 'OTP sent via WhatsApp',
+      channel: 'whatsapp',
       remainingAttempts: rateLimit.remaining,
-      ...((isDev || isMockMode || isTestPhone) && { devOtp: otpCode }),
+      ...(exposeDevOtp && { devOtp: otpCode }),
     });
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : String(error);

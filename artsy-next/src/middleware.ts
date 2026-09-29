@@ -5,15 +5,16 @@ import type { NextRequest } from 'next/server';
 const ipRequestMap = new Map<string, { count: number; resetTime: number }>();
 
 /**
- * Edge Middleware for Rate Limiting & Protection (§5.8, §9.5)
- * Enforces per-IP and per-endpoint limits:
- * - General API: 100 req/min
- * - Auth/OTP endpoints: 10 req/10min
+ * Server-Side Edge Middleware for:
+ * 1. Rate Limiting & Protection (§5.8, §9.5)
+ * 2. Strict Role-Based Server Route Guards (SEC-02)
  */
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Only apply rate limiting to API routes
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 1. API Route Rate Limiting
+  // ─────────────────────────────────────────────────────────────────────────────
   if (pathname.startsWith('/api')) {
     // Exempt cron jobs from edge rate limiting (they use CRON_SECRET auth)
     if (pathname.startsWith('/api/cron')) {
@@ -54,9 +55,73 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 2. Server-Side Page Route Guards (SEC-02)
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // Exempt public onboarding / login subroutes
+  if (pathname === '/admin/login' || pathname === '/freelancer/onboarding') {
+    return NextResponse.next();
+  }
+
+  // Role map for protected paths
+  const protectedRoutes: Array<{ prefix: string; allowedRoles: string[] }> = [
+    { prefix: '/admin', allowedRoles: ['admin'] },
+    { prefix: '/client-dashboard', allowedRoles: ['client', 'admin'] },
+    { prefix: '/client', allowedRoles: ['client', 'admin'] },
+    { prefix: '/freelancer', allowedRoles: ['freelancer', 'admin'] },
+  ];
+
+  for (const route of protectedRoutes) {
+    if (pathname === route.prefix || pathname.startsWith(route.prefix + '/')) {
+      const authCookie = request.cookies.get('artsy_auth_token');
+
+      // Unauthenticated -> redirect to login with return path
+      if (!authCookie || !authCookie.value) {
+        const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      // Role authorization check
+      try {
+        let rawVal = authCookie.value;
+        try {
+          rawVal = decodeURIComponent(rawVal);
+        } catch {}
+        const user = JSON.parse(rawVal);
+        if (!user || !user.role || !route.allowedRoles.includes(user.role)) {
+          // Unauthorized role -> redirect to login with error notice
+          const loginUrl = new URL('/auth/login', request.url);
+          loginUrl.searchParams.set('unauthorized', 'true');
+          loginUrl.searchParams.set('redirect', pathname);
+          return NextResponse.redirect(loginUrl);
+        }
+      } catch {
+        // Malformed cookie -> treat as unauthenticated
+        const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      // Valid session & authorized role
+      return NextResponse.next();
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/api/:path*']
+  matcher: [
+    '/api/:path*',
+    '/admin/:path*',
+    '/admin',
+    '/client/:path*',
+    '/client',
+    '/client-dashboard/:path*',
+    '/client-dashboard',
+    '/freelancer/:path*',
+    '/freelancer'
+  ]
 };

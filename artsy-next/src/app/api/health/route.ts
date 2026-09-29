@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/../lib/supabase';
+import { checkOpenWAGatewayHealth, getAntiBanStatus } from '@/lib/whatsapp/openwa-dispatcher';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -42,11 +43,10 @@ export async function GET() {
   const rzpSecret = process.env.RAZORPAY_KEY_SECRET;
   const rzpStatus = (rzpKeyId && rzpSecret && !rzpKeyId.includes('your-')) ? 'connected' : 'mock';
 
-  // 4. WhatsApp Health (Meta Cloud API - Skipped / Mock)
-  const waToken = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_ACCESS_TOKEN;
-  const waPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || process.env.META_WHATSAPP_PHONE_ID;
-  const isMockWA = process.env.MOCK_WHATSAPP === 'true' || !waToken || waToken.includes('your-');
-  const waStatus = isMockWA ? 'mock' : (waPhoneId ? 'connected' : 'mock');
+  // 4. WhatsApp Health (OpenWA Self-Hosted Gateway + Baileys Anti-Ban)
+  const openwaHealth = await checkOpenWAGatewayHealth();
+  const antiBanStatus = getAntiBanStatus();
+  const waStatus = openwaHealth.reachable ? 'connected' : (openwaHealth.configured ? 'disconnected' : 'mock');
 
   // 5. Email Health (Resend - Connected)
   const resendApiKey = process.env.RESEND_API_KEY;
@@ -84,13 +84,27 @@ export async function GET() {
         status: emailStatus,
       },
       whatsapp: {
-        provider: 'meta_whatsapp',
+        provider: 'openwa_gateway',
         status: waStatus,
+        gatewayUrl: openwaHealth.gatewayUrl,
+        sessionId: openwaHealth.sessionId || null,
+        sessionStatus: openwaHealth.sessionStatus || 'disconnected',
+        antiban: {
+          rateLimitStatus: antiBanStatus.allowed ? 'active' : 'throttled',
+          maxPerMinute: antiBanStatus.maxPerMinute,
+          lastMinute: antiBanStatus.lastMinute,
+          messagesAllowed: antiBanStatus.messagesAllowed,
+          messagesBlocked: antiBanStatus.messagesBlocked,
+          currentFactor: antiBanStatus.currentFactor,
+          entropyCycles: antiBanStatus.entropyCycles,
+        },
+        ...(openwaHealth.error && { error: openwaHealth.error }),
       },
       notifications: {
         provider: 'resend_email',
         status: emailStatus,
-        whatsapp_fallback: 'mock',
+        whatsapp_provider: 'openwa_gateway',
+        whatsapp_status: waStatus,
       },
     },
     responseTimeMs,

@@ -1,73 +1,127 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// This function can be marked `async` if using `await` inside
-export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
+// In-memory bucket for edge/local dev rate limiting (§5.8)
+const ipRequestMap = new Map<string, { count: number; resetTime: number }>();
 
-  // Skip middleware for static assets, next internals, and API routes (we'll handle API auth separately if needed)
-  if (
-    path.startsWith('/_next') ||
-    path.startsWith('/api/') ||
-    path.startsWith('/public/') ||
-    path === '/favicon.ico'
-  ) {
+/**
+ * Server-Side Edge Middleware for:
+ * 1. Rate Limiting & Protection (§5.8, §9.5)
+ * 2. Strict Role-Based Server Route Guards (SEC-02)
+ */
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 1. API Route Rate Limiting
+  // ─────────────────────────────────────────────────────────────────────────────
+  if (pathname.startsWith('/api')) {
+    // Exempt cron jobs from edge rate limiting (they use CRON_SECRET auth)
+    if (pathname.startsWith('/api/cron')) {
+      return NextResponse.next();
+    }
+
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+    const now = Date.now();
+    const windowMs = 60 * 1000; // 1 minute
+    const maxRequests = pathname.startsWith('/api/auth') ? 10 : 100;
+
+    const record = ipRequestMap.get(ip);
+
+    if (!record || now > record.resetTime) {
+      ipRequestMap.set(ip, { count: 1, resetTime: now + windowMs });
+    } else {
+      record.count += 1;
+      if (record.count > maxRequests) {
+        return new NextResponse(
+          JSON.stringify({
+            error: 'Too Many Requests',
+            message: 'Rate limit exceeded. Please wait before submitting additional requests.'
+          }),
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'application/json',
+              'Retry-After': Math.ceil((record.resetTime - now) / 1000).toString()
+            }
+          }
+        );
+      }
+    }
+
+    const response = NextResponse.next();
+    response.headers.set('X-RateLimit-Limit', maxRequests.toString());
+    response.headers.set('X-RateLimit-Remaining', Math.max(0, maxRequests - (record?.count || 1)).toString());
+    return response;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 2. Server-Side Page Route Guards (SEC-02)
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // Exempt public onboarding / login subroutes
+  if (pathname === '/admin/login' || pathname === '/freelancer/onboarding') {
     return NextResponse.next();
   }
 
-  // Define protected routes and their corresponding roles
-  const protectedRoutes: Record<string, ('client' | 'freelancer' | 'admin')[]> = {
-    '/client-dashboard': ['client'],
-    '/freelancer': ['freelancer'],
-    '/admin': ['admin'],
-    // Add more specific protected routes as needed
-  };
+  // Role map for protected paths
+  const protectedRoutes: Array<{ prefix: string; allowedRoles: string[] }> = [
+    { prefix: '/admin', allowedRoles: ['admin'] },
+    { prefix: '/client-dashboard', allowedRoles: ['client', 'admin'] },
+    { prefix: '/client', allowedRoles: ['client', 'admin'] },
+    { prefix: '/freelancer', allowedRoles: ['freelancer', 'admin'] },
+  ];
 
-  // Check if the path is protected
-  const requiredRoles = protectedRoutes[path];
-  if (requiredRoles) {
-    // For middleware running on server, we need to check cookies
-    // In a real app with Next.js 14, we'd use NextAuth or similar
-    // For this implementation, we'll rely on client-side auth via AuthenticatedLayout
-    // But we can still do basic redirect for obvious cases
+  for (const route of protectedRoutes) {
+    if (pathname === route.prefix || pathname.startsWith(route.prefix + '/')) {
+      const authCookie = request.cookies.get('artsy_auth_token');
 
-    // Since we're using client-side auth with localStorage,
-    // the middleware can't reliably check auth state on server
-    // So we'll let the AuthenticatedLayout handle client-side redirects
-    // but we can still prevent access to obvious protected paths if no auth cookie
+      // Unauthenticated -> redirect to login with return path
+      if (!authCookie || !authCookie.value) {
+        const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
 
-    // Check for auth cookie (if we had one set)
-    const authCookie = request.cookies.get('artsy_auth_token') ||
-                      request.cookies.get('next-auth.session-token') ||
-                      request.cookies.get('__session');
+      // Role authorization check
+      try {
+        let rawVal = authCookie.value;
+        try {
+          rawVal = decodeURIComponent(rawVal);
+        } catch {}
+        const user = JSON.parse(rawVal);
+        if (!user || !user.role || !route.allowedRoles.includes(user.role)) {
+          // Unauthorized role -> redirect to login with error notice
+          const loginUrl = new URL('/auth/login', request.url);
+          loginUrl.searchParams.set('unauthorized', 'true');
+          loginUrl.searchParams.set('redirect', pathname);
+          return NextResponse.redirect(loginUrl);
+        }
+      } catch {
+        // Malformed cookie -> treat as unauthenticated
+        const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
 
-    // If no auth cookie and trying to access protected route, redirect to login
-    // Note: This is a simplification - in practice with localStorage auth,
-    // we'd need to handle this differently or accept client-side redirects
-    if (!authCookie && !path.startsWith('/auth/')) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/auth/login';
-      return NextResponse.redirect(url);
+      // Valid session & authorized role
+      return NextResponse.next();
     }
   }
-
-  // Optional: Redirect root to login if not authenticated (handled client-side now)
-  // We'll let the AuthenticatedLayout handle this for better UX
 
   return NextResponse.next();
 }
 
-// See "Matching Paths" below to learn more
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - API routes (we handle those differently if needed)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public|api).*)',
-  ],
+    '/api/:path*',
+    '/admin/:path*',
+    '/admin',
+    '/client/:path*',
+    '/client',
+    '/client-dashboard/:path*',
+    '/client-dashboard',
+    '/freelancer/:path*',
+    '/freelancer'
+  ]
 };

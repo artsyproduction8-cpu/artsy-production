@@ -21,6 +21,11 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'csv';
+    const revealFullPan = searchParams.get('revealPan') === 'true';
+
+    if (revealFullPan) {
+      console.warn(`[SECURITY AUDIT LOG] Unmasked PAN export accessed at ${new Date().toISOString()} from IP: ${request.headers.get('x-forwarded-for') || '127.0.0.1'}`);
+    }
 
     let batchRecords: NeftBatchRecord[] = [];
 
@@ -158,18 +163,25 @@ export async function GET(request: NextRequest) {
       'Project Reference',
     ];
 
-    const csvRows = batchRecords.map((r) => [
-      `"${r.transactionRef}"`,
-      `"${r.beneficiaryName}"`,
-      `"${r.accountNumber}"`,
-      `"${r.ifscCode}"`,
-      r.netPayoutRupees.toFixed(2),
-      `"${r.narration}"`,
-      (r.tdsAmountPaise / 100).toFixed(2),
-      `"194J-Tech (2%)"`,
-      `"${r.pan}"`,
-      `"${r.projectId}"`,
-    ]);
+    const csvRows = batchRecords.map((r) => {
+      const maskedPan = r.pan && r.pan.length >= 10
+        ? `XXXXXX${r.pan.slice(-4)}`
+        : (r.pan || 'NOT_PROVIDED');
+      const panOutput = revealFullPan ? r.pan : maskedPan;
+
+      return [
+        `"${r.transactionRef}"`,
+        `"${r.beneficiaryName}"`,
+        `"${r.accountNumber}"`,
+        `"${r.ifscCode}"`,
+        r.netPayoutRupees.toFixed(2),
+        `"${r.narration}"`,
+        (r.tdsAmountPaise / 100).toFixed(2),
+        `"194J-Tech (2%)"`,
+        `"${panOutput}"`,
+        `"${r.projectId}"`,
+      ];
+    });
 
     const csvContent = [csvHeaders.join(','), ...csvRows.map((row) => row.join(','))].join('\r\n');
 

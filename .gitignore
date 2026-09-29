@@ -26,6 +26,7 @@ backup/
 scratch/
 artsy-next/scratch/
 artsy-next/.baileys_auth/
+OpenWA/
 
 # Large Raw Media Files
 *.mp4

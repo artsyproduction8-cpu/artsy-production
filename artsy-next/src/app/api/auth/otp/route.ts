@@ -42,20 +42,24 @@ export async function POST(request: NextRequest) {
 
     const identifier = cleanEmail || cleanPhone!;
 
-    const TEST_PERSONAS: Record<string, { role: string; full_name: string }> = {
-      '7777078742': { role: 'admin', full_name: 'Studio Director (Admin)' },
-      '9876543210': { role: 'client', full_name: 'Sneha Patel' },
-      '9876543211': { role: 'freelancer', full_name: 'Aarav Sen' },
-      '9876543212': { role: 'admin', full_name: 'Studio Director' },
-    };
-
     const isDev = process.env.NODE_ENV === 'development';
     const isMockWhatsApp = process.env.MOCK_WHATSAPP === 'true';
 
     // ────────────────────────────────────────────────────────
-    // ACTION: LOOKUP — Identify user role and name by phone
+    // ACTION: LOOKUP — Identify user role and name dynamically
     // ────────────────────────────────────────────────────────
     if (action === 'lookup') {
+      // 1. Fixed Studio Director Admin Anchor
+      if (cleanPhone === '7777078742') {
+        return NextResponse.json({
+          exists: true,
+          role: 'admin',
+          name: 'Studio Director (Admin)',
+          isNewUser: false,
+        });
+      }
+
+      // 2. Query dynamic user records from Supabase
       if (isSupabaseConfigured && supabase) {
         try {
           let userQuery = supabase.from('users').select('id, full_name, email, phone, role, status');
@@ -79,21 +83,10 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Check fallback test personas if DB not populated
-      if (cleanPhone && TEST_PERSONAS[cleanPhone]) {
-        const persona = TEST_PERSONAS[cleanPhone];
-        return NextResponse.json({
-          exists: true,
-          role: persona.role,
-          name: persona.full_name,
-          isNewUser: false,
-        });
-      }
-
-      // Default all new phone numbers to Client
+      // 3. New user (allows them to register as Client or Creator/Editor)
       return NextResponse.json({
         exists: false,
-        role: 'client',
+        role: null,
         name: null,
         isNewUser: true,
       });
@@ -111,9 +104,8 @@ export async function POST(request: NextRequest) {
 
       // Only allow mock 123456 bypass if STRICTLY in dev AND mock mode enabled
       if (isDev && isMockWhatsApp && inputCode === '123456') {
-        const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
-        const resolvedRole = testPersona ? testPersona.role : (role || 'client');
-        const resolvedName = testPersona ? testPersona.full_name : (cleanEmail ? 'Test User' : 'Valued Client');
+        const resolvedRole = cleanPhone === '7777078742' ? 'admin' : (role || 'client');
+        const resolvedName = cleanPhone === '7777078742' ? 'Studio Director (Admin)' : (cleanEmail ? 'Test User' : 'Valued Member');
 
         const verifiedUser = {
           id: cleanEmail ? `user_${cleanEmail.replace(/[^a-z0-9]/g, '_').slice(0, 15)}` : `user_${cleanPhone!.slice(-6)}`,
@@ -227,10 +219,12 @@ export async function POST(request: NextRequest) {
           await supabase.from('users').update({ updated_at: new Date().toISOString() }).eq('id', existingUser.id);
           resolvedUser = existingUser;
         } else {
-          const testPersona = cleanPhone ? TEST_PERSONAS[cleanPhone] : null;
-          // Security: New users ALWAYS default to client; admin cannot be auto-assigned
-          const defaultRole = testPersona ? testPersona.role : 'client';
-          const defaultName = testPersona ? testPersona.full_name : (cleanEmail ? cleanEmail.split('@')[0] : 'Valued Client');
+          // If 7777078742: admin. Otherwise, user-selected role (freelancer or client):
+          const userChosenRole = (role === 'freelancer' || role === 'editor') ? 'freelancer' : 'client';
+          const defaultRole = cleanPhone === '7777078742' ? 'admin' : userChosenRole;
+          const defaultName = cleanPhone === '7777078742'
+            ? 'Studio Director (Admin)'
+            : (cleanEmail ? cleanEmail.split('@')[0] : (defaultRole === 'freelancer' ? 'Creator Member' : 'Valued Client'));
 
           const newUserData = {
             email: cleanEmail || `${cleanPhone}@artsyprod.studio`,

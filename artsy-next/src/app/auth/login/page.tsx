@@ -278,7 +278,7 @@ function LoginFormContent() {
 
   const [countryCode, setCountryCode] = useState('+91');
   const [otpStep, setOtpStep] = useState<'phone' | 'otp'>('phone');
-  const [otpDigits, setOtpDigits] = useState<string[]>(['1', '2', '3', '4', '5', '6']);
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -293,30 +293,21 @@ function LoginFormContent() {
     return () => clearInterval(timer);
   }, []);
 
-  // Automatic Phone-to-Role Identification (Defaults new users to Client)
+  // Automatic Phone-to-Role Identification from Supabase Database
   useEffect(() => {
     const clean = phoneNumber.replace(/\D/g, '');
     if (clean.length === 10) {
-      // Fast local resolution for instant test accounts
-      const testLookup: Record<string, { name: string; role: UserRole }> = {
-        '7777078742': { name: 'Studio Director (Admin)', role: 'admin' },
-        '9876543210': { name: 'Sneha Patel', role: 'client' },
-        '9876543211': { name: 'Aarav Sen', role: 'freelancer' },
-        '9876543212': { name: 'Studio Director', role: 'admin' },
-      };
-
-      if (testLookup[clean]) {
-        const match = testLookup[clean];
+      if (clean === '7777078742') {
         setIdentifiedUser({
-          name: match.name,
-          role: match.role,
+          name: 'Studio Director (Admin)',
+          role: 'admin',
           isNewUser: false,
         });
-        setSelectedRole(match.role);
+        setSelectedRole('admin');
         return;
       }
 
-      // Check with backend lookup
+      // Check dynamically with backend database
       fetch('/api/auth/otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -324,31 +315,34 @@ function LoginFormContent() {
       })
         .then((res) => res.json())
         .then((data) => {
-          if (data && data.role) {
+          if (data && data.exists && data.role) {
             setIdentifiedUser({
               name: data.name || null,
               role: (data.role as UserRole) || 'client',
-              isNewUser: Boolean(data.isNewUser),
+              isNewUser: false,
             });
             setSelectedRole((data.role as UserRole) || 'client');
+          } else {
+            setIdentifiedUser((prev) => ({
+              name: null,
+              role: prev.role || selectedRole || 'client',
+              isNewUser: true,
+            }));
           }
         })
         .catch(() => {
-          // Default unknown numbers to Client
-          setIdentifiedUser({
+          setIdentifiedUser((prev) => ({
             name: null,
-            role: 'client',
+            role: prev.role || selectedRole || 'client',
             isNewUser: true,
-          });
-          setSelectedRole('client');
+          }));
         });
     } else {
-      setIdentifiedUser({
+      setIdentifiedUser((prev) => ({
         name: null,
-        role: 'client',
+        role: prev.role || selectedRole || 'client',
         isNewUser: true,
-      });
-      setSelectedRole('client');
+      }));
     }
   }, [phoneNumber]);
 
@@ -579,6 +573,55 @@ function LoginFormContent() {
               }}
               className="space-y-4"
             >
+              {/* Recognized Member Status */}
+              {identifiedUser.name && (
+                <div className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                  <span>
+                    Recognized Account: <strong>{identifiedUser.name}</strong> ({identifiedUser.role.toUpperCase()})
+                  </span>
+                </div>
+              )}
+
+              {/* Account Type Selection for New Sign-ups */}
+              {identifiedUser.isNewUser && phoneNumber !== '7777078742' && (
+                <div>
+                  <label className="block text-xs font-semibold text-[#1D1D1F] mb-1.5">
+                    Signing in as
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedRole('client');
+                        setIdentifiedUser((prev) => ({ ...prev, role: 'client' }));
+                      }}
+                      className={`py-2 px-2.5 rounded-lg text-xs font-bold transition-all ${
+                        selectedRole === 'client'
+                          ? 'bg-white text-[#1D1D1F] shadow-sm'
+                          : 'text-[#86868B] hover:text-[#1D1D1F]'
+                      }`}
+                    >
+                      🎬 Client / Brand
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedRole('freelancer');
+                        setIdentifiedUser((prev) => ({ ...prev, role: 'freelancer' }));
+                      }}
+                      className={`py-2 px-2.5 rounded-lg text-xs font-bold transition-all ${
+                        selectedRole === 'freelancer'
+                          ? 'bg-white text-[#1D1D1F] shadow-sm'
+                          : 'text-[#86868B] hover:text-[#1D1D1F]'
+                      }`}
+                    >
+                      ✂️ Creator / Editor
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-semibold text-[#1D1D1F] mb-1.5">
                   Phone Number <span className="text-red-500">*</span>

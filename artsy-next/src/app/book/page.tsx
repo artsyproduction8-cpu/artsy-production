@@ -5,65 +5,55 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '../components/marketing/Navbar';
 import Footer from '../components/marketing/Footer';
 
-const CATEGORIES = [
-  { key: 'wedding', title: 'Wedding', startingPrice: '₹1,500' },
-  { key: 'brand', title: 'Brand', startingPrice: '₹3,000' },
-  { key: 'corporate', title: 'Corporate', startingPrice: '₹8,000' },
-  { key: 'personal', title: 'Personal / Other', startingPrice: '₹1,000' }
-];
-
-interface SubFormat {
-  id: string;
-  label: string;
-  base: number;
-  duration: string;
-  tag?: string;
-}
-
-const SUB_CATEGORIES: Record<string, SubFormat[]> = {
-  wedding: [
-    { id: 'highlight-teaser', label: 'Highlight + Teaser', base: 5000, duration: '3–5m + 45–60s', tag: 'Most Popular' },
-    { id: 'highlight-only', label: 'Highlight Only', base: 4000, duration: '3–5 min' },
-    { id: 'teaser-only', label: 'Teaser Only', base: 2000, duration: '45–60 sec' },
-    { id: 'trinity-bundle', label: 'Trinity: Highlight + Teaser + Reel', base: 8000, duration: '3–5m + teaser + reel', tag: 'Full Suite' },
-    { id: 'reel-only', label: 'Social Reel Only', base: 1500, duration: '30–60 sec' },
-    { id: 'cinematic-story', label: 'Cinematic Story', base: 8000, duration: '10–15 min' },
-    { id: 'master-package', label: 'Cinematic Story + Teaser + Reel', base: 10000, duration: 'Archival Master' },
-  ],
-  brand: [
-    { id: 'product-video', label: 'Product Video', base: 3000, duration: 'Max 2 min', tag: 'DTC Hero' },
-    { id: 'brand-video', label: 'Brand Video', base: 3000, duration: 'Max 2 min' },
-    { id: 'fashion-apparel', label: 'Fashion / Apparel Video', base: 3000, duration: 'Max 2 min' },
-    { id: 'ad-film', label: 'Ad Film (Commercial Cut)', base: 10000, duration: 'Max 2 min', tag: 'High Velocity' },
-    { id: 'explainer-video', label: 'Explainer Video', base: 8000, duration: 'Max 2 min' },
-  ],
-  corporate: [
-    { id: 'event-highlight', label: 'Event Highlight', base: 12000, duration: '3–5 min', tag: 'Summit Recap' },
-    { id: 'corporate-film', label: 'Corporate Film (Full Keynote)', base: 15000, duration: 'Enterprise' },
-    { id: 'testimonial', label: 'Testimonial Video', base: 10000, duration: '2–4 min' },
-    { id: 'training-video', label: 'Internal Training Video', base: 8000, duration: 'Modular Chapter' },
-  ],
-  personal: [
-    { id: 'birthday-highlight', label: 'Birthday Highlight', base: 3000, duration: '3–5 min' },
-    { id: 'birthday-highlight-teaser', label: 'Birthday Highlight + Teaser', base: 4000, duration: '3–5m + teaser' },
-    { id: 'birthday-triple', label: 'Birthday Triple Bundle', base: 5000, duration: 'Highlight + Teaser + Reel', tag: 'Popular' },
-    { id: 'birthday-teaser', label: 'Birthday Teaser Only', base: 1500, duration: '45–60 sec' },
-    { id: 'birthday-reel', label: 'Birthday Reel Only', base: 1000, duration: '30–60 sec' },
-    { id: 'engagement-highlight', label: 'Engagement Highlight', base: 3500, duration: '3–5 min' },
-    { id: 'engagement-highlight-teaser', label: 'Engagement Highlight + Teaser', base: 4500, duration: '3–5m + teaser' },
-    { id: 'engagement-triple', label: 'Engagement Triple Bundle', base: 5500, duration: 'Highlight + Teaser + Reel' },
-    { id: 'baby-shower-highlight', label: 'Baby Shower Highlight', base: 3000, duration: '3–5 min' },
-    { id: 'baby-shower-bundle', label: 'Baby Shower Triple Bundle', base: 5000, duration: 'Highlight + Teaser + Reel' },
-    { id: 'memorial-film', label: 'Memorial & Celebration of Life', base: 3000, duration: '3–5 min' },
-    { id: 'maternity-reel', label: 'Maternity Reel Only', base: 1000, duration: '30–60 sec' },
-  ],
-};
+import {
+  loadPricingMatrix,
+  getBookCategories,
+  getBookSubCategories,
+  DEFAULT_PRICING_MATRIX,
+  DEFAULT_CAMERA_ANGLES,
+  DEFAULT_DELIVERY_SLAS,
+  CameraAngleRule,
+  DeliverySlaRule,
+  loadCameraAngleRules,
+  loadDeliverySlaRules,
+  ServiceCategory
+} from '@/lib/pricing/catalog-matrix';
 
 function ConfiguratorContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const queryService = (searchParams.get('service') || 'wedding').toLowerCase();
+  const [matrix, setMatrix] = useState<ServiceCategory[]>(DEFAULT_PRICING_MATRIX);
+  const [cameraAngles, setCameraAngles] = useState<CameraAngleRule[]>(DEFAULT_CAMERA_ANGLES);
+  const [deliverySlas, setDeliverySlas] = useState<DeliverySlaRule[]>(DEFAULT_DELIVERY_SLAS);
+
+  useEffect(() => {
+    const sync = () => {
+      const live = loadPricingMatrix();
+      setMatrix(live);
+      setCameraAngles(loadCameraAngleRules());
+      setDeliverySlas(loadDeliverySlaRules());
+    };
+    sync();
+    window.addEventListener('artsy_pricing_updated', sync);
+    window.addEventListener('artsy_catalog_deployed', sync);
+    window.addEventListener('artsy_angles_updated', sync);
+    window.addEventListener('artsy_slas_updated', sync);
+    window.addEventListener('storage', sync);
+    return () => {
+      window.removeEventListener('artsy_pricing_updated', sync);
+      window.removeEventListener('artsy_catalog_deployed', sync);
+      window.removeEventListener('artsy_angles_updated', sync);
+      window.removeEventListener('artsy_slas_updated', sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+
+  const categoriesList = getBookCategories(matrix);
+  const subCategoriesDict = getBookSubCategories(matrix);
+
+
+  const queryService = (searchParams.get('service') || searchParams.get('category') || 'wedding').toLowerCase();
   const resolvedCategory =
     queryService === 'ugc' || queryService === 'brand_ugc' || queryService === 'product' || queryService === 'store_product'
       ? 'brand'
@@ -71,15 +61,15 @@ function ConfiguratorContent() {
       ? 'corporate'
       : queryService === 'personal_event'
       ? 'personal'
-      : queryService in SUB_CATEGORIES
+      : queryService in subCategoriesDict
       ? queryService
       : 'wedding';
 
   const [category, setCategory] = useState<string>(resolvedCategory);
 
   const querySub = searchParams.get('sub') || '';
-  const currentSubs = SUB_CATEGORIES[category] || SUB_CATEGORIES.wedding;
-  const initialSub = currentSubs.find((s) => s.id === querySub) || currentSubs[0];
+  const currentSubs = subCategoriesDict[resolvedCategory] || subCategoriesDict['wedding'] || Object.values(subCategoriesDict)[0] || [];
+  const initialSub = currentSubs.find((s: any) => s.id === querySub) || currentSubs[0] || { id: 'default', label: 'Standard', base: 3000, duration: 'Standard' };
 
   const [selectedSubId, setSelectedSubId] = useState<string>(initialSub.id);
   const [angles, setAngles] = useState<string>('single');
@@ -92,16 +82,53 @@ function ConfiguratorContent() {
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
+  // Sync state if searchParams change dynamically
+  useEffect(() => {
+    const sService = (searchParams.get('service') || searchParams.get('category') || '').toLowerCase();
+    const sSub = searchParams.get('sub') || '';
+
+    const newCat =
+      sService === 'ugc' || sService === 'brand_ugc' || sService === 'product' || sService === 'store_product'
+        ? 'brand'
+        : sService === 'corporate_event'
+        ? 'corporate'
+        : sService === 'personal_event'
+        ? 'personal'
+        : sService in subCategoriesDict
+        ? sService
+        : null;
+
+    if (newCat) {
+      setCategory(newCat);
+      const subs = subCategoriesDict[newCat] || subCategoriesDict['wedding'] || Object.values(subCategoriesDict)[0] || [];
+      if (sSub) {
+        const found = subs.find((s: any) => s.id === sSub || s.id.toLowerCase() === sSub.toLowerCase());
+        if (found) {
+          setSelectedSubId(found.id);
+        }
+      }
+    } else if (sSub) {
+      for (const [catKey, subs] of Object.entries(subCategoriesDict)) {
+        const found = (subs as any[]).find((s: any) => s.id === sSub || s.id.toLowerCase() === sSub.toLowerCase());
+        if (found) {
+          setCategory(catKey);
+          setSelectedSubId(found.id);
+          break;
+        }
+      }
+    }
+  }, [searchParams, subCategoriesDict]);
+
   // When category changes, reset sub-category if not in new category, and reset turnaround if wedding
   useEffect(() => {
-    const subs = SUB_CATEGORIES[category] || SUB_CATEGORIES.wedding;
-    if (!subs.some((s) => s.id === selectedSubId)) {
+    const subs = subCategoriesDict[category] || subCategoriesDict['wedding'] || Object.values(subCategoriesDict)[0] || [];
+    if (!subs.some((s: any) => s.id === selectedSubId) && subs[0]) {
       setSelectedSubId(subs[0].id);
     }
     if (category === 'wedding' && turnaround === 'rush') {
       setTurnaround('priority');
     }
-  }, [category, selectedSubId, turnaround]);
+  }, [category, selectedSubId, turnaround, subCategoriesDict]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -114,26 +141,34 @@ function ConfiguratorContent() {
   }, [otpSent, resendTimer]);
 
   // Selected sub-category details
-  const activeSubs = SUB_CATEGORIES[category] || SUB_CATEGORIES.wedding;
-  const activeSub = activeSubs.find((s) => s.id === selectedSubId) || activeSubs[0];
-  const baseServiceCost = activeSub.base;
+  const activeSubs = subCategoriesDict[category] || subCategoriesDict['wedding'] || Object.values(subCategoriesDict)[0] || [];
+  const activeSub = activeSubs.find((s: any) => s.id === selectedSubId) || activeSubs[0] || { id: 'default', label: 'Standard', base: 3000, duration: 'Standard' };
+  const baseServiceCost = activeSub.base || 3000;
 
-  // Add-ons per Master Plan §2.2, §2.3, §2.4, §2.5
-  const anglePerCam = category === 'wedding' || category === 'personal' ? 800 : 500;
-  const angleCost = angles === 'dual' ? anglePerCam : angles === 'multicam' ? anglePerCam * 2 : 0;
+  // Add-ons computed dynamically from active pricing engine matrix
+  const isWeddingPersonal = category === 'wedding' || category === 'personal';
+  const selectedAngleRule = cameraAngles.find((a) => a.id === angles) || cameraAngles[0];
+  const angleCost = selectedAngleRule
+    ? isWeddingPersonal
+      ? selectedAngleRule.costWeddingPersonal
+      : selectedAngleRule.costBrandCorporate
+    : 0;
 
-  const turnaroundCost =
-    turnaround === 'rush'
-      ? 2000
-      : turnaround === 'priority'
-      ? category === 'wedding'
-        ? 2000
-        : 1000
-      : 0;
+  const selectedSlaRule = deliverySlas.find((s) => s.id === turnaround) || deliverySlas[0];
+  const turnaroundCost = selectedSlaRule
+    ? isWeddingPersonal
+      ? selectedSlaRule.costWeddingPersonal
+      : selectedSlaRule.costBrandCorporate
+    : 0;
 
   const totalPayable = baseServiceCost + angleCost + turnaroundCost;
 
   const handleSendOtp = () => {
+    if (!audioUrl || !audioUrl.trim()) {
+      alert('Please provide a Music Reference or Video Link (Mandatory)');
+      document.getElementById('music-reference-input')?.focus();
+      return;
+    }
     if (!mobile || mobile.length < 10) {
       alert('Please enter a valid 10-digit mobile number');
       return;
@@ -144,13 +179,18 @@ function ConfiguratorContent() {
   };
 
   const handleSimulatePayment = () => {
+    if (!audioUrl || !audioUrl.trim()) {
+      alert('Please provide a Music Reference or Video Link (Mandatory)');
+      document.getElementById('music-reference-input')?.focus();
+      return;
+    }
     setIsProcessing(true);
     const orderId = 'ARTSY-' + Math.floor(100000 + Math.random() * 900000);
     const bookingPayload = {
       orderId,
       bookingData: {
         service: category,
-        serviceName: `${CATEGORIES.find((c) => c.key === category)?.title} — ${activeSub.label}`,
+        serviceName: `${categoriesList.find((c) => c.key === category)?.title || category} — ${activeSub.label}`,
         subCategoryId: activeSub.id,
         duration: activeSub.duration,
         angles,
@@ -177,19 +217,12 @@ function ConfiguratorContent() {
   };
 
   return (
-    <main className="w-full max-w-full overflow-x-hidden pt-16 bg-[#F5F5F7] min-h-screen">
-      <div className="flex flex-col w-full max-w-full overflow-x-hidden">
+    <main className="w-full max-w-full pt-16 bg-[#F5F5F7] min-h-screen">
+      <div className="flex flex-col w-full max-w-full">
         
         {/* Editorial Subheader Strip */}
         <section className="w-full bg-white border-b border-[#E5E5E7] px-6 sm:px-8 py-4">
-          <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span>
-              <span className="text-xs font-semibold tracking-wide text-[#1D1D1F] uppercase">
-                {CATEGORIES.find((c) => c.key === category)?.title || 'Production'} Order
-              </span>
-            </div>
-            
+          <div className="max-w-[1200px] mx-auto flex items-center justify-end">
             {/* Step Indicators */}
             <div className="flex items-center gap-2 text-xs">
               <span className="px-3 py-1 rounded-full bg-[#1D1D1F] text-white font-medium">
@@ -209,17 +242,14 @@ function ConfiguratorContent() {
 
         {/* Main Grid Content */}
         <section className="w-full px-6 sm:px-8 py-10 sm:py-14">
-          <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
             
             {/* LEFT COLUMN: Configuration Wizard (7 Cols) */}
             <div className="lg:col-span-7 flex flex-col gap-8">
               
               {/* Top Banner Card */}
               <div className="bg-white rounded-2xl p-7 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-[#E5E5E7]">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#3B82F6]/10 text-[#3B82F6]">
-                    Deterministic Studio Pricing
-                  </span>
+                <div className="flex items-center justify-end mb-3">
                   <span className="text-xs font-semibold text-[#86868B]">
                     Guaranteed SLA
                   </span>
@@ -241,7 +271,7 @@ function ConfiguratorContent() {
                 </div>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {CATEGORIES.map((c) => (
+                  {categoriesList.map((c) => (
                     <button
                       key={c.key}
                       onClick={() => setCategory(c.key)}
@@ -331,41 +361,44 @@ function ConfiguratorContent() {
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {[
-                    { id: 'single', label: 'Single Camera Setup', desc: 'Linear A-roll raw timeline', add: 0 },
-                    { id: 'dual', label: 'Dual Camera (2 Angles)', desc: 'A/B camera angle switching and waveform sync', add: anglePerCam },
-                    { id: 'multicam', label: '3–4 Multi-Cam Sync', desc: 'Audio waveform aligned multi-perspective', add: anglePerCam * 2 },
-                    { id: 'drone', label: 'Drone Footage (Client Provided)', desc: 'Client-provided drone plates conform', add: 0 },
-                  ].map((a) => (
-                    <label
-                      key={a.id}
-                      className={`p-4 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
-                        angles === a.id
-                          ? 'border-[#3B82F6] bg-[#3B82F6]/5'
-                          : 'border-[#E5E5E7] hover:border-[#86868B]/40 bg-white'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-xs font-bold text-[#1D1D1F]">
-                          {a.label}
-                        </span>
-                        <input
-                          type="radio"
-                          name="angles"
-                          checked={angles === a.id}
-                          onChange={() => setAngles(a.id)}
-                          className="accent-[#3B82F6] w-4 h-4 cursor-pointer mt-0.5"
-                        />
-                      </div>
-                      <p className="text-[11px] text-[#86868B] mt-1">
-                        {a.desc}
-                      </p>
-                      <div className="mt-3 pt-2 border-t border-[#F5F5F7] text-xs font-semibold text-[#1D1D1F]">
-                        {a.add === 0 ? 'Included' : `+₹${a.add.toLocaleString('en-IN')}`}
-                      </div>
-                    </label>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {cameraAngles.map((a) => {
+                    const cost = isWeddingPersonal ? a.costWeddingPersonal : a.costBrandCorporate;
+                    return (
+                      <label
+                        key={a.id}
+                        className={`p-4 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
+                          angles === a.id
+                            ? 'border-[#3B82F6] bg-[#3B82F6]/5'
+                            : 'border-[#E5E5E7] hover:border-[#86868B]/40 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="text-xs font-bold text-[#1D1D1F] block">
+                              {a.label}
+                            </span>
+                            <span className="text-[10px] text-[#86868B] block mt-0.5">
+                              {a.camerasCount}
+                            </span>
+                          </div>
+                          <input
+                            type="radio"
+                            name="angles"
+                            checked={angles === a.id}
+                            onChange={() => setAngles(a.id)}
+                            className="accent-[#3B82F6] w-4 h-4 cursor-pointer mt-0.5"
+                          />
+                        </div>
+                        <p className="text-[11px] text-[#86868B] mt-2">
+                          {a.description}
+                        </p>
+                        <div className="mt-3 pt-2 border-t border-[#F5F5F7] text-xs font-semibold text-[#1D1D1F]">
+                          {cost === 0 ? 'Included' : `+₹${cost.toLocaleString('en-IN')}`}
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -377,33 +410,35 @@ function ConfiguratorContent() {
                   </h2>
                 </div>
 
-                <div className={`grid grid-cols-1 ${category === 'wedding' ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3`}>
-                  {[
-                    { id: 'standard', label: '7–10 Working Days', tag: 'Normal SLA', add: 0 },
-                    { id: 'priority', label: '4–5 Working Days', tag: 'Rush SLA', add: category === 'wedding' ? 2000 : 1000 },
-                    ...(category !== 'wedding' ? [{ id: 'rush', label: '48 Hours', tag: 'Ultra Rush SLA', add: 2000 }] : []),
-                  ].map((t) => (
-                    <label
-                      key={t.id}
-                      className={`p-4 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
-                        turnaround === t.id
-                          ? 'border-[#3B82F6] bg-[#3B82F6]/5'
-                          : 'border-[#E5E5E7] hover:border-[#86868B]/40 bg-white'
-                      }`}
-                    >
-                      <div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F5F5F7] text-[#86868B] block w-fit mb-2">
-                          {t.tag}
-                        </span>
-                        <span className="text-xs font-bold text-[#1D1D1F] block">
-                          {t.label}
-                        </span>
-                      </div>
-                      <div className="mt-3 pt-2 border-t border-[#F5F5F7] text-xs font-semibold text-[#1D1D1F]">
-                        {t.add === 0 ? 'Included' : `+₹${t.add.toLocaleString('en-IN')}`}
-                      </div>
-                    </label>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {deliverySlas.map((t) => {
+                    const cost = isWeddingPersonal ? t.costWeddingPersonal : t.costBrandCorporate;
+                    return (
+                      <label
+                        key={t.id}
+                        className={`p-4 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
+                          turnaround === t.id
+                            ? 'border-[#3B82F6] bg-[#3B82F6]/5'
+                            : 'border-[#E5E5E7] hover:border-[#86868B]/40 bg-white'
+                        }`}
+                      >
+                        <div>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F5F5F7] text-[#86868B] block w-fit mb-2">
+                            {t.hours}h SLA
+                          </span>
+                          <span className="text-xs font-bold text-[#1D1D1F] block">
+                            {t.label}
+                          </span>
+                          <span className="text-[11px] text-[#86868B] block mt-0.5">
+                            {t.turnaroundDays}
+                          </span>
+                        </div>
+                        <div className="mt-3 pt-2 border-t border-[#F5F5F7] text-xs font-semibold text-[#1D1D1F]">
+                          {cost === 0 ? 'Included' : `+₹${cost.toLocaleString('en-IN')}`}
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -416,14 +451,16 @@ function ConfiguratorContent() {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-semibold text-[#1D1D1F] block mb-1">
-                      Music Reference or Video Link (Optional)
+                    <label htmlFor="music-reference-input" className="text-xs font-semibold text-[#1D1D1F] block mb-1">
+                      Music Reference or Video Link <span className="text-red-500 font-bold">*</span> <span className="text-[#86868B] font-normal">(Mandatory)</span>
                     </label>
                     <input
+                      id="music-reference-input"
                       type="url"
+                      required
                       value={audioUrl}
                       onChange={(e) => setAudioUrl(e.target.value)}
-                      placeholder="https://open.spotify.com/track/... or YouTube link"
+                      placeholder="https://open.spotify.com/track/... or YouTube link (Mandatory)"
                       className="w-full px-4 py-2.5 rounded-xl border border-[#E5E5E7] text-xs focus:outline-none focus:border-[#3B82F6]"
                     />
                   </div>
@@ -445,8 +482,9 @@ function ConfiguratorContent() {
             </div>
 
             {/* RIGHT COLUMN: Quotation Breakdown & Mobile Checkout (5 Cols) */}
-            <div className="lg:col-span-5 sticky top-24 space-y-6">
-              <div className="bg-white rounded-2xl p-7 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-[#E5E5E7]">
+            <div className="lg:col-span-5">
+              <div className="lg:sticky lg:top-24 space-y-6 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto pr-0.5">
+                <div className="bg-white rounded-2xl p-6 sm:p-7 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-[#E5E5E7]">
                 
                 {/* Header */}
                 <div className="pb-4 border-b border-[#F5F5F7]">
@@ -483,7 +521,7 @@ function ConfiguratorContent() {
                 <div className="my-5 p-4 rounded-xl bg-[#F5F5F7] flex items-center justify-between">
                   <div>
                     <span className="text-[10px] text-[#86868B] block uppercase font-bold tracking-wider">
-                      Total Payable (Escrow)
+                      Total Payable
                     </span>
                     <span className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] mt-0.5 block">
                       ₹{totalPayable.toLocaleString('en-IN')}
@@ -511,24 +549,27 @@ function ConfiguratorContent() {
                 </div>
 
                 {/* Mobile Auth & Dispatch */}
-                <div className="pt-5 border-t border-[#F5F5F7]">
-                  <label className="text-xs font-semibold text-[#1D1D1F] block mb-1.5">
+                <div id="booking-mobile-input" className="pt-5 border-t border-[#F5F5F7] scroll-mt-28">
+                  <label htmlFor="mobile-number-checkout" className="text-xs font-semibold text-[#1D1D1F] block mb-1.5">
                     Mobile Number for WhatsApp Delivery Link
                   </label>
                   
                   {!otpSent ? (
                     <div className="flex gap-2">
                       <div className="relative flex-1">
-                        <span className="absolute left-3.5 top-2.5 text-xs text-[#86868B] font-mono">
+                        <span className="absolute left-3.5 top-2.5 text-xs text-[#86868B] font-mono select-none">
                           +91
                         </span>
                         <input
+                          id="mobile-number-checkout"
                           type="tel"
+                          inputMode="numeric"
+                          autoComplete="tel-national"
                           maxLength={10}
                           value={mobile}
                           onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
                           placeholder="9876543210"
-                          className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-[#E5E5E7] text-xs font-mono focus:outline-none focus:border-[#3B82F6]"
+                          className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-[#E5E5E7] text-xs font-mono focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
                         />
                       </div>
                       <button
@@ -558,6 +599,7 @@ function ConfiguratorContent() {
                             key={i}
                             id={`otp-${i}`}
                             type="text"
+                            inputMode="numeric"
                             maxLength={1}
                             value={digit}
                             onChange={(e) => {
@@ -579,7 +621,7 @@ function ConfiguratorContent() {
                         onClick={handleSimulatePayment}
                         className="w-full py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50 mt-2"
                       >
-                        {isProcessing ? 'Locking Escrow Deposit...' : 'Lock Escrow & Confirm Booking →'}
+                        {isProcessing ? 'Confirming Booking...' : 'Confirm Booking'}
                       </button>
                     </div>
                   )}
@@ -587,9 +629,32 @@ function ConfiguratorContent() {
 
               </div>
             </div>
+          </div>
 
           </div>
         </section>
+
+        {/* Mobile Sticky Floating Price Bar (Screen < lg) */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E5E5E7] px-6 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] flex items-center justify-between">
+          <div>
+            <span className="text-[10px] text-[#86868B] block uppercase font-bold tracking-wider">
+              Total
+            </span>
+            <span className="text-xl font-extrabold text-[#1D1D1F]">
+              ₹{totalPayable.toLocaleString('en-IN')}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('booking-mobile-input');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors"
+          >
+            Checkout Details ↓
+          </button>
+        </div>
 
       </div>
     </main>

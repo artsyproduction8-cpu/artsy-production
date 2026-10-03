@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 /**
  * DPDP Act (v2.0) Data Erasure / Deletion Request Route (§4.4, §10.2, §10.3)
@@ -15,6 +16,27 @@ export async function POST(request: NextRequest) {
 
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId parameter' }, { status: 400 });
+    }
+
+    // 1. Authenticate caller identity
+    const authUser = getAuthenticatedUser(request);
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
+    }
+
+    // 2. Authorization check: caller must be owner or admin
+    const isOwner = authUser.id === userId;
+    const isAdmin = authUser.role === 'admin';
+
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Forbidden: You do not have permission to request deletion for this user' },
+        { status: 403 }
+      );
+    }
+
+    if (isAdmin && !isOwner) {
+      console.log(`[DPDP AUDIT] Admin ${authUser.id} initiated data deletion for user ${userId}. Reason: ${reason || 'Admin action'}`);
     }
 
     if (supabase) {

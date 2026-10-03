@@ -8,10 +8,10 @@ export default function Footer() {
       <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
         
         {/* Main Footer Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 pb-10 border-b border-white/10">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-8 pb-10 border-b border-white/10">
           
           {/* Brand & Mission */}
-          <div className="lg:col-span-4 flex flex-col items-start gap-3">
+          <div className="lg:col-span-5 flex flex-col items-start gap-3">
             <Link href="/" className="flex flex-col items-start leading-none select-none group">
               <span className="text-[22px] font-extrabold uppercase tracking-tight text-white leading-none group-hover:text-white/80 transition-colors">
                 ARTSY
@@ -26,7 +26,7 @@ export default function Footer() {
           </div>
 
           {/* Services Links */}
-          <div className="lg:col-span-3 flex flex-col gap-3">
+          <div className="lg:col-span-4 flex flex-col gap-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-white">
               Creative Catalog
             </h4>
@@ -59,40 +59,6 @@ export default function Footer() {
               <li>
                 <Link href="/services/personal" className="hover:text-white transition-colors">
                   Personal &amp; Life Milestones
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Role Portals */}
-          <div className="lg:col-span-2 flex flex-col gap-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white">
-              Portals &amp; Roles
-            </h4>
-            <ul className="flex flex-col gap-2 text-xs font-medium text-[#DCDFE3]">
-              <li>
-                <Link href="/auth/login?role=client" className="hover:text-white transition-colors">
-                  Client Review Hub
-                </Link>
-              </li>
-              <li>
-                <Link href="/book" className="hover:text-white transition-colors">
-                  Book Commission
-                </Link>
-              </li>
-              <li>
-                <Link href="/auth/login?role=freelancer" className="hover:text-white transition-colors">
-                  Creator Job Slate
-                </Link>
-              </li>
-              <li>
-                <Link href="/freelancer/onboarding" className="hover:text-white transition-colors">
-                  Editor Onboarding
-                </Link>
-              </li>
-              <li>
-                <Link href="/auth/login?role=admin" className="hover:text-white transition-colors">
-                  Studio Admin Ops
                 </Link>
               </li>
             </ul>
@@ -137,9 +103,7 @@ export default function Footer() {
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy (DPDP)</Link>
             <Link href="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>
             <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
-            <Link href="/services" className="hover:text-white transition-colors">Services</Link>
-            <Link href="/book" className="hover:text-white transition-colors">Book Cut</Link>
-            <Link href="/auth/login" className="hover:text-white transition-colors">Portal Login</Link>
+            <Link href="/grievance" className="hover:text-white transition-colors">Grievance</Link>
           </div>
         </div>
       </div>

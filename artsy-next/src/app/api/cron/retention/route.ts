@@ -54,10 +54,10 @@ export async function GET(request: NextRequest) {
         for (const file of files) {
           if (!file.retention_expires_at) continue;
 
-          // Check if project is in dispute
+          // Check if project is in dispute & fetch user details
           const { data: project } = await supabase
             .from('projects')
-            .select('status, user_id')
+            .select('status, user_id, client_id')
             .eq('id', file.project_id)
             .maybeSingle();
 
@@ -65,34 +65,49 @@ export async function GET(request: NextRequest) {
             continue; // Safety Rule: Never delete during dispute
           }
 
+          const targetUserId = (project as any)?.client_id || (project as any)?.user_id;
+          let userPhone: string | undefined;
+          let userEmail: string | undefined;
+
+          if (targetUserId) {
+            const { data: userRec } = await supabase
+              .from('users')
+              .select('phone, email')
+              .eq('id', targetUserId)
+              .maybeSingle();
+
+            userPhone = userRec?.phone || undefined;
+            userEmail = userRec?.email || undefined;
+          }
+
+          const sendRetentionNotification = async (eventNumber: number) => {
+            if (!userPhone && !userEmail) {
+              console.log(`[RETENTION CRON] Skipped event ${eventNumber} for project ${file.project_id}: user phone and email missing`);
+              return;
+            }
+
+            await dispatchNotification({
+              eventNumber,
+              userId: targetUserId || 'system',
+              recipientPhone: userPhone,
+              recipientEmail: userEmail,
+              variables: { projectId: file.project_id }
+            });
+          };
+
           const expiryDate = new Date(file.retention_expires_at);
           const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
           // Warnings for raw footage (15-day total retention window)
           if (file.file_category === 'raw_footage') {
             if (daysUntilExpiry === 7) {
-              await dispatchNotification({
-                eventNumber: 35,
-                userId: project?.user_id || 'system',
-                recipientPhone: '+919876543210',
-                variables: { projectId: file.project_id }
-              });
+              await sendRetentionNotification(35);
               processedWarnings.push(`raw_7d_warning_${file.id}`);
             } else if (daysUntilExpiry === 3) {
-              await dispatchNotification({
-                eventNumber: 36,
-                userId: project?.user_id || 'system',
-                recipientPhone: '+919876543210',
-                variables: { projectId: file.project_id }
-              });
+              await sendRetentionNotification(36);
               processedWarnings.push(`raw_3d_warning_${file.id}`);
             } else if (daysUntilExpiry === 1) {
-              await dispatchNotification({
-                eventNumber: 37,
-                userId: project?.user_id || 'system',
-                recipientPhone: '+919876543210',
-                variables: { projectId: file.project_id }
-              });
+              await sendRetentionNotification(37);
               processedWarnings.push(`raw_1d_warning_${file.id}`);
             } else if (daysUntilExpiry <= 0 && daysUntilExpiry > -7) {
               // Soft delete: move to trash/ logical marker
@@ -110,12 +125,7 @@ export async function GET(request: NextRequest) {
                   .update({ is_deleted: true, updated_at: now.toISOString() })
                   .eq('id', file.id);
 
-                await dispatchNotification({
-                  eventNumber: 38,
-                  userId: project?.user_id || 'system',
-                  recipientPhone: '+919876543210',
-                  variables: { projectId: file.project_id }
-                });
+                await sendRetentionNotification(38);
                 hardDeletedFiles.push(file.id);
               }
             }

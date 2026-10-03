@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth, logout } from '@/lib/auth';
+import ClientSidebar from '../components/ClientSidebar';
+import ClientHeader from '../components/ClientHeader';
 import { createChangeOrder } from '@/lib/changeOrders/engine';
 import { logRefundRequest, logRevisionRequest, logFinalApproval } from '@/lib/activity/logger';
 
@@ -163,6 +165,15 @@ export default function ClientReviewPage() {
     setIsApproved(true);
     // Master Plan v2.1 Rule: Retention triggers strictly upon project approval
     logFinalApproval('AP-8841', user?.id || 'client');
+    fetch('/api/notifications/whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: '+919876543210',
+        eventType: 'MILESTONE_COMPLETED',
+        projectId: 'AP-8841',
+      }),
+    }).catch(() => {});
     alert(
       'FINAL ACCEPTANCE GATE UNLOCKED:\n• Master 4K DCI cloud archive is decrypting.\n• Raw footage 15-day retention countdown started.\n• Master delivery 30-day retention countdown started.\n• Unwatermarked deliverables dispatched to Backblaze B2 vault.'
     );
@@ -173,6 +184,15 @@ export default function ClientReviewPage() {
       const nextRound = currentRound + 1;
       setCurrentRound(nextRound);
       logRevisionRequest('AP-8841', user?.id || 'client', nextRound, 'Client requested retake revisions');
+      fetch('/api/notifications/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: '+919876543210',
+          message: `🎬 Artsy Revision Alert: Client requested Revision Pass Round ${nextRound} on Project #AP-8841. 48h turnaround timer initiated.`,
+          projectId: 'AP-8841',
+        }),
+      }).catch(() => {});
       alert(`REVISION PASS ROUND ${nextRound} INITIATED: Notified assigned colorist & editor. 48h turnaround timer started.`);
     } else {
       setShowChangeOrderModal(true);
@@ -194,7 +214,7 @@ export default function ClientReviewPage() {
     setIncludedRounds((prev) => prev + 1);
     setCurrentRound((prev) => prev + 1);
     setShowChangeOrderModal(false);
-    alert('CHANGE ORDER APPROVED: ₹1,500 added to escrow. Revision Round 3 unlocked for editorial slate.');
+    alert('CHANGE ORDER APPROVED: ₹1,500 added. Revision Round 3 unlocked for editorial slate.');
   };
 
   const handleSubmitRefundDispute = (e: React.FormEvent) => {
@@ -209,133 +229,15 @@ export default function ClientReviewPage() {
     alert('REFUND DISPUTE FILED: Studio Administration will review activity logs, footage import timestamps, and creative drafts within 24 hours.');
   };
 
-  const clientName = user?.full_name || 'Sneha Patel';
-  const clientInitials = clientName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'SP';
-
   return (
     <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
-      {/* Sleek Dark Tech Header */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A] border-b border-[#262626]">
-        <div className="h-16 w-full px-6 md:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex flex-col select-none group">
-              <span className="font-extrabold text-[15px] leading-tight tracking-[0.18em] text-white group-hover:text-blue-400 transition-colors uppercase">
-                ARTSY
-              </span>
-              <span className="font-mono text-[7.5px] leading-none tracking-[0.24em] text-[#86868B] uppercase">
-                PLACE FOR PERSPECTIVE
-              </span>
-            </Link>
-            <span className="hidden md:inline-flex items-center gap-1.5 text-xs text-[#86868B] border-l border-[#262626] pl-6 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              FRAME-ACCURATE REVIEW SUITE
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-xs font-semibold uppercase px-3 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              Public Site
-            </Link>
-            <Link
-              href="/book"
-              className="text-xs font-semibold uppercase px-3.5 py-1.5 rounded-lg bg-[#3B82F6] text-white hover:bg-[#2563EB] transition-colors"
-            >
-              Book Cut
-            </Link>
-            <button
-              type="button"
-              onClick={() => logout()}
-              className="text-xs font-semibold uppercase px-2.5 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-            >
-              Sign Out
-            </button>
-            <div className="pl-2 border-l border-white/10 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold text-xs">
-                {clientInitials}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Unified Client Production Header */}
+      <ClientHeader />
 
       {/* Main Layout Container */}
-      <div className="flex pt-16 w-full max-w-full overflow-x-hidden">
-        {/* Left Sidebar: Client Station Control (w-72 fixed on desktop) */}
-        <aside className="hidden lg:flex w-72 fixed left-0 top-16 bottom-0 overflow-y-auto bg-white border-r border-[#E5E5E7] z-40 p-6 flex-col justify-between shadow-xs">
-          <div className="space-y-6">
-            <div>
-              <div className="text-sm font-bold text-[#1D1D1F]">{clientName}</div>
-              <span className="inline-block mt-1 text-[10px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-2 py-0.5 rounded">
-                Verified Producer
-              </span>
-            </div>
-
-            <nav className="flex flex-col space-y-1">
-              <div className="text-[10px] uppercase font-bold text-[#3B82F6] px-3 pt-2">
-                Active Projects
-              </div>
-              <Link
-                href="/client/review"
-                className="px-3 py-2 text-xs font-semibold rounded-xl bg-[#3B82F6]/10 text-[#3B82F6] transition-colors"
-              >
-                Timestamped Review
-              </Link>
-              <Link
-                href="/book"
-                className="px-3 py-2 text-xs font-medium rounded-xl text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors"
-              >
-                Book New Project
-              </Link>
-              <Link
-                href="/services"
-                className="px-3 py-2 text-xs font-medium rounded-xl text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors"
-              >
-                Explore Creative Catalog
-              </Link>
-
-              <div className="text-[10px] uppercase font-bold text-[#86868B] px-3 pt-5">
-                Vault &amp; Billing
-              </div>
-              <div
-                onClick={() => alert(`ARCHIVES: 1 Completed Master Project on file for ${clientName}.`)}
-                className="px-3 py-2 text-xs font-medium rounded-xl text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors cursor-pointer"
-              >
-                Completed Masters
-              </div>
-              <div
-                onClick={() => alert('TAX INVOICES: Escrow release records and GST receipts are current.')}
-                className="px-3 py-2 text-xs font-medium rounded-xl text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors cursor-pointer"
-              >
-                Tax Invoices &amp; Escrow
-              </div>
-
-              <div className="text-[10px] uppercase font-bold text-[#86868B] px-3 pt-5">
-                Studio Setup
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowStudioModal(true)}
-                className="w-full text-left px-3 py-2 text-xs font-medium rounded-xl text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors cursor-pointer flex items-center justify-between"
-              >
-                <span>Studio &amp; Ingest</span>
-                <span className="text-[9px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-1.5 py-0.5 rounded">Setup</span>
-              </button>
-            </nav>
-          </div>
-
-          <div className="pt-4 border-t border-[#F5F5F7]">
-            <button
-              type="button"
-              onClick={() => logout()}
-              className="w-full text-center py-2 px-3 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
-            >
-              Sign Out
-            </button>
-          </div>
-        </aside>
+      <div className="flex pt-28 lg:pt-16 w-full max-w-full overflow-x-hidden">
+        {/* Left Sidebar: Unified Client Station Sidebar */}
+        <ClientSidebar />
 
         {/* Main Content Pane */}
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 bg-[#F5F5F7] min-h-screen">
@@ -350,9 +252,6 @@ export default function ClientReviewPage() {
                     <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-[-0.03em] leading-tight">
                       Udaipur Palace Royal Wedding Highlight (4K DCI)
                     </h1>
-                    <p className="text-xs sm:text-sm text-[#86868B] leading-relaxed">
-                      Source Material: RED Monstro 8K VV + Sony FX9 Multi-cam Ingest // Deliverable: Master 4K DCI + Social 9:16 Cuts
-                    </p>
                   </div>
 
                   {/* Quick Metrics Slate */}
@@ -367,17 +266,6 @@ export default function ClientReviewPage() {
                       <div className="text-xl font-extrabold text-[#3B82F6] mt-1">Round {currentRound}/{includedRounds}</div>
                       <div className="text-[10px] text-[#86868B] mt-0.5">{currentRound <= includedRounds ? 'Complimentary Pass' : 'Change Order Active'}</div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowRefundModal(true)}
-                      className="bg-[#F5F5F7] hover:bg-slate-200 p-4 rounded-xl border border-[#E5E5E7] min-w-[140px] text-left transition-colors cursor-pointer"
-                    >
-                      <div className="text-[10px] uppercase font-bold text-[#86868B]">Escrow &amp; Refund</div>
-                      <div className="text-xs font-bold text-[#1D1D1F] mt-1">
-                        {refundRequested ? 'Dispute Under Review' : 'Tier 3 Active'}
-                      </div>
-                      <div className="text-[10px] text-[#3B82F6] mt-0.5">Inspect Policy →</div>
-                    </button>
                   </div>
                 </div>
 
@@ -429,14 +317,7 @@ export default function ClientReviewPage() {
                     <div className="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-[#F5F5F7]">
                       <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span className="text-xs font-bold text-[#1D1D1F]">Stream Monitor (4K Cloud Cache)</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs font-medium text-[#86868B]">
-                        <span>48.2 Mbps</span>
-                        <span>•</span>
-                        <span>24.00 FPS</span>
-                        <span>•</span>
-                        <span>Rec.709-A</span>
+                        <span className="text-xs font-bold text-[#1D1D1F]">Stream Monitor</span>
                       </div>
                     </div>
 
@@ -706,9 +587,6 @@ export default function ClientReviewPage() {
                     <h3 className="text-lg font-bold text-[#1D1D1F]">
                       Project Deliverables &amp; Master Assets
                     </h3>
-                    <p className="text-xs text-[#86868B] mt-0.5">
-                      High-speed cloud distribution via CDN edge • Encrypted archive mirror
-                    </p>
                   </div>
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -872,14 +750,14 @@ export default function ClientReviewPage() {
         </main>
       </div>
 
-      {/* 3-Tier Refund Policy & Escrow Modal */}
+      {/* 3-Tier Refund Policy & Production Vault Modal */}
       {showRefundModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <div className="bg-white max-w-lg w-full rounded-2xl border border-[#E5E5E7] shadow-2xl p-6 sm:p-8 flex flex-col gap-5">
             <div className="flex items-center justify-between border-b border-[#E5E5E7] pb-4">
               <div>
                 <span className="text-[10px] font-bold tracking-widest text-[#3B82F6] uppercase">
-                  ESCROW &amp; SETTLEMENT TRANSPARENCY
+                  PAYMENT &amp; SETTLEMENT TRANSPARENCY
                 </span>
                 <h3 className="text-lg font-extrabold text-[#1D1D1F] mt-0.5">
                   Artsy 3-Tier Refund Policy
@@ -989,7 +867,7 @@ export default function ClientReviewPage() {
                 <span>48 Hours</span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-[#1D1D1F] pt-2 border-t border-[#E5E5E7]">
-                <span>Additional Escrow:</span>
+                <span>Additional Amount:</span>
                 <span className="font-mono text-[#3B82F6]">₹1,500</span>
               </div>
             </div>

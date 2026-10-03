@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth, logout } from '@/lib/auth';
+import FreelancerHeader from '../components/FreelancerHeader';
+import FreelancerSidebar from '../components/FreelancerSidebar';
 
 export default function FreelancerPayoutsPage() {
   const { user } = useAuth();
@@ -14,54 +16,16 @@ export default function FreelancerPayoutsPage() {
   };
 
   const creatorName = user?.full_name || 'Aarav Sen';
-  const creatorInitials = creatorName
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2) || 'AS';
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-50 bg-[#1D1D1F] text-white border-b border-white/10 shadow-xs">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 group">
-              <span className="font-black text-xl tracking-tight uppercase">ARTSY</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]"></span>
-            </Link>
-            <span className="text-xs font-semibold text-white/50">/</span>
-            <span className="text-xs font-bold text-[#3B82F6] uppercase tracking-wider">
-              Escrow Ledger &amp; Payouts
-            </span>
-          </div>
+      <FreelancerHeader />
 
-          <div className="flex items-center gap-4">
-            <Link
-              href="/freelancer"
-              className="text-xs font-semibold uppercase px-3 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              ← Back to Workstation
-            </Link>
-            <button
-              type="button"
-              onClick={() => logout()}
-              className="text-xs font-semibold uppercase px-2.5 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-            >
-              Sign Out
-            </button>
-            <div className="pl-2 border-l border-white/10 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold text-xs">
-                {creatorInitials}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <div className="flex w-full max-w-full overflow-x-hidden">
+        <FreelancerSidebar />
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
+          <div className="p-6 md:p-8 space-y-8 max-w-7xl">
         {/* Notice Alert */}
         {statementNotice && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs text-emerald-800 animate-in fade-in duration-200">
@@ -86,10 +50,10 @@ export default function FreelancerPayoutsPage() {
               FINANCIAL ROSTER ACCOUNTING
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-[#1D1D1F] mt-1">
-              Escrow Ledger &amp; Payouts
+              Earnings Ledger &amp; Payouts
             </h1>
             <p className="text-xs text-[#86868B] mt-1">
-              Real-time settlement status, milestone escrow balances, and direct NEFT bank transfers.
+              Real-time settlement status, milestone vault balances, and direct NEFT bank transfers.
             </p>
           </div>
 
@@ -117,7 +81,7 @@ export default function FreelancerPayoutsPage() {
 
           <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
             <div className="text-xs uppercase font-bold text-amber-600">
-              IN ESCROW HOLD (STATION CUSTODY)
+              IN PRODUCTION VAULT (STATION CUSTODY)
             </div>
             <div className="text-3xl font-extrabold text-[#1D1D1F] leading-none mt-2">
               ₹12,000
@@ -222,7 +186,7 @@ export default function FreelancerPayoutsPage() {
                   </td>
                   <td className="p-4">
                     <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full">
-                      Escrow Locked (Day 2/4)
+                      Vault Secured (Day 2/4)
                     </span>
                   </td>
                 </tr>
@@ -238,12 +202,12 @@ export default function FreelancerPayoutsPage() {
             <span>Direct NEFT bank transfers upon client milestone completion.</span>
           </div>
           <div className="flex items-center gap-2 text-[#1D1D1F]">
-            <span>PAN Linked:</span>
-            <span className="font-mono font-bold">AAAPL8821K</span>
-            <span className="text-emerald-600 font-semibold ml-2">✓ Verified Vendor</span>
+            <span className="text-emerald-600 font-semibold">✓ Verified Vendor</span>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
+  </div>
+</div>
   );
 }

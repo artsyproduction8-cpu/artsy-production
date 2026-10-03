@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
+    // 1. Server-side auth check for admin role
+    const authUser = getAuthenticatedUser(request);
+    if (!authUser || authUser.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Unauthorized: Admin access required for statutory GSTR-1 exports' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const month = searchParams.get('month') || String(new Date().getMonth() + 1).padStart(2, '0');
     const year = searchParams.get('year') || String(new Date().getFullYear());

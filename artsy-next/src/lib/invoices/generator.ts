@@ -45,6 +45,26 @@ export interface InvoiceData {
   };
 }
 
+export function getIndianFinancialYear(date: Date = new Date()): string {
+  const month = date.getMonth(); // 0 = Jan, 3 = April
+  const year = date.getFullYear();
+  if (month >= 3) {
+    const startYr = year % 100;
+    const endYr = (year + 1) % 100;
+    return `${String(startYr).padStart(2, '0')}-${String(endYr).padStart(2, '0')}`;
+  } else {
+    const startYr = (year - 1) % 100;
+    const endYr = year % 100;
+    return `${String(startYr).padStart(2, '0')}-${String(endYr).padStart(2, '0')}`;
+  }
+}
+
+export function formatSequentialInvoiceNumber(sequenceNumber: number, date: Date = new Date()): string {
+  const fy = getIndianFinancialYear(date);
+  const seqPadded = String(sequenceNumber).padStart(5, '0');
+  return `AP/${fy}/${seqPadded}`;
+}
+
 export function generateInvoiceData(params: {
   orderId: string;
   clientName: string;
@@ -52,6 +72,8 @@ export function generateInvoiceData(params: {
   clientEmail: string;
   serviceName?: string;
   totalPaise: number;
+  sequenceNumber?: number;
+  invoiceNumber?: string;
   clientState?: string;
   clientStateCode?: string;
   clientGstin?: string;
@@ -79,7 +101,10 @@ export function generateInvoiceData(params: {
     sgstPaise = gstAmountPaise - cgstPaise;
   }
 
-  const invoiceNumber = `INV-${params.orderId.replace(/[^a-zA-Z0-9]/g, '')}-${new Date().getFullYear()}`;
+  const invoiceNumber = params.invoiceNumber || 
+    (params.sequenceNumber 
+      ? formatSequentialInvoiceNumber(params.sequenceNumber) 
+      : formatSequentialInvoiceNumber(1));
 
   return {
     invoiceNumber,

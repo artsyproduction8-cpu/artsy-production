@@ -331,7 +331,7 @@ export default function CoverflowReels() {
             href="/work"
             className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#3B82F6] hover:text-[#2563EB] transition-colors"
           >
-            <span>View All 12+ Showreel Cuts &amp; Technical Formats →</span>
+            <span>View All Showreel Cuts &amp; Technical Formats</span>
           </Link>
         </div>
       </div>

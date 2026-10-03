@@ -244,7 +244,7 @@ export async function sendInvoiceEmail(toEmail: string, invoice: InvoiceData): P
             <td style="padding:32px;">
               <h2 style="margin:0 0 16px;font-size:18px;font-weight:700;">Payment Confirmed &amp; Invoice Issued</h2>
               <p style="margin:0 0 24px;font-size:13px;line-height:1.6;color:#555;">
-                Thank you for your business. Your payment of <strong>₹${(invoice.orderDetails.totalPaidPaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong> for Order #<strong>${invoice.orderDetails.orderId}</strong> has been successfully captured into escrow.
+                Thank you for your business. Your payment of <strong>₹${(invoice.orderDetails.totalPaidPaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong> for Order #<strong>${invoice.orderDetails.orderId}</strong> has been successfully captured into Production Vault custody.
               </p>
 
               <table width="100%" style="border-collapse:collapse;margin-bottom:24px;font-size:12px;">

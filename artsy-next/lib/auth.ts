@@ -7,6 +7,7 @@ export type UserStatus = 'active' | 'pending' | 'suspended' | 'banned';
 export type OnboardingStatus =
   | 'registered'
   | 'incomplete'
+  | 'pending'
   | 'pending_review'
   | 'approved'
   | 'rejected'
@@ -24,7 +25,10 @@ export interface ArtsyUser {
   agreement_accepted?: boolean;
   agreement_accepted_at?: string;
   agreement_version?: string;
-  onboarding_status?: OnboardingStatus;
+  onboarding_status?: OnboardingStatus | null;
+  tracking_id?: string | null;
+  rejection_reason?: string | null;
+  rejected_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -78,7 +82,7 @@ export const getRoleHomePath = (role: UserRole): string => {
       return '/freelancer';
     case 'client':
     default:
-      return '/client-dashboard';
+      return '/client';
   }
 };
 
@@ -99,13 +103,17 @@ export const getCurrentUser = (): ArtsyUser | null => {
   }
 };
 
-// Set current user in localStorage and server HttpOnly cookie via session endpoint
+// Set current user in localStorage and server cookie via session endpoint
 export const setCurrentUser = (user: ArtsyUser | null) => {
   if (typeof window === 'undefined') return;
 
   if (user) {
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-    // Sync with server HttpOnly cookie
+    // Immediate fallback cookie for synchronous browser transitions
+    try {
+      document.cookie = `artsy_auth_token=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800; SameSite=Lax`;
+    } catch {}
+    // Sync with server HttpOnly signed cookie
     fetch('/api/auth/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -113,12 +121,31 @@ export const setCurrentUser = (user: ArtsyUser | null) => {
     }).catch(() => {});
   } else {
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    try {
+      document.cookie = `artsy_auth_token=; path=/; max-age=0; SameSite=Lax`;
+    } catch {}
     // Invalidate server HttpOnly cookie
     fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
   }
 
   // Notify active components in the current window
   window.dispatchEvent(new Event('artsy_auth_change'));
+};
+
+export const setCurrentUserAsync = async (user: ArtsyUser | null): Promise<void> => {
+  if (typeof window === 'undefined') return;
+  setCurrentUser(user);
+  try {
+    if (user) {
+      await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user }),
+      });
+    } else {
+      await fetch('/api/auth/session', { method: 'DELETE' });
+    }
+  } catch {}
 };
 
 // Check if user is authenticated

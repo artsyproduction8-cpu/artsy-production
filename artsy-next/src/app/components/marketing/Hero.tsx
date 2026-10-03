@@ -14,16 +14,15 @@ export default function Hero() {
       </div>
 
       <div className="relative z-10 max-w-[1200px] mx-auto px-6 sm:px-8">
-        <div className="flex flex-col items-start max-w-4xl">
+        <div className="flex flex-col items-start max-w-5xl">
           
           {/* Heading with MODERN CREATIVE TEAMS in Blue with Underline */}
-          <h1 className="text-4xl sm:text-6xl lg:text-[76px] lg:leading-[74px] font-extrabold text-[#1D1D1F] uppercase tracking-tight max-w-5xl">
-            <span>CINEMATIC</span>
-            <span className="block mt-1">POST-PRODUCTION FOR</span>
-            <span className="block mt-1">
-              <span className="text-[#3B82F6] underline decoration-[#3B82F6] decoration-4 underline-offset-8">
-                MODERN CREATIVE TEAMS
-              </span>
+          <h1 className="text-4xl sm:text-6xl lg:text-[70px] lg:leading-[72px] font-extrabold text-[#1D1D1F] uppercase tracking-tight max-w-none">
+            <span className="block">CINEMATIC</span>
+            <span className="block mt-1 whitespace-nowrap">POST-PRODUCTION FOR</span>
+            <span className="block mt-1 text-[#3B82F6] underline decoration-[#3B82F6] decoration-4 underline-offset-8">
+              <span className="block">MODERN CREATIVE</span>
+              <span className="block mt-1">TEAMS</span>
             </span>
           </h1>
 

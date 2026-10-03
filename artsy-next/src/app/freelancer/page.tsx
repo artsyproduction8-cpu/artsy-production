@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth, logout, hasAcceptedAgreement, recordAgreementAcceptance } from '@/lib/auth';
+import { useAuth, logout, hasAcceptedAgreement, recordAgreementAcceptance, setCurrentUser, PRESET_USERS } from '@/lib/auth';
+import FreelancerHeader from './components/FreelancerHeader';
+import FreelancerSidebar from './components/FreelancerSidebar';
 
 export default function FreelancerDashboard() {
   const { user, role } = useAuth();
@@ -11,6 +13,10 @@ export default function FreelancerDashboard() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('demo') === 'true' || urlParams.get('approved') === 'true') {
+          setCurrentUser(PRESET_USERS.freelancer);
+        }
         const stored = localStorage.getItem('artsy_creator_profile');
         if (stored) setProfileData(JSON.parse(stored));
       } catch {}
@@ -29,7 +35,7 @@ export default function FreelancerDashboard() {
   const [ndaChecked, setNdaChecked] = useState<boolean>(false);
   const [pendingJobToAccept, setPendingJobToAccept] = useState<string | null>(null);
 
-  const isApproved = user?.onboarding_status === 'approved' || user?.id === 'usr-editor-002' || user?.role === 'freelancer';
+  const isApproved = user?.onboarding_status === 'approved' || user?.role === 'freelancer';
   const isPending = !isApproved && (user?.onboarding_status === 'pending_review' || !!profileData);
   const isIncomplete = !isApproved && !isPending;
 
@@ -119,6 +125,15 @@ export default function FreelancerDashboard() {
               >
                 Start Creator Onboarding →
               </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentUser(PRESET_USERS.freelancer);
+                }}
+                className="px-6 py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl border border-blue-200 transition-all cursor-pointer"
+              >
+                Access Vetted Station (Demo) →
+              </button>
               <button
                 type="button"
                 onClick={() => logout()}
@@ -266,132 +281,14 @@ export default function FreelancerDashboard() {
 
   return (
     <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
-      {/* Sleek Dark Tech Header */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A] border-b border-[#262626]">
-        <div className="h-16 w-full px-6 md:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex flex-col select-none group">
-              <span className="font-extrabold text-[15px] leading-tight tracking-[0.18em] text-white group-hover:text-blue-400 transition-colors uppercase">
-                ARTSY
-              </span>
-              <span className="font-mono text-[7.5px] leading-none tracking-[0.24em] text-[#86868B] uppercase">
-                PLACE FOR PERSPECTIVE
-              </span>
-            </Link>
-            <span className="hidden md:inline-flex items-center gap-1.5 text-xs text-[#86868B] border-l border-[#262626] pl-6 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              CREATOR STATION ACTIVE
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-xs font-semibold uppercase px-3 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              Public Site
-            </Link>
-            <Link
-              href="/services"
-              className="text-xs font-semibold uppercase px-3 py-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-            >
-              Services Specs
-            </Link>
-            <button
-              type="button"
-              onClick={() => logout()}
-              className="text-xs font-semibold uppercase px-2.5 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-            >
-              Sign Out
-            </button>
-            <div className="pl-2 border-l border-white/10 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold text-xs">
-                {creatorInitials}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <FreelancerHeader />
 
       {/* Main Layout Container */}
-      <div className="flex pt-16 w-full max-w-full overflow-x-hidden">
-        {/* Left Sidebar: Creator Station Control (w-72 fixed on desktop) */}
-        <aside className="hidden lg:flex w-72 fixed left-0 top-16 bottom-0 overflow-y-auto bg-white border-r border-[#E5E5E7] z-40 p-6 flex-col justify-between shadow-xs">
-          <div className="space-y-6">
-            <div>
-              <div className="text-[11px] uppercase font-bold text-[#86868B] tracking-wider">
-                Creator Workspace
-              </div>
-              <div className="text-sm font-bold text-[#1D1D1F] mt-0.5">{creatorName}</div>
-              <span className="inline-block mt-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                Senior Cutter • Vetted
-              </span>
-            </div>
-
-            <nav className="flex flex-col space-y-1">
-              <div className="text-[10px] uppercase font-bold text-[#3B82F6] px-3 pt-2">
-                Production Slate
-              </div>
-              <Link
-                href="/freelancer"
-                className="px-3 py-2 text-xs font-semibold rounded-xl bg-[#3B82F6]/10 text-[#3B82F6] transition-colors"
-              >
-                Active Job Slate
-              </Link>
-              <Link
-                href="/freelancer/work/AP-8841"
-                className="px-3 py-2 text-xs font-medium rounded-xl text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors"
-              >
-                Project Workroom #8841
-              </Link>
-              <Link
-                href="/freelancer/payouts"
-                className="px-3 py-2 text-xs font-medium rounded-xl text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors"
-              >
-                Escrow Ledger &amp; Payouts
-              </Link>
-
-              <div className="text-[10px] uppercase font-bold text-[#86868B] px-3 pt-5">
-                Profile &amp; Gear
-              </div>
-              <Link
-                href="/freelancer/onboarding"
-                className="px-3 py-2 text-xs font-medium rounded-xl text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7] transition-colors"
-              >
-                Software &amp; Gear Profile
-              </Link>
-            </nav>
-          </div>
-
-          <div className="pt-4 border-t border-[#F5F5F7] space-y-3">
-            <div className="bg-[#F5F5F7] rounded-xl p-3 border border-[#E5E5E7]">
-              <div className="text-[10px] uppercase font-bold text-[#86868B]">Legal Agreement</div>
-              {hasAcceptedAgreement(user) ? (
-                <div className="flex items-center gap-1.5 mt-1 text-xs font-semibold text-emerald-600">
-                  <span>✓</span> Signed (NDA &amp; MSA v1.0)
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowAgreementModal(true)}
-                  className="mt-1 text-xs font-bold text-[#3B82F6] hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <span>⚠️</span> Sign Required NDA
-                </button>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => logout()}
-              className="w-full text-center py-2 px-3 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer"
-            >
-              Sign Out
-            </button>
-          </div>
-        </aside>
+      <div className="flex w-full max-w-full overflow-x-hidden">
+        <FreelancerSidebar />
 
         {/* Main Content Pane */}
-        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 bg-[#F5F5F7] min-h-screen">
+        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
           <div className="flex flex-col w-full max-w-full overflow-x-hidden">
             
 
@@ -479,19 +376,6 @@ export default function FreelancerDashboard() {
                         </div>
                         <div className="text-3xl sm:text-4xl font-extrabold text-emerald-600 leading-none">99.4</div>
                         <div className="text-xs text-[#86868B] mt-2">0 Flagged Milestones</div>
-                      </div>
-                    </div>
-
-                    {/* Bottom Control Notice Bar */}
-                    <div className="mt-6 pt-4 border-t border-[#F5F5F7] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-[#86868B]">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span className="font-medium text-[#1D1D1F]">
-                          Automated Slate Allocation: Enabled
-                        </span>
-                      </div>
-                      <div className="text-[11px]">
-                        TDS Citizen Registry: <span className="font-mono text-[#1D1D1F] font-bold">AAAPL8821K</span>
                       </div>
                     </div>
                   </div>
@@ -662,7 +546,7 @@ export default function FreelancerDashboard() {
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-[-0.03em]">
-                    Available Job Dispatch Slate (Anonymized)
+                    Available Job Dispatch Slate
                   </h2>
                   <span className="text-xs font-semibold text-[#86868B]">
                     {2 - acceptedJobs.length - declinedJobs.length} Offers Pending
@@ -876,27 +760,6 @@ export default function FreelancerDashboard() {
                 </div>
               </section>
 
-              {/* 4. ESCROW LEDGER & PAYOUTS CALLOUT */}
-              <section className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider text-[#86868B] font-bold">
-                    SETTLEMENT ACCOUNTING
-                  </div>
-                  <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-[-0.03em] mt-0.5">
-                    Escrow Ledger &amp; Payouts
-                  </h2>
-                  <p className="text-xs text-[#86868B] mt-1">
-                    Track your project milestones, released funds, and scheduled direct NEFT transfers.
-                  </p>
-                </div>
-                <Link
-                  href="/freelancer/payouts"
-                  className="px-5 py-3 bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-semibold rounded-xl transition-all shadow-sm shrink-0 flex items-center gap-2"
-                >
-                  <span>Open Full Ledger</span>
-                  <span>→</span>
-                </Link>
-              </section>
             </div>
           </div>
         </main>

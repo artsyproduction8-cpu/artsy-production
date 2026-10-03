@@ -117,7 +117,7 @@ function PriceSummaryContent() {
             Configured Price Summary
           </h1>
           <p className="text-xs text-[#86868B] mt-1">
-            All-inclusive escrow pricing. Zero hidden fees. 18% GST absorbed and itemized.
+            All-inclusive pricing. Zero hidden fees. 18% GST absorbed and itemized.
           </p>
         </div>
 
@@ -180,7 +180,7 @@ function PriceSummaryContent() {
                   All-Inclusive Client Total
                 </span>
                 <span className="text-xs text-emerald-600 font-semibold">
-                  ✓ Protected in Razorpay Escrow
+                  ✓ Protected in Razorpay Secure Payment
                 </span>
               </div>
               <div className="text-right">
@@ -209,7 +209,7 @@ function PriceSummaryContent() {
             onClick={handleProceedToCheckout}
             className="w-full bg-[#1D1D1F] hover:bg-[#3B82F6] text-white py-4 px-6 rounded-xl font-bold text-sm transition-all cursor-pointer shadow-sm text-center flex items-center justify-center gap-2"
           >
-            <span>Proceed to Escrow Checkout</span>
+            <span>Proceed to Checkout</span>
             <span>→</span>
           </button>
         </div>

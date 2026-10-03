@@ -369,7 +369,7 @@ CREATE TABLE IF NOT EXISTS public.creator_payouts (
     project_id          UUID REFERENCES public.projects(id) NOT NULL,
     creator_id          UUID REFERENCES public.users(id) NOT NULL,
     gross_amount        INTEGER NOT NULL, -- in paise (70% share)
-    tds_rate            DECIMAL(5,4) DEFAULT 0.0100, -- 1% under Section 194C
+    tds_rate            DECIMAL(5,4) DEFAULT 0.0200, -- 2% under Section 194J-Tech
     tds_amount          INTEGER NOT NULL, -- in paise
     net_payout          INTEGER NOT NULL, -- in paise
     status              TEXT NOT NULL DEFAULT 'pending' CHECK (status IN (
@@ -586,7 +586,7 @@ INSERT INTO public.platform_config (key, value, description) VALUES
     ('creator_share_pct', '70', 'Creator share percentage of available-for-split amount'),
     ('artsy_share_pct', '30', 'Artsy share percentage of available-for-split amount'),
     ('gst_rate', '0.18', 'GST rate (18% SAC 999613)'),
-    ('tds_rate', '0.01', 'TDS rate under Section 194C (1%)'),
+    ('tds_rate', '0.02', 'TDS rate under Section 194J-Tech (2%)'),
     ('quote_validity_days', '7', 'Quote expiration validity in days'),
     ('client_auto_approve_days', '7', 'Client preview review auto-approval timeout'),
     ('creator_accept_timeout_hours', '24', 'Hours creator has to accept or decline job offer'),

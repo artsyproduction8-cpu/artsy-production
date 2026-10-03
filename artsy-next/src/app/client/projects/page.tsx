@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth, logout } from '@/lib/auth';
+import ClientHeader from '../components/ClientHeader';
+import ClientSidebar from '../components/ClientSidebar';
 
 interface ClientProject {
   id: string;
@@ -86,47 +88,13 @@ export default function ClientProjectsPage() {
   const clientInitials = clientName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'SP';
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans">
-      {/* Studio Header Bar */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A] border-b border-[#262626]">
-        <div className="h-16 w-full px-6 md:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex flex-col select-none group">
-              <span className="font-extrabold text-[15px] leading-tight tracking-[0.18em] text-white group-hover:text-blue-400 transition-colors uppercase">
-                ARTSY
-              </span>
-              <span className="font-mono text-[7.5px] leading-none tracking-[0.24em] text-[#86868B] uppercase">
-                CLIENT PORTAL
-              </span>
-            </Link>
-            <span className="hidden md:inline-flex items-center gap-1.5 text-xs text-[#86868B] border-l border-[#262626] pl-6 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              PRODUCTION SUITE ACTIVE
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/book"
-              className="text-xs font-semibold uppercase px-3.5 py-1.5 rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white transition-all shadow-sm flex items-center gap-1.5"
-            >
-              <span>+</span>
-              <span>Order New Cut</span>
-            </Link>
-            <button
-              type="button"
-              onClick={() => logout()}
-              className="text-xs font-semibold uppercase px-2.5 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-            >
-              Sign Out
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="max-w-6xl mx-auto pt-28 pb-16 px-6">
-        {/* User Identity Greeting */}
+    <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
+      <ClientHeader />
+      <div className="flex w-full max-w-full overflow-x-hidden">
+        <ClientSidebar />
+        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen">
+          <div className="p-6 md:p-8 space-y-8 max-w-6xl mx-auto">
+            {/* User Identity Greeting */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-[#E5E5E7]">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-sm tracking-wider shadow-sm">
@@ -137,7 +105,7 @@ export default function ClientProjectsPage() {
                 Active Production Orders
               </h1>
               <p className="text-xs text-[#86868B] mt-0.5">
-                Client Workspace for <span className="font-semibold text-[#1D1D1F]">{clientName}</span> • Real-time SLA milestones &amp; master deliveries
+                Real-time SLA milestones &amp; master deliveries
               </p>
             </div>
           </div>
@@ -209,18 +177,9 @@ export default function ClientProjectsPage() {
             </div>
           ))}
         </div>
-
-        {/* Empty State / Ingestion Info */}
-        <div className="mt-8 p-6 bg-white rounded-2xl border border-[#E5E5E7] text-xs text-[#86868B] space-y-2">
-          <div className="font-bold text-[#1D1D1F] text-sm flex items-center gap-2">
-            <span>🔒</span>
-            <span>Artsy Escrow &amp; Retention Guarantee</span>
-          </div>
-          <p className="leading-relaxed">
-            All payments remain locked in Razorpay Escrow until you provide explicit sign-off on the final master cut. Raw footage proxies are retained for 15 days post-approval; master 4K archives are preserved in our encrypted Backblaze B2 cold vault for 30 days.
-          </p>
-        </div>
-      </main>
-    </div>
-  );
+      </div>
+    </main>
+  </div>
+</div>
+);
 }

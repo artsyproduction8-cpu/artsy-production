@@ -35,7 +35,7 @@ export default function HowItWorks() {
       num: '4',
       stage: 'STAGE 04',
       title: 'MASTER EXPORT & HANDOFF',
-      desc: 'Final delivery in uncompressed 4K masters, social mp4 cutdowns, and clean audio stems. Instant escrow payout released to creator.',
+      desc: 'Final delivery in uncompressed 4K masters, social mp4 cutdowns, and clean audio stems. Instant direct NEFT payout released to creator.',
       tag: 'ARCHIVAL ZIP / XML DISPATCH',
       tagColor: 'text-[#1C1B1B]',
       color: 'bg-[#1C1B1B] text-white'

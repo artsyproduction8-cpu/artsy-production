@@ -240,6 +240,71 @@ export function getAntiBanStatus(): AntiBanHealthStatus {
   }
 }
 
+// -----------------------------------------------------------------------------
+// GENERAL MILESTONE NOTIFICATION DISPATCHER: sendWhatsAppNotification
+// -----------------------------------------------------------------------------
+export async function sendWhatsAppNotification(
+  phone: string,
+  messageText: string,
+  eventNumber: number = 2
+): Promise<WhatsAppOTPResult> {
+  const gatewayUrl = (process.env.WHATSAPP_GATEWAY_URL || 'http://localhost:2785').replace(/\/$/, '');
+  const apiKey = process.env.WHATSAPP_GATEWAY_API_KEY || '';
+  const sessionId = process.env.WHATSAPP_SESSION_ID || '';
+
+  const digitsOnly = phone.replace(/\D/g, '');
+  const normalizedPhone =
+    digitsOnly.startsWith('91') && digitsOnly.length === 12
+      ? digitsOnly
+      : digitsOnly.length === 10
+      ? `91${digitsOnly}`
+      : digitsOnly;
+
+  const chatId = `${normalizedPhone}@c.us`;
+
+  if (!apiKey || apiKey.includes('YOUR_OPERATOR_KEY') || !sessionId || sessionId.includes('YOUR_SESSION')) {
+    const errorMsg = 'OpenWA Gateway credentials not configured or in dev fallback mode.';
+    return { success: false, error: errorMsg };
+  }
+
+  const sendEndpoint = `${gatewayUrl}/api/sessions/${sessionId}/messages/send-text`;
+  const payload = { chatId, text: messageText };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const response = await fetch(sendEndpoint, {
+      method: 'POST',
+      headers: {
+        'X-API-Key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => 'Gateway error');
+      await logDeliveryAttempt(phone, 'failed', `HTTP ${response.status}: ${errText}`);
+      return { success: false, error: errText };
+    }
+
+    const data = await response.json().catch(() => ({}));
+    const messageId = data?.id || data?.messageId || `owa_${Date.now()}`;
+    await logDeliveryAttempt(phone, 'delivered', undefined, messageId);
+
+    return { success: true, messageId };
+  } catch (err: unknown) {
+    clearTimeout(timeoutId);
+    const errMessage = err instanceof Error ? err.message : String(err);
+    await logDeliveryAttempt(phone, 'failed', errMessage);
+    return { success: false, error: errMessage };
+  }
+}
+
 export async function checkOpenWAGatewayHealth(): Promise<{
   configured: boolean;
   reachable: boolean;

@@ -16,10 +16,17 @@ function ConfirmationContent() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem('artsy_confirmed_order');
+      const stored =
+        sessionStorage.getItem('artsy_confirmed_order') ||
+        sessionStorage.getItem('artsy_active_booking') ||
+        localStorage.getItem('artsy_active_booking');
       if (stored) {
-        const parsed = JSON.parse(stored);
-        setConfirmedOrder(parsed);
+        try {
+          const parsed = JSON.parse(stored);
+          setConfirmedOrder(parsed.bookingData ? parsed : { bookingData: parsed });
+        } catch (e) {
+          console.error('Failed to parse confirmed order:', e);
+        }
         // Automatically trigger invoice email delivery
         if (orderId && !sessionStorage.getItem(`artsy_inv_sent_${orderId}`)) {
           sessionStorage.setItem(`artsy_inv_sent_${orderId}`, 'true');
@@ -65,7 +72,7 @@ function ConfirmationContent() {
               ✓
             </div>
             <span className="font-mono text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-wider border border-emerald-200">
-              ESCROW PAYMENT VERIFIED
+              PAYMENT VERIFIED
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-[-0.03em] mt-3 mb-2">
               Project Booked &amp; Ingestion Initialized
@@ -86,7 +93,7 @@ function ConfirmationContent() {
               <span className="font-bold">{orderId}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#86868B]">Total Escrow Deposited:</span>
+              <span className="text-[#86868B]">Total Deposited:</span>
               <span className="font-bold text-[#3B82F6]">₹{Number(totalAmount).toLocaleString('en-IN')} INR</span>
             </div>
             <div className="flex justify-between">
@@ -94,7 +101,7 @@ function ConfirmationContent() {
               <span className="font-bold text-emerald-600">48h Initial Assembly Delivery</span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-[#E5E5E7]">
-              <span className="text-[#86868B]">Statutory Tax Invoice:</span>
+              <span className="text-[#86868B]">Tax Invoice:</span>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -154,19 +161,26 @@ function ConfirmationContent() {
           </div>
 
           {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
             <Link
-              href="/client/review"
-              className="w-full sm:w-1/2 py-3.5 px-6 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold uppercase tracking-wider rounded-xl text-center transition-all shadow-sm"
+              href="/client"
+              className="w-full sm:flex-1 py-3.5 px-6 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold uppercase tracking-wider rounded-xl text-center transition-all shadow-sm"
             >
-              Open Frame Review Suite →
+              Open Client Dashboard →
             </Link>
 
             <Link
-              href="/"
-              className="w-full sm:w-1/2 py-3.5 px-6 border border-[#E5E5E7] text-[#1D1D1F] hover:bg-[#F5F5F7] text-xs font-semibold uppercase tracking-wider rounded-xl text-center transition-all"
+              href="/client/studio?onboarding=true"
+              className="w-full sm:w-auto py-3.5 px-5 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold uppercase tracking-wider rounded-xl text-center transition-all"
             >
-              Return to Homepage
+              Ingest Setup
+            </Link>
+
+            <Link
+              href="/client/review"
+              className="w-full sm:w-auto py-3.5 px-5 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold uppercase tracking-wider rounded-xl text-center transition-all"
+            >
+              Review Suite
             </Link>
           </div>
 

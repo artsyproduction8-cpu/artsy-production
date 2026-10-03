@@ -33,7 +33,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${jetbrainsMono.variable} overflow-x-hidden max-w-full`}
+      className={`${inter.variable} ${jetbrainsMono.variable} overflow-x-clip max-w-full`}
       suppressHydrationWarning
     >
       <head>
@@ -44,7 +44,7 @@ export default function RootLayout({
         <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
       </head>
       <body
-        className="font-sans antialiased text-[#1D1D1F] bg-[#FFFFFF] selection:bg-[#3B82F6] selection:text-white overflow-x-hidden max-w-full w-full min-h-screen relative"
+        className="font-sans antialiased text-[#1D1D1F] bg-[#FFFFFF] selection:bg-[#3B82F6] selection:text-white overflow-x-clip max-w-full w-full min-h-screen relative"
         suppressHydrationWarning
       >
         {children}

@@ -19,9 +19,20 @@ function CheckoutContent() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = sessionStorage.getItem('artsy_active_booking');
+      const stored =
+        sessionStorage.getItem('artsy_active_booking') ||
+        sessionStorage.getItem('artsy_confirmed_order') ||
+        localStorage.getItem('artsy_active_booking');
       if (stored) {
-        setBookingData(JSON.parse(stored));
+        try {
+          const parsed = JSON.parse(stored);
+          setBookingData(parsed.bookingData || parsed);
+          if (parsed.bookingData?.mobile || parsed.mobile) {
+            setClientPhone(parsed.bookingData?.mobile || parsed.mobile);
+          }
+        } catch (e) {
+          console.error('Failed to parse stored booking data:', e);
+        }
       }
     }
   }, []);
@@ -179,7 +190,7 @@ function CheckoutContent() {
             <span className="text-[#0F172A] font-black text-2xl tracking-tight uppercase">ARTSY</span>
             <span className="w-2 h-2 rounded-full bg-[#2563EB]"></span>
             <span className="text-xs font-bold text-[#2563EB] bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-              Escrow Checkout
+              Checkout
             </span>
           </Link>
 
@@ -195,7 +206,7 @@ function CheckoutContent() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
         <div className="mb-8">
           <div className="inline-flex items-center gap-2 text-xs font-bold text-[#2563EB] bg-blue-50 px-3 py-1 rounded-full uppercase tracking-wider mb-2">
-            Secure Escrow Checkout
+            Secure Checkout
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight">
             Order Confirmation & Ingestion
@@ -258,14 +269,14 @@ function CheckoutContent() {
                 />
               </div>
 
-              {/* Escrow Guarantee Box */}
+              {/* Payment Guarantee Box */}
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1 text-xs text-emerald-800">
                 <div className="font-bold flex items-center gap-1.5 text-sm">
                   <span>🔒</span>
-                  <span>100% Upfront Escrow Protection</span>
+                  <span>100% Upfront Payment Protection</span>
                 </div>
                 <p className="leading-relaxed">
-                  Funds remain securely protected in escrow. Your matched Artsy Creator is paid only after you review and approve the final master cut.
+                  Funds remain securely protected. Your matched Artsy Creator is paid only after you review and approve the final master cut.
                 </p>
               </div>
 
@@ -276,7 +287,7 @@ function CheckoutContent() {
                 className="w-full py-4 px-6 bg-[#0F172A] hover:bg-[#2563EB] text-white text-sm font-bold rounded-full shadow-md hover:shadow-lg transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
               >
                 {isProcessing ? (
-                  <span>Processing Razorpay Escrow...</span>
+                  <span>Processing Payment...</span>
                 ) : (
                   <>
                     <span>Pay ₹{grandTotal.toLocaleString('en-IN')} via Razorpay →</span>

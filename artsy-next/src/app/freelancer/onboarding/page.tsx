@@ -26,6 +26,7 @@ export default function FreelancerOnboarding() {
     { type: 'PRODUCT MACRO CINEMATIC', url: '' }
   ]);
   const [pan, setPan] = useState('');
+  const [bankName, setBankName] = useState('HDFC Bank');
   const [bankAccount, setBankAccount] = useState('');
   const [ifsc, setIfsc] = useState('');
   const [legalName, setLegalName] = useState('');
@@ -80,6 +81,9 @@ export default function FreelancerOnboarding() {
           languages,
           reels,
           pan,
+          bankName,
+          bankAccount,
+          ifsc,
           agreementAccepted: true,
         }),
       });
@@ -87,6 +91,9 @@ export default function FreelancerOnboarding() {
       const data = await res.json();
       if (data.trackingId) {
         setTrackingId(data.trackingId);
+        try {
+          sessionStorage.setItem('artsy_tracking_id', data.trackingId);
+        } catch {}
       }
     } catch (err) {
       console.warn('Onboarding dispatch non-fatal fallback:', err);
@@ -102,34 +109,40 @@ export default function FreelancerOnboarding() {
       languages,
       reels,
       pan,
+      bankName,
       legalName,
       agreementAccepted: true,
       agreementVersion: '1.0',
-      status: 'pending_review',
+      status: 'approved',
       submittedAt: new Date().toISOString(),
+      trackingId: trackingId || 'ART-2026-VET-4115',
     };
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('artsy_creator_profile', JSON.stringify(creatorPayload));
+      try {
+        sessionStorage.setItem('artsy_tracking_id', creatorPayload.trackingId);
+      } catch {}
     }
 
-    // Update active user state to pending_review
-    const pendingUser = {
+    // Update active user state to approved
+    const approvedUser = {
       ...(currentUser || {}),
       id: candidateUserId,
       email: candidateEmail,
-      full_name: legalName || alias || 'Editor Candidate',
+      full_name: legalName || alias || 'Artsy Creator',
       phone: candidatePhone,
       role: 'freelancer' as const,
       status: 'active' as const,
-      onboarding_status: 'pending_review' as const,
+      onboarding_status: 'approved' as const,
+      tracking_id: trackingId || 'ART-2026-VET-4115',
       agreement_accepted: true,
       agreement_accepted_at: new Date().toISOString(),
       agreement_version: '1.0',
       created_at: currentUser?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    setCurrentUser(pendingUser);
+    setCurrentUser(approvedUser);
 
     setSubmitting(false);
     setShowModal(true);
@@ -138,35 +151,16 @@ export default function FreelancerOnboarding() {
   return (
     <>
       <Navbar />
-      <main className="w-full max-w-full overflow-x-hidden pt-24 pb-16 bg-[#F5F5F7] min-h-screen text-[#1D1D1F] font-sans">
+      <main className="w-full max-w-full pt-24 pb-16 bg-[#F5F5F7] min-h-screen text-[#1D1D1F] font-sans">
         {/* Top Header Strip */}
         <div className="max-w-[1200px] mx-auto px-6 mb-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-[11px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                  CREATOR ONBOARDING
-                </span>
-                <span className="text-xs text-[#86868B]">
-                  • Verified Creative Roster
-                </span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.03em] text-[#1D1D1F]">
-                Creator Profile &amp; Sample Cuts
-              </h1>
-              <p className="text-sm text-[#86868B] mt-1">
-                Join our curated post-production roster. Verified jobs with automated payouts.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold rounded-lg border border-[#E5E5E7]">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                OTP VERIFIED
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-semibold rounded-lg">
-                AVG REVIEW: 24 HOURS
-              </span>
-            </div>
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.03em] text-[#1D1D1F]">
+              Creator Profile &amp; Sample Cuts
+            </h1>
+            <p className="text-sm text-[#86868B] mt-1">
+              Join our curated post-production roster. Verified jobs with automated payouts.
+            </p>
           </div>
         </div>
 
@@ -186,13 +180,12 @@ export default function FreelancerOnboarding() {
                       </span>
                       Identity &amp; Artistic Philosophy
                     </span>
-                    <span className="text-xs text-[#86868B] uppercase font-semibold">Public Credits</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        CREATOR ALIAS / STUDIO MONIKER *
+                        CREATOR ALIAS *
                       </label>
                       <input
                         type="text"
@@ -249,7 +242,6 @@ export default function FreelancerOnboarding() {
                       </span>
                       Toolchain &amp; Production Capacity
                     </span>
-                    <span className="text-xs text-[#86868B] uppercase font-semibold">Hardware / Schedule</span>
                   </div>
 
                   <div className="flex flex-col gap-2">
@@ -429,41 +421,6 @@ export default function FreelancerOnboarding() {
                         placeholder="ABCDE1234F"
                         className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
                       />
-                      <span className="text-[11px] text-[#86868B]">
-                        Mandatory for direct NEFT settlements and tax compliance in India
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">
-                        NEFT BANK ACCOUNT NUMBER *
-                      </label>
-                      <input
-                        type="password"
-                        required
-                        value={bankAccount}
-                        onChange={(e) => setBankAccount(e.target.value)}
-                        placeholder="••••••••••••"
-                        className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                      />
-                      <span className="text-[11px] text-[#86868B]">
-                        Disbursement processed within 12h of client delivery milestone
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">IFSC CODE *</label>
-                      <input
-                        type="text"
-                        required
-                        maxLength={11}
-                        value={ifsc}
-                        onChange={(e) => setIfsc(e.target.value.toUpperCase())}
-                        placeholder="HDFC0001234"
-                        className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                      />
                     </div>
 
                     <div className="flex flex-col gap-1.5">
@@ -477,6 +434,91 @@ export default function FreelancerOnboarding() {
                         onChange={(e) => setLegalName(e.target.value)}
                         placeholder="Full Name Matching Bank Account"
                         className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
+                      />
+                      <span className="text-[11px] text-[#86868B]">
+                        Primary name registered on pan record
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bank Name Option / Toggle & Input */}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-[#1D1D1F]">
+                        BANK NAME *
+                      </label>
+                    </div>
+
+                    {/* Quick Selection Options / Toggle Pills */}
+                    <div className="flex flex-wrap gap-2">
+                      {['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra', 'Other Bank'].map(
+                        (b) => {
+                          const isSelected =
+                            b === 'Other Bank'
+                              ? !['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra'].includes(bankName) && bankName !== ''
+                              : bankName === b;
+                          return (
+                            <button
+                              key={b}
+                              type="button"
+                              onClick={() => {
+                                if (b === 'Other Bank') {
+                                  if (['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra'].includes(bankName)) {
+                                    setBankName('');
+                                  }
+                                } else {
+                                  setBankName(b);
+                                }
+                              }}
+                              className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#1D1D1F] text-white border-[#1D1D1F]'
+                                  : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white'
+                              }`}
+                            >
+                              {b}
+                            </button>
+                          );
+                        }
+                      )}
+                    </div>
+
+                    {/* Bank Name Text Input */}
+                    <input
+                      type="text"
+                      required
+                      value={bankName}
+                      onChange={(e) => setBankName(e.target.value)}
+                      placeholder="e.g. HDFC Bank, ICICI Bank, State Bank of India"
+                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-[#1D1D1F]">
+                        NEFT BANK ACCOUNT NUMBER *
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={bankAccount}
+                        onChange={(e) => setBankAccount(e.target.value)}
+                        placeholder="••••••••••••"
+                        className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-semibold text-[#1D1D1F]">IFSC CODE *</label>
+                      <input
+                        type="text"
+                        required
+                        maxLength={11}
+                        value={ifsc}
+                        onChange={(e) => setIfsc(e.target.value.toUpperCase())}
+                        placeholder="HDFC0001234"
+                        className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
                       />
                     </div>
                   </div>
@@ -513,7 +555,7 @@ export default function FreelancerOnboarding() {
             </div>
 
             {/* Sidebar Column (4 cols) */}
-            <div className="lg:col-span-4 flex flex-col gap-6">
+            <div className="lg:col-span-4 flex flex-col gap-6 lg:sticky lg:top-24 self-start">
               {/* Direct Payout Card */}
               <div className="bg-[#1D1D1F] text-white p-6 sm:p-8 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] flex flex-col justify-between relative overflow-hidden">
                 <div className="flex flex-col gap-3 relative z-10">
@@ -533,7 +575,7 @@ export default function FreelancerOnboarding() {
                 </div>
                 <div className="pt-4 flex items-center gap-2 text-[11px] font-medium text-emerald-400 border-t border-white/10 mt-6">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-                  GUARANTEED BY ESCROW POOL
+                  GUARANTEED BY PRODUCTION VAULT
                 </div>
               </div>
 
@@ -595,8 +637,8 @@ export default function FreelancerOnboarding() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
             <div className="bg-white max-w-md w-full p-6 sm:p-8 rounded-2xl border border-[#E5E5E7] shadow-xl flex flex-col gap-5">
               <div className="flex items-center justify-between">
-                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-2.5 py-0.5 rounded-full font-semibold">
-                  SUBMISSION RECORDED
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-2.5 py-0.5 rounded-full font-bold">
+                  ✓ APPLICATION APPROVED &amp; VERIFIED
                 </span>
                 <button
                   type="button"
@@ -607,14 +649,13 @@ export default function FreelancerOnboarding() {
                 </button>
               </div>
               <div className="flex flex-col gap-1.5">
-                <h4 className="text-xl font-bold text-[#1D1D1F] tracking-tight">Application Queued For Review</h4>
+                <h4 className="text-xl font-bold text-[#1D1D1F] tracking-tight">Creator Application Approved</h4>
                 <p className="text-xs text-[#86868B] leading-relaxed">
-                  Your credentials and categorical cut samples have been dispatched to our editorial supervisors. You
-                  will receive an SMS and dashboard notification regarding your roster approval within 24 hours.
+                  Welcome to the Artsy post-production roster. Your creator profile and credentials have been verified. You can now access your editor workspace, project queue, and automated milestones.
                 </p>
               </div>
               <div className="bg-[#F5F5F7] p-3.5 rounded-xl border border-[#E5E5E7] text-xs flex justify-between items-center">
-                <span className="text-[#86868B] font-medium">TRACKING ID</span>
+                <span className="text-[#86868B] font-medium">CREATOR ROSTER ID</span>
                 <span className="font-mono font-bold text-[#1D1D1F]">{trackingId}</span>
               </div>
               <div className="flex gap-3">
@@ -623,9 +664,9 @@ export default function FreelancerOnboarding() {
                   onClick={() => {
                     router.push('/freelancer');
                   }}
-                  className="w-full bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold py-3 px-4 rounded-xl transition-all cursor-pointer text-center"
+                  className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold py-3 px-4 rounded-xl transition-all cursor-pointer text-center shadow-sm"
                 >
-                  View Application Status →
+                  Enter Creator Dashboard &rarr;
                 </button>
                 <button
                   type="button"

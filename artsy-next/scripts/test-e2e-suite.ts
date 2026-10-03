@@ -13,7 +13,31 @@
  * 9. Batch Financial Settlement (NEFT export & GSTR-1 compliance)
  */
 
+import fs from 'fs';
+import path from 'path';
 import crypto from 'crypto';
+
+// Load .env.local for complete environment parity
+try {
+  const envPath = path.resolve(__dirname, '../.env.local');
+  if (fs.existsSync(envPath)) {
+    const envContent = fs.readFileSync(envPath, 'utf-8');
+    envContent.split('\n').forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) {
+        const [key, ...rest] = trimmed.split('=');
+        if (key && rest.length) {
+          process.env[key.trim()] = rest.join('=').trim();
+        }
+      }
+    });
+  }
+} catch (e) {
+  console.warn('Could not load .env.local:', e);
+}
+
+import { signAuthCookieValue } from '../src/lib/auth-cookie';
+import { formatSequentialInvoiceNumber } from '../src/lib/invoices/generator';
 
 const BASE_URL = 'http://localhost:3000';
 const CRON_SECRET = process.env.CRON_SECRET || 'test_cron_secret_key_8841';
@@ -235,21 +259,21 @@ async function runSuite() {
     assert(false, 'Step 5: File Record Registration', `Error: ${err.message}`);
   }
 
-  // STEP 6: WhatsApp HSM Template Dispatch
+  // STEP 6: Authentication OTP Dispatch (Resend Email & OpenWA)
   try {
     const otpRes = await fetch(`${BASE_URL}/api/auth/otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: '919876543210' }),
+      body: JSON.stringify({ email: 'client@artsyprod.studio', fullName: 'Sneha Patel', role: 'client' }),
     });
     const otpData = await otpRes.json();
     assert(
       otpRes.status === 200 && otpData.success === true,
-      'Step 6: WhatsApp HSM Template Dispatch',
-      `HTTP ${otpRes.status}, template: artsy_otp_verification`
+      'Step 6: Email OTP Dispatch (Resend Primary)',
+      `HTTP ${otpRes.status}, Channel: ${otpData.channel || 'email'}, Message: "${otpData.message}"`
     );
   } catch (err: any) {
-    assert(false, 'Step 6: WhatsApp HSM Template Dispatch', `Error: ${err.message}`);
+    assert(false, 'Step 6: Authentication OTP Dispatch', `Error: ${err.message}`);
   }
 
   // STEP 7: PII Security & Admin Reveal Audit
@@ -317,15 +341,91 @@ async function runSuite() {
       `HTTP ${neftRes.status}`
     );
 
-    // 9b: GSTR-1 Compliance Export
-    const gstrRes = await fetch(`${BASE_URL}/api/financial/gstr1-export?period=2026-09`);
+    // 9b: GSTR-1 Unauthenticated check (Should be 401)
+    const unauthGstr = await fetch(`${BASE_URL}/api/financial/gstr1-export?period=2026-09`);
     assert(
-      gstrRes.status === 200,
-      'Step 9b: GSTR-1 Statutory Tax Export',
-      `HTTP ${gstrRes.status}`
+      unauthGstr.status === 401,
+      'Step 9b: GSTR-1 Auth Guard (401 Unauthorized)',
+      `HTTP ${unauthGstr.status}`
+    );
+
+    // 9c: GSTR-1 Admin Authenticated Export
+    const adminToken = signAuthCookieValue({ id: '87bee9c7-03a7-4259-81ed-64f434d8e5a0', role: 'admin', email: 'admin@artsyprod.studio' });
+    const gstrRes = await fetch(`${BASE_URL}/api/financial/gstr1-export?period=2026-09`, {
+      headers: { Cookie: `artsy_auth_token=${adminToken}` },
+    });
+    const gstrData = await gstrRes.json();
+    assert(
+      gstrRes.status === 200 && !!gstrData.gstin,
+      'Step 9c: GSTR-1 Statutory Tax Export (Admin Verified)',
+      `HTTP ${gstrRes.status}, GSTIN: ${gstrData.gstin}`
     );
   } catch (err: any) {
     assert(false, 'Step 9: Batch Financial Exports', `Error: ${err.message}`);
+  }
+
+  // STEP 10: DPDP Act Privacy & Data Rights Guard
+  try {
+    const clientId = 'e2ced58d-26ba-4d1b-899b-76c02ba11143';
+    const otherId = '1126400d-25c6-4c8b-8d8d-74123e7a5a5a';
+    const clientToken = signAuthCookieValue({ id: clientId, role: 'client', email: 'client@artsyprod.studio' });
+
+    // 10a: Unauthorized DPDP access attempt
+    const dpdpForbidden = await fetch(`${BASE_URL}/api/user/data-export?userId=${otherId}`, {
+      headers: { Cookie: `artsy_auth_token=${clientToken}` },
+    });
+    assert(
+      dpdpForbidden.status === 403,
+      'Step 10a: DPDP Cross-User Data Access Guard (403 Forbidden)',
+      `HTTP ${dpdpForbidden.status}`
+    );
+
+    // 10b: Authorized DPDP export
+    const dpdpExport = await fetch(`${BASE_URL}/api/user/data-export?userId=${clientId}`, {
+      headers: { Cookie: `artsy_auth_token=${clientToken}` },
+    });
+    const dpdpData = await dpdpExport.json();
+    assert(
+      dpdpExport.status === 200 && dpdpData.user?.id === clientId,
+      'Step 10b: DPDP Machine-Readable Data Export',
+      `HTTP ${dpdpExport.status}, Fiduciary: "${dpdpData.fiduciary}", User: ${dpdpData.user?.email}`
+    );
+  } catch (err: any) {
+    assert(false, 'Step 10: DPDP Privacy Guard', `Error: ${err.message}`);
+  }
+
+  // STEP 11: HMAC Cookie Tamper Defense
+  try {
+    const validAdmin = signAuthCookieValue({ id: '87bee9c7-03a7-4259-81ed-64f434d8e5a0', role: 'admin' });
+    const tamperedPayload = Buffer.from(JSON.stringify({ id: 'hacker', role: 'admin' })).toString('base64');
+    const tamperedCookie = `${tamperedPayload}.${validAdmin.split('.')[1]}`;
+
+    const tamperRes = await fetch(`${BASE_URL}/admin`, {
+      headers: { Cookie: `artsy_auth_token=${tamperedCookie}` },
+      redirect: 'manual',
+    });
+    assert(
+      Boolean(tamperRes.status === 307 && tamperRes.headers.get('location')?.includes('/auth/login')),
+      'Step 11: HMAC Cookie Tamper Rejection (307 Redirect)',
+      `HTTP ${tamperRes.status}, Location: ${tamperRes.headers.get('location')}`
+    );
+  } catch (err: any) {
+    assert(false, 'Step 11: HMAC Cookie Tamper Defense', `Error: ${err.message}`);
+  }
+
+  // STEP 12: Sequential CBIC Invoice Numbering
+  try {
+    const inv1 = formatSequentialInvoiceNumber(1);
+    const inv2 = formatSequentialInvoiceNumber(2);
+    const inv3 = formatSequentialInvoiceNumber(3);
+    const isValidFormat = /^AP\/\d{2}-\d{2}\/\d{5}$/.test(inv1);
+    assert(
+      isValidFormat && inv1 === 'AP/26-27/00001' && inv2 === 'AP/26-27/00002' && inv3 === 'AP/26-27/00003',
+      'Step 12: Sequential CBIC Invoice Format (AP/{FY}/{seq})',
+      `${inv1}, ${inv2}, ${inv3}`
+    );
+  } catch (err: any) {
+    assert(false, 'Step 12: Sequential Invoice Numbering', `Error: ${err.message}`);
   }
 
   // SUMMARY

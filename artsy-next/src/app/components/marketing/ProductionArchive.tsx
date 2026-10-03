@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link';
 
 const ARCHIVE_ITEMS = [
   {
@@ -124,17 +123,6 @@ export default function ProductionArchive() {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* View Full Archive CTA */}
-        <div className="mt-12 text-center">
-          <Link
-            href="/work"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all shadow-sm group"
-          >
-            <span>Explore Complete Production Archive (12+ Cinematic Cuts)</span>
-            <span className="group-hover:translate-x-1 transition-transform">→</span>
-          </Link>
         </div>
 
       </div>

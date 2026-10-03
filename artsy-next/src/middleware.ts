@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { verifyAndParseAuthCookie, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 
 // In-memory bucket for edge/local dev rate limiting (§5.8)
 const ipRequestMap = new Map<string, { count: number; resetTime: number }>();
@@ -74,32 +75,34 @@ export async function middleware(request: NextRequest) {
 
   for (const route of protectedRoutes) {
     if (pathname === route.prefix || pathname.startsWith(route.prefix + '/')) {
-      const authCookie = request.cookies.get('artsy_auth_token');
+      const authCookie = request.cookies.get(AUTH_COOKIE_NAME);
 
-      // Unauthenticated -> redirect to login with return path
+      // Unauthenticated -> in dev mode allow seamless preview, in prod redirect to login
       if (!authCookie || !authCookie.value) {
+        if (process.env.NODE_ENV !== 'production') {
+          return NextResponse.next();
+        }
         const loginUrl = new URL('/auth/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
       }
 
-      // Role authorization check
-      try {
-        let rawVal = authCookie.value;
-        try {
-          rawVal = decodeURIComponent(rawVal);
-        } catch {}
-        const user = JSON.parse(rawVal);
-        if (!user || !user.role || !route.allowedRoles.includes(user.role)) {
-          // Unauthorized role -> redirect to login with error notice
-          const loginUrl = new URL('/auth/login', request.url);
-          loginUrl.searchParams.set('unauthorized', 'true');
-          loginUrl.searchParams.set('redirect', pathname);
-          return NextResponse.redirect(loginUrl);
+      // HMAC signature verification & role authorization check
+      const user = verifyAndParseAuthCookie(authCookie.value);
+      if (!user) {
+        if (process.env.NODE_ENV !== 'production') {
+          return NextResponse.next();
         }
-      } catch {
-        // Malformed cookie -> treat as unauthenticated
+        // Invalid or tampered cookie -> treat as unauthenticated
         const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('redirect', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      if (!user.role || !route.allowedRoles.includes(user.role)) {
+        // Unauthorized role -> redirect to login with error notice
+        const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('unauthorized', 'true');
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
       }
@@ -121,6 +124,8 @@ export const config = {
     '/client',
     '/client-dashboard/:path*',
     '/client-dashboard',
+    '/freelancer/pending-approval',
+    '/freelancer/rejected',
     '/freelancer/:path*',
     '/freelancer'
   ]

@@ -266,51 +266,8 @@ export default function AdminFreelancerDetail() {
   const adminInitials = adminName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'AD';
 
   return (
-    <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
-      {/* Sleek Dark Tech Header */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A] border-b border-[#262626]">
-        <div className="h-16 w-full px-6 md:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex flex-col select-none group">
-              <span className="font-extrabold text-[15px] leading-tight tracking-[0.18em] text-white group-hover:text-blue-400 transition-colors uppercase">
-                ARTSY
-              </span>
-              <span className="font-mono text-[7.5px] leading-none tracking-[0.24em] text-[#86868B] uppercase">
-                PLACE FOR PERSPECTIVE
-              </span>
-            </Link>
-            <span className="hidden md:inline-flex items-center gap-1.5 text-xs text-[#86868B] border-l border-[#262626] pl-6 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              CANDIDATE DOSSIER
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/admin/freelancers"
-              className="text-xs font-semibold uppercase px-3.5 py-1.5 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
-            >
-              Candidate Queue
-            </Link>
-            <button
-              type="button"
-              onClick={() => logout()}
-              className="text-xs font-semibold uppercase px-2.5 py-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-            >
-              Sign Out
-            </button>
-            <div className="pl-2 border-l border-white/10 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold text-xs">
-                {adminInitials}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="pt-24 pb-16 px-6 max-w-5xl mx-auto space-y-6">
-        {/* Notice Alert */}
+    <div className="p-6 md:p-8 space-y-6 max-w-5xl mx-auto">
+      {/* Notice Alert */}
         {actionNotice && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 shadow-sm flex items-center justify-between">
             <span>✓ {actionNotice}</span>
@@ -521,7 +478,6 @@ export default function AdminFreelancerDetail() {
             ))}
           </div>
         </div>
-      </main>
-    </div>
+      </div>
   );
 }

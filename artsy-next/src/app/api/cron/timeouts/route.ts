@@ -52,6 +52,35 @@ export async function GET(request: NextRequest) {
             continue;
           }
 
+          const targetClientId = (proj as any).client_id || proj.user_id;
+          let clientPhone: string | undefined;
+          let clientEmail: string | undefined;
+
+          if (targetClientId) {
+            const { data: clientUser } = await supabase
+              .from('users')
+              .select('phone, email')
+              .eq('id', targetClientId)
+              .maybeSingle();
+
+            clientPhone = clientUser?.phone || undefined;
+            clientEmail = clientUser?.email || undefined;
+          }
+
+          const sendClientNotification = async (eventNumber: number, variables?: Record<string, any>) => {
+            if (!clientPhone && !clientEmail) {
+              console.log(`[TIMEOUT CRON] Skipped event ${eventNumber} for project ${proj.id}: client contact missing`);
+              return;
+            }
+            await dispatchNotification({
+              eventNumber,
+              userId: targetClientId || 'system',
+              recipientPhone: clientPhone,
+              recipientEmail: clientEmail,
+              variables: { projectId: proj.id, ...variables }
+            });
+          };
+
           const updatedAt = new Date(proj.updated_at).getTime();
           const elapsedHours = (now - updatedAt) / (1000 * 60 * 60);
 
@@ -80,49 +109,49 @@ export async function GET(request: NextRequest) {
               .eq('file_type', 'master_delivery')
               .is('retention_delete_at', null);
 
-            // Event 24: Auto-Approved Notification
-            await dispatchNotification({
-              eventNumber: 24,
-              userId: proj.user_id || 'system',
-              recipientPhone: '+919876543210',
-              variables: { projectId: proj.id }
-            });
+            // Event 24: Auto-Approved Notification to Client
+            await sendClientNotification(24);
 
             // Event 29: Payout Scheduled for Creator
-            await dispatchNotification({
-              eventNumber: 29,
-              userId: proj.user_id || 'system',
-              recipientPhone: '+919876543210',
-              variables: { projectId: proj.id, amount: '4,533' }
-            });
+            const creatorId = (proj as any).assigned_creator_id || (proj as any).assigned_editor_id;
+            let creatorPhone: string | undefined;
+            let creatorEmail: string | undefined;
+
+            if (creatorId) {
+              const { data: creatorUser } = await supabase
+                .from('users')
+                .select('phone, email')
+                .eq('id', creatorId)
+                .maybeSingle();
+
+              creatorPhone = creatorUser?.phone || undefined;
+              creatorEmail = creatorUser?.email || undefined;
+            }
+
+            if (creatorPhone || creatorEmail) {
+              await dispatchNotification({
+                eventNumber: 29,
+                userId: creatorId || 'system',
+                recipientPhone: creatorPhone,
+                recipientEmail: creatorEmail,
+                variables: { projectId: proj.id, amount: '4,533' }
+              });
+            } else {
+              console.log(`[TIMEOUT CRON] Skipped event 29 for project ${proj.id}: creator contact missing`);
+            }
 
             autoApprovedProjects.push(proj.id);
           } else if (elapsedHours >= 144 && elapsedHours < 145) {
             // Day 6 reminder
-            await dispatchNotification({
-              eventNumber: 23,
-              userId: proj.user_id || 'system',
-              recipientPhone: '+919876543210',
-              variables: { projectId: proj.id }
-            });
+            await sendClientNotification(23);
             reviewRemindersSent.push(`${proj.id}_day6`);
           } else if (elapsedHours >= 120 && elapsedHours < 121) {
             // Day 5 reminder
-            await dispatchNotification({
-              eventNumber: 23,
-              userId: proj.user_id || 'system',
-              recipientPhone: '+919876543210',
-              variables: { projectId: proj.id }
-            });
+            await sendClientNotification(23);
             reviewRemindersSent.push(`${proj.id}_day5`);
           } else if (elapsedHours >= 72 && elapsedHours < 73) {
             // Day 3 reminder
-            await dispatchNotification({
-              eventNumber: 23,
-              userId: proj.user_id || 'system',
-              recipientPhone: '+919876543210',
-              variables: { projectId: proj.id }
-            });
+            await sendClientNotification(23);
             reviewRemindersSent.push(`${proj.id}_day3`);
           }
         }
@@ -164,12 +193,28 @@ export async function GET(request: NextRequest) {
               .update({ status: 'reassignment_needed', updated_at: new Date().toISOString() })
               .eq('id', offer.project_id);
 
-            await dispatchNotification({
-              eventNumber: 15,
-              userId: 'admin',
-              recipientPhone: '+919876543210',
-              variables: { projectId: offer.project_id }
-            });
+            // Fetch admin user contact
+            const { data: adminUser } = await supabase
+              .from('users')
+              .select('id, phone, email')
+              .eq('role', 'admin')
+              .limit(1)
+              .maybeSingle();
+
+            const adminPhone = adminUser?.phone || process.env.ADMIN_PHONE;
+            const adminEmail = adminUser?.email || process.env.ADMIN_EMAIL;
+
+            if (adminPhone || adminEmail) {
+              await dispatchNotification({
+                eventNumber: 15,
+                userId: adminUser?.id || 'admin',
+                recipientPhone: adminPhone,
+                recipientEmail: adminEmail,
+                variables: { projectId: offer.project_id }
+              });
+            } else {
+              console.log(`[TIMEOUT CRON] Skipped event 15 for offer ${offer.id}: admin contact missing`);
+            }
             creatorOfferTimeouts.push(offer.id);
           }
         }

@@ -33,7 +33,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-bold text-[#1D1D1F] mb-3">2. Invoicing, Payments &amp; Taxes</h2>
             <p>
-              All prices displayed on Artsy Production are inclusive of applicable Goods and Services Tax (GST) at 18% under SAC Code 999613 (video post-production services). Client payments are held in escrow custody until deliverable quality assurance is certified. Formal Tax Invoices indicating CGST/SGST or IGST based on the place of supply are issued electronically for every order.
+              All prices displayed on Artsy Production are inclusive of applicable Goods and Services Tax (GST) at 18% under SAC Code 999613 (video post-production services). Client payments are held in Production Vault custody until deliverable quality assurance is certified. Formal Tax Invoices indicating CGST/SGST or IGST based on the place of supply are issued electronically for every order.
             </p>
           </section>
 

@@ -1,7 +1,7 @@
 'use client';
 
-import ClientReviewPage from '../client/review/page';
+import ClientDashboardPage from '../client/page';
 
 export default function ClientDashboard() {
-  return <ClientReviewPage />;
+  return <ClientDashboardPage />;
 }

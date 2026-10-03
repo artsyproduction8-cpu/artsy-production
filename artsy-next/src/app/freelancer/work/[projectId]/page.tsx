@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { getCurrentUser, hasAcceptedAgreement, recordAgreementAcceptance, type ArtsyUser } from '@/lib/auth';
+import { getCurrentUser, hasAcceptedAgreement, recordAgreementAcceptance, PRESET_USERS, type ArtsyUser } from '@/lib/auth';
 import { INITIAL_OPEN_JOBS } from '@/lib/matching/engine';
 import {
   logFootageDownload,
@@ -13,112 +13,94 @@ import {
   getProjectActivityLog,
   type ActivityLogEntry,
 } from '@/lib/activity/logger';
+import FreelancerHeader from '../../components/FreelancerHeader';
+import FreelancerSidebar from '../../components/FreelancerSidebar';
+
+const getInitialWorkData = (projectId: string) => {
+  const currentUser = (typeof window !== 'undefined' ? getCurrentUser() : null) || PRESET_USERS.freelancer;
+  const mockJob = INITIAL_OPEN_JOBS.find(j => j.id === projectId || (projectId && projectId.includes('8841'))) || INITIAL_OPEN_JOBS[0];
+  const mockProj = {
+    id: projectId || 'AP-8841',
+    status: 'in_progress',
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    estimated_delivery: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+    raw_footage_url: 'https://vault.artsyproduction.in/b2/raw-footage-secure',
+    assigned_creator_id: currentUser?.id || 'usr-editor-002',
+    payoutAmount: mockJob?.payoutAmount || 4533,
+    title: mockJob?.title || 'Brand UGC Viral Hooks & Micro-Pacing Cut',
+    scopeSummary: mockJob?.scopeSummary || '4K 60fps raw footage, 3 camera angles, color grading, and sound design sync.',
+    cameraAnglesCount: mockJob?.cameraAnglesCount || 3,
+  };
+  const mockOrder = {
+    id: `ord_${projectId || 'AP-8841'}`,
+    total_amount: 8000,
+    clients: { full_name: 'Verified Commercial Client', email: 'production@brandclient.com' },
+  };
+  const mockService = {
+    name: mockProj.title,
+    description: mockProj.scopeSummary,
+  };
+  return { currentUser, mockProj, mockOrder, mockService };
+};
 
 export default function FreelancerWorkView() {
   const { projectId } = useParams<{ projectId: string }>();
   const router = useRouter();
 
-  const [project, setProject] = useState<any>(null);
-  const [order, setOrder] = useState<any>(null);
-  const [service, setService] = useState<any>(null);
-  const [user, setUser] = useState<ArtsyUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [project, setProject] = useState<any>(() => getInitialWorkData(projectId).mockProj);
+  const [order, setOrder] = useState<any>(() => getInitialWorkData(projectId).mockOrder);
+  const [service, setService] = useState<any>(() => getInitialWorkData(projectId).mockService);
+  const [user, setUser] = useState<ArtsyUser | null>(() => getInitialWorkData(projectId).currentUser);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkInStatus, setCheckInStatus] = useState<'on_track' | 'missed' | 'escalated' | 'blocked'>('on_track');
   const [checkInMessage, setCheckInMessage] = useState('');
   const [deliverableUploaded, setDeliverableUploaded] = useState(false);
+  const [deliverableUrl, setDeliverableUrl] = useState('');
   const [footageDownloaded, setFootageDownloaded] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [ndaChecked, setNdaChecked] = useState(false);
   const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
 
   useEffect(() => {
-    const fetchWorkData = async () => {
+    // 1. Instant sync from local auth and activity logger
+    const currentUser = getCurrentUser() || PRESET_USERS.freelancer;
+    setUser(currentUser);
+    setActivityLogs(getProjectActivityLog(projectId));
+
+    // 2. Non-blocking background sync with Supabase (with fast timeout race)
+    const syncWithSupabase = async () => {
       try {
-        // 1. Identify user (Supabase or local session)
-        let currentUser: any = null;
-        try {
-          const { data: { user: sbUser } } = await supabase.auth.getUser();
-          currentUser = sbUser;
-        } catch {
-          // Ignore Supabase connection error in mock mode
-        }
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Supabase sync timeout')), 800)
+        );
 
-        if (!currentUser) {
-          currentUser = getCurrentUser();
-        }
-
-        if (!currentUser) {
-          router.push('/auth/login');
-          return;
-        }
-        setUser(currentUser);
-
-        // 2. Fetch Project (Supabase or fallback to matching mock job)
-        let foundProject: any = null;
-        try {
-          const { data: projectData, error: projectError } = await supabase
-            .from('projects')
-            .select(`
+        const fetchPromise = supabase
+          .from('projects')
+          .select(`
+            *,
+            orders:orders_id(
               *,
-              orders:orders_id(
-                *,
-                services(*),
-                clients:client_id(full_name, email)
-              )
-            `)
-            .eq('id', projectId)
-            .single();
+              services(*),
+              clients:client_id(full_name, email)
+            )
+          `)
+          .eq('id', projectId)
+          .single();
 
-          if (!projectError && projectData) {
-            foundProject = projectData;
-            setProject(projectData);
-            setOrder(projectData.orders);
-            setService(projectData.orders?.services);
-          }
-        } catch {
-          // fallback to mock
+        const result: any = await Promise.race([fetchPromise, timeoutPromise]);
+        if (result && !result.error && result.data) {
+          setProject(result.data);
+          if (result.data.orders) setOrder(result.data.orders);
+          if (result.data.orders?.services) setService(result.data.orders.services);
         }
-
-        if (!foundProject) {
-          // Search mock jobs or create a realistic project wrapper
-          const mockJob = INITIAL_OPEN_JOBS.find(j => j.id === projectId) || INITIAL_OPEN_JOBS[0];
-          const mockProj = {
-            id: projectId || mockJob.id,
-            status: 'in_progress',
-            created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-            estimated_delivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-            raw_footage_url: 'https://vault.artsyproduction.in/b2/raw-footage-secure',
-            assigned_creator_id: currentUser.id,
-            payoutAmount: mockJob.payoutAmount,
-            title: mockJob.title,
-            scopeSummary: mockJob.scopeSummary,
-            cameraAnglesCount: mockJob.cameraAnglesCount,
-          };
-          setProject(mockProj);
-          setOrder({
-            id: `ord_${projectId}`,
-            total_amount: mockJob.id === 'job-artsy-101' ? 8000 : 5000,
-            clients: { full_name: 'Verified Commercial Client', email: 'client@brand.com' },
-          });
-          setService({
-            name: mockJob.title,
-            description: mockJob.scopeSummary,
-          });
-        }
-
-        // 3. Load activity log
-        setActivityLogs(getProjectActivityLog(projectId));
-      } catch (err: any) {
-        console.error('Error fetching work data:', err);
-        setError(err.message || 'An error occurred');
-      } finally {
-        setLoading(false);
+      } catch {
+        // Fallback to instant mock state gracefully without delaying render
       }
     };
 
-    fetchWorkData();
-  }, [projectId, router]);
+    syncWithSupabase();
+  }, [projectId]);
 
   const handleFootageAccess = () => {
     if (!hasAcceptedAgreement(user)) {
@@ -166,6 +148,15 @@ export default function FreelancerWorkView() {
       setCheckInMessage(message);
 
       if (status === 'missed' || status === 'escalated' || status === 'blocked') {
+        fetch('/api/notifications/whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: '+919876543210',
+            message: `⚠️ Artsy Editorial Alert: Check-in for Project #${projectId} flagged as ${status.toUpperCase()}: "${message}"`,
+            projectId,
+          }),
+        }).catch(() => {});
         alert(`Artsy editorial supervisor alerted: Check-in recorded as "${status.toUpperCase()}".`);
       } else {
         alert('Daily check-in logged successfully on the platform audit trail.');
@@ -186,8 +177,8 @@ export default function FreelancerWorkView() {
       // 1. Log draft submission (Tier 3 Refund Trigger: 0% refund lock)
       logDraftSubmission(projectId, user?.id || 'creator', {
         version: 1,
-        draftUrl: 'https://stream.artsyprod.studio/v/draft-cut-v1',
-        notes: 'Initial master draft cut uploaded for QA and client preview.',
+        draftUrl: deliverableUrl || 'https://stream.artsyprod.studio/v/draft-cut-v1',
+        notes: `Master draft cut uploaded for QA and client preview. Link: ${deliverableUrl || 'Universal Cloud Vault'}`,
       });
       setActivityLogs(getProjectActivityLog(projectId));
 
@@ -203,6 +194,17 @@ export default function FreelancerWorkView() {
       } catch {
         // mock
       }
+
+      // 3. Dispatch automated milestone alert to client via WhatsApp
+      fetch('/api/notifications/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: order?.clients?.phone || '+919876543210',
+          eventType: 'QA_SUBMITTED',
+          projectId: projectId || 'AP-8841',
+        }),
+      }).catch(() => {});
 
       setDeliverableUploaded(true);
       alert('Draft cut submitted! Platform QA review initiated. Milestone progress locked.');
@@ -249,36 +251,37 @@ export default function FreelancerWorkView() {
   const netPayout = payoutAmount - tdsAmount;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans pb-16">
-      {/* Header */}
-      <header className="bg-white border-b border-[#E5E5E7] sticky top-0 z-20">
-        <div className="max-w-[1200px] mx-auto px-6 py-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <Link href="/freelancer" className="text-xs font-medium text-[#86868B] hover:text-[#1D1D1F] inline-flex items-center gap-1 mb-1">
-                ← Back to Creator Dashboard
-              </Link>
-              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1D1D1F]">
-                Active Project #{project.id}
-              </h1>
-              <p className="text-xs text-[#86868B] mt-0.5">
-                {service?.name || 'Commercial Video Editing'} • Client: {order?.clients?.full_name || 'Verified Client'}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-200">
-                {project.status?.replace('_', ' ').toUpperCase()}
-              </span>
-              <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
-                Project Payout: ₹{payoutAmount.toLocaleString('en-IN')}
-              </span>
+    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans">
+      <FreelancerHeader />
+
+      <div className="flex w-full max-w-full overflow-x-hidden">
+        <FreelancerSidebar />
+
+        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7] pb-16">
+          {/* Workroom Project Banner */}
+          <div className="bg-white border-b border-[#E5E5E7] px-6 py-4">
+            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1D1D1F]">
+                  Active Project #{project.id}
+                </h1>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  {service?.name || 'Commercial Video Editing'} • Client: {order?.clients?.full_name || 'Verified Client'}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-200">
+                  {project.status?.replace('_', ' ').toUpperCase()}
+                </span>
+                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
+                  Project Payout: ₹{payoutAmount.toLocaleString('en-IN')}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-[1200px] mx-auto px-6 py-8">
+          {/* Main Content */}
+          <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Creator Agreement Gating Warning (if unsigned) */}
         {!hasAcceptedAgreement(user) && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -387,7 +390,7 @@ export default function FreelancerWorkView() {
             <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm">
               <h2 className="text-base font-bold text-[#1D1D1F] mb-1">Submit Master Cut Deliverable</h2>
               <p className="text-xs text-[#86868B] mb-4">
-                Upload your 4K ProRes / MP4 export to your assigned Drive folder, then click submit to trigger Artsy QA review.
+                Provide your master export link from any platform (Google Drive, Vimeo, Frame.io, Dropbox, or YouTube unlisted).
               </p>
               {deliverableUploaded ? (
                 <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
@@ -397,13 +400,30 @@ export default function FreelancerWorkView() {
                   </p>
                 </div>
               ) : (
-                <button
-                  onClick={handleDeliverableSubmit}
-                  className="w-full py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
-                >
-                  <span>Submit Draft Cut for QA Review</span>
-                  <span>↗</span>
-                </button>
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-[#1D1D1F]">
+                      UNIVERSAL DELIVERABLE / CLOUD STORAGE URL *
+                    </label>
+                    <input
+                      type="url"
+                      value={deliverableUrl}
+                      onChange={(e) => setDeliverableUrl(e.target.value)}
+                      placeholder="https://drive.google.com/... or Vimeo / Frame.io / Dropbox link"
+                      className="bg-[#F5F5F7] px-4 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
+                    />
+                    <span className="text-[11px] text-[#86868B]">
+                      Universal link from any cloud storage or video hosting platform
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleDeliverableSubmit}
+                    className="w-full py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <span>Submit Master Cut for QA Review</span>
+                    <span>↗</span>
+                  </button>
+                </div>
               )}
             </div>
 
@@ -441,17 +461,13 @@ export default function FreelancerWorkView() {
                 Payout &amp; Settlement
               </h2>
               <div className="space-y-3 text-xs">
-                <div className="flex justify-between items-center pb-2 border-b border-[#E5E5E7]">
+                <div className="flex justify-between items-center">
                   <span className="text-[#86868B]">Project Fee</span>
                   <span className="font-bold text-[#1D1D1F]">₹{payoutAmount.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between items-center text-[#86868B]">
-                  <span>Statutory Withholding</span>
-                  <span className="text-amber-600">-₹{tdsAmount}</span>
-                </div>
                 <div className="pt-3 border-t border-[#1D1D1F] flex justify-between items-center">
                   <span className="font-extrabold text-[#1D1D1F]">Net NEFT Settlement</span>
-                  <span className="font-extrabold text-emerald-600 text-sm">₹{netPayout.toLocaleString('en-IN')}</span>
+                  <span className="font-extrabold text-emerald-600 text-sm">₹{payoutAmount.toLocaleString('en-IN')}</span>
                 </div>
               </div>
               <div className="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-800 leading-relaxed">
@@ -479,9 +495,11 @@ export default function FreelancerWorkView() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
         </div>
       </main>
+    </div>
 
       {/* NDA & Creator Agreement Modal */}
       {showAgreementModal && (

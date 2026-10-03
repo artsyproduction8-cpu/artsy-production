@@ -114,11 +114,11 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
         )}
 
         {/* Brand Lockup */}
-        <Link href="/" className="flex flex-col items-start leading-none select-none group">
-          <span className="text-[22px] sm:text-[24px] font-extrabold uppercase tracking-[-0.03em] text-white leading-none group-hover:text-white/80 transition-colors">
+        <Link href="/" className="flex flex-col items-center justify-center leading-none select-none group">
+          <span className="text-[20px] sm:text-[22px] font-extrabold uppercase tracking-[-0.03em] text-white leading-none group-hover:text-white/80 transition-colors">
             ARTSY
           </span>
-          <span className="font-mono text-[9px] sm:text-[9.5px] font-semibold tracking-[1.5px] uppercase text-[#DCDFE3]/80 mt-1 leading-none">
+          <span className="font-mono text-[7.5px] sm:text-[8px] font-semibold tracking-[1.6px] uppercase text-[#DCDFE3]/80 mt-1.5 leading-none text-center">
             PLACE FOR PERSPECTIVE
           </span>
         </Link>
@@ -162,7 +162,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             <>
               {/* FIND JOB Button */}
               <Link
-                href="/freelancer/onboarding"
+                href="/auth/login?intent=freelancer"
                 className="hidden sm:inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-white bg-transparent border border-white/30 hover:border-white hover:bg-white hover:text-[#0A0A0A] transition-all"
               >
                 FIND JOB
@@ -183,7 +183,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
                 href={roleHome}
                 className="hidden sm:inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all"
               >
-                {role === 'admin' ? 'ADMIN CONSOLE' : role === 'freelancer' ? 'CREATOR HUB' : 'MY REVIEWS'}
+                {role === 'admin' ? 'ADMIN CONSOLE' : role === 'freelancer' ? 'CREATOR HUB' : 'CLIENT DASHBOARD'}
               </Link>
 
               {/* User Avatar & Dropdown Trigger */}
@@ -300,7 +300,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             {!isAuthenticated ? (
               <div className="flex gap-3">
                 <Link
-                  href="/freelancer/onboarding"
+                  href="/auth/login?intent=freelancer"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex-1 text-center py-2 border border-white/30 rounded-lg text-xs font-semibold uppercase tracking-wider text-white hover:bg-white hover:text-black transition-all"
                 >

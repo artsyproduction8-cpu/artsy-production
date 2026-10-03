@@ -10,11 +10,11 @@ import Footer from './components/marketing/Footer';
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white text-[#1D1D1F] flex flex-col font-sans selection:bg-[#3B82F6] selection:text-white w-full max-w-full overflow-x-hidden">
+    <div className="min-h-screen bg-white text-[#1D1D1F] flex flex-col font-sans selection:bg-[#3B82F6] selection:text-white w-full max-w-full overflow-x-clip">
       {/* 00. Top Navigation */}
       <Navbar />
 
-      <main className="w-full pt-16 bg-white min-h-screen max-w-full overflow-x-hidden flex flex-col">
+      <main className="w-full pt-16 bg-white min-h-screen max-w-full overflow-x-clip flex flex-col">
         {/* 01. Hero Section (White Background) */}
         <Hero />
 

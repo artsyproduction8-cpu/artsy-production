@@ -269,16 +269,10 @@ export default function WorkPage() {
       {/* 00. Top Navigation */}
       <Navbar />
 
-      <main className="w-full pt-28 pb-20 max-w-full overflow-x-hidden flex-1">
+      <main className="w-full pt-28 pb-20 max-w-full overflow-x-clip flex-1">
         {/* Header Hero */}
         <section className="w-full max-w-[1200px] mx-auto px-6 sm:px-8 mb-12">
           <div className="max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-mono font-medium">
-              <span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span>
-              <span>VERIFIED PRODUCTION PORTFOLIO</span>
-              <span>•</span>
-              <span>{PORTFOLIO_ITEMS.length} ARCHIVED EDITS</span>
-            </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1D1D1F] uppercase">
               STUDIO WORK &amp; CINEMATIC ARCHIVE
             </h1>
@@ -290,31 +284,24 @@ export default function WorkPage() {
           {/* Interactive Filter Pills */}
           <div className="mt-8 flex flex-wrap items-center gap-2 pt-6 border-t border-[#F5F5F7]">
             {[
-              { id: 'all', label: 'All Work', count: PORTFOLIO_ITEMS.length },
-              { id: 'wedding', label: 'Wedding Cinema', count: PORTFOLIO_ITEMS.filter((i) => i.category === 'wedding').length },
-              { id: 'brand', label: 'Brand & UGC', count: PORTFOLIO_ITEMS.filter((i) => i.category === 'brand').length },
-              { id: 'product', label: 'Product & Commercial', count: PORTFOLIO_ITEMS.filter((i) => i.category === 'product').length },
-              { id: 'corporate', label: 'Corporate & Keynotes', count: PORTFOLIO_ITEMS.filter((i) => i.category === 'corporate').length },
-              { id: 'music', label: 'Music & Events', count: PORTFOLIO_ITEMS.filter((i) => i.category === 'music').length },
+              { id: 'all', label: 'All Work' },
+              { id: 'wedding', label: 'Wedding Cinema' },
+              { id: 'brand', label: 'Brand & UGC' },
+              { id: 'product', label: 'Product & Commercial' },
+              { id: 'corporate', label: 'Corporate & Keynotes' },
+              { id: 'music', label: 'Music & Events' },
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setFilter(tab.id as CategoryFilter)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                   filter === tab.id
                     ? 'bg-[#1D1D1F] text-white shadow-sm'
                     : 'bg-[#F5F5F7] text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#E5E5E7]'
                 }`}
               >
-                <span>{tab.label}</span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    filter === tab.id ? 'bg-white/20 text-white' : 'bg-black/5 text-[#86868B]'
-                  }`}
-                >
-                  {tab.count}
-                </span>
+                {tab.label}
               </button>
             ))}
           </div>

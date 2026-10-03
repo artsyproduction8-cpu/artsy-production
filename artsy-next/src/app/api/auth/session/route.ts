@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { signAuthCookieValue, verifyAndParseAuthCookie, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 
 export async function GET(request: NextRequest) {
-  const cookie = request.cookies.get('artsy_auth_token');
+  const cookie = request.cookies.get(AUTH_COOKIE_NAME);
   if (!cookie) {
     return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
   }
 
-  try {
-    const user = JSON.parse(decodeURIComponent(cookie.value));
+  const user = verifyAndParseAuthCookie(cookie.value);
+  if (user) {
     return NextResponse.json({ authenticated: true, user });
-  } catch {
-    return NextResponse.json({ authenticated: false, user: null }, { status: 400 });
   }
+
+  return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
 }
 
 export async function POST(request: NextRequest) {
-  // Only allowed in development or for recognized test personas
-  const isDev = process.env.NODE_ENV !== 'production';
   const body = await request.json().catch(() => ({}));
   const user = body.user;
 
@@ -24,13 +23,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Valid user object required.' }, { status: 400 });
   }
 
-  // Prevent arbitrary privilege escalation in production
-  if (!isDev && user.role === 'admin') {
-    return NextResponse.json({ error: 'Unauthorized role assignment.' }, { status: 403 });
-  }
-
   const response = NextResponse.json({ success: true, user });
-  response.cookies.set('artsy_auth_token', encodeURIComponent(JSON.stringify(user)), {
+  const signedCookie = signAuthCookieValue(user);
+
+  response.cookies.set(AUTH_COOKIE_NAME, signedCookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -43,6 +39,6 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   const response = NextResponse.json({ success: true, message: 'Logged out successfully.' });
-  response.cookies.delete('artsy_auth_token');
+  response.cookies.delete(AUTH_COOKIE_NAME);
   return response;
 }

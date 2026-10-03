@@ -1,31 +1,43 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-const CATEGORIES = [
-  {
-    id: 'wedding',
-    title: 'Wedding',
-    href: '/services/wedding',
-  },
-  {
-    id: 'brand',
-    title: 'Brand',
-    href: '/services/brand',
-  },
-  {
-    id: 'corporate',
-    title: 'Corporate',
-    href: '/services/corporate',
-  },
-  {
-    id: 'personal',
-    title: 'Personal / Other',
-    href: '/services/personal',
-  },
-];
+import { loadPricingMatrix, DEFAULT_PRICING_MATRIX } from '@/lib/pricing/catalog-matrix';
 
 export default function Services() {
+  const [categories, setCategories] = useState(() =>
+    DEFAULT_PRICING_MATRIX.map((c) => ({
+      id: c.id,
+      title: c.title,
+      href: `/services/${c.id}`,
+    }))
+  );
+
+  useEffect(() => {
+    const sync = () => {
+      const live = loadPricingMatrix();
+      setCategories(
+        live.map((c) => ({
+          id: c.id,
+          title: c.title,
+          href: `/services/${c.id}`,
+        }))
+      );
+    };
+
+    sync();
+
+    window.addEventListener('artsy_pricing_updated', sync);
+    window.addEventListener('artsy_catalog_deployed', sync);
+    window.addEventListener('storage', sync);
+
+    return () => {
+      window.removeEventListener('artsy_pricing_updated', sync);
+      window.removeEventListener('artsy_catalog_deployed', sync);
+      window.removeEventListener('storage', sync);
+    };
+  }, []);
+
   return (
     <section className="w-full py-14 sm:py-20 bg-[#F5F5F7]" id="services-catalog">
       <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
@@ -40,9 +52,9 @@ export default function Services() {
           </p>
         </div>
 
-        {/* Small, Clean Rectangular Category Cards Showing Only Category Name */}
+        {/* Clean Rectangular Category Cards Showing Category Names */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <Link
               key={cat.id}
               href={cat.href}
@@ -50,10 +62,6 @@ export default function Services() {
             >
               <span className="text-base sm:text-lg font-bold tracking-tight text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
                 {cat.title}
-              </span>
-
-              <span className="text-[#86868B] group-hover:text-[#3B82F6] text-base font-bold transition-all group-hover:translate-x-1">
-                →
               </span>
             </Link>
           ))}

@@ -126,10 +126,11 @@ if (isSupabaseConfigured && supabaseUrl && supabaseAnonKey) {
     },
     from: (table: string) => createMockBuilder(table),
   };
+  supabaseAdmin = supabase;
 }
 
 // Auth helpers - modified to use the supabase client (real or mock)
-export const signInWithWhatsApp = async (phoneNumber: string, fullName: string = '', role: 'client' | 'freelancer' | 'admin' = 'client') => {
+export const signInWithWhatsApp = async (phoneNumber: string) => {
   // In a real implementation, this would integrate with WhatsApp Cloud API
   // For now, we'll simulate the OTP flow and create a Supabase user
 

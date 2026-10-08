@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { calculateFinancialWaterfall } from '@/lib/financial/engine';
 
 export async function GET() {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
     }
 
-    const eventTimestamp = event.created_at || event.payload?.payment?.entity?.created_at;
+    const eventTimestamp = event.created_at || event.payload?.payment?.entity?.created_at || event.payload?.refund?.entity?.created_at;
     if (eventTimestamp) {
       const nowSec = Math.floor(Date.now() / 1000);
       const diffSec = Math.abs(nowSec - Number(eventTimestamp));
@@ -63,9 +63,9 @@ export async function POST(request: NextRequest) {
     const eventType = event.event;
 
     // 3. Idempotency Check via webhook_events
-    if (supabase && typeof supabase.from === 'function') {
+    if (supabaseAdmin && typeof supabaseAdmin.from === 'function') {
       try {
-        const { data: existingEvent } = await supabase
+        const { data: existingEvent } = await supabaseAdmin
           .from('webhook_events')
           .select('id, status')
           .match({ gateway: 'razorpay', event_id: eventId })
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Record incoming webhook event
-        await supabase.from('webhook_events').insert([
+        await supabaseAdmin.from('webhook_events').insert([
           {
             gateway: 'razorpay',
             event_id: eventId,
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Process Payment Events
+    // 4. Process Gateway Events
     switch (eventType) {
       case 'payment.captured':
       case 'order.paid': {
@@ -101,16 +101,16 @@ export async function POST(request: NextRequest) {
         const razorpayPaymentId = paymentEntity?.id;
         const amountPaise = paymentEntity?.amount;
 
-        if (supabase && typeof supabase.from === 'function' && razorpayOrderId) {
+        if (supabaseAdmin && typeof supabaseAdmin.from === 'function' && razorpayOrderId) {
           try {
-            const { data: order } = await supabase
+            const { data: order } = await supabaseAdmin
               .from('orders')
               .select('*')
               .eq('razorpay_order_id', razorpayOrderId)
               .maybeSingle();
 
             if (order) {
-              await supabase
+              await supabaseAdmin
                 .from('orders')
                 .update({
                   status: 'paid',
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
                 })
                 .eq('id', order.id);
 
-              await supabase.from('payments').insert([
+              await supabaseAdmin.from('payments').insert([
                 {
                   order_id: order.id,
                   amount: amountPaise || order.gross_amount,
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
               ]);
 
               const waterfall = calculateFinancialWaterfall(amountPaise || order.gross_amount);
-              await supabase.from('financial_events').insert([
+              await supabaseAdmin.from('financial_events').insert([
                 {
                   order_id: order.id,
                   event_type: 'client_payment',
@@ -202,9 +202,9 @@ export async function POST(request: NextRequest) {
       case 'payment.failed': {
         const paymentEntity = event.payload?.payment?.entity;
         const razorpayOrderId = paymentEntity?.order_id;
-        if (supabase && typeof supabase.from === 'function' && razorpayOrderId) {
+        if (supabaseAdmin && typeof supabaseAdmin.from === 'function' && razorpayOrderId) {
           try {
-            await supabase
+            await supabaseAdmin
               .from('orders')
               .update({ status: 'payment_failed', updated_at: new Date().toISOString() })
               .eq('razorpay_order_id', razorpayOrderId);
@@ -215,18 +215,59 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      case 'refund.created':
+      case 'refund.processed': {
+        const refund = event.payload?.refund?.entity;
+        if (refund && supabaseAdmin && typeof supabaseAdmin.from === 'function') {
+          try {
+            // Find matched order by razorpay_payment_id
+            const { data: matchedOrder } = await supabaseAdmin
+              .from('orders')
+              .select('id, gross_amount, refund_amount')
+              .eq('razorpay_payment_id', refund.payment_id)
+              .maybeSingle();
+
+            await supabaseAdmin
+              .from('orders')
+              .update({
+                refund_status: refund.status || 'processed',
+                refund_amount: refund.amount,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('razorpay_payment_id', refund.payment_id);
+
+            await supabaseAdmin
+              .from('refund_entries')
+              .insert([
+                {
+                  order_id: matchedOrder?.id || null,
+                  amount: refund.amount,
+                  reason: refund.notes?.reason || 'webhook refund',
+                  razorpay_refund_id: refund.id,
+                  reference: refund.id,
+                  status: refund.status || 'processed',
+                  created_at: new Date().toISOString(),
+                },
+              ]);
+          } catch (refErr) {
+            console.warn('Refund webhook DB processing warning:', refErr);
+          }
+        }
+        break;
+      }
+
       default:
         break;
     }
 
     // Mark webhook event as processed
-    if (supabase && typeof supabase.from === 'function') {
+    if (supabaseAdmin && typeof supabaseAdmin.from === 'function') {
       try {
-        await supabase
+        await supabaseAdmin
           .from('webhook_events')
           .update({ status: 'processed', processed_at: new Date().toISOString() })
           .match({ gateway: 'razorpay', event_id: eventId });
-      } catch (e) {
+      } catch {
         // non-blocking
       }
     }

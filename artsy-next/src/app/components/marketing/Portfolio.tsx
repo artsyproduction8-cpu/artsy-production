@@ -130,6 +130,7 @@ export default function Portfolio() {
               className="group bg-[#FFFFFF] border-4 border-[#1C1B1B] shadow-[8px_8px_0px_0px_#1c1b1b] overflow-hidden flex flex-col justify-between hover:-translate-y-1 transition-transform"
             >
               <div className="relative w-full h-64 overflow-hidden bg-[#1C1B1B] border-b-4 border-[#1C1B1B]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.image}
                   alt={item.title}

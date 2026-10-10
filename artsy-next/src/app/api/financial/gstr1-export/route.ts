@@ -26,7 +26,6 @@ export async function GET(request: NextRequest) {
     let totalB2cTaxable = 0;
     let totalB2cCgst = 0;
     let totalB2cSgst = 0;
-    let totalB2cIgst = 0;
     let invoiceCount = 0;
 
     const b2csList: Array<{
@@ -93,7 +92,6 @@ export async function GET(request: NextRequest) {
       totalB2cTaxable = 48474;
       totalB2cCgst = 4363;
       totalB2cSgst = 4363;
-      totalB2cIgst = 0;
 
       hsnData[0].qty = 8;
       hsnData[0].txval = totalB2cTaxable;

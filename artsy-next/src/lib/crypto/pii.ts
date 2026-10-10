@@ -54,7 +54,7 @@ export function decryptPII(cipherTextBase64: string): string {
     decrypted += decipher.final('utf8');
 
     return decrypted;
-  } catch (err: unknown) {
+  } catch {
     console.warn('PII Decryption fallback (treating as unencrypted or legacy text)');
     return cipherTextBase64;
   }

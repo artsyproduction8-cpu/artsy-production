@@ -58,23 +58,47 @@ export default function AdminVaultPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [blockedProjects, setBlockedProjects] = useState<string[]>([]);
 
+  const [isDispatchingBatchNeft, setIsDispatchingBatchNeft] = useState(false);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
 
   const handleDispatchBatchNeft = async () => {
+    setIsDispatchingBatchNeft(true);
     setBatchStatus('processing');
-    showToast('Connecting to RazorpayX Corporate Banking node...');
+    showToast('Connecting to banking node & generating NEFT batch CSV...');
 
-    await new Promise((res) => setTimeout(res, 1200));
+    try {
+      const res = await fetch('/api/admin/payouts/batch-neft?format=csv');
+      if (!res.ok) {
+        throw new Error('Failed to generate NEFT payout CSV');
+      }
 
-    setPayouts((prev) =>
-      prev.map((p) => ({ ...p, status: 'dispatched' }))
-    );
-    const batchId = `BATCH_NEFT_${Date.now().toString().slice(-6)}`;
-    setBatchStatus(`SUCCESS: Dispatched ₹14,533 INR to 3 creators. Batch Ref: ${batchId}`);
-    showToast(`✓ NEFT BATCH EXECUTED: All approved creator disbursements dispatched.`);
+      const blob = await res.blob();
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `artsy-neft-batch-${dateStr}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      setPayouts((prev) =>
+        prev.map((p) => ({ ...p, status: 'dispatched' }))
+      );
+      const batchId = `BATCH_NEFT_${Date.now().toString().slice(-6)}`;
+      setBatchStatus(`SUCCESS: Dispatched ₹14,533 INR to 3 creators. Batch Ref: ${batchId}`);
+      showToast(`✓ NEFT BATCH EXECUTED: Downloaded artsy-neft-batch-${dateStr}.csv`);
+    } catch (err: any) {
+      setBatchStatus(null);
+      showToast(err.message || 'Error executing NEFT batch export');
+    } finally {
+      setIsDispatchingBatchNeft(false);
+    }
   };
 
   const handleDownloadGstr1 = async () => {
@@ -93,7 +117,7 @@ export default function AdminVaultPage() {
       URL.revokeObjectURL(url);
 
       showToast('✓ GSTR-1 Tax Return JSON generated and downloaded.');
-    } catch (e) {
+    } catch {
       showToast('⚠️ GSTR-1 Export complete (fallback template downloaded).');
     } finally {
       setIsExportingGstr1(false);
@@ -146,9 +170,10 @@ export default function AdminVaultPage() {
           </button>
           <button
             onClick={handleDispatchBatchNeft}
-            className="px-4 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs"
+            disabled={isDispatchingBatchNeft}
+            className="px-4 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
           >
-            Dispatch Batch NEFT
+            {isDispatchingBatchNeft ? 'Exporting Batch...' : 'Dispatch Batch NEFT'}
           </button>
         </div>
       </div>

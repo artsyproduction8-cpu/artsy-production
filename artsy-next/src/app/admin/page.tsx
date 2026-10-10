@@ -271,20 +271,15 @@ export default function UnifiedAdminDashboard() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Pricing matrix state
-  const [pricingCategories, setPricingCategories] = useState<ServiceCategory[]>([]);
-  const [activeMatrixCatId, setActiveMatrixCatId] = useState<string>('wedding');
-  const [selectedProductId, setSelectedProductId] = useState<string>('highlight-teaser');
-
-  useEffect(() => {
+  const [pricingCategories, setPricingCategories] = useState<ServiceCategory[]>(() => loadPricingMatrix());
+  const [activeMatrixCatId, setActiveMatrixCatId] = useState<string>(() => {
     const data = loadPricingMatrix();
-    setPricingCategories(data);
-    if (data.length > 0) {
-      setActiveMatrixCatId(data[0].id);
-      if (data[0].products.length > 0) {
-        setSelectedProductId(data[0].products[0].id);
-      }
-    }
-  }, []);
+    return data.length > 0 ? data[0].id : 'wedding';
+  });
+  const [selectedProductId, setSelectedProductId] = useState<string>(() => {
+    const data = loadPricingMatrix();
+    return data.length > 0 && data[0].products.length > 0 ? data[0].products[0].id : 'highlight-teaser';
+  });
 
   // Assign editor modal / selector state
   const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);

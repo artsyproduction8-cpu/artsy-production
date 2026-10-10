@@ -7,7 +7,7 @@ import FreelancerHeader from './components/FreelancerHeader';
 import FreelancerSidebar from './components/FreelancerSidebar';
 
 export default function FreelancerDashboard() {
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
 
   useEffect(() => {
@@ -38,15 +38,36 @@ export default function FreelancerDashboard() {
   const isApproved = user?.onboarding_status === 'approved' || user?.role === 'freelancer';
   const isPending = !isApproved && (user?.onboarding_status === 'pending_review' || !!profileData);
   const isIncomplete = !isApproved && !isPending;
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  const handleAcceptJob = (jobId: string) => {
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleAcceptJob = async (jobId: string) => {
     if (!hasAcceptedAgreement(user)) {
       setPendingJobToAccept(jobId);
       setShowAgreementModal(true);
       return;
     }
     setAcceptedJobs((prev) => [...prev, jobId]);
-    alert(`DISPATCH SYSTEM: Job #${jobId} confirmed. Scoped Backblaze B2 ingest vault credentials dispatched.`);
+
+    try {
+      const res = await fetch('/api/freelancer/jobs/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: jobId }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to accept job');
+      }
+      showToast('Job accepted. Check your workroom.', 'success');
+    } catch (err: any) {
+      setAcceptedJobs((prev) => prev.filter((id) => id !== jobId));
+      showToast(err.message || 'Failed to accept job. Reverting.', 'error');
+    }
   };
 
   const handleSignAgreement = () => {
@@ -57,11 +78,10 @@ export default function FreelancerDashboard() {
     recordAgreementAcceptance('both', '1.0');
     setShowAgreementModal(false);
     if (pendingJobToAccept) {
-      setAcceptedJobs((prev) => [...prev, pendingJobToAccept]);
-      alert(`AGREEMENT EXECUTED: Job #${pendingJobToAccept} confirmed. Scoped Backblaze B2 ingest vault credentials dispatched.`);
+      handleAcceptJob(pendingJobToAccept);
       setPendingJobToAccept(null);
     } else {
-      alert('Master Agreement & NDA recorded. Your creator station is fully unlocked.');
+      showToast('Master Agreement & NDA recorded. Your creator station is fully unlocked.', 'success');
     }
   };
 
@@ -293,6 +313,24 @@ export default function FreelancerDashboard() {
             
 
             <div className="p-6 md:p-8 space-y-8 max-w-7xl">
+              {toastMessage && (
+                <div
+                  className={`p-4 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-between ${
+                    toastMessage.type === 'success'
+                      ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                      : 'bg-red-50 border border-red-200 text-red-800'
+                  }`}
+                >
+                  <span>{toastMessage.text}</span>
+                  <button
+                    type="button"
+                    onClick={() => setToastMessage(null)}
+                    className="ml-3 font-bold opacity-70 hover:opacity-100"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
 
               {/* Agreement Pending Banner */}
               {!hasAcceptedAgreement(user) && (

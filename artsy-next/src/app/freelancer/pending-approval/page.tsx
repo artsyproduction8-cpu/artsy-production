@@ -3,11 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, logout, ArtsyUser } from '@/lib/auth';
+import { getCurrentUser, logout } from '@/lib/auth';
 
 export default function FreelancerPendingApprovalPage() {
   const router = useRouter();
-  const [user, setUser] = useState<ArtsyUser | null>(null);
   const [trackingId, setTrackingId] = useState<string>('ART-2026-VET-4115');
   const [copied, setCopied] = useState<boolean>(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState<boolean>(true);
@@ -33,8 +32,6 @@ export default function FreelancerPendingApprovalPage() {
       router.replace('/client');
       return;
     }
-
-    setUser(activeUser);
 
     // Resolve Tracking ID
     let resolvedTrackingId = activeUser.tracking_id;

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/../lib/supabase';
-import { checkOpenWAGatewayHealth, getAntiBanStatus } from '@/lib/whatsapp/openwa-dispatcher';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -43,10 +42,48 @@ export async function GET() {
   const rzpSecret = process.env.RAZORPAY_KEY_SECRET;
   const rzpStatus = (rzpKeyId && rzpSecret && !rzpKeyId.includes('your-')) ? 'connected' : 'mock';
 
-  // 4. WhatsApp Health (OpenWA Self-Hosted Gateway + Baileys Anti-Ban)
-  const openwaHealth = await checkOpenWAGatewayHealth();
-  const antiBanStatus = getAntiBanStatus();
-  const waStatus = openwaHealth.reachable ? 'connected' : (openwaHealth.configured ? 'disconnected' : 'mock');
+  // 4. WhatsApp Health (Meta Cloud API)
+  const metaAccessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+  const metaPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || '1389485034246532';
+  let waStatus: 'connected' | 'disconnected' = 'disconnected';
+  let waSessionStatus: 'registered' | 'unregistered' | 'disconnected' = 'disconnected';
+  let waError: string | undefined = undefined;
+
+  const isMetaTokenPresent = Boolean(
+    metaAccessToken &&
+    !metaAccessToken.includes('WILL_BE_PROVIDED') &&
+    !metaAccessToken.includes('your-')
+  );
+
+  if (isMetaTokenPresent && metaPhoneId) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+      const metaRes = await fetch(`https://graph.facebook.com/v23.0/${metaPhoneId}`, {
+        headers: { Authorization: `Bearer ${metaAccessToken}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (metaRes.ok) {
+        waStatus = 'connected';
+        waSessionStatus = 'registered';
+      } else {
+        const errJson = await metaRes.json().catch(() => ({}));
+        waStatus = 'disconnected';
+        waSessionStatus = 'unregistered';
+        waError = errJson.error?.message || `Meta Graph API returned status ${metaRes.status}`;
+      }
+    } catch (fetchErr: any) {
+      waStatus = 'disconnected';
+      waSessionStatus = 'disconnected';
+      waError = fetchErr.name === 'AbortError' ? 'Meta Graph API timeout' : (fetchErr.message || 'Connection failed');
+    }
+  } else {
+    waStatus = 'disconnected';
+    waSessionStatus = 'disconnected';
+    waError = 'WHATSAPP_ACCESS_TOKEN is missing or not configured';
+  }
 
   // 5. Email Health (Resend - Connected)
   const resendApiKey = process.env.RESEND_API_KEY;
@@ -84,31 +121,22 @@ export async function GET() {
         status: emailStatus,
       },
       whatsapp: {
-        provider: 'openwa_gateway',
+        provider: 'meta_cloud_api',
         status: waStatus,
-        gatewayUrl: openwaHealth.gatewayUrl,
-        sessionId: openwaHealth.sessionId || null,
-        sessionStatus: openwaHealth.sessionStatus || 'disconnected',
-        antiban: {
-          rateLimitStatus: antiBanStatus.allowed ? 'active' : 'throttled',
-          maxPerMinute: antiBanStatus.maxPerMinute,
-          lastMinute: antiBanStatus.lastMinute,
-          messagesAllowed: antiBanStatus.messagesAllowed,
-          messagesBlocked: antiBanStatus.messagesBlocked,
-          currentFactor: antiBanStatus.currentFactor,
-          entropyCycles: antiBanStatus.entropyCycles,
-        },
-        ...(openwaHealth.error && { error: openwaHealth.error }),
+        phoneNumber: '+91 83694 11627',
+        phoneNumberId: metaPhoneId,
+        sessionStatus: waSessionStatus,
+        ...(waError ? { error: waError } : {}),
       },
       notifications: {
         provider: 'resend_email',
         status: emailStatus,
-        whatsapp_provider: 'openwa_gateway',
+        whatsapp_provider: 'meta_cloud_api',
         whatsapp_status: waStatus,
       },
     },
     responseTimeMs,
-    version: '2.2.0',
+    version: '2.3.0',
   };
 
   return NextResponse.json(healthPayload, {

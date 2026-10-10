@@ -1,21 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { useAuth, logout } from '@/lib/auth';
 import FreelancerHeader from '../components/FreelancerHeader';
 import FreelancerSidebar from '../components/FreelancerSidebar';
 
 export default function FreelancerPayoutsPage() {
-  const { user } = useAuth();
   const [statementNotice, setStatementNotice] = useState(false);
 
   const handleExportStatement = () => {
     setStatementNotice(true);
     setTimeout(() => setStatementNotice(false), 5000);
   };
-
-  const creatorName = user?.full_name || 'Aarav Sen';
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans">

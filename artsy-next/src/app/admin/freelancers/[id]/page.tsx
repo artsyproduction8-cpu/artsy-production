@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { useAuth, logout } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 
 interface SampleReel {
   id: string;
@@ -156,7 +156,6 @@ const ROSTER_DATABASE: Record<string, CreatorDetail> = {
 
 export default function AdminFreelancerDetail() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const { user } = useAuth();
 
   const [freelancer, setFreelancer] = useState<CreatorDetail | null>(null);
@@ -262,8 +261,6 @@ export default function AdminFreelancerDetail() {
     .slice(0, 2)
     .toUpperCase();
 
-  const adminName = user?.full_name || 'Studio Director';
-  const adminInitials = adminName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'AD';
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-5xl mx-auto">

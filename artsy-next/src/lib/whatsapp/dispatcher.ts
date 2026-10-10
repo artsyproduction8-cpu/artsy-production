@@ -112,7 +112,7 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
       }
     }
 
-    // 2. Email Dispatch via Resend (Primary delivery channel while WhatsApp is skipped)
+    // 2. Resolve User Email for Resend Delivery / Fallbacks
     let emailToUse = payload.recipientEmail;
     if (!emailToUse && payload.userId && !payload.userId.startsWith('anon_') && supabase && typeof supabase.from === 'function') {
       try {
@@ -130,52 +130,101 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
     }
 
     const hasResend = process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.includes('your-resend');
-    if (hasResend && emailToUse) {
-      try {
-        const { sendNotificationEmail } = await import('@/lib/email/dispatcher');
-        await sendNotificationEmail({
-          eventNumber: payload.eventNumber,
-          title: template.title,
-          message: formattedMessage,
-          recipientEmail: emailToUse,
-          actionUrl: payload.actionUrl,
-        });
-      } catch (emailErr) {
-        console.error('Email dispatch error for notification event #' + payload.eventNumber, emailErr);
+    const sendEmailFallback = async (reason: string) => {
+      if (hasResend && emailToUse) {
+        try {
+          const { sendNotificationEmail } = await import('@/lib/email/dispatcher');
+          await sendNotificationEmail({
+            eventNumber: payload.eventNumber,
+            title: template.title,
+            message: formattedMessage,
+            recipientEmail: emailToUse,
+            actionUrl: payload.actionUrl,
+          });
+          console.log(`[Email Fallback] Sent notification email for Event #${payload.eventNumber} to ${emailToUse} (Reason: ${reason})`);
+        } catch (emailErr) {
+          console.error(`Email dispatch error for notification event #${payload.eventNumber}:`, emailErr);
+        }
+      } else {
+        console.warn(`[Email Fallback Skipped] No recipient email or Resend not configured for Event #${payload.eventNumber}`);
       }
-    } else if (hasResend && !emailToUse) {
-      console.log(`[Resend Email Notice] Event #${payload.eventNumber} "${template.title}" has no recipient email provided. Message: "${formattedMessage}"`);
-    }
+    };
 
-    // 3. WhatsApp Cloud API Dispatch (MOCKED - Skipped per configuration)
-    const isMockWA = process.env.MOCK_WHATSAPP === 'true' || true;
+    // 3. WhatsApp Cloud API Dispatch via Meta Cloud API
+    const metaAccessToken = process.env.WHATSAPP_ACCESS_TOKEN;
+    const metaPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+    const isMetaConfigured = Boolean(
+      metaAccessToken &&
+      metaPhoneId &&
+      !metaAccessToken.includes('WILL_BE_PROVIDED') &&
+      !metaAccessToken.includes('your-')
+    );
+
+    let metaSendSuccess = false;
+
     if (payload.recipientPhone) {
       const cleanPhone = payload.recipientPhone.replace(/\D/g, '');
-      const templateDef = WHATSAPP_TEMPLATES[payload.eventNumber];
-      const templateName = templateDef?.templateName || 'artsy_general_notification';
-      console.log(`[WhatsApp MOCK (Skipped)] Event #${payload.eventNumber} ("${templateName}") -> ${cleanPhone}: "${formattedMessage}"`);
 
-      if (supabase && typeof supabase.from === 'function') {
+      if (isMetaConfigured) {
+        // Map 44 events to the 3 Meta utility templates
+        const metaTemplate = getMetaTemplateForEvent(payload, template);
         try {
-          await supabase.from('notification_delivery_log').insert([
-            {
-              notification_id: inAppNotificationId,
-              channel: 'whatsapp',
-              recipient: payload.recipientPhone,
-              event_number: payload.eventNumber,
-              provider_message_id: `mock_wa_${Date.now()}`,
-              status: 'mock_sent',
-              created_at: new Date().toISOString(),
-            },
-          ]);
-        } catch {
-          // non-blocking
+          const { sendMetaTemplate } = await import('./meta-cloud-dispatcher');
+          const metaResult = await sendMetaTemplate(cleanPhone, metaTemplate.templateName, metaTemplate.params);
+
+          metaSendSuccess = metaResult.success;
+
+          // Log every attempt to notification_delivery_log table with channel='whatsapp_meta'
+          if (supabase && typeof supabase.from === 'function') {
+            try {
+              const deliveryRow = {
+                notification_id: inAppNotificationId,
+                channel: 'whatsapp_meta',
+                recipient: payload.recipientPhone,
+                event_number: payload.eventNumber,
+                provider_message_id: metaResult.messageId || null,
+                status: metaResult.success ? 'sent' : 'failed',
+                error_message: metaResult.error || null,
+                created_at: new Date().toISOString(),
+              };
+
+              const { error: logError } = await supabase
+                .from('notification_delivery_log')
+                .insert([deliveryRow]);
+
+              if (logError && logError.code === '23514') {
+                // If database check constraint requires legacy 'whatsapp' enum
+                await supabase
+                  .from('notification_delivery_log')
+                  .insert([{ ...deliveryRow, channel: 'whatsapp' }]);
+              }
+            } catch (logErr) {
+              console.warn('[META_CAPI] Delivery log non-fatal error:', logErr);
+            }
+          }
+
+          if (!metaResult.success) {
+            console.warn(`[META_CAPI] Failed for Event #${payload.eventNumber}: ${metaResult.error}. Falling back to email.`);
+            await sendEmailFallback(`Meta Cloud API failed: ${metaResult.error}`);
+          }
+        } catch (metaErr: any) {
+          console.error(`[META_CAPI] Exception for Event #${payload.eventNumber}:`, metaErr);
+          await sendEmailFallback(`Meta Cloud API exception: ${metaErr.message}`);
         }
+      } else {
+        // Fallback: OpenWA gateway or email
+        console.log(`[WhatsApp Meta Cloud API Unconfigured] Event #${payload.eventNumber} recipient: ${cleanPhone}. Triggering fallback.`);
+        await sendEmailFallback('Meta Cloud API unconfigured');
+      }
+    } else {
+      // Direct Email dispatch if no phone is specified but email channel is available
+      if (hasResend && emailToUse && template.targetChannels.includes('email')) {
+        await sendEmailFallback('Direct email notification');
       }
     }
 
-    // 4. SMS Fallback (MOCKED - Skipped per configuration)
-    if (template.isCritical && payload.recipientPhone) {
+    // 4. SMS Fallback (Critical alerts)
+    if (template.isCritical && payload.recipientPhone && !metaSendSuccess) {
       console.log(`[SMS MOCK (Skipped)] Event #${payload.eventNumber} to ${payload.recipientPhone}: "${formattedMessage}"`);
     }
 
@@ -185,3 +234,68 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
     return { success: false, error: 'Internal dispatch error' };
   }
 }
+
+/**
+ * Maps all 44 Artsy notification events to one of the 3 Meta Cloud API utility templates.
+ * 
+ * Rules:
+ * 1. Welcome / new user creation (Events 2, 3) -> artsy_account_confirmed
+ *    Parameters: [user_name, account_id, dashboard_url]
+ * 2. Payment success (Event 6) -> artsy_payment_confirmation
+ *    Parameters: [user_name, amount_inr, project_id, invoice_number]
+ * 3. All other status updates (Events 1, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16-44) -> artsy_project_status
+ *    Parameters: [project_id, project_name, status_text, project_url]
+ */
+export function getMetaTemplateForEvent(
+  payload: NotificationPayload,
+  template: NotificationTemplate
+): { templateName: string; params: string[] } {
+  const vars = payload.variables || {};
+  const userName = String(vars.userName || vars.user_name || vars.name || vars.alias || 'Client');
+  const accountId = String(vars.accountId || vars.account_id || vars.userId || payload.userId || 'ARTSY-USER-8841');
+  const dashboardUrl = payload.actionUrl || String(vars.dashboardUrl || vars.dashboard_url || 'https://artsyproduction.com/client-dashboard');
+  const projectUrl = payload.actionUrl || String(vars.projectUrl || vars.project_url || 'https://artsyproduction.com/client/projects');
+  const projectId = String(vars.projectId || vars.project_id || vars.orderId || vars.order_id || 'AP-8841');
+  const projectName = String(vars.projectName || vars.project_name || vars.serviceName || vars.service_name || 'Production Film');
+
+  // Welcome / new user creation (Events 2, 3) -> artsy_account_confirmed
+  if (payload.eventNumber === 2 || payload.eventNumber === 3) {
+    return {
+      templateName: process.env.WHATSAPP_WELCOME_TEMPLATE_NAME || 'artsy_account_confirmed',
+      params: [userName, accountId, dashboardUrl],
+    };
+  }
+
+  // Payment success (Event 6) -> artsy_payment_confirmation
+  if (payload.eventNumber === 6) {
+    const rawAmount = String(vars.amountInr || vars.amount_inr || vars.amount || '8000');
+    const amountInr = rawAmount.startsWith('Rs.') || rawAmount.startsWith('₹') ? rawAmount : `Rs.${rawAmount}`;
+    const invoiceNumber = String(vars.invoiceNumber || vars.invoice_number || vars.orderId || 'AP/26-27/00001');
+    return {
+      templateName: process.env.WHATSAPP_PAYMENT_TEMPLATE_NAME || 'artsy_payment_confirmation',
+      params: [userName, amountInr, projectId, invoiceNumber],
+    };
+  }
+
+  // OTP Verification (Event 1) -> artsy_otp_verification if OTP template exists, else artsy_project_status
+  if (payload.eventNumber === 1 && vars.otp) {
+    const otpTemplate = process.env.WHATSAPP_OTP_TEMPLATE_NAME;
+    if (otpTemplate) {
+      return {
+        templateName: otpTemplate,
+        params: [String(vars.otp)],
+      };
+    }
+  }
+
+  // All other status updates -> artsy_project_status
+  // Events: 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+  // 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44
+  const statusText = String(vars.statusText || vars.status_text || vars.status || template.title || 'Ready for review');
+  return {
+    templateName: process.env.WHATSAPP_PROJECT_TEMPLATE_NAME || 'artsy_project_status',
+    params: [projectId, projectName, statusText, projectUrl],
+  };
+}
+
+

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/../lib/supabase';
-import { generateInvoiceData, InvoiceData } from '@/lib/invoices/generator';
+import { generateInvoiceData } from '@/lib/invoices/generator';
 import { archiveInvoiceToVault } from '@/lib/invoices/vault';
 import { sendInvoiceEmail } from '@/lib/email/dispatcher';
 

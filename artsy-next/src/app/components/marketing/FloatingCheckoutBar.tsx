@@ -5,17 +5,15 @@ interface FloatingCheckoutBarProps {
   totalItems: number;
   grandTotal: number;
   onOpenCart: () => void;
-  rushDelivery: boolean;
-  onRushToggle: (checked: boolean) => void;
+  rushDelivery?: boolean;
+  onRushToggle?: (checked: boolean) => void;
 }
 
 export default function FloatingCheckoutBar({
   active,
   totalItems,
   grandTotal,
-  onOpenCart,
-  rushDelivery,
-  onRushToggle
+  onOpenCart
 }: FloatingCheckoutBarProps) {
   if (!active || totalItems === 0) {
     return null;

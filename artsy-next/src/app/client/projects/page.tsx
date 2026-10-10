@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useAuth, logout } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 import ClientHeader from '../components/ClientHeader';
 import ClientSidebar from '../components/ClientSidebar';
 

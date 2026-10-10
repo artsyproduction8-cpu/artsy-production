@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { useAuth, logout } from '@/lib/auth';
+import { useAuth } from '@/lib/auth';
 import ClientSidebar from '../components/ClientSidebar';
 import ClientHeader from '../components/ClientHeader';
 import { createChangeOrder } from '@/lib/changeOrders/engine';
@@ -21,7 +20,7 @@ interface RevisionItem {
 }
 
 export default function ClientReviewPage() {
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimecode, setCurrentTimecode] = useState('02:44:18');
   const [activeCategory, setActiveCategory] = useState('COLOR');
@@ -66,7 +65,6 @@ export default function ClientReviewPage() {
     }, 1000);
   };
   const [refundReason, setRefundReason] = useState('');
-  const [refundRequested, setRefundRequested] = useState(false);
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Keyboard shortcut listener: Space toggles play/pause, M focuses feedback textarea
@@ -224,7 +222,6 @@ export default function ClientReviewPage() {
       return;
     }
     logRefundRequest('AP-8841', user?.id || 'client', 800000, refundReason);
-    setRefundRequested(true);
     setShowRefundModal(false);
     alert('REFUND DISPUTE FILED: Studio Administration will review activity logs, footage import timestamps, and creative drafts within 24 hours.');
   };

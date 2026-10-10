@@ -61,7 +61,9 @@ export async function POST(request: NextRequest) {
     const identifier = cleanEmail || cleanPhone!;
 
     const isDev = process.env.NODE_ENV === 'development';
-    const isMockWhatsApp = process.env.MOCK_WHATSAPP === 'true';
+    const shouldExposeDevOtp =
+      process.env.NODE_ENV === 'development' &&
+      process.env.MOCK_WHATSAPP === 'true';
 
     // ────────────────────────────────────────────────────────
     // ACTION: LOOKUP — Identify user role and name dynamically
@@ -517,7 +519,7 @@ export async function POST(request: NextRequest) {
         channel: 'whatsapp',
         messageId: waMessageId,
         remainingAttempts: rateLimit.remaining,
-        ...(isDev && { devOtp: otpCode }),
+        ...(shouldExposeDevOtp && { devOtp: otpCode }),
       });
     }
 
@@ -535,7 +537,7 @@ export async function POST(request: NextRequest) {
             channel: 'email',
             email: cleanEmail,
             remainingAttempts: rateLimit.remaining,
-            devOtp: otpCode,
+            ...(shouldExposeDevOtp && { devOtp: otpCode }),
           });
         }
         return NextResponse.json(
@@ -558,7 +560,7 @@ export async function POST(request: NextRequest) {
         channel: 'email',
         email: cleanEmail,
         remainingAttempts: rateLimit.remaining,
-        ...(isDev && { devOtp: otpCode }),
+        ...(shouldExposeDevOtp && { devOtp: otpCode }),
       });
     }
 
@@ -570,7 +572,7 @@ export async function POST(request: NextRequest) {
         message: 'OTP dispatched (development testing mode)',
         channel: 'dev',
         remainingAttempts: rateLimit.remaining,
-        devOtp: otpCode,
+        ...(shouldExposeDevOtp && { devOtp: otpCode }),
       });
     }
 

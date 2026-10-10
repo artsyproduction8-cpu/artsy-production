@@ -27,7 +27,6 @@ function rightRotate(value: number, amount: number): number {
 function sha256Binary(ascii: string): string {
   const mathPow = Math.pow;
   const maxWord = mathPow(2, 32);
-  let lengthProperty = 'length';
   let i: number, j: number;
   let result = '';
 
@@ -196,29 +195,22 @@ export function verifyAndParseAuthCookie(cookieValue?: string | null): AuthUserP
     } catch {}
 
     const parts = raw.split('.');
-    if (parts.length === 2) {
-      const [payloadBase64, signature] = parts;
-      const secret = getSigningSecret();
-      const expectedSig = computeHmacSha256(secret, payloadBase64);
-
-      if (constantTimeEqual(signature, expectedSig)) {
-        const jsonStr = base64Decode(payloadBase64);
-        const parsed = JSON.parse(jsonStr);
-        if (parsed && typeof parsed === 'object' && parsed.id) {
-          return parsed as AuthUserPayload;
-        }
-      }
+    if (parts.length !== 2) {
+      // Reject any cookie that is not strictly in {payloadBase64}.{signature} format
       return null;
     }
 
-    // JSON fallback for direct/client session tokens
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && parsed.id && parsed.role) {
+    const [payloadBase64, signature] = parts;
+    const secret = getSigningSecret();
+    const expectedSig = computeHmacSha256(secret, payloadBase64);
+
+    if (constantTimeEqual(signature, expectedSig)) {
+      const jsonStr = base64Decode(payloadBase64);
+      const parsed = JSON.parse(jsonStr);
+      if (parsed && typeof parsed === 'object' && parsed.id) {
         return parsed as AuthUserPayload;
       }
-    } catch {}
-
+    }
     return null;
   } catch {
     return null;

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth, getRoleHomePath } from '@/lib/auth';
 
 interface NavbarProps {
@@ -10,6 +11,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
+  const router = useRouter();
   const { user, role, isAuthenticated, logout } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState(searchTerm);
@@ -35,28 +37,28 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
         setIsSearchOpen(false);
         if (query.includes('wedding') || query.includes('ugc') || query.includes('service') || query.includes('product') || query.includes('corporate') || query.includes('price')) {
           if (window.location.pathname !== '/') {
-            window.location.href = '/services';
+            router.push('/services');
           } else {
             const el = document.getElementById('services-catalog');
             if (el) el.scrollIntoView({ behavior: 'smooth' });
           }
         } else if (query.includes('reel') || query.includes('work') || query.includes('portfolio') || query.includes('cut')) {
           if (window.location.pathname !== '/') {
-            window.location.href = '/#featured-reels';
+            router.push('/#featured-reels');
           } else {
             const el = document.getElementById('featured-reels');
             if (el) el.scrollIntoView({ behavior: 'smooth' });
           }
         } else if (query.includes('archive') || query.includes('case') || query.includes('benchmark') || query.includes('deliverable')) {
           if (window.location.pathname !== '/') {
-            window.location.href = '/#verified-production-archive';
+            router.push('/#verified-production-archive');
           } else {
             const el = document.getElementById('verified-production-archive');
             if (el) el.scrollIntoView({ behavior: 'smooth' });
           }
         } else if (query.includes('faq') || query.includes('question') || query.includes('refund') || query.includes('sla')) {
           if (window.location.pathname !== '/') {
-            window.location.href = '/#faq-section';
+            router.push('/#faq-section');
           } else {
             const el = document.getElementById('faq-section');
             if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -86,9 +88,11 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
         {isSearchOpen && (
           <div className="absolute inset-0 bg-[#0A0A0A] z-50 flex items-center px-6 sm:px-8 justify-between">
             <div className="flex items-center gap-3 flex-1 max-w-2xl">
-              <span className="material-symbols-outlined text-[20px] text-white/70 select-none">
-                search
-              </span>
+              <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[20px] text-white/70 select-none">
+                  search
+                </span>
+              </div>
               <input
                 ref={searchInputRef}
                 value={searchVal}
@@ -108,7 +112,9 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
               onClick={() => setIsSearchOpen(false)}
               className="text-white/70 hover:text-white flex items-center justify-center p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
             >
-              <span className="material-symbols-outlined text-xl leading-none">close</span>
+              <div className="w-5 h-5 flex items-center justify-center">
+                <span className="material-symbols-outlined text-xl leading-none">close</span>
+              </div>
             </button>
           </div>
         )}
@@ -153,9 +159,11 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             type="button"
             aria-label="Search"
             onClick={() => setIsSearchOpen(true)}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="flex items-center justify-center w-8 h-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
           >
-            <span className="material-symbols-outlined text-[19px] leading-none text-white">search</span>
+            <div className="w-5 h-5 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[19px] leading-none text-white">search</span>
+            </div>
           </button>
 
           {!isAuthenticated ? (
@@ -163,7 +171,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
               {/* FIND JOB Button */}
               <Link
                 href="/auth/login?intent=freelancer"
-                className="hidden sm:inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-white bg-transparent border border-white/30 hover:border-white hover:bg-white hover:text-[#0A0A0A] transition-all"
+                className="hidden sm:inline-flex items-center justify-center min-w-[88px] h-8 px-3.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-white bg-transparent border border-white/30 hover:border-white hover:bg-white hover:text-[#0A0A0A] transition-all whitespace-nowrap"
               >
                 FIND JOB
               </Link>
@@ -171,7 +179,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
               {/* LOGIN / SIGNUP Button */}
               <Link
                 href="/auth/login"
-                className="inline-flex items-center justify-center px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all"
+                className="inline-flex items-center justify-center min-w-[72px] h-8 px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
               >
                 LOGIN
               </Link>

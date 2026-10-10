@@ -35,7 +35,6 @@ const SERVICES_DATA: Record<string, { title: string; price: number; thumb: strin
 export default function CartDrawer({
   open,
   onClose,
-  cart,
   rushDelivery,
   onRushToggle,
   cartItems,
@@ -100,6 +99,7 @@ export default function CartDrawer({
 
                 return (
                   <div key={id} className="cart-item-row">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={item.thumb}
                       alt={item.title}

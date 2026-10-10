@@ -44,15 +44,15 @@ export async function GET(request: NextRequest) {
     if (supabase) {
       const now = new Date();
 
-      // 1. Fetch file records that are scheduled for retention and not disputed
+      // 1. Fetch file records that are scheduled for retention and not hard-deleted
       const { data: files, error } = await supabase
         .from('file_records')
-        .select('id, project_id, file_category, retention_expires_at, is_deleted, storage_path, file_size_bytes')
-        .eq('is_deleted', false);
+        .select('id, project_id, file_type, retention_delete_at, is_soft_deleted, is_hard_deleted, b2_key, file_size_bytes')
+        .eq('is_hard_deleted', false);
 
       if (!error && files) {
         for (const file of files) {
-          if (!file.retention_expires_at) continue;
+          if (!file.retention_delete_at) continue;
 
           // Check if project is in dispute & fetch user details
           const { data: project } = await supabase
@@ -95,11 +95,11 @@ export async function GET(request: NextRequest) {
             });
           };
 
-          const expiryDate = new Date(file.retention_expires_at);
+          const expiryDate = new Date(file.retention_delete_at);
           const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
           // Warnings for raw footage (15-day total retention window)
-          if (file.file_category === 'raw_footage') {
+          if (file.file_type === 'raw_footage' || file.file_type === 'raw' || file.file_type === 'raw_asset') {
             if (daysUntilExpiry === 7) {
               await sendRetentionNotification(35);
               processedWarnings.push(`raw_7d_warning_${file.id}`);
@@ -110,24 +110,28 @@ export async function GET(request: NextRequest) {
               await sendRetentionNotification(37);
               processedWarnings.push(`raw_1d_warning_${file.id}`);
             } else if (daysUntilExpiry <= 0 && daysUntilExpiry > -7) {
-              // Soft delete: move to trash/ logical marker
+              // Soft delete: set is_soft_deleted = true and move key to trash prefix
+              const updatedPath = file.b2_key && !file.b2_key.startsWith('trash/') ? `trash/${file.b2_key}` : file.b2_key;
               await supabase
                 .from('file_records')
-                .update({ storage_path: `trash/${file.storage_path}`, updated_at: now.toISOString() })
+                .update({
+                  is_soft_deleted: true,
+                  b2_key: updatedPath,
+                })
                 .eq('id', file.id);
               softDeletedFiles.push(file.id);
             } else if (daysUntilExpiry <= -7) {
               // Day 22: Hard delete from Backblaze B2 S3 storage
-              const b2Res = await deleteObject(file.storage_path);
-              if (b2Res.success) {
-                await supabase
-                  .from('file_records')
-                  .update({ is_deleted: true, updated_at: now.toISOString() })
-                  .eq('id', file.id);
-
-                await sendRetentionNotification(38);
-                hardDeletedFiles.push(file.id);
+              if (file.b2_key) {
+                await deleteObject(file.b2_key);
               }
+              await supabase
+                .from('file_records')
+                .update({ is_hard_deleted: true })
+                .eq('id', file.id);
+
+              await sendRetentionNotification(38);
+              hardDeletedFiles.push(file.id);
             }
           }
         }

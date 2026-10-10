@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState, Suspense } from 'react';
 import { generateQuoteSnapshot } from '@/lib/pricing/engine';
@@ -8,7 +8,6 @@ import { generateLedgerEntries, calculateFinancialWaterfall } from '@/lib/financ
 import { logProjectStart, logStatusChange } from '@/lib/activity/logger';
 
 function CheckoutContent() {
-  const searchParams = useSearchParams();
   const router = useRouter();
 
   const [bookingData, setBookingData] = useState<any>(null);
@@ -101,36 +100,60 @@ function CheckoutContent() {
             contact: clientPhone,
           },
           theme: { color: '#2563EB' },
-          handler: function (response: any) {
-            // Payment successful — store confirmation
-            const confirmedOrder = {
-              orderId,
-              razorpayOrderId,
-              razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature,
-              clientName,
-              clientPhone,
-              clientEmail,
-              bookingData,
-              paidAt: new Date().toISOString(),
-              paymentStatus: 'captured',
-              gateway: 'Razorpay (Live)',
-            };
-
-            sessionStorage.setItem('artsy_confirmed_order', JSON.stringify(confirmedOrder));
-            sessionStorage.setItem('artsy_confirmed_quote', JSON.stringify(quote));
-
+          handler: async function (response: any) {
             try {
-              const storedQuotes = JSON.parse(localStorage.getItem('artsy_quotes') || '[]');
-              storedQuotes.push(quote);
-              localStorage.setItem('artsy_quotes', JSON.stringify(storedQuotes));
-              const storedLedger = JSON.parse(localStorage.getItem('artsy_financial_ledger') || '[]');
-              storedLedger.push(...ledger);
-              localStorage.setItem('artsy_financial_ledger', JSON.stringify(storedLedger));
-            } catch { /* ignore */ }
+              // 1. Verify payment signature on backend
+              const verifyRes = await fetch('/api/verify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
 
-            setIsProcessing(false);
-            router.push(`/book/confirmation?orderId=${orderId}`);
+              const verifyData = await verifyRes.json();
+              if (!verifyRes.ok || !verifyData.success) {
+                alert(verifyData.error || 'Payment verification failed. Please contact support.');
+                setIsProcessing(false);
+                return;
+              }
+
+              // 2. Payment successfully verified — store confirmation
+              const confirmedOrder = {
+                orderId,
+                razorpayOrderId,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+                clientName,
+                clientPhone,
+                clientEmail,
+                bookingData,
+                paidAt: new Date().toISOString(),
+                paymentStatus: 'captured',
+                gateway: 'Razorpay (Live)',
+              };
+
+              sessionStorage.setItem('artsy_confirmed_order', JSON.stringify(confirmedOrder));
+              sessionStorage.setItem('artsy_confirmed_quote', JSON.stringify(quote));
+
+              try {
+                const storedQuotes = JSON.parse(localStorage.getItem('artsy_quotes') || '[]');
+                storedQuotes.push(quote);
+                localStorage.setItem('artsy_quotes', JSON.stringify(storedQuotes));
+                const storedLedger = JSON.parse(localStorage.getItem('artsy_financial_ledger') || '[]');
+                storedLedger.push(...ledger);
+                localStorage.setItem('artsy_financial_ledger', JSON.stringify(storedLedger));
+              } catch { /* ignore */ }
+
+              setIsProcessing(false);
+              router.push(`/book/confirmation?orderId=${orderId}`);
+            } catch (vErr) {
+              console.error('Signature verification error:', vErr);
+              alert('Error verifying payment response. Please contact support.');
+              setIsProcessing(false);
+            }
           },
           modal: {
             ondismiss: function () {
@@ -138,6 +161,13 @@ function CheckoutContent() {
             },
           },
         });
+
+        rzp.on('payment.failed', function (failResp: any) {
+          console.error('[Razorpay Payment Failed]', failResp);
+          alert(failResp?.error?.description || 'Payment was unsuccessful. Please try again.');
+          setIsProcessing(false);
+        });
+
         rzp.open();
       } else {
         // Mock/Demo mode — simulate successful payment after short delay

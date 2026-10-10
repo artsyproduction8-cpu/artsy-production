@@ -19,6 +19,10 @@ import {
   ServiceCategory
 } from '@/lib/pricing/catalog-matrix';
 
+function generateBookingOrderId(): string {
+  return 'ARTSY-' + Math.floor(100000 + Math.random() * 900000);
+}
+
 function ConfiguratorContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -185,7 +189,7 @@ function ConfiguratorContent() {
       return;
     }
     setIsProcessing(true);
-    const orderId = 'ARTSY-' + Math.floor(100000 + Math.random() * 900000);
+    const orderId = generateBookingOrderId();
     const bookingPayload = {
       orderId,
       bookingData: {

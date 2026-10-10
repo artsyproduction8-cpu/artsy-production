@@ -8,7 +8,6 @@ import { setCurrentUser, ArtsyUser } from '@/lib/auth';
 export default function AdminLoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('karan@artsy.production');
-  const [password, setPassword] = useState('••••••••••••');
   const [passkey, setPasskey] = useState('ARTSY-OPS-2026');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +33,7 @@ export default function AdminLoginPage() {
 
       setCurrentUser(adminUser);
       router.push('/admin');
-    } catch (err) {
+    } catch {
       setError('Invalid admin credentials.');
     } finally {
       setIsLoading(false);

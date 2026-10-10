@@ -23,6 +23,10 @@ export default function ClientSidebar() {
     { label: 'Timestamped Review', href: '/client/review' },
     { label: 'Completed Masters', href: '/client/masters' },
     { label: 'Tax Invoices', href: '/client/invoices' },
+    { label: 'My Files & Retention', href: '/client/files' },
+    { label: 'Notifications', href: '/client/notifications' },
+    { label: 'Support & Grievance', href: '/client/support' },
+    { label: 'Profile Settings', href: '/client/profile' },
     { label: 'Workspace & Ingest Setup', href: '/client/studio' },
   ];
 

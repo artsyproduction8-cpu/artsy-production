@@ -10,15 +10,10 @@ export async function POST(req: NextRequest) {
       legalName,
       email,
       phone,
-      showreelUrl,
       philosophy,
       software,
-      experience,
-      capacity,
       languages,
-      reels,
       pan,
-      agreementAccepted,
       userId,
     } = body;
 
@@ -27,19 +22,38 @@ export async function POST(req: NextRequest) {
     const candidateEmail = email || `${alias?.toLowerCase().replace(/\s+/g, '') || 'editor'}@artsyprod.studio`;
     const candidatePhone = phone || '+91 9876543211';
 
-    // 1. Try to record in Supabase creator_profiles if configured
+    // 1. Ensure user and creator profile exist in Supabase with status = 'pending'
     if (supabase && typeof supabase.from === 'function') {
       try {
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', candidateUserId)
+          .maybeSingle();
+
+        if (!existingUser) {
+          await supabase.from('users').insert({
+            id: candidateUserId,
+            email: candidateEmail,
+            phone: candidatePhone,
+            full_name: legalName || alias || 'Artsy Creator',
+            role: 'freelancer',
+            status: 'active',
+          });
+        }
+
         await supabase.from('creator_profiles').upsert([
           {
+            id: candidateUserId,
             user_id: candidateUserId,
-            displayName: alias || legalName,
             bio: philosophy || 'Creative Editor',
-            skills: languages || ['4K Color Grading'],
-            software: software || ['DaVinci Resolve Studio'],
-            experience: experience || 'Mid-Level Independent',
+            skills: Array.isArray(languages) ? languages : ['4K Color Grading'],
+            software: Array.isArray(software) ? software : ['DaVinci Resolve Studio'],
             approval_status: 'pending',
+            onboarding_status: 'pending',
+            pan_number: pan || null,
             created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           },
         ]);
       } catch (dbErr) {
@@ -54,7 +68,7 @@ export async function POST(req: NextRequest) {
         userId: candidateUserId,
         recipientEmail: candidateEmail,
         recipientPhone: candidatePhone,
-        actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsy-production.vercel.app'}/freelancer`,
+        actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/freelancer`,
       });
     } catch (notifErr) {
       console.warn('Notification dispatch non-fatal fallback:', notifErr);

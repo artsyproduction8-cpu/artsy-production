@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { getCurrentUser, hasAcceptedAgreement, recordAgreementAcceptance, PRESET_USERS, type ArtsyUser } from '@/lib/auth';
+import { getCurrentUser, hasAcceptedAgreement, recordAgreementAcceptance, type ArtsyUser } from '@/lib/auth';
 import { INITIAL_OPEN_JOBS } from '@/lib/matching/engine';
 import {
   logFootageDownload,
@@ -17,7 +16,7 @@ import FreelancerHeader from '../../components/FreelancerHeader';
 import FreelancerSidebar from '../../components/FreelancerSidebar';
 
 const getInitialWorkData = (projectId: string) => {
-  const currentUser = (typeof window !== 'undefined' ? getCurrentUser() : null) || PRESET_USERS.freelancer;
+  const currentUser = typeof window !== 'undefined' ? getCurrentUser() : null;
   const mockJob = INITIAL_OPEN_JOBS.find(j => j.id === projectId || (projectId && projectId.includes('8841'))) || INITIAL_OPEN_JOBS[0];
   const mockProj = {
     id: projectId || 'AP-8841',
@@ -25,7 +24,7 @@ const getInitialWorkData = (projectId: string) => {
     created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     estimated_delivery: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
     raw_footage_url: 'https://vault.artsyproduction.in/b2/raw-footage-secure',
-    assigned_creator_id: currentUser?.id || 'usr-editor-002',
+    assigned_creator_id: currentUser?.id || '',
     payoutAmount: mockJob?.payoutAmount || 4533,
     title: mockJob?.title || 'Brand UGC Viral Hooks & Micro-Pacing Cut',
     scopeSummary: mockJob?.scopeSummary || '4K 60fps raw footage, 3 camera angles, color grading, and sound design sync.',
@@ -50,9 +49,7 @@ export default function FreelancerWorkView() {
   const [project, setProject] = useState<any>(() => getInitialWorkData(projectId).mockProj);
   const [order, setOrder] = useState<any>(() => getInitialWorkData(projectId).mockOrder);
   const [service, setService] = useState<any>(() => getInitialWorkData(projectId).mockService);
-  const [user, setUser] = useState<ArtsyUser | null>(() => getInitialWorkData(projectId).currentUser);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [user] = useState<ArtsyUser | null>(() => getInitialWorkData(projectId).currentUser);
   const [checkInStatus, setCheckInStatus] = useState<'on_track' | 'missed' | 'escalated' | 'blocked'>('on_track');
   const [checkInMessage, setCheckInMessage] = useState('');
   const [deliverableUploaded, setDeliverableUploaded] = useState(false);
@@ -60,13 +57,15 @@ export default function FreelancerWorkView() {
   const [footageDownloaded, setFootageDownloaded] = useState(false);
   const [showAgreementModal, setShowAgreementModal] = useState(false);
   const [ndaChecked, setNdaChecked] = useState(false);
-  const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLogEntry[]>(() => getProjectActivityLog(projectId));
 
   useEffect(() => {
-    // 1. Instant sync from local auth and activity logger
-    const currentUser = getCurrentUser() || PRESET_USERS.freelancer;
-    setUser(currentUser);
-    setActivityLogs(getProjectActivityLog(projectId));
+    // 1. Enforce authenticated creator session; redirect to login if missing
+    const currentUser = getCurrentUser();
+    if (!currentUser) {
+      router.push(`/auth/login?redirect=/freelancer/work/${encodeURIComponent(projectId || '')}`);
+      return;
+    }
 
     // 2. Non-blocking background sync with Supabase (with fast timeout race)
     const syncWithSupabase = async () => {
@@ -100,7 +99,7 @@ export default function FreelancerWorkView() {
     };
 
     syncWithSupabase();
-  }, [projectId]);
+  }, [projectId, router]);
 
   const handleFootageAccess = () => {
     if (!hasAcceptedAgreement(user)) {
@@ -214,34 +213,6 @@ export default function FreelancerWorkView() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[#1D1D1F] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-sm font-medium text-[#86868B]">Loading workspace...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7] px-6">
-        <div className="bg-white rounded-2xl p-8 max-w-md w-full border border-[#E5E5E7] shadow-sm text-center">
-          <h2 className="text-lg font-bold text-[#1D1D1F] mb-2">Workspace Access Error</h2>
-          <p className="text-xs text-[#86868B] mb-6">{error}</p>
-          <Link
-            href="/freelancer"
-            className="inline-block px-6 py-2.5 bg-[#1D1D1F] text-white text-xs font-semibold rounded-xl hover:bg-black transition-all"
-          >
-            Return to Creator Dashboard
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   if (!project || !user) {
     return null;
   }
@@ -274,7 +245,7 @@ export default function FreelancerWorkView() {
                   {project.status?.replace('_', ' ').toUpperCase()}
                 </span>
                 <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
-                  Project Payout: ₹{payoutAmount.toLocaleString('en-IN')}
+                  Project Payout: ₹{payoutAmount.toLocaleString('en-IN')} (Net: ₹{netPayout.toLocaleString('en-IN')})
                 </span>
               </div>
             </div>

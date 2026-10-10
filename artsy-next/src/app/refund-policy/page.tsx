@@ -2,7 +2,6 @@
 
 import Navbar from '../components/marketing/Navbar';
 import Footer from '../components/marketing/Footer';
-import Link from 'next/link';
 
 export default function RefundPolicyPage() {
   return (

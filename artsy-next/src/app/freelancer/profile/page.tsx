@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { useAuth, getCurrentUser, setCurrentUser, PRESET_USERS } from '@/lib/auth';
 import FreelancerHeader from '../components/FreelancerHeader';
 import FreelancerSidebar from '../components/FreelancerSidebar';
@@ -177,28 +176,57 @@ export default function FreelancerProfilePage() {
     setIsChangingPhone(true);
   };
 
-  const handleSendPhoneOtp = () => {
+  const handleSendPhoneOtp = async () => {
     if (!newPhone || newPhone.trim().length < 10) {
       setPhoneOtpError('Please enter a valid 10-digit mobile number');
       return;
     }
     setPhoneOtpError('');
-    setPhoneOtpStep(true);
+    try {
+      const res = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: newPhone.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setPhoneOtpError(data.error || 'Failed to dispatch phone verification');
+        return;
+      }
+      setPhoneOtpStep(true);
+    } catch {
+      setPhoneOtpError('Network error dispatching phone OTP');
+    }
   };
 
-  const handleVerifyPhoneOtp = () => {
-    if (phoneOtp.trim() !== '123456' && phoneOtp.trim().length !== 6) {
-      setPhoneOtpError('Invalid OTP. For demonstration, use code 123456');
+  const handleVerifyPhoneOtp = async () => {
+    if (!phoneOtp || phoneOtp.trim().length < 4) {
+      setPhoneOtpError('Please enter the 6-digit verification code');
       return;
     }
-    setPhone(newPhone.trim().startsWith('+91') ? newPhone.trim() : `+91 ${newPhone.trim()}`);
-    setIsChangingPhone(false);
-    setToastMessage('✓ Mobile number updated and verified successfully.');
-    setTimeout(() => setToastMessage(null), 4000);
+    setPhoneOtpError('');
+    try {
+      const res = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: newPhone.trim(), otp: phoneOtp.trim(), verify: true }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setPhoneOtpError(data.error || 'Invalid or expired OTP code');
+        return;
+      }
+      setPhone(newPhone.trim().startsWith('+91') ? newPhone.trim() : `+91 ${newPhone.trim()}`);
+      setIsChangingPhone(false);
+      setToastMessage('✓ Mobile number updated and verified successfully.');
+      setTimeout(() => setToastMessage(null), 4000);
 
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      setCurrentUser({ ...currentUser, phone: newPhone.trim() });
+      const currentUser = getCurrentUser();
+      if (currentUser) {
+        setCurrentUser({ ...currentUser, phone: newPhone.trim() });
+      }
+    } catch {
+      setPhoneOtpError('Network error verifying phone OTP');
     }
   };
 
@@ -211,28 +239,57 @@ export default function FreelancerProfilePage() {
     setIsChangingEmail(true);
   };
 
-  const handleSendEmailOtp = () => {
+  const handleSendEmailOtp = async () => {
     if (!newEmail || !newEmail.includes('@')) {
       setEmailOtpError('Please enter a valid email address');
       return;
     }
     setEmailOtpError('');
-    setEmailOtpStep(true);
+    try {
+      const res = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newEmail.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setEmailOtpError(data.error || 'Failed to dispatch email verification');
+        return;
+      }
+      setEmailOtpStep(true);
+    } catch {
+      setEmailOtpError('Network error dispatching OTP');
+    }
   };
 
-  const handleVerifyEmailOtp = () => {
-    if (emailOtp.trim() !== '123456' && emailOtp.trim().length !== 6) {
-      setEmailOtpError('Invalid code. For demonstration, use code 123456');
+  const handleVerifyEmailOtp = async () => {
+    if (!emailOtp || emailOtp.trim().length < 4) {
+      setEmailOtpError('Please enter the 6-digit verification code');
       return;
     }
-    setEmail(newEmail.trim());
-    setIsChangingEmail(false);
-    setToastMessage('✓ Email address updated and verified successfully.');
-    setTimeout(() => setToastMessage(null), 4000);
+    setEmailOtpError('');
+    try {
+      const res = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newEmail.trim(), otp: emailOtp.trim(), verify: true }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setEmailOtpError(data.error || 'Invalid or expired OTP code');
+        return;
+      }
+      setEmail(newEmail.trim());
+      setIsChangingEmail(false);
+      setToastMessage('✓ Email address updated and verified successfully.');
+      setTimeout(() => setToastMessage(null), 4000);
 
-    const currentUser = getCurrentUser();
-    if (currentUser) {
-      setCurrentUser({ ...currentUser, email: newEmail.trim() });
+      const currentUser = getCurrentUser();
+      if (currentUser) {
+        setCurrentUser({ ...currentUser, email: newEmail.trim() });
+      }
+    } catch {
+      setEmailOtpError('Network error verifying code');
     }
   };
 
@@ -911,7 +968,7 @@ export default function FreelancerProfilePage() {
             ) : (
               <div className="space-y-4">
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800">
-                  OTP sent to <strong>+91 {newPhone}</strong>. (For demonstration, use: <strong>123456</strong>)
+                  OTP sent to <strong>+91 {newPhone}</strong>. Enter the 6-digit code received via WhatsApp.
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -921,7 +978,7 @@ export default function FreelancerProfilePage() {
                     maxLength={6}
                     value={phoneOtp}
                     onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="123456"
+                    placeholder="• • • • • •"
                     className="bg-[#F5F5F7] px-4 py-2.5 text-center text-lg tracking-[0.3em] font-mono font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
                   />
                 </div>
@@ -1007,7 +1064,7 @@ export default function FreelancerProfilePage() {
             ) : (
               <div className="space-y-4">
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800">
-                  Verification code dispatched to <strong>{newEmail}</strong>. (For demonstration, use: <strong>123456</strong>)
+                  Verification code dispatched to <strong>{newEmail}</strong>. Enter the 6-digit code received via Email.
                 </div>
 
                 <div className="flex flex-col gap-1.5">
@@ -1017,7 +1074,7 @@ export default function FreelancerProfilePage() {
                     maxLength={6}
                     value={emailOtp}
                     onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="123456"
+                    placeholder="• • • • • •"
                     className="bg-[#F5F5F7] px-4 py-2.5 text-center text-lg tracking-[0.3em] font-mono font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
                   />
                 </div>

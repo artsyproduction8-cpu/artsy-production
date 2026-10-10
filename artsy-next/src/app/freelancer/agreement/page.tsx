@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
-import { useAuth, hasAcceptedAgreement, recordAgreementAcceptance, logout } from '@/lib/auth';
+import { useAuth, hasAcceptedAgreement, recordAgreementAcceptance } from '@/lib/auth';
 import FreelancerHeader from '../components/FreelancerHeader';
 import FreelancerSidebar from '../components/FreelancerSidebar';
 

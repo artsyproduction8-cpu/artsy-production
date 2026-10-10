@@ -14,7 +14,7 @@ export async function PUT(request: NextRequest) {
         'ETag': `"mock_etag_${Date.now()}"`,
       },
     });
-  } catch (err: unknown) {
+  } catch {
     return NextResponse.json({ error: 'Mock upload failed' }, { status: 500 });
   }
 }

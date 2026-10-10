@@ -155,7 +155,6 @@ export default function CoverflowReels() {
     }, 50);
   };
 
-  const formatNumber = (num: number) => (num < 10 ? '0' + num : '' + num);
 
   return (
     <section

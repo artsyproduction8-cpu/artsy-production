@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth';
 
 interface ClientOrder {
   orderId: string;
@@ -285,8 +284,7 @@ const CLIENTS_DATA: ComprehensiveClient[] = [
 ];
 
 export default function AdminClientsPage() {
-  const { user } = useAuth();
-  const [clients, setClients] = useState<ComprehensiveClient[]>(CLIENTS_DATA);
+  const [clients] = useState<ComprehensiveClient[]>(CLIENTS_DATA);
   const [filter, setFilter] = useState<'all' | 'corporate' | 'brand' | 'wedding' | 'top_spenders'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedClientId, setExpandedClientId] = useState<string | null>('clt-001');

@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       }
 
       // 3. Insert record into data_deletion_requests
-      const { data: deletionRequest, error: reqError } = await supabase
+      const { data: deletionRequest } = await supabase
         .from('data_deletion_requests')
         .insert({
           user_id: userId,

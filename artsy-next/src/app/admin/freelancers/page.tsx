@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth';
 
 interface FreelancerProject {
   projectId: string;
@@ -348,7 +347,6 @@ const FREELANCERS_DATA: ComprehensiveFreelancer[] = [
 ];
 
 export default function AdminFreelancersPage() {
-  const { user } = useAuth();
   const [freelancers, setFreelancers] = useState<ComprehensiveFreelancer[]>(FREELANCERS_DATA);
   const [filter, setFilter] = useState<'all' | 'approved' | 'pending' | 'top_earners'>('all');
   const [searchQuery, setSearchQuery] = useState('');

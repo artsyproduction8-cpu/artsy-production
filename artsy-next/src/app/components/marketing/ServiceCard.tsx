@@ -44,6 +44,7 @@ export default function ServiceCard({
         tabIndex={0}
         aria-label={`Preview ${service.title}`}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={service.thumb}
           alt={service.title}

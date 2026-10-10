@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
           recipientEmail,
           recipientPhone,
           variables: { name: creatorName },
-          actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsy-production.vercel.app'}/freelancer`,
+          actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/freelancer`,
         });
       } catch (notifErr) {
         console.warn('Approval notification dispatch non-fatal error:', notifErr);

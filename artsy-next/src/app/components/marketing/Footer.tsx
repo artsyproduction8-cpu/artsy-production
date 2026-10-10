@@ -47,11 +47,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/services/product" className="hover:text-white transition-colors">
-                  Product &amp; Commercial Showcase
-                </Link>
-              </li>
-              <li>
                 <Link href="/services/corporate" className="hover:text-white transition-colors">
                   Corporate &amp; Keynote Sizzle
                 </Link>
@@ -96,7 +91,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Copyright & Compliance Links */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 text-xs text-[#DCDFE3]/70 font-mono">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 text-xs text-[#DCDFE3]/70 font-sans">
           <div>© 2026 ARTSY PRODUCTION. ALL RIGHTS RESERVED.</div>
           <div className="flex flex-wrap items-center gap-4 sm:gap-6">
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>

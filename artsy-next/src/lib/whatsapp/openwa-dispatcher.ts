@@ -192,12 +192,12 @@ async function logDeliveryAttempt(
   try {
     await supabase.from('notification_delivery_log').insert([
       {
-        channel: 'whatsapp_openwa',
+        channel: 'whatsapp',
         recipient: phone,
         event_number: 1, // OTP_SENT
         provider_message_id: providerMessageId || null,
         status,
-        error_detail: errorDetail || null,
+        error_message: errorDetail || null,
         created_at: new Date().toISOString(),
       },
     ]);
@@ -245,8 +245,7 @@ export function getAntiBanStatus(): AntiBanHealthStatus {
 // -----------------------------------------------------------------------------
 export async function sendWhatsAppNotification(
   phone: string,
-  messageText: string,
-  eventNumber: number = 2
+  messageText: string
 ): Promise<WhatsAppOTPResult> {
   const gatewayUrl = (process.env.WHATSAPP_GATEWAY_URL || 'http://localhost:2785').replace(/\/$/, '');
   const apiKey = process.env.WHATSAPP_GATEWAY_API_KEY || '';

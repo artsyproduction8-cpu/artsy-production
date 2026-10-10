@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { setCurrentUser, ArtsyUser, UserRole, UserStatus, PRESET_USERS, getRoleHomePath } from '@/lib/auth';
+import { setCurrentUser, ArtsyUser } from '@/lib/auth';
 
 // ── Cinematic Portfolio Work Data for Infinite Marquee Rows ──
 interface PortfolioWorkCard {

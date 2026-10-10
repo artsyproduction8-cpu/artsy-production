@@ -90,10 +90,7 @@ export async function middleware(request: NextRequest) {
       // HMAC signature verification & role authorization check
       const user = verifyAndParseAuthCookie(authCookie.value);
       if (!user) {
-        if (process.env.NODE_ENV !== 'production') {
-          return NextResponse.next();
-        }
-        // Invalid or tampered cookie -> treat as unauthenticated
+        // Invalid or unsigned/tampered cookie -> always reject and redirect to login
         const loginUrl = new URL('/auth/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);

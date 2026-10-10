@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Navbar from '../../components/marketing/Navbar';
 import Footer from '../../components/marketing/Footer';
-import { getCurrentUser, setCurrentUser, PRESET_USERS, recordAgreementAcceptance } from '@/lib/auth';
+import { getCurrentUser, setCurrentUser, recordAgreementAcceptance } from '@/lib/auth';
 
 export default function FreelancerOnboarding() {
   const router = useRouter();
@@ -125,8 +124,8 @@ export default function FreelancerOnboarding() {
       } catch {}
     }
 
-    // Update active user state to approved
-    const approvedUser = {
+    // Update active user state to pending review (Do NOT auto-approve)
+    const pendingUser = {
       ...(currentUser || {}),
       id: candidateUserId,
       email: candidateEmail,
@@ -134,7 +133,7 @@ export default function FreelancerOnboarding() {
       phone: candidatePhone,
       role: 'freelancer' as const,
       status: 'active' as const,
-      onboarding_status: 'approved' as const,
+      onboarding_status: 'pending_review' as const,
       tracking_id: trackingId || 'ART-2026-VET-4115',
       agreement_accepted: true,
       agreement_accepted_at: new Date().toISOString(),
@@ -142,7 +141,7 @@ export default function FreelancerOnboarding() {
       created_at: currentUser?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    setCurrentUser(approvedUser);
+    setCurrentUser(pendingUser);
 
     setSubmitting(false);
     setShowModal(true);
@@ -649,24 +648,24 @@ export default function FreelancerOnboarding() {
                 </button>
               </div>
               <div className="flex flex-col gap-1.5">
-                <h4 className="text-xl font-bold text-[#1D1D1F] tracking-tight">Creator Application Approved</h4>
+                <h4 className="text-xl font-bold text-[#1D1D1F] tracking-tight">Creator Application Submitted</h4>
                 <p className="text-xs text-[#86868B] leading-relaxed">
-                  Welcome to the Artsy post-production roster. Your creator profile and credentials have been verified. You can now access your editor workspace, project queue, and automated milestones.
+                  Your creator profile, toolchain verification, and showreel have been submitted for Studio Curation review. We will evaluate your portfolio within 24 to 48 hours.
                 </p>
               </div>
               <div className="bg-[#F5F5F7] p-3.5 rounded-xl border border-[#E5E5E7] text-xs flex justify-between items-center">
-                <span className="text-[#86868B] font-medium">CREATOR ROSTER ID</span>
+                <span className="text-[#86868B] font-medium">CREATOR TRACKING ID</span>
                 <span className="font-mono font-bold text-[#1D1D1F]">{trackingId}</span>
               </div>
               <div className="flex gap-3">
                 <button
                   type="button"
                   onClick={() => {
-                    router.push('/freelancer');
+                    router.push('/freelancer/pending-approval');
                   }}
                   className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold py-3 px-4 rounded-xl transition-all cursor-pointer text-center shadow-sm"
                 >
-                  Enter Creator Dashboard &rarr;
+                  View Application Status &rarr;
                 </button>
                 <button
                   type="button"

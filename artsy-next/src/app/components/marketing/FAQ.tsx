@@ -25,7 +25,7 @@ const FAQS = [
   },
   {
     q: 'What raw camera formats and codecs do you accept?',
-    a: 'We natively ingest all cinema raw and log profiles including ARRI RAW, REDCODE, cinema mezzanine formats, Sony S-Log3, Canon Cinema RAW Light, and Blackmagic RAW up to 8K resolutions.',
+    a: 'We natively ingest all cinema raw and log profiles including ARRI RAW, REDCODE, cinema mezzanine formats, Sony S-Log3, Canon Cinema RAW Light, and Blackmagic RAW up to 4K resolutions.',
   },
 ];
 

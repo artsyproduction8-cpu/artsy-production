@@ -1,24 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   ServiceCategory,
-  ServiceProduct,
   loadPricingMatrix,
   savePricingMatrix,
 } from '@/lib/pricing/catalog-matrix';
 
 export default function AdminCatalogPage() {
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [categories, setCategories] = useState<ServiceCategory[]>(() => loadPricingMatrix());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loaded = loadPricingMatrix();
-    setCategories(loaded);
-  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -335,7 +329,7 @@ export default function AdminCatalogPage() {
 
       {filteredProducts.length === 0 && (
         <div className="p-12 text-center bg-white rounded-2xl border border-[#E5E5E7] text-[#86868B] text-sm">
-          No catalog formats match your search filter "{searchQuery}".
+          No catalog formats match your search filter &quot;{searchQuery}&quot;.
         </div>
       )}
 

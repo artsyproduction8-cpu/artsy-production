@@ -1,21 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, isSupabaseConfigured } from '@/../lib/supabase';
 import { calculateFinancialWaterfall } from '@/lib/financial/engine';
+import { calculateLivePrice, ConfiguratorSelections } from '@/lib/pricing/engine';
+
+function resolveServiceKey(serviceId?: string): string {
+  if (!serviceId) return 'wedding';
+  const lower = serviceId.toLowerCase();
+  if (lower.includes('wedding')) return 'wedding';
+  if (lower.includes('brand') || lower.includes('ugc')) return 'brand_ugc';
+  if (lower.includes('store') || lower.includes('product')) return 'store_product';
+  if (lower.includes('corporate') || lower.includes('event')) return 'corporate_event';
+  return 'wedding';
+}
 
 /**
  * POST /api/orders/create
  * 
  * Creates a Razorpay order server-side and stores the order record in database.
+ * Security Fix #3: Amount is strictly computed server-side via the Pricing Engine.
+ * Client-supplied amounts are ignored and logged as potential tampering attempts.
  * 
- * Body: { serviceId, amount, currency?, requirements?, quoteId?, clientPhone?, clientName?, clientEmail? }
+ * Body: { serviceId, currency?, requirements?, quoteId?, clientPhone?, clientName?, clientEmail? }
  * Returns: { orderId, razorpayOrderId, amount, currency, razorpayKeyId }
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const {
       serviceId,
-      amount,
       currency = 'INR',
       requirements = {},
       quoteId,
@@ -24,22 +36,34 @@ export async function POST(request: NextRequest) {
       clientEmail,
     } = body;
 
-    // 1. Validate required fields
-    if (!amount || typeof amount !== 'number' || amount < 100) {
+    // Security Fix #3: Log client-supplied amount tampering if provided, but never use it
+    if (body.amount !== undefined) {
+      console.warn(
+        `[SECURITY AUDIT] Client attempted to supply direct amount: ${body.amount}. Ignored. Calculating canonical price server-side.`
+      );
+    }
+
+    // 1. Server-side price calculation via canonical pricing engine
+    const serviceKey = resolveServiceKey(serviceId);
+    const priceBreakdown = calculateLivePrice(serviceKey, (requirements as ConfiguratorSelections) || {});
+    const canonicalAmount = priceBreakdown.grandTotalPaise;
+
+    // 2. Validate amount bounds (guardrails)
+    if (!canonicalAmount || canonicalAmount < 100) {
       return NextResponse.json(
-        { error: 'Amount is required and must be at least 100 paise (₹1)' },
+        { error: 'Calculated order amount is invalid.' },
         { status: 400 }
       );
     }
 
-    if (amount > 50000000) {
+    if (canonicalAmount > 50000000) {
       return NextResponse.json(
         { error: 'Amount exceeds maximum order value of ₹5,00,000' },
         { status: 400 }
       );
     }
 
-    // 2. Check Razorpay credentials
+    // 3. Check Razorpay credentials
     const rzpKeyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     const rzpKeySecret = process.env.RAZORPAY_KEY_SECRET;
     const isRzpConfigured = rzpKeyId && rzpKeySecret && !rzpKeyId.includes('your-');
@@ -48,7 +72,7 @@ export async function POST(request: NextRequest) {
     let razorpayOrderData: Record<string, unknown> = {};
 
     if (isRzpConfigured) {
-      // 3a. LIVE MODE: Call Razorpay Orders API
+      // 4a. LIVE MODE: Call Razorpay Orders API with server-computed amount
       const authHeader = Buffer.from(`${rzpKeyId}:${rzpKeySecret}`).toString('base64');
 
       const rzpRes = await fetch('https://api.razorpay.com/v1/orders', {
@@ -58,11 +82,12 @@ export async function POST(request: NextRequest) {
           Authorization: `Basic ${authHeader}`,
         },
         body: JSON.stringify({
-          amount: amount, // in paise
+          amount: canonicalAmount, // in paise, computed server-side
           currency,
           receipt: `artsy_${Date.now()}`,
           notes: {
             serviceId: serviceId || 'custom',
+            serviceKey,
             platform: 'artsy_production',
             quoteId: quoteId || null,
           },
@@ -75,7 +100,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error: 'Failed to create payment order with Razorpay',
-            details: errorData?.error?.description || `HTTP ${rzpRes.status}`,
           },
           { status: 502 }
         );
@@ -84,21 +108,21 @@ export async function POST(request: NextRequest) {
       razorpayOrderData = await rzpRes.json();
       razorpayOrderId = String(razorpayOrderData.id);
     } else {
-      // 3b. MOCK MODE: Generate simulated order ID
+      // 4b. MOCK MODE: Generate simulated order ID with server-computed amount
       razorpayOrderId = `order_mock_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       razorpayOrderData = {
         id: razorpayOrderId,
-        amount,
+        amount: canonicalAmount,
         currency,
         status: 'created',
         receipt: `artsy_mock_${Date.now()}`,
       };
     }
 
-    // 4. Calculate financial waterfall for this order
-    const waterfall = calculateFinancialWaterfall(amount);
+    // 5. Calculate financial waterfall on canonical amount
+    const waterfall = calculateFinancialWaterfall(canonicalAmount);
 
-    // 5. Store order in database
+    // 6. Store order in database
     const internalOrderNumber = `ARTSY-${Math.floor(100000 + Math.random() * 900000)}`;
 
     const isUUID = (str?: string) =>
@@ -112,11 +136,11 @@ export async function POST(request: NextRequest) {
             client_phone: clientPhone || null,
             client_name: clientName || null,
             client_email: clientEmail || null,
-            service_key: serviceId || null,
+            service_key: serviceKey,
             service_id: isUUID(serviceId) ? serviceId : null,
             quote_id: isUUID(quoteId) ? quoteId : null,
             currency,
-            gross_amount: amount,
+            gross_amount: canonicalAmount,
             gst_amount: waterfall.gstAmount,
             gateway_fee: waterfall.totalGatewayDeduction,
             net_amount: waterfall.availableForSplit,
@@ -135,15 +159,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 6. Return order details
+    // 7. Return order details
     return NextResponse.json({
       success: true,
       orderId: razorpayOrderId,
-      amount,
+      amount: canonicalAmount,
       currency,
       razorpayKeyId: rzpKeyId || 'rzp_mock_key',
       razorpayOrderId,
       internalOrderId: internalOrderNumber,
+      serviceKey,
       mode: isRzpConfigured ? 'live' : 'mock',
       waterfall: {
         gst: waterfall.gstAmount,
@@ -156,7 +181,7 @@ export async function POST(request: NextRequest) {
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error('[Order Creation Error]', errorMsg);
     return NextResponse.json(
-      { error: 'Internal server error creating order', details: errorMsg },
+      { error: 'Internal server error creating order' },
       { status: 500 }
     );
   }

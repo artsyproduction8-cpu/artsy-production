@@ -236,15 +236,35 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
 }
 
 /**
- * Maps all 44 Artsy notification events to one of the 3 Meta Cloud API utility templates.
+ * Maps all 44 Artsy notification events to Meta Cloud API utility templates.
  * 
  * Rules:
- * 1. Welcome / new user creation (Events 2, 3) -> artsy_account_confirmed
- *    Parameters: [user_name, account_id, dashboard_url]
- * 2. Payment success (Event 6) -> artsy_payment_confirmation
- *    Parameters: [user_name, amount_inr, project_id, invoice_number]
- * 3. All other status updates (Events 1, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16-44) -> artsy_project_status
- *    Parameters: [project_id, project_name, status_text, project_url]
+ * - Creator events:
+ *   - Freelancer signup (Event 2 with role='freelancer') -> artsy_creator_welcome [userName, creatorId, onboardingUrl]
+ *   - Job offered to freelancer (Event 12) -> artsy_job_offer [userName, projectId, budgetInr, freelancerUrl]
+ *   - Payout processed (Event 30) -> artsy_payout_sent [userName, netAmountInr, neftReference, payoutUrl]
+ *   - Payout failed (Event 31) -> artsy_payout_sent (variant) [userName, amountInr, 'FAILED', payoutUrl]
+ *   - Creator suspended (Event 42) -> artsy_creator_suspended [userName, reason, freelancerUrl]
+ * - Client dispute and refund events:
+ *   - Dispute opened (Event 34) -> artsy_dispute_opened [userName, projectId, projectUrl]
+ *   - Refund initiated/processed (Events 32, 33) -> artsy_refund_processed [userName, amountInr, projectId, refundRef]
+ *   - Change order created (Event 26) -> artsy_change_order [userName, projectId, additionalAmountInr, projectUrl]
+ *   - SLA breach (Event 44) -> artsy_sla_breach [userName, projectId, newDeliveryDate, projectUrl]
+ * - Operational events:
+ *   - Upload reminder (Event 8) -> artsy_upload_reminder [userName, projectId, projectUrl]
+ *   - Review reminder (Event 23) -> artsy_review_reminder [userName, projectId, projectUrl]
+ *   - Daily check-in (Event 16) -> artsy_daily_checkin [userName, projectId, workUrl]
+ *   - Deadline risk / missed check-in (Events 17, 18) -> artsy_admin_alert [projectId, reason, adminUrl]
+ * - Existing client & lifecycle events:
+ *   - Events 2, 3 (client) -> artsy_account_confirmed [userName, accountId, dashboardUrl]
+ *   - Event 6 (payment) -> artsy_payment_confirmation [userName, amountInr, projectId, invoiceNumber]
+ *   - Event 9 (upload complete) -> artsy_footage_received [userName, projectId, projectUrl]
+ *   - Events 11, 13 (assignment/accept) -> artsy_editor_assigned [userName, projectId, projectUrl]
+ *   - Event 20 (draft ready) -> artsy_draft_ready [userName, projectId, projectUrl]
+ *   - Events 21, 22 (revision) -> artsy_revision_requested [userName, projectId, projectUrl]
+ *   - Event 25 (completed) -> artsy_final_delivery [userName, projectId, filesUrl]
+ *   - Events 35-41 (retention) -> artsy_retention_warning [userName, projectId, daysRemaining, filesUrl]
+ *   - All others -> artsy_project_status (fallback) [projectId, projectName, statusText, projectUrl]
  */
 export function getMetaTemplateForEvent(
   payload: NotificationPayload,
@@ -253,12 +273,144 @@ export function getMetaTemplateForEvent(
   const vars = payload.variables || {};
   const userName = String(vars.userName || vars.user_name || vars.name || vars.alias || 'Client');
   const accountId = String(vars.accountId || vars.account_id || vars.userId || payload.userId || 'ARTSY-USER-8841');
+  const creatorId = String(vars.creatorId || vars.creator_id || vars.userId || payload.userId || 'CREATOR-8841');
   const dashboardUrl = payload.actionUrl || String(vars.dashboardUrl || vars.dashboard_url || 'https://artsyproduction.com/client-dashboard');
+  const onboardingUrl = payload.actionUrl || String(vars.onboardingUrl || vars.onboarding_url || 'https://artsyproduction.com/freelancer/onboarding');
   const projectUrl = payload.actionUrl || String(vars.projectUrl || vars.project_url || 'https://artsyproduction.com/client/projects');
+  const filesUrl = payload.actionUrl || String(vars.filesUrl || vars.files_url || 'https://artsyproduction.com/client/files');
+  const invoicesUrl = payload.actionUrl || String(vars.invoicesUrl || vars.invoice_url || 'https://artsyproduction.com/client/invoices');
+  const freelancerUrl = payload.actionUrl || String(vars.freelancerUrl || vars.freelancer_url || 'https://artsyproduction.com/freelancer');
+  const payoutUrl = payload.actionUrl || String(vars.payoutUrl || vars.payout_url || 'https://artsyproduction.com/freelancer/payouts');
+  const adminUrl = payload.actionUrl || String(vars.adminUrl || vars.admin_url || 'https://artsyproduction.com/admin');
   const projectId = String(vars.projectId || vars.project_id || vars.orderId || vars.order_id || 'AP-8841');
   const projectName = String(vars.projectName || vars.project_name || vars.serviceName || vars.service_name || 'Production Film');
+  const workUrl = payload.actionUrl || String(vars.workUrl || vars.work_url || `https://artsyproduction.com/freelancer/work/${projectId}`);
 
-  // Welcome / new user creation (Events 2, 3) -> artsy_account_confirmed
+  // 1. Creator events
+  // Freelancer signup (Event 2 with role='freelancer' or isFreelancer/isCreator flag)
+  const isFreelancer = vars.role === 'freelancer' || vars.role === 'creator' || Boolean(vars.isFreelancer || vars.isCreator);
+  if (payload.eventNumber === 2 && isFreelancer) {
+    return {
+      templateName: process.env.WHATSAPP_CREATOR_WELCOME_TEMPLATE_NAME || 'artsy_creator_welcome',
+      params: [userName, creatorId, onboardingUrl],
+    };
+  }
+
+  // Job offered to freelancer (Event 12)
+  if (payload.eventNumber === 12) {
+    const rawBudget = String(vars.budgetInr || vars.budget_inr || vars.payout || vars.amount || '4500');
+    const budgetInr = rawBudget.startsWith('Rs.') || rawBudget.startsWith('₹') ? rawBudget : `Rs.${rawBudget}`;
+    return {
+      templateName: process.env.WHATSAPP_JOB_OFFER_TEMPLATE_NAME || 'artsy_job_offer',
+      params: [userName, projectId, budgetInr, freelancerUrl],
+    };
+  }
+
+  // Payout processed (Event 30) -> artsy_payout_sent
+  if (payload.eventNumber === 30) {
+    const rawPayout = String(vars.netAmountInr || vars.net_amount || vars.amountInr || vars.amount || '4442');
+    const netAmountInr = rawPayout.startsWith('Rs.') || rawPayout.startsWith('₹') ? rawPayout : `Rs.${rawPayout}`;
+    const neftReference = String(vars.neftReference || vars.neft_reference || vars.utr || 'NEFT-2026-8841');
+    return {
+      templateName: process.env.WHATSAPP_PAYOUT_TEMPLATE_NAME || 'artsy_payout_sent',
+      params: [userName, netAmountInr, neftReference, payoutUrl],
+    };
+  }
+
+  // Payout failed (Event 31) -> artsy_payout_sent (variant with 'FAILED')
+  if (payload.eventNumber === 31) {
+    const rawAmount = String(vars.amountInr || vars.amount || '4442');
+    const amountInr = rawAmount.startsWith('Rs.') || rawAmount.startsWith('₹') ? rawAmount : `Rs.${rawAmount}`;
+    return {
+      templateName: process.env.WHATSAPP_PAYOUT_TEMPLATE_NAME || 'artsy_payout_sent',
+      params: [userName, amountInr, 'FAILED', payoutUrl],
+    };
+  }
+
+  // Creator suspended (Event 42) -> artsy_creator_suspended
+  if (payload.eventNumber === 42) {
+    const reason = String(vars.reason || 'Missed multiple deadlines');
+    return {
+      templateName: process.env.WHATSAPP_SUSPENDED_TEMPLATE_NAME || 'artsy_creator_suspended',
+      params: [userName, reason, freelancerUrl],
+    };
+  }
+
+  // 2. Client dispute, refund, change order, and SLA events
+  // Dispute opened (Event 34) -> artsy_dispute_opened
+  if (payload.eventNumber === 34) {
+    return {
+      templateName: process.env.WHATSAPP_DISPUTE_TEMPLATE_NAME || 'artsy_dispute_opened',
+      params: [userName, projectId, projectUrl],
+    };
+  }
+
+  // Refund initiated / processed (Events 32, 33) -> artsy_refund_processed
+  if (payload.eventNumber === 32 || payload.eventNumber === 33) {
+    const rawRefund = String(vars.amountInr || vars.amount || '8000');
+    const amountInr = rawRefund.startsWith('Rs.') || rawRefund.startsWith('₹') ? rawRefund : `Rs.${rawRefund}`;
+    const refundRef = String(vars.refundRef || vars.refund_ref || vars.reference || 'RFND-2026-8841');
+    return {
+      templateName: process.env.WHATSAPP_REFUND_TEMPLATE_NAME || 'artsy_refund_processed',
+      params: [userName, amountInr, projectId, refundRef],
+    };
+  }
+
+  // Change order created (Event 26) -> artsy_change_order
+  if (payload.eventNumber === 26) {
+    const rawAdditional = String(vars.additionalAmountInr || vars.additional_amount || vars.amount || '1500');
+    const additionalAmountInr = rawAdditional.startsWith('Rs.') || rawAdditional.startsWith('₹') ? rawAdditional : `Rs.${rawAdditional}`;
+    return {
+      templateName: process.env.WHATSAPP_CHANGE_ORDER_TEMPLATE_NAME || 'artsy_change_order',
+      params: [userName, projectId, additionalAmountInr, projectUrl],
+    };
+  }
+
+  // SLA breach (Event 44) -> artsy_sla_breach
+  if (payload.eventNumber === 44) {
+    const newDeliveryDate = String(vars.newDeliveryDate || vars.new_delivery_date || '15 Oct 2026');
+    return {
+      templateName: process.env.WHATSAPP_SLA_TEMPLATE_NAME || 'artsy_sla_breach',
+      params: [userName, projectId, newDeliveryDate, projectUrl],
+    };
+  }
+
+  // 3. Operational events
+  // Upload reminder (Event 8) -> artsy_upload_reminder
+  if (payload.eventNumber === 8) {
+    return {
+      templateName: process.env.WHATSAPP_UPLOAD_REMINDER_TEMPLATE_NAME || 'artsy_upload_reminder',
+      params: [userName, projectId, projectUrl],
+    };
+  }
+
+  // Review reminder (Event 23) -> artsy_review_reminder
+  if (payload.eventNumber === 23) {
+    return {
+      templateName: process.env.WHATSAPP_REVIEW_REMINDER_TEMPLATE_NAME || 'artsy_review_reminder',
+      params: [userName, projectId, projectUrl],
+    };
+  }
+
+  // Daily check-in (Event 16) -> artsy_daily_checkin
+  if (payload.eventNumber === 16) {
+    return {
+      templateName: process.env.WHATSAPP_CHECKIN_TEMPLATE_NAME || 'artsy_daily_checkin',
+      params: [userName, projectId, workUrl],
+    };
+  }
+
+  // Deadline risk / missed check-in (Events 17, 18) -> artsy_admin_alert
+  if (payload.eventNumber === 17 || payload.eventNumber === 18) {
+    const reason = String(vars.reason || (payload.eventNumber === 17 ? 'Missed check-in' : 'Internal deadline approaching <24h'));
+    return {
+      templateName: process.env.WHATSAPP_ADMIN_ALERT_TEMPLATE_NAME || 'artsy_admin_alert',
+      params: [projectId, reason, adminUrl],
+    };
+  }
+
+  // 4. Existing client mappings (Events 2, 3, 6, 9, 11, 13, 20, 21, 22, 25, 35-41)
+  // Client onboarding / profile approved (Events 2, 3)
   if (payload.eventNumber === 2 || payload.eventNumber === 3) {
     return {
       templateName: process.env.WHATSAPP_WELCOME_TEMPLATE_NAME || 'artsy_account_confirmed',
@@ -266,7 +418,7 @@ export function getMetaTemplateForEvent(
     };
   }
 
-  // Payment success (Event 6) -> artsy_payment_confirmation
+  // Payment success (Event 6)
   if (payload.eventNumber === 6) {
     const rawAmount = String(vars.amountInr || vars.amount_inr || vars.amount || '8000');
     const amountInr = rawAmount.startsWith('Rs.') || rawAmount.startsWith('₹') ? rawAmount : `Rs.${rawAmount}`;
@@ -277,7 +429,70 @@ export function getMetaTemplateForEvent(
     };
   }
 
-  // OTP Verification (Event 1) -> artsy_otp_verification if OTP template exists, else artsy_project_status
+  // Upload complete / footage received (Event 9)
+  if (payload.eventNumber === 9) {
+    return {
+      templateName: process.env.WHATSAPP_FOOTAGE_TEMPLATE_NAME || 'artsy_footage_received',
+      params: [userName, projectId, projectUrl],
+    };
+  }
+
+  // Assignment / accepted (Events 11, 13)
+  if (payload.eventNumber === 11 || payload.eventNumber === 13) {
+    return {
+      templateName: process.env.WHATSAPP_EDITOR_TEMPLATE_NAME || 'artsy_editor_assigned',
+      params: [userName, projectId, projectUrl],
+    };
+  }
+
+  // QA passed / draft ready (Event 20)
+  if (payload.eventNumber === 20) {
+    return {
+      templateName: process.env.WHATSAPP_DRAFT_TEMPLATE_NAME || 'artsy_draft_ready',
+      params: [userName, projectId, projectUrl],
+    };
+  }
+
+  // Revision requested (Events 21, 22)
+  if (payload.eventNumber === 21 || payload.eventNumber === 22) {
+    return {
+      templateName: process.env.WHATSAPP_REVISION_TEMPLATE_NAME || 'artsy_revision_requested',
+      params: [userName, projectId, projectUrl],
+    };
+  }
+
+  // Master delivery complete (Event 25)
+  if (payload.eventNumber === 25) {
+    return {
+      templateName: process.env.WHATSAPP_DELIVERY_TEMPLATE_NAME || 'artsy_final_delivery',
+      params: [userName, projectId, filesUrl],
+    };
+  }
+
+  // Retention warnings (Events 35-41)
+  if (payload.eventNumber >= 35 && payload.eventNumber <= 41) {
+    let defaultDays = '7';
+    if (payload.eventNumber === 36 || payload.eventNumber === 40) defaultDays = '3';
+    else if (payload.eventNumber === 37) defaultDays = '1';
+    else if (payload.eventNumber === 38 || payload.eventNumber === 41) defaultDays = '0';
+    const daysRemaining = String(vars.daysRemaining || vars.days_remaining || defaultDays);
+
+    return {
+      templateName: process.env.WHATSAPP_RETENTION_TEMPLATE_NAME || 'artsy_retention_warning',
+      params: [userName, projectId, daysRemaining, filesUrl],
+    };
+  }
+
+  // Invoice ready
+  if (vars.invoiceReady || vars.isInvoice) {
+    const invoiceNumber = String(vars.invoiceNumber || vars.invoice_number || 'AP/26-27/00042');
+    return {
+      templateName: process.env.WHATSAPP_INVOICE_TEMPLATE_NAME || 'artsy_invoice_ready',
+      params: [userName, invoiceNumber, projectId, invoicesUrl],
+    };
+  }
+
+  // OTP Verification (Event 1)
   if (payload.eventNumber === 1 && vars.otp) {
     const otpTemplate = process.env.WHATSAPP_OTP_TEMPLATE_NAME;
     if (otpTemplate) {
@@ -288,14 +503,13 @@ export function getMetaTemplateForEvent(
     }
   }
 
-  // All other status updates -> artsy_project_status
-  // Events: 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
-  // 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44
+  // All other status updates -> artsy_project_status (fallback)
   const statusText = String(vars.statusText || vars.status_text || vars.status || template.title || 'Ready for review');
   return {
     templateName: process.env.WHATSAPP_PROJECT_TEMPLATE_NAME || 'artsy_project_status',
     params: [projectId, projectName, statusText, projectUrl],
   };
 }
+
 
 

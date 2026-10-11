@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 /**
@@ -105,9 +105,9 @@ export async function POST(request: NextRequest) {
       mockUserId: userId
     });
   } catch (err: any) {
-    console.error('[DPDP DELETION ERROR]:', err);
+    console.error('[INTERNAL] [DPDP DELETION ERROR]:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal deletion error' },
+      { error: 'Unable to process request' },
       { status: 500 }
     );
   }

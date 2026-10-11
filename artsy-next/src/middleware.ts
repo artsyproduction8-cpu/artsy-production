@@ -2,19 +2,19 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyAndParseAuthCookie, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 
-// In-memory bucket for edge/local dev rate limiting (§5.8)
-const ipRequestMap = new Map<string, { count: number; resetTime: number }>();
+// In-memory bucket for edge rate limiting
+const requestCounterMap = new Map<string, { count: number; resetTime: number }>();
 
 /**
  * Server-Side Edge Middleware for:
- * 1. Rate Limiting & Protection (§5.8, §9.5)
+ * 1. Rate Limiting & Protection with Trusted IP extraction (§5.8)
  * 2. Strict Role-Based Server Route Guards (SEC-02)
  */
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // 1. API Route Rate Limiting
+  // 1. API Route Rate Limiting (Security Fix #8)
   // ─────────────────────────────────────────────────────────────────────────────
   if (pathname.startsWith('/api')) {
     // Exempt cron jobs from edge rate limiting (they use CRON_SECRET auth)
@@ -22,15 +22,29 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+    // Security Fix #8: Prevent X-Forwarded-For spoofing.
+    // Use request.ip (Vercel Edge) -> x-real-ip -> rightmost IP appended by trusted edge proxy
+    const xRealIp = request.headers.get('x-real-ip');
+    const forwardedFor = request.headers.get('x-forwarded-for') || '';
+    const forwardedIps = forwardedFor.split(',').map((s) => s.trim()).filter(Boolean);
+    const trustedEdgeIp =
+      (request as any).ip ||
+      xRealIp ||
+      (forwardedIps.length > 0 ? forwardedIps[forwardedIps.length - 1] : '127.0.0.1');
+
+    // Use composite key: authenticated user ID if logged in, otherwise trusted IP
+    const authCookie = request.cookies.get(AUTH_COOKIE_NAME);
+    const authUser = authCookie?.value ? verifyAndParseAuthCookie(authCookie.value) : null;
+    const rateLimitKey = authUser?.id ? `usr_${authUser.id}_${pathname}` : `ip_${trustedEdgeIp}`;
+
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute
     const maxRequests = pathname.startsWith('/api/auth') ? 10 : 100;
 
-    const record = ipRequestMap.get(ip);
+    const record = requestCounterMap.get(rateLimitKey);
 
     if (!record || now > record.resetTime) {
-      ipRequestMap.set(ip, { count: 1, resetTime: now + windowMs });
+      requestCounterMap.set(rateLimitKey, { count: 1, resetTime: now + windowMs });
     } else {
       record.count += 1;
       if (record.count > maxRequests) {
@@ -77,11 +91,7 @@ export async function middleware(request: NextRequest) {
     if (pathname === route.prefix || pathname.startsWith(route.prefix + '/')) {
       const authCookie = request.cookies.get(AUTH_COOKIE_NAME);
 
-      // Unauthenticated -> in dev mode allow seamless preview, in prod redirect to login
       if (!authCookie || !authCookie.value) {
-        if (process.env.NODE_ENV !== 'production') {
-          return NextResponse.next();
-        }
         const loginUrl = new URL('/auth/login', request.url);
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);

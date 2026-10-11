@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/../lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
+import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 export async function POST(req: NextRequest) {
   try {
+    // Security Fix #4: Strict admin authentication check
+    const authUser = getAuthenticatedUser(req);
+    if (!authUser || authUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const body = await req.json();
     const {
       creatorId,

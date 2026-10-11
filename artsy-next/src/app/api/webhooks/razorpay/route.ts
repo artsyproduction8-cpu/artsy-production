@@ -33,7 +33,12 @@ export async function POST(request: NextRequest) {
       .update(rawBody)
       .digest('hex');
 
-    if (expectedSignature !== signature) {
+    const expectedBuf = Buffer.from(expectedSignature, 'hex');
+    const providedBuf = Buffer.from(signature, 'hex');
+    if (
+      expectedBuf.length !== providedBuf.length ||
+      !crypto.timingSafeEqual(expectedBuf, providedBuf)
+    ) {
       console.error('[Razorpay Webhook Error] Invalid webhook signature provided.');
       return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 });
     }

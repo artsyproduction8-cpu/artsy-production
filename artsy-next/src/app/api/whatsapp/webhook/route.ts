@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 /**
  * WhatsApp Cloud API Webhook Endpoint
@@ -40,9 +41,33 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const signature = request.headers.get('x-hub-signature-256');
     const rawBody = await request.text();
-    let payload: any = null;
 
+    const appSecret = process.env.META_APP_SECRET;
+    if (!appSecret) {
+      console.error('[WhatsApp Webhook] META_APP_SECRET is not configured on server.');
+      return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+    }
+
+    const expectedSig = 'sha256=' + crypto
+      .createHmac('sha256', appSecret)
+      .update(rawBody)
+      .digest('hex');
+
+    const providedSig = signature || '';
+    const expectedBuf = Buffer.from(expectedSig);
+    const providedBuf = Buffer.from(providedSig);
+
+    if (
+      expectedBuf.length !== providedBuf.length ||
+      !crypto.timingSafeEqual(expectedBuf, providedBuf)
+    ) {
+      console.warn('[WhatsApp Webhook] Invalid or missing signature');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
+    let payload: any = null;
     try {
       payload = JSON.parse(rawBody);
     } catch {

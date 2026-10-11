@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateHeaderBytesServer } from '@/lib/storage/validator';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
 
     if (!validation.isValid) {
       // Mark file record as failed in database if record exists
-      if (supabase && fileRecordId) {
-        await supabase
+      if (supabaseAdmin && fileRecordId) {
+        await supabaseAdmin
           .from('file_records')
           .update({
             is_soft_deleted: true,

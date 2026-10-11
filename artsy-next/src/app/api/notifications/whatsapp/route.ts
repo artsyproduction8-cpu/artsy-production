@@ -3,6 +3,7 @@ import {
   sendWhatsAppNotification,
   checkOpenWAGatewayHealth,
 } from '@/lib/whatsapp/openwa-dispatcher';
+import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Security Fix: Require admin authentication for arbitrary WhatsApp dispatches
+    const authUser = getAuthenticatedUser(req);
+    if (!authUser || authUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const body = await req.json().catch(() => ({}));
     const { phone, message, eventType, projectId } = body;
 
@@ -61,9 +68,9 @@ export async function POST(req: NextRequest) {
       error: result.error,
     });
   } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : String(err);
+    console.error('WhatsApp notification dispatch error:', err);
     return NextResponse.json(
-      { success: false, error },
+      { success: false, error: 'Internal server error dispatching notification' },
       { status: 500 }
     );
   }

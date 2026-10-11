@@ -91,9 +91,9 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (err: any) {
-    console.error('[Razorpay verify-payment exception]:', err);
+    console.error('[INTERNAL] Razorpay verify-payment exception:', err);
     return NextResponse.json(
-      { success: false, error: err?.message || 'Internal error verifying payment' },
+      { success: false, error: 'Unable to process request' },
       { status: 500 }
     );
   }

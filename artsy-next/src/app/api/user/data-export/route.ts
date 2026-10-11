@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 /**
@@ -120,9 +120,9 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (err: any) {
-    console.error('[DPDP EXPORT ERROR]:', err);
+    console.error('[INTERNAL] [DPDP EXPORT ERROR]:', err);
     return NextResponse.json(
-      { error: err.message || 'Internal export error' },
+      { error: 'Unable to process request' },
       { status: 500 }
     );
   }

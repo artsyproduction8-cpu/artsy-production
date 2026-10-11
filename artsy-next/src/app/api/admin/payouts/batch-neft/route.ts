@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 interface NeftBatchRecord {
   transactionRef: string;
@@ -19,12 +20,19 @@ interface NeftBatchRecord {
 
 export async function GET(request: NextRequest) {
   try {
+    // Security Fix #4: Enforce admin authentication
+    const authUser = getAuthenticatedUser(request);
+    if (!authUser || authUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'csv';
-    const revealFullPan = searchParams.get('revealPan') === 'true';
+    // PAN masked by default. Explicit second confirmation flag required to reveal full PAN
+    const revealFullPan = searchParams.get('revealPan') === 'true' && searchParams.get('confirm') === 'true';
 
     if (revealFullPan) {
-      console.warn(`[SECURITY AUDIT LOG] Unmasked PAN export accessed at ${new Date().toISOString()} from IP: ${request.headers.get('x-forwarded-for') || '127.0.0.1'}`);
+      console.warn(`[SECURITY AUDIT LOG] Unmasked PAN export accessed by admin ${authUser.id} at ${new Date().toISOString()}`);
     }
 
     let batchRecords: NeftBatchRecord[] = [];
@@ -82,7 +90,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // If no live payouts found or mock mode, generate standard audit-verified sample batch
+    // Default sample for authorized admin dev preview if no pending payouts
     if (batchRecords.length === 0) {
       batchRecords = [
         {
@@ -100,36 +108,6 @@ export async function GET(request: NextRequest) {
           pan: 'AAAPL4481K',
           narration: 'ARTSY PROD AP-8841 UDAIPUR',
         },
-        {
-          transactionRef: 'NFT-AP8842-02',
-          projectId: 'proj-8842',
-          creatorId: 'creator-2',
-          beneficiaryName: 'AANYA SEN',
-          accountNumber: '000901584930',
-          ifscCode: 'ICIC0000009',
-          grossAmountPaise: 288350,
-          tdsRate: 0.02,
-          tdsAmountPaise: 5767,
-          netPayoutPaise: 282583,
-          netPayoutRupees: 2825.83,
-          pan: 'BZNPS9910E',
-          narration: 'ARTSY PROD AP-8842 BRAND',
-        },
-        {
-          transactionRef: 'NFT-AP8843-03',
-          projectId: 'proj-8843',
-          creatorId: 'creator-3',
-          beneficiaryName: 'ROHAN MEHRA',
-          accountNumber: '91802004819381',
-          ifscCode: 'UTIB0000451',
-          grossAmountPaise: 576701,
-          tdsRate: 0.02,
-          tdsAmountPaise: 11534,
-          netPayoutPaise: 565167,
-          netPayoutRupees: 5651.67,
-          pan: 'CJKPM1204R',
-          narration: 'ARTSY PROD AP-8843 3D PROD',
-        },
       ];
     }
 
@@ -137,19 +115,25 @@ export async function GET(request: NextRequest) {
       const totalNetRupees = batchRecords.reduce((acc, r) => acc + r.netPayoutRupees, 0);
       const totalTdsRupees = batchRecords.reduce((acc, r) => acc + r.tdsAmountPaise / 100, 0);
 
+      const sanitizedRecords = batchRecords.map(r => ({
+        ...r,
+        pan: revealFullPan ? r.pan : (r.pan.length >= 10 ? `XXXXX${r.pan.slice(-4)}` : 'XXXXXXXXXX'),
+        accountNumber: r.accountNumber.length > 4 ? `XXXXXX${r.accountNumber.slice(-4)}` : r.accountNumber,
+      }));
+
       return NextResponse.json({
         success: true,
         batchId: `BATCH-NEFT-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Date.now().toString().slice(-4)}`,
         generatedAt: new Date().toISOString(),
         statutoryTdsSection: '194J-Tech (2% FTS)',
-        recordsCount: batchRecords.length,
+        recordsCount: sanitizedRecords.length,
         totalNetRupees: Number(totalNetRupees.toFixed(2)),
         totalTdsRupees: Number(totalTdsRupees.toFixed(2)),
-        records: batchRecords,
+        records: sanitizedRecords,
       });
     }
 
-    // Default: Standard Corporate Banking NEFT CSV Format (HDFC Corporate ENet / ICICI CIB compatible)
+    // Default: Standard Corporate Banking NEFT CSV Format
     const csvHeaders = [
       'Transaction Reference',
       'Beneficiary Name',
@@ -184,7 +168,6 @@ export async function GET(request: NextRequest) {
     });
 
     const csvContent = [csvHeaders.join(','), ...csvRows.map((row) => row.join(','))].join('\r\n');
-
     const fileName = `ARTSY_NEFT_BATCH_${new Date().toISOString().slice(0, 10)}.csv`;
 
     return new Response(csvContent, {
@@ -197,7 +180,7 @@ export async function GET(request: NextRequest) {
   } catch (err: any) {
     console.error('[BATCH NEFT EXPORT ERROR]:', err);
     return NextResponse.json(
-      { success: false, error: err.message || 'Internal error generating NEFT batch' },
+      { success: false, error: 'Internal error generating NEFT batch' },
       { status: 500 }
     );
   }
@@ -205,6 +188,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Security Fix #4: Enforce admin authentication
+    const authUser = getAuthenticatedUser(request);
+    if (!authUser || authUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const body = await request.json().catch(() => ({}));
     const { payoutIds, batchNotes } = body;
 
@@ -225,11 +214,11 @@ export async function POST(request: NextRequest) {
       for (const pId of payoutIds) {
         await supabase.from('financial_events').insert({
           event_type: 'creator_payout',
-          amount: 0, // amount fetched per record in production trigger
+          amount: 0,
           currency: 'INR',
           reference_id: pId,
           reference_table: 'creator_payouts',
-          metadata: { batch_ref: batchRef, dispatched_at: timestamp },
+          metadata: { batch_ref: batchRef, dispatched_at: timestamp, admin_id: authUser.id },
         });
       }
     }
@@ -243,7 +232,7 @@ export async function POST(request: NextRequest) {
   } catch (err: any) {
     console.error('[BATCH NEFT DISPATCH ERROR]:', err);
     return NextResponse.json(
-      { success: false, error: err.message || 'Internal error dispatching batch' },
+      { success: false, error: 'Internal error dispatching batch' },
       { status: 500 }
     );
   }

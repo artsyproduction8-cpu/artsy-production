@@ -5,7 +5,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { sendWhatsAppOTP } from '@/lib/whatsapp/openwa-dispatcher';
 import { sendOtpEmail } from '@/lib/email/dispatcher';
-import { supabase, isSupabaseConfigured } from '@/../lib/supabase';
+import { supabaseAdmin as supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { signAuthCookieValue, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 
 // Helper for legacy sha256 fallback compatibility
@@ -31,10 +31,18 @@ export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
     const body = await request.json().catch(() => ({}));
-    const { email, phone, action = 'send', code, role = 'client', consentGiven = true } = body;
+    const { email, phone, identifier: inputIdentifier, action = 'send', code, role = 'client', consentGiven = true } = body;
 
-    const cleanEmail = email ? String(email).trim().toLowerCase() : null;
-    let cleanPhone = phone ? String(phone).replace(/\D/g, '') : null;
+    // Security Fix #4: Return generic response for lookup without user enumeration
+    if (action === 'lookup') {
+      return NextResponse.json({ success: true });
+    }
+
+    const rawEmail = email || (inputIdentifier && String(inputIdentifier).includes('@') ? inputIdentifier : null);
+    const rawPhone = phone || (inputIdentifier && !String(inputIdentifier).includes('@') ? inputIdentifier : null);
+
+    const cleanEmail = rawEmail ? String(rawEmail).trim().toLowerCase() : null;
+    let cleanPhone = rawPhone ? String(rawPhone).replace(/\D/g, '') : null;
     if (cleanPhone && cleanPhone.length === 12 && cleanPhone.startsWith('91')) {
       cleanPhone = cleanPhone.slice(2);
     }
@@ -65,52 +73,6 @@ export async function POST(request: NextRequest) {
       process.env.NODE_ENV === 'development' &&
       process.env.MOCK_WHATSAPP === 'true';
 
-    // ────────────────────────────────────────────────────────
-    // ACTION: LOOKUP — Identify user role and name dynamically
-    // ────────────────────────────────────────────────────────
-    if (action === 'lookup') {
-      // 1. Fixed Studio Director Admin Anchor
-      if (cleanPhone === '7777078742') {
-        return NextResponse.json({
-          exists: true,
-          role: 'admin',
-          name: 'Studio Director (Admin)',
-          isNewUser: false,
-        });
-      }
-
-      // 2. Query dynamic user records from Supabase
-      if (isSupabaseConfigured && supabase) {
-        try {
-          let userQuery = supabase.from('users').select('id, full_name, email, phone, role, status');
-          if (cleanEmail) {
-            userQuery = userQuery.eq('email', cleanEmail);
-          } else if (cleanPhone) {
-            userQuery = userQuery.or(`phone.eq.${cleanPhone},phone.ilike.%${cleanPhone}%`);
-          }
-          const { data: existingUser } = await userQuery.maybeSingle();
-
-          if (existingUser) {
-            return NextResponse.json({
-              exists: true,
-              role: existingUser.role || 'client',
-              name: existingUser.full_name || 'Valued Member',
-              isNewUser: false,
-            });
-          }
-        } catch (dbErr) {
-          console.warn('User lookup warning:', dbErr);
-        }
-      }
-
-      // 3. New user (allows them to register as Client or Creator/Editor)
-      return NextResponse.json({
-        exists: false,
-        role: null,
-        name: null,
-        isNewUser: true,
-      });
-    }
 
     // ────────────────────────────────────────────────────────
     // ACTION: VERIFY — Check submitted OTP against stored hash
@@ -541,7 +503,7 @@ export async function POST(request: NextRequest) {
           });
         }
         return NextResponse.json(
-          { error: 'Failed to send verification email. Please try again.', details: emailResult.error },
+          { error: 'Failed to send verification email. Please try again.' },
           { status: 502 }
         );
       }
@@ -587,10 +549,9 @@ export async function POST(request: NextRequest) {
       { status: 502 }
     );
   } catch (error: unknown) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('Auth OTP dispatch error:', error);
+    console.error('[INTERNAL] Auth OTP dispatch error:', error);
     return NextResponse.json(
-      { error: 'Failed to dispatch verification code. Please try again.', details: errorMsg },
+      { error: 'Unable to process request' },
       { status: 500 }
     );
   }

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/../lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { generateInvoiceData } from '@/lib/invoices/generator';
 import { archiveInvoiceToVault } from '@/lib/invoices/vault';
 import { sendInvoiceEmail } from '@/lib/email/dispatcher';
+import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 async function resolveOrderDetails(orderId: string) {
   let totalPaise = 800000;
@@ -10,11 +11,13 @@ async function resolveOrderDetails(orderId: string) {
   let clientPhone = '+919876543210';
   let clientEmail = 'client@artsyproduction.in';
   let serviceName = 'Wedding Highlight Cinema (Post-Production)';
+  let clientId: string | null = null;
+  let orderFound = false;
 
-  if (supabase) {
+  if (supabaseAdmin) {
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
     
-    let query = supabase.from('orders').select('*, users(full_name, phone, email)');
+    let query = supabaseAdmin.from('orders').select('*, users(full_name, phone, email)');
     if (isUUID) {
       query = query.eq('id', orderId);
     } else {
@@ -24,6 +27,8 @@ async function resolveOrderDetails(orderId: string) {
     const { data: order } = await query.maybeSingle();
 
     if (order) {
+      orderFound = true;
+      clientId = order.client_id || order.user_id || null;
       totalPaise = order.gross_amount || order.amount_paise || totalPaise;
       clientName = order.client_name || order.users?.full_name || clientName;
       clientPhone = order.client_phone || order.users?.phone || clientPhone;
@@ -36,6 +41,8 @@ async function resolveOrderDetails(orderId: string) {
 
   return {
     orderId,
+    clientId,
+    orderFound,
     clientName,
     clientPhone,
     clientEmail,
@@ -54,11 +61,27 @@ export async function GET(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
+    // Fix 10: Require authenticated user
+    const authUser = getAuthenticatedUser(request);
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { orderId } = await params;
     const format = request.nextUrl.searchParams.get('format') || 'html';
     const shouldSendEmail = request.nextUrl.searchParams.get('sendEmail') === 'true';
 
     const orderDetails = await resolveOrderDetails(orderId);
+
+    // Fix 10: Verify ownership (client_id matches authUser.id OR authUser is admin)
+    if (orderDetails.orderFound) {
+      const isOwner = (orderDetails.clientId && authUser.id === orderDetails.clientId) || authUser.role === 'admin';
+      if (!isOwner) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
     const invoice = generateInvoiceData(orderDetails);
 
     // If query parameter requests email dispatch, trigger it asynchronously
@@ -202,7 +225,7 @@ export async function GET(
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error('[INVOICE ROUTE ERROR]:', errorMsg);
     return NextResponse.json(
-      { error: errorMsg || 'Error generating invoice' },
+      { error: 'Unable to process request' },
       { status: 500 }
     );
   }
@@ -218,9 +241,24 @@ export async function POST(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
+    const authUser = getAuthenticatedUser(request);
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { orderId } = await params;
     const body = await request.json().catch(() => ({}));
     const orderDetails = await resolveOrderDetails(orderId);
+
+    if (orderDetails.orderFound) {
+      if (orderDetails.clientId && authUser.id !== orderDetails.clientId && authUser.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else {
+      if (authUser.role !== 'admin') {
+        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+      }
+    }
 
     const recipientEmail = body.email || orderDetails.clientEmail;
     if (!recipientEmail) {
@@ -254,7 +292,7 @@ export async function POST(
     const errorMsg = err instanceof Error ? err.message : String(err);
     console.error('[INVOICE SEND ERROR]:', errorMsg);
     return NextResponse.json(
-      { error: errorMsg || 'Failed to dispatch invoice' },
+      { error: 'Unable to process request' },
       { status: 500 }
     );
   }

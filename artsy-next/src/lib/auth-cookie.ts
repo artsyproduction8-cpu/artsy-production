@@ -174,7 +174,12 @@ function base64Decode(str: string): string {
  * Format: {base64(JSON)}.{hmac_signature}
  */
 export function signAuthCookieValue(payload: AuthUserPayload): string {
-  const jsonStr = JSON.stringify(payload);
+  // Fix 11: Embed 7-day expiration (604800000 ms) in payload
+  const payloadWithExp: AuthUserPayload = {
+    ...payload,
+    exp: payload.exp || Date.now() + 604800000,
+  };
+  const jsonStr = JSON.stringify(payloadWithExp);
   const payloadBase64 = base64Encode(jsonStr);
   const secret = getSigningSecret();
   const signature = computeHmacSha256(secret, payloadBase64);
@@ -183,7 +188,7 @@ export function signAuthCookieValue(payload: AuthUserPayload): string {
 
 /**
  * Verifies HMAC-SHA256 signature and parses user payload.
- * Returns null if signature is invalid, missing, or payload is malformed.
+ * Returns null if signature is invalid, missing, expired, or payload is malformed.
  */
 export function verifyAndParseAuthCookie(cookieValue?: string | null): AuthUserPayload | null {
   if (!cookieValue) return null;
@@ -208,6 +213,10 @@ export function verifyAndParseAuthCookie(cookieValue?: string | null): AuthUserP
       const jsonStr = base64Decode(payloadBase64);
       const parsed = JSON.parse(jsonStr);
       if (parsed && typeof parsed === 'object' && parsed.id) {
+        // Fix 11: Check cookie expiration
+        if (parsed.exp && Date.now() > parsed.exp) {
+          return null; // Expired cookie
+        }
         return parsed as AuthUserPayload;
       }
     }

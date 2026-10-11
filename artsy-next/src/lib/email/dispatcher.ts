@@ -44,7 +44,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
     };
   }
 
-  const fromAddress = options.from || process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'Artsy Production <onboarding@resend.dev>';
+  const fromAddress = options.from || process.env.RESEND_FROM_EMAIL || process.env.EMAIL_FROM || 'Artsy Production <noreply@artsyproduction.com>';
   const recipients = Array.isArray(options.to) ? options.to : [options.to];
 
   const payload: Record<string, unknown> = {

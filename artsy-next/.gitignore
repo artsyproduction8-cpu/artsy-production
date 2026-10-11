@@ -44,4 +44,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# sensitive one-off rotation & admin scripts
+scripts/*rotate*.mjs
+scripts/*vercel*.mjs
+scripts/*update-razorpay*.mjs

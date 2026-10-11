@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { decryptPII, maskPAN } from '@/lib/crypto/pii';
+import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,10 +10,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Security Fix #4: Strict admin authentication check
+    const authUser = getAuthenticatedUser(request);
+    if (!authUser || authUser.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const { id: creatorId } = await params;
 
     let encryptedPan = '';
-    let creatorName = 'Kabir Verma';
+    let creatorName = 'Creator';
 
     if (supabase && typeof supabase.from === 'function') {
       try {
@@ -22,8 +29,7 @@ export async function GET(
           .eq('id', creatorId)
           .maybeSingle();
 
-        // 600ms timeout so dev server never hangs if database container is offline
-        const timeout = new Promise((resolve) => setTimeout(() => resolve({ data: null }), 600));
+        const timeout = new Promise((resolve) => setTimeout(() => resolve({ data: null }), 1000));
         const res = (await Promise.race([dbQuery, timeout])) as { data?: { pan_number?: string; users?: { full_name?: string } } | null };
 
         if (res?.data) {
@@ -35,14 +41,16 @@ export async function GET(
       }
     }
 
-    // Default sample for dev testing if DB row doesn't exist
     if (!encryptedPan) {
-      encryptedPan = 'AAAPL4481K';
+      return NextResponse.json({ error: 'Creator PAN record not found' }, { status: 404 });
     }
 
     const decryptedPan = decryptPII(encryptedPan);
     const masked = maskPAN(decryptedPan);
     const auditLogId = `aud_rev_${Date.now()}`;
+
+    // Security audit log entry
+    console.info(`[SECURITY AUDIT] PAN revealed by admin ${authUser.id} for creator ${creatorId}`);
 
     return NextResponse.json({
       success: true,
@@ -54,10 +62,9 @@ export async function GET(
       revealedAt: new Date().toISOString(),
     });
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error('PAN reveal error:', errorMsg);
+    console.error('[PAN reveal error]:', err);
     return NextResponse.json(
-      { error: 'Failed to reveal sensitive credentials', details: errorMsg },
+      { error: 'Failed to reveal sensitive credentials' },
       { status: 500 }
     );
   }

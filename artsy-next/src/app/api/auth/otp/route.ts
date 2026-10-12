@@ -6,7 +6,7 @@ import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { sendWhatsAppOTP } from '@/lib/whatsapp/openwa-dispatcher';
 import { sendMetaOTP } from '@/lib/whatsapp/meta-cloud-dispatcher';
 import { sendOtpEmail } from '@/lib/email/dispatcher';
-import { supabaseAdmin as supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabaseAdmin as supabase, supabase as anonClient, isSupabaseConfigured } from '@/lib/supabase';
 import { signAuthCookieValue, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 
 // Helper for legacy sha256 fallback compatibility
@@ -457,7 +457,8 @@ export async function POST(request: NextRequest) {
       const waResult = await sendMetaOTP(cleanPhone, otpCode);
 
       // Log to notification_delivery_log
-      if (supabase && typeof supabase.from === 'function') {
+      const dbClient = (supabase && typeof supabase.from === 'function') ? supabase : anonClient;
+      if (dbClient && typeof dbClient.from === 'function') {
         try {
           const deliveryRow = {
             channel: 'whatsapp_otp',
@@ -469,14 +470,17 @@ export async function POST(request: NextRequest) {
             created_at: new Date().toISOString(),
           };
 
-          const { error: logErr } = await supabase
+          const { error: logErr } = await dbClient
             .from('notification_delivery_log')
             .insert([deliveryRow]);
 
-          if (logErr && logErr.code === '23514') {
-            await supabase
-              .from('notification_delivery_log')
-              .insert([{ ...deliveryRow, channel: 'whatsapp' }]);
+          if (logErr) {
+            console.warn('[OTP Route] notification_delivery_log primary insert warning:', logErr);
+            if (anonClient && typeof anonClient.from === 'function' && dbClient !== anonClient) {
+              await anonClient
+                .from('notification_delivery_log')
+                .insert([deliveryRow]);
+            }
           }
         } catch (logErr) {
           console.warn('[OTP Route] notification_delivery_log warning:', logErr);

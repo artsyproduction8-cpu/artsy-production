@@ -36,12 +36,18 @@ export const isSupabaseConfigured =
   isValidHttpUrl(supabaseUrl) &&
   Boolean(supabaseAnonKey && !isPlaceholder(supabaseAnonKey));
 
+const isValidJwt = (val?: string) => {
+  if (!val || isPlaceholder(val)) return false;
+  const parts = val.trim().split('.');
+  return parts.length === 3 && parts[0].length > 0 && parts[1].length > 0;
+};
+
 if (isSupabaseConfigured && supabaseUrl && supabaseAnonKey) {
   // Production mode: real Supabase client
   supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  // If service role key is present and not a placeholder, create admin client
-  if (supabaseServiceKey && !isPlaceholder(supabaseServiceKey)) {
+  // If service role key is present and is a valid JWT, create admin client
+  if (supabaseServiceKey && isValidJwt(supabaseServiceKey)) {
     supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });

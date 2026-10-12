@@ -1,7 +1,14 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 
+import type { UserRole } from './auth-utils';
+import { getRoleHomePath, isAdminRole } from './auth-utils';
+
+export type { UserRole };
+export { getRoleHomePath, isAdminRole };
+
 // Auth types
-export type UserRole = 'client' | 'freelancer' | 'admin' | 'super_admin';
 export type UserStatus = 'active' | 'pending' | 'suspended' | 'banned';
 
 export type OnboardingStatus =
@@ -82,19 +89,6 @@ export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
     avatar_url: '',
     created_at: '2025-01-10T00:00:00.000Z',
     updated_at: '2025-01-10T00:00:00.000Z'
-  }
-};
-
-export const getRoleHomePath = (role: UserRole): string => {
-  switch (role) {
-    case 'super_admin':
-    case 'admin':
-      return '/admin';
-    case 'freelancer':
-      return '/freelancer';
-    case 'client':
-    default:
-      return '/client';
   }
 };
 

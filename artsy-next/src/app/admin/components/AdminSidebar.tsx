@@ -24,24 +24,37 @@ export default function AdminSidebar() {
     {
       group: 'Overview',
       items: [
-        { label: 'Admin Dashboard', href: '/admin', exact: true },
+        { label: 'Dashboard', href: '/admin', exact: true },
+        { label: 'Infra Costs', href: '/admin/infra-costs' },
       ],
     },
     {
-      group: 'Operations Desk',
+      group: 'Accounts & People',
       items: [
-        { label: 'Roster Vetting Queue', href: '/admin/vetting' },
-        { label: 'Verified Freelancers', href: '/admin/freelancers' },
-        { label: 'Client Accounts & Spend', href: '/admin/clients' },
-        { label: 'Pricing & Catalog SLAs', href: '/admin/pricing' },
-        { label: 'Production Vault Ledger', href: '/admin/vault' },
+        { label: 'Clients', href: '/admin/clients' },
+        { label: 'Creators', href: '/admin/freelancers' },
+        { label: 'Vetting', href: '/admin/vetting' },
+        { label: 'Users & Roles', href: '/admin/users' },
       ],
     },
     {
-      group: 'Client Pipelines',
+      group: 'Financial Ledger',
       items: [
-        { label: 'Production Catalog', href: '/admin/catalog' },
-        { label: 'Pipeline Telemetry', href: '/admin/telemetry' },
+        { label: 'Payments', href: '/admin/payments' },
+        { label: 'Payouts', href: '/admin/payouts' },
+        { label: 'Refunds', href: '/admin/refunds' },
+        { label: 'Disputes', href: '/admin/disputes' },
+      ],
+    },
+    {
+      group: 'Platform & Logs',
+      items: [
+        { label: 'Notifications', href: '/admin/notifications' },
+        { label: 'Audit Log', href: '/admin/audit-log' },
+        { label: 'Pricing & SLAs', href: '/admin/pricing' },
+        { label: 'Catalog', href: '/admin/catalog' },
+        { label: 'Vault', href: '/admin/vault' },
+        { label: 'Telemetry', href: '/admin/telemetry' },
       ],
     },
   ];

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '../components/marketing/Navbar';
 import Footer from '../components/marketing/Footer';
@@ -21,6 +21,16 @@ import {
 
 function generateBookingOrderId(): string {
   return 'ARTSY-' + Math.floor(100000 + Math.random() * 900000);
+}
+
+function resolveCategoryFromQuery(serviceQuery: string, subDict: Record<string, any[]>): string {
+  const s = (serviceQuery || '').toLowerCase();
+  if (s === 'ugc' || s === 'brand_ugc' || s === 'product' || s === 'store_product' || s === 'brand') return 'brand';
+  if (s === 'corporate_event' || s === 'corporate') return 'corporate';
+  if (s === 'personal_event' || s === 'personal') return 'personal';
+  if (s === 'wedding') return 'wedding';
+  if (s in subDict) return s;
+  return 'wedding';
 }
 
 function ConfiguratorContent() {
@@ -53,27 +63,20 @@ function ConfiguratorContent() {
     };
   }, []);
 
-  const categoriesList = getBookCategories(matrix);
-  const subCategoriesDict = getBookSubCategories(matrix);
+  const categoriesList = useMemo(() => getBookCategories(matrix), [matrix]);
+  const subCategoriesDict = useMemo(() => getBookSubCategories(matrix), [matrix]);
 
+  // Track searchParams string to prevent clobbering user manual selections on re-renders
+  const lastSearchStringRef = useRef<string>(searchParams.toString());
 
   const queryService = (searchParams.get('service') || searchParams.get('category') || 'wedding').toLowerCase();
-  const resolvedCategory =
-    queryService === 'ugc' || queryService === 'brand_ugc' || queryService === 'product' || queryService === 'store_product'
-      ? 'brand'
-      : queryService === 'corporate_event'
-      ? 'corporate'
-      : queryService === 'personal_event'
-      ? 'personal'
-      : queryService in subCategoriesDict
-      ? queryService
-      : 'wedding';
+  const resolvedCategory = resolveCategoryFromQuery(queryService, subCategoriesDict);
 
   const [category, setCategory] = useState<string>(resolvedCategory);
 
   const querySub = searchParams.get('sub') || '';
   const currentSubs = subCategoriesDict[resolvedCategory] || subCategoriesDict['wedding'] || Object.values(subCategoriesDict)[0] || [];
-  const initialSub = currentSubs.find((s: any) => s.id === querySub) || currentSubs[0] || { id: 'default', label: 'Standard', base: 3000, duration: 'Standard' };
+  const initialSub = currentSubs.find((s: any) => s.id === querySub || s.id.toLowerCase() === querySub.toLowerCase()) || currentSubs[0] || { id: 'default', label: 'Standard', base: 3000, duration: 'Standard' };
 
   const [selectedSubId, setSelectedSubId] = useState<string>(initialSub.id);
   const [angles, setAngles] = useState<string>('single');
@@ -114,30 +117,35 @@ function ConfiguratorContent() {
     }
   }, [searchParams]);
 
-  // Sync state if searchParams change dynamically
+  // Sync state ONLY when searchParams genuinely change from external navigation
   useEffect(() => {
-    const sService = (searchParams.get('service') || searchParams.get('category') || '').toLowerCase();
+    const currentSearch = searchParams.toString();
+    if (lastSearchStringRef.current === currentSearch) {
+      return;
+    }
+    lastSearchStringRef.current = currentSearch;
+
+    const sService = searchParams.get('service') || searchParams.get('category') || '';
     const sSub = searchParams.get('sub') || '';
 
-    const newCat =
-      sService === 'ugc' || sService === 'brand_ugc' || sService === 'product' || sService === 'store_product'
-        ? 'brand'
-        : sService === 'corporate_event'
-        ? 'corporate'
-        : sService === 'personal_event'
-        ? 'personal'
-        : sService in subCategoriesDict
-        ? sService
-        : null;
+    if (!sService && !sSub) return;
 
-    if (newCat) {
+    if (sService) {
+      const newCat = resolveCategoryFromQuery(sService, subCategoriesDict);
       setCategory(newCat);
       const subs = subCategoriesDict[newCat] || subCategoriesDict['wedding'] || Object.values(subCategoriesDict)[0] || [];
       if (sSub) {
         const found = subs.find((s: any) => s.id === sSub || s.id.toLowerCase() === sSub.toLowerCase());
         if (found) {
           setSelectedSubId(found.id);
+        } else if (subs[0]) {
+          setSelectedSubId(subs[0].id);
         }
+      } else if (subs[0]) {
+        setSelectedSubId(subs[0].id);
+      }
+      if (newCat === 'wedding' && turnaround === 'rush') {
+        setTurnaround('priority');
       }
     } else if (sSub) {
       for (const [catKey, subs] of Object.entries(subCategoriesDict)) {
@@ -145,22 +153,73 @@ function ConfiguratorContent() {
         if (found) {
           setCategory(catKey);
           setSelectedSubId(found.id);
+          if (catKey === 'wedding' && turnaround === 'rush') {
+            setTurnaround('priority');
+          }
           break;
         }
       }
     }
-  }, [searchParams, subCategoriesDict]);
+  }, [searchParams, subCategoriesDict, turnaround]);
 
-  // When category changes, reset sub-category if not in new category, and reset turnaround if wedding
-  useEffect(() => {
-    const subs = subCategoriesDict[category] || subCategoriesDict['wedding'] || Object.values(subCategoriesDict)[0] || [];
-    if (!subs.some((s: any) => s.id === selectedSubId) && subs[0]) {
+  // User category change handler: sets category, first subcategory, and updates browser URL query parameters
+  const handleCategoryChange = (newCat: string) => {
+    setCategory(newCat);
+    const subs = subCategoriesDict[newCat] || [];
+    if (subs.length > 0) {
       setSelectedSubId(subs[0].id);
     }
+    if (newCat === 'wedding' && turnaround === 'rush') {
+      setTurnaround('priority');
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('service');
+        url.searchParams.delete('sub');
+        url.searchParams.delete('basePrice');
+        url.searchParams.delete('subName');
+        url.searchParams.set('category', newCat);
+        window.history.replaceState(null, '', url.toString());
+        lastSearchStringRef.current = url.searchParams.toString();
+      } catch (err) {
+        console.warn('URL update error:', err);
+      }
+    }
+  };
+
+  // User sub-category change handler
+  const handleSubChange = (newSubId: string) => {
+    setSelectedSubId(newSubId);
+    if (typeof window !== 'undefined') {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sub', newSubId);
+        window.history.replaceState(null, '', url.toString());
+        lastSearchStringRef.current = url.searchParams.toString();
+      } catch (err) {
+        console.warn('URL update error:', err);
+      }
+    }
+  };
+
+  // Filter available SLAs based on category
+  // In the wedding section there should NOT be rush 48h SLA. It is strictly for brand, corporate, and personal only.
+  const availableSlas = useMemo(() => {
+    return deliverySlas.filter((s) => {
+      if (category === 'wedding') {
+        return s.id !== 'rush' && s.hours !== 48;
+      }
+      return true;
+    });
+  }, [deliverySlas, category]);
+
+  // Keep turnaround in sync if switching to wedding while rush was previously active
+  useEffect(() => {
     if (category === 'wedding' && turnaround === 'rush') {
       setTurnaround('priority');
     }
-  }, [category, selectedSubId, turnaround, subCategoriesDict]);
+  }, [category, turnaround]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -186,7 +245,7 @@ function ConfiguratorContent() {
       : selectedAngleRule.costBrandCorporate
     : 0;
 
-  const selectedSlaRule = deliverySlas.find((s) => s.id === turnaround) || deliverySlas[0];
+  const selectedSlaRule = availableSlas.find((s) => s.id === turnaround) || availableSlas[0] || deliverySlas[0];
   const turnaroundCost = selectedSlaRule
     ? isWeddingPersonal
       ? selectedSlaRule.costWeddingPersonal
@@ -308,7 +367,7 @@ function ConfiguratorContent() {
                   {categoriesList.map((c) => (
                     <button
                       key={c.key}
-                      onClick={() => setCategory(c.key)}
+                      onClick={() => handleCategoryChange(c.key)}
                       type="button"
                       className={`p-3.5 rounded-xl text-left transition-all cursor-pointer border ${
                         category === c.key
@@ -350,10 +409,10 @@ function ConfiguratorContent() {
                     return (
                       <div
                         key={sub.id}
-                        onClick={() => setSelectedSubId(sub.id)}
+                        onClick={() => handleSubChange(sub.id)}
                         className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between gap-3 ${
                           isSelected
-                            ? 'border-[#3B82F6] bg-[#3B82F6]/5 shadow-xs'
+                            ? 'border-[#3B82F6] bg-[#3B82F6]/5 shadow-xs ring-1 ring-[#3B82F6]'
                             : 'border-[#E5E5E7] hover:border-[#86868B]/40 bg-white'
                         }`}
                       >
@@ -362,7 +421,7 @@ function ConfiguratorContent() {
                             type="radio"
                             name="sub_category"
                             checked={isSelected}
-                            onChange={() => setSelectedSubId(sub.id)}
+                            onChange={() => handleSubChange(sub.id)}
                             className="accent-[#3B82F6] w-4 h-4 cursor-pointer"
                           />
                           <div>
@@ -406,13 +465,15 @@ function ConfiguratorContent() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {cameraAngles.map((a) => {
+                    const isSelected = angles === a.id;
                     const cost = isWeddingPersonal ? a.costWeddingPersonal : a.costBrandCorporate;
                     return (
-                      <label
+                      <div
                         key={a.id}
+                        onClick={() => setAngles(a.id)}
                         className={`p-4 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
-                          angles === a.id
-                            ? 'border-[#3B82F6] bg-[#3B82F6]/5'
+                          isSelected
+                            ? 'border-[#3B82F6] bg-[#3B82F6]/5 shadow-xs ring-1 ring-[#3B82F6]'
                             : 'border-[#E5E5E7] hover:border-[#86868B]/40 bg-white'
                         }`}
                       >
@@ -428,7 +489,7 @@ function ConfiguratorContent() {
                           <input
                             type="radio"
                             name="angles"
-                            checked={angles === a.id}
+                            checked={isSelected}
                             onChange={() => setAngles(a.id)}
                             className="accent-[#3B82F6] w-4 h-4 cursor-pointer mt-0.5"
                           />
@@ -439,7 +500,7 @@ function ConfiguratorContent() {
                         <div className="mt-3 pt-2 border-t border-[#F5F5F7] text-xs font-semibold text-[#1D1D1F]">
                           {cost === 0 ? 'Included' : `+₹${cost.toLocaleString('en-IN')}`}
                         </div>
-                      </label>
+                      </div>
                     );
                   })}
                 </div>
@@ -453,22 +514,35 @@ function ConfiguratorContent() {
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {deliverySlas.map((t) => {
+                <div className={`grid grid-cols-1 ${category === 'wedding' ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3`}>
+                  {availableSlas.map((t) => {
+                    const isSelected = turnaround === t.id;
                     const cost = isWeddingPersonal ? t.costWeddingPersonal : t.costBrandCorporate;
                     return (
-                      <label
+                      <div
                         key={t.id}
+                        onClick={() => setTurnaround(t.id)}
                         className={`p-4 rounded-xl border flex flex-col justify-between cursor-pointer transition-all ${
-                          turnaround === t.id
-                            ? 'border-[#3B82F6] bg-[#3B82F6]/5'
+                          isSelected
+                            ? 'border-[#3B82F6] bg-[#3B82F6]/5 shadow-xs ring-1 ring-[#3B82F6]'
                             : 'border-[#E5E5E7] hover:border-[#86868B]/40 bg-white'
                         }`}
                       >
                         <div>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F5F5F7] text-[#86868B] block w-fit mb-2">
-                            {t.hours}h SLA
-                          </span>
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              isSelected ? 'bg-[#3B82F6]/15 text-[#3B82F6]' : 'bg-[#F5F5F7] text-[#86868B]'
+                            }`}>
+                              {t.hours}h SLA
+                            </span>
+                            <input
+                              type="radio"
+                              name="turnaround_sla"
+                              checked={isSelected}
+                              onChange={() => setTurnaround(t.id)}
+                              className="accent-[#3B82F6] w-4 h-4 cursor-pointer"
+                            />
+                          </div>
                           <span className="text-xs font-bold text-[#1D1D1F] block">
                             {t.label}
                           </span>
@@ -479,7 +553,7 @@ function ConfiguratorContent() {
                         <div className="mt-3 pt-2 border-t border-[#F5F5F7] text-xs font-semibold text-[#1D1D1F]">
                           {cost === 0 ? 'Included' : `+₹${cost.toLocaleString('en-IN')}`}
                         </div>
-                      </label>
+                      </div>
                     );
                   })}
                 </div>

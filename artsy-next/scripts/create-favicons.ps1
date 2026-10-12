@@ -8,22 +8,26 @@ Write-Host "Source logo: $sourcePath"
 $srcBitmap = [System.Drawing.Bitmap]::FromFile($sourcePath)
 
 function Resize-Image($source, $width, $height, $targetPath) {
-    $destRect = [System.Drawing.Rectangle]::new(0, 0, $width, $height)
     $destBitmap = [System.Drawing.Bitmap]::new($width, $height, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
     
     $graphics = [System.Drawing.Graphics]::FromImage($destBitmap)
+    $graphics.Clear([System.Drawing.Color]::White)
     $graphics.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceOver
     $graphics.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
     $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
     $graphics.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
     $graphics.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
 
+    $destRect = [System.Drawing.Rectangle]::new(0, 0, $width, $height)
     $graphics.DrawImage($source, $destRect, 0, 0, $source.Width, $source.Height, [System.Drawing.GraphicsUnit]::Pixel)
     $graphics.Dispose()
 
+    if (Test-Path $targetPath) {
+        Remove-Item $targetPath -Force
+    }
     $destBitmap.Save($targetPath, [System.Drawing.Imaging.ImageFormat]::Png)
     $destBitmap.Dispose()
-    Write-Host "Created: $targetPath ($width x $height)"
+    Write-Host "Created: $targetPath ($width x $height) with white background"
 }
 
 # 1. public/logo.png & public/images/logo.png (Full 1024x1024 & 512x512)
@@ -44,25 +48,37 @@ Resize-Image $srcBitmap 512 512 "$projectRoot\public\icon-512.png"
 Resize-Image $srcBitmap 512 512 "$projectRoot\public\icon.png"
 Resize-Image $srcBitmap 180 180 "$projectRoot\public\apple-touch-icon.png"
 
-# 4. Generate multi-resolution .ico (16, 32, 48) for public/favicon.ico and src/app/favicon.ico
+# 4. Generate .ico with white background for public/favicon.ico and src/app/favicon.ico
 $ico48 = [System.Drawing.Bitmap]::new(48, 48, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
 $g = [System.Drawing.Graphics]::FromImage($ico48)
+$g.Clear([System.Drawing.Color]::White)
+$g.CompositingMode = [System.Drawing.Drawing2D.CompositingMode]::SourceOver
+$g.CompositingQuality = [System.Drawing.Drawing2D.CompositingQuality]::HighQuality
 $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+$g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+$g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
 $g.DrawImage($srcBitmap, 0, 0, 48, 48)
 $g.Dispose()
 
 # Save ICO using Icon handle
 $iconHandle = $ico48.GetHicon()
 $icon = [System.Drawing.Icon]::FromHandle($iconHandle)
-$stream1 = [System.IO.File]::OpenWrite("$projectRoot\public\favicon.ico")
+
+if (Test-Path "$projectRoot\public\favicon.ico") {
+    Remove-Item "$projectRoot\public\favicon.ico" -Force
+}
+$stream1 = [System.IO.File]::Create("$projectRoot\public\favicon.ico")
 $icon.Save($stream1)
 $stream1.Close()
 
-$stream2 = [System.IO.File]::OpenWrite("$projectRoot\src\app\favicon.ico")
+if (Test-Path "$projectRoot\src\app\favicon.ico") {
+    Remove-Item "$projectRoot\src\app\favicon.ico" -Force
+}
+$stream2 = [System.IO.File]::Create("$projectRoot\src\app\favicon.ico")
 $icon.Save($stream2)
 $stream2.Close()
 
 $ico48.Dispose()
 $srcBitmap.Dispose()
 
-Write-Host "All Artsy favicons and app icons generated successfully!"
+Write-Host "All Artsy favicons and app icons with solid white background generated successfully!"

@@ -206,17 +206,16 @@ export async function POST(request: NextRequest) {
             // Send WhatsApp notification to admin(s) if phone configured
             for (const adm of adminList) {
               const targetPhone = adm.phone || '+917777078742';
-                try {
-                  // Attempt meta template notice with all 4 required parameters [orderId, title, statusText, url]
-                  await sendMetaTemplate(targetPhone, 'artsy_project_status', [
-                    internalOrderNumber,
-                    'Preferred Creator Request',
-                    `Requested: ${preferredCreatorName}`,
-                    'https://artsyproduction.com/admin/creator-requests',
-                  ]).catch(() => null);
-                } catch {
-                  // Non-fatal if meta template rejected
-                }
+              try {
+                // Attempt meta template notice with all 4 required parameters [orderId, title, statusText, url]
+                await sendMetaTemplate(targetPhone, 'artsy_project_status', [
+                  internalOrderNumber,
+                  'Preferred Creator Request',
+                  `Requested: ${preferredCreatorName}`,
+                  'https://artsyproduction.com/admin/creator-requests',
+                ]).catch(() => null);
+              } catch {
+                // Non-fatal if meta template rejected
               }
             }
           } catch (notifErr) {

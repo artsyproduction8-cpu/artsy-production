@@ -317,7 +317,7 @@ export default function CreatorProfilePage() {
               <div className="p-4 sm:p-5 flex items-center justify-between border-b border-white/10">
                 <div>
                   <div className="text-[10px] uppercase font-bold tracking-wider text-[#3B82F6]">
-                    {activeVideo.category} // {creator.public_display_name}
+                    {`${activeVideo.category} // ${creator.public_display_name}`}
                   </div>
                   <h3 className="text-sm sm:text-base font-bold text-white mt-0.5">
                     {activeVideo.title}

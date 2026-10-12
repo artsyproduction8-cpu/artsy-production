@@ -310,5 +310,3 @@ export const updateCurrentUserOnboarding = (status: OnboardingStatus): ArtsyUser
   setCurrentUser(updated);
   return updated;
 };
-
-export { getAuthenticatedUser } from '@/lib/auth-cookie';

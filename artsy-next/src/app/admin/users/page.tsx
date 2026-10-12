@@ -185,6 +185,7 @@ export default function AdminUsersManagementPage() {
                   <th className="py-3 px-4">Assigned Role</th>
                   <th className="py-3 px-4">Account Protection</th>
                   <th className="py-3 px-4">Joined Date</th>
+                  <th className="py-3 px-4">Last Login</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Role Operations</th>
                 </tr>
@@ -223,6 +224,15 @@ export default function AdminUsersManagementPage() {
                         month: 'short',
                         year: 'numeric',
                       })}
+                    </td>
+                    <td className="py-3 px-4 text-[#86868B]">
+                      {u.updated_at
+                        ? new Date(u.updated_at).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })
+                        : '—'}
                     </td>
                     <td className="py-3 px-4">
                       <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[10px] font-semibold">

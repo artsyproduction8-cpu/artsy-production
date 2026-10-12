@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     // 1. Fetch all admin and super_admin users
     const { data: admins, error: adminErr } = await dbClient
       .from('users')
-      .select('id, full_name, phone, email, role, status, created_at, updated_at, last_sign_in_at')
+      .select('id, full_name, phone, email, role, status, created_at, updated_at')
       .in('role', ['admin', 'super_admin'])
       .order('created_at', { ascending: true });
 

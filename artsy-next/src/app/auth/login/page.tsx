@@ -449,8 +449,8 @@ function LoginFormContent() {
     setError(null);
 
     const cleanOtp = otpInput.trim();
-    if (cleanOtp.length < 4) {
-      setError('Please enter the 4-digit verification code sent to both your phone and email.');
+    if (cleanOtp.length < 6) {
+      setError('Please enter the 6-digit verification code sent to both your phone and email.');
       otpInputRef.current?.focus();
       return;
     }
@@ -648,7 +648,7 @@ function LoginFormContent() {
                   Verify <span className="text-[#3B82F6]">Passcode</span>
                 </h1>
                 <p className="text-xs sm:text-[13px] text-[#86868B] mt-1.5 leading-relaxed">
-                  Enter the 4-digit code sent to both your phone and email.
+                  Enter the 6-digit code sent to both your phone and email.
                 </p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   <span className="text-[11px] font-mono font-semibold bg-[#F5F5F7] text-[#1D1D1F] px-2.5 py-1 rounded-lg border border-[#E5E5E7]">
@@ -773,13 +773,6 @@ function LoginFormContent() {
                   <label htmlFor="login-otp-input" className="block text-xs font-semibold text-[#1D1D1F]">
                     Single Verification Code <span className="text-red-500">*</span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setOtpInput('4210')}
-                    className="text-[10px] text-[#3B82F6] hover:underline font-semibold"
-                  >
-                    Quick Test (4210)
-                  </button>
                 </div>
                 <div className="relative flex h-12 w-full items-stretch rounded-xl border border-[#E5E5E7] bg-white transition-colors focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10">
                   <input
@@ -794,7 +787,7 @@ function LoginFormContent() {
                       setOtpInput(e.target.value.replace(/\D/g, ''));
                       if (error) setError(null);
                     }}
-                    placeholder="Enter 4-digit OTP"
+                    placeholder="Enter 6-digit OTP"
                     className="h-full w-full rounded-xl bg-transparent px-4 text-center font-mono text-lg font-extrabold tracking-[0.3em] text-[#1D1D1F] placeholder:tracking-normal placeholder:font-sans placeholder:text-xs placeholder:text-[#86868B] focus:outline-none"
                   />
                 </div>

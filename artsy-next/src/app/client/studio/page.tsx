@@ -159,8 +159,8 @@ function ClientStudioSetupContent() {
 
   // Verify OTP & Update
   const handleVerifyOtp = () => {
-    if (otpModal.otpCode.trim().length < 4) {
-      setOtpModal((prev) => ({ ...prev, error: 'Please enter the 4-digit verification code.' }));
+    if (otpModal.otpCode.trim().length < 6) {
+      setOtpModal((prev) => ({ ...prev, error: 'Please enter the 6-digit verification code.' }));
       return;
     }
 
@@ -470,7 +470,7 @@ function ClientStudioSetupContent() {
                 <p className="text-xs text-[#86868B] mt-0.5">
                   {otpModal.step === 'input'
                     ? `Enter your new ${otpModal.type === 'phone' ? 'phone number' : 'email'} to receive a one-time passcode.`
-                    : `Enter the 4-digit code sent to ${otpModal.newValue}.`}
+                    : `Enter the 6-digit code sent to ${otpModal.newValue}.`}
                 </p>
               </div>
               <button
@@ -524,18 +524,17 @@ function ClientStudioSetupContent() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-[#1D1D1F] mb-1.5">
-                    4-Digit One-Time Verification Code
+                    6-Digit One-Time Verification Code
                   </label>
                   <input
                     type="text"
-                    maxLength={4}
+                    maxLength={6}
                     value={otpModal.otpCode}
                     onChange={(e) => setOtpModal({ ...otpModal, otpCode: e.target.value, error: '' })}
-                    placeholder="e.g. 4210"
+                    placeholder="Enter 6-digit OTP"
                     className="w-full text-center tracking-[0.5em] font-mono font-bold text-lg px-3.5 py-2.5 rounded-xl border border-[#E5E5E7] bg-[#F5F5F7] text-[#1D1D1F] focus:bg-white focus:border-[#3B82F6] focus:outline-none"
                   />
-                  <div className="flex items-center justify-between text-[11px] text-[#86868B] mt-2">
-                    <span>Demo Test OTP: <strong className="text-[#1D1D1F]">4210</strong></span>
+                  <div className="flex items-center justify-end text-[11px] text-[#86868B] mt-2">
                     {otpModal.countdown > 0 ? (
                       <span>Resend in {otpModal.countdown}s</span>
                     ) : (

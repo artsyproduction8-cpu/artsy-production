@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { sendWhatsAppOTP } from '@/lib/whatsapp/openwa-dispatcher';
+import { sendMetaOTP } from '@/lib/whatsapp/meta-cloud-dispatcher';
 import { sendOtpEmail } from '@/lib/email/dispatcher';
 import { supabaseAdmin as supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { signAuthCookieValue, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
@@ -451,7 +452,57 @@ export async function POST(request: NextRequest) {
     let dispatchedViaWA = false;
     let waMessageId: string | undefined;
 
-    // Track 1: WhatsApp via OpenWA (Local development / dedicated gateway)
+    // Track 1: WhatsApp via Meta Cloud API Authentication Template
+    if (cleanPhone && process.env.WHATSAPP_OTP_TEMPLATE_NAME) {
+      const waResult = await sendMetaOTP(cleanPhone, otpCode);
+
+      // Log to notification_delivery_log
+      if (supabase && typeof supabase.from === 'function') {
+        try {
+          const deliveryRow = {
+            channel: 'whatsapp_otp',
+            recipient: cleanPhone,
+            event_number: 1,
+            provider_message_id: waResult.messageId || null,
+            status: waResult.success ? 'sent' : 'failed',
+            error_message: waResult.error || null,
+            created_at: new Date().toISOString(),
+          };
+
+          const { error: logErr } = await supabase
+            .from('notification_delivery_log')
+            .insert([deliveryRow]);
+
+          if (logErr && logErr.code === '23514') {
+            await supabase
+              .from('notification_delivery_log')
+              .insert([{ ...deliveryRow, channel: 'whatsapp' }]);
+          }
+        } catch (logErr) {
+          console.warn('[OTP Route] notification_delivery_log warning:', logErr);
+        }
+      }
+
+      if (waResult.success) {
+        return NextResponse.json({
+          success: true,
+          message: 'OTP sent via WhatsApp',
+          channel: 'whatsapp',
+          remainingAttempts: rateLimit.remaining,
+          ...(shouldExposeDevOtp && { devOtp: otpCode }),
+        });
+      }
+
+      console.warn('[OTP Route] Meta WhatsApp failed, falling back to email:', waResult.error);
+      if (!cleanEmail) {
+        return NextResponse.json(
+          { error: `WhatsApp delivery failed: ${waResult.error || 'Please try again or use email verification.'}` },
+          { status: 502 }
+        );
+      }
+    }
+
+    // Track 1B: WhatsApp via OpenWA (Local development / dedicated gateway fallback)
     if (cleanPhone && hasOpenWA) {
       try {
         const waResult = await sendWhatsAppOTP(cleanPhone, otpCode);

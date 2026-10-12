@@ -164,6 +164,16 @@ export default function AdminFreelancerDetail() {
   const [rejecting, setRejecting] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
+  // Public Profile Settings state
+  const [isPublic, setIsPublic] = useState(false);
+  const [publicDisplayName, setPublicDisplayName] = useState('');
+  const [publicSpecialty, setPublicSpecialty] = useState('');
+  const [publicBio, setPublicBio] = useState('');
+  const [yearsOfExperience, setYearsOfExperience] = useState(3);
+  const [creatorTier, setCreatorTier] = useState<'rising_talent' | 'standard' | 'senior'>('rising_talent');
+  const [isAcceptingWork, setIsAcceptingWork] = useState(true);
+  const [savingPublicProfile, setSavingPublicProfile] = useState(false);
+
   useEffect(() => {
     const fetchDetail = async () => {
       try {
@@ -185,9 +195,39 @@ export default function AdminFreelancerDetail() {
               approval_status: data.approval_status || found.approval_status,
               rejection_reason: data.rejection_reason || found.rejection_reason,
             };
+
+            // Calculate auto-suggested public display name (e.g. "FirstName L.")
+            const nameParts = (data.full_name || data.displayName || found.displayName || '').trim().split(' ');
+            const suggestedName = nameParts.length > 1
+              ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`
+              : nameParts[0] || 'Creator';
+
+            // Auto-calculate creator_tier
+            const completed = data.total_projects_completed ?? found.completed_projects_count ?? 0;
+            const autoTier = completed > 50 ? 'senior' : completed >= 10 ? 'standard' : 'rising_talent';
+
+            setIsPublic(Boolean(data.is_public));
+            setPublicDisplayName(data.public_display_name || suggestedName);
+            setPublicSpecialty(data.public_specialty || (found.skills?.[0] ? `${found.skills[0]} Specialist` : 'Cinematography & Color'));
+            setPublicBio(data.public_bio || data.bio || found.bio || '');
+            setYearsOfExperience(data.years_of_experience ?? 3);
+            setCreatorTier(data.creator_tier || autoTier);
+            setIsAcceptingWork(data.is_accepting_work !== false);
+          } else {
+            // Mock defaults
+            const nameParts = found.displayName.trim().split(' ');
+            const suggestedName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.` : nameParts[0];
+            const autoTier = (found.completed_projects_count || 0) > 50 ? 'senior' : (found.completed_projects_count || 0) >= 10 ? 'standard' : 'rising_talent';
+            setIsPublic(found.approval_status === 'approved');
+            setPublicDisplayName(suggestedName);
+            setPublicSpecialty(found.skills[0] || 'Cinematic Editing');
+            setPublicBio(found.bio);
+            setYearsOfExperience(4);
+            setCreatorTier(autoTier);
+            setIsAcceptingWork(true);
           }
         } catch {
-          // mock
+          // fallback
         }
 
         setFreelancer(found);
@@ -200,6 +240,45 @@ export default function AdminFreelancerDetail() {
 
     fetchDetail();
   }, [id]);
+
+  const handleSavePublicProfile = async () => {
+    if (!freelancer) return;
+    if (freelancer.approval_status !== 'approved' && isPublic) {
+      alert('Creator must have approval_status = "approved" to be made public.');
+      return;
+    }
+
+    try {
+      setSavingPublicProfile(true);
+      const res = await fetch('/api/admin/creators', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: freelancer.id,
+          action: 'update_public_profile',
+          is_public: isPublic,
+          public_display_name: publicDisplayName,
+          public_specialty: publicSpecialty,
+          public_bio: publicBio,
+          years_of_experience: yearsOfExperience,
+          creator_tier: creatorTier,
+          is_accepting_work: isAcceptingWork,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionNotice('Public profile settings saved successfully.');
+        setTimeout(() => setActionNotice(null), 4000);
+      } else {
+        alert(data.error || 'Failed to save public profile settings');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error saving public profile');
+    } finally {
+      setSavingPublicProfile(false);
+    }
+  };
 
   const handleApprove = async () => {
     if (!freelancer) return;
@@ -426,6 +505,159 @@ export default function AdminFreelancerDetail() {
                 <div className="text-xs font-bold text-[#1D1D1F] mt-1">{freelancer.bank_status}</div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Public Profile Settings Card (Task 7) */}
+        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7] shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#E5E5E7] gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                <h2 className="text-base font-bold text-[#1D1D1F]">Public Profile Settings</h2>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#F5F5F7] text-[#86868B] uppercase">
+                  /creators discovery
+                </span>
+              </div>
+              <p className="text-xs text-[#86868B] mt-1">
+                Configure discovery visibility, pseudonym display name, tier, and client request availability.
+              </p>
+            </div>
+
+            <button
+              onClick={handleSavePublicProfile}
+              disabled={savingPublicProfile}
+              className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50"
+            >
+              {savingPublicProfile ? 'Saving...' : 'Save Public Settings'}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Toggles Row */}
+            <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-[#1D1D1F] block">Public Discovery Status</span>
+                <span className="text-[11px] text-[#86868B]">
+                  {freelancer.approval_status !== 'approved'
+                    ? 'Requires "approved" roster status to enable'
+                    : isPublic
+                    ? 'Listed on /creators directory'
+                    : 'Hidden from public directory'}
+                </span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  disabled={freelancer.approval_status !== 'approved'}
+                  checked={isPublic}
+                  onChange={(e) => {
+                    if (freelancer.approval_status !== 'approved') {
+                      alert('Creator must have approval_status = "approved" before making profile public.');
+                      return;
+                    }
+                    setIsPublic(e.target.value === 'true' || e.target.checked);
+                  }}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 disabled:opacity-50"></div>
+              </label>
+            </div>
+
+            <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-[#1D1D1F] block">Accepting Work</span>
+                <span className="text-[11px] text-[#86868B]">
+                  {isAcceptingWork ? 'Available for client booking requests' : 'Fully Booked / Paused'}
+                </span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isAcceptingWork}
+                  onChange={(e) => setIsAcceptingWork(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1D1D1F]"></div>
+              </label>
+            </div>
+
+            {/* Display Name */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#1D1D1F] flex items-center justify-between">
+                <span>Public Display Name (First Name + Last Initial)</span>
+                <span className="text-[10px] text-[#86868B] font-normal">PII Protected</span>
+              </label>
+              <input
+                type="text"
+                value={publicDisplayName}
+                onChange={(e) => setPublicDisplayName(e.target.value)}
+                placeholder="e.g. Aarav S."
+                className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+              />
+            </div>
+
+            {/* Specialty */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#1D1D1F]">
+                Public Specialty / Headline
+              </label>
+              <input
+                type="text"
+                value={publicSpecialty}
+                onChange={(e) => setPublicSpecialty(e.target.value)}
+                placeholder="e.g. Wedding Cinema & 4K Color Grading"
+                className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+              />
+            </div>
+
+            {/* Experience */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#1D1D1F]">
+                Years of Experience
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={yearsOfExperience}
+                onChange={(e) => setYearsOfExperience(Number(e.target.value))}
+                className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+              />
+            </div>
+
+            {/* Tier */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#1D1D1F] flex items-center justify-between">
+                <span>Creator Tier</span>
+                <span className="text-[10px] text-[#86868B] font-normal">
+                  Auto-calculated ({freelancer.completed_projects_count || 0} projects)
+                </span>
+              </label>
+              <select
+                value={creatorTier}
+                onChange={(e) => setCreatorTier(e.target.value as any)}
+                className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+              >
+                <option value="rising_talent">Rising Talent (&lt; 10 completed projects)</option>
+                <option value="standard">Standard (10 - 50 completed projects)</option>
+                <option value="senior">Senior (&gt; 50 completed projects)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Public Bio */}
+          <div className="space-y-1.5 pt-2">
+            <label className="text-xs font-bold text-[#1D1D1F]">
+              Public Bio (Client-Facing)
+            </label>
+            <textarea
+              rows={3}
+              value={publicBio}
+              onChange={(e) => setPublicBio(e.target.value)}
+              placeholder="Narrative bio highlighting creative style, pacing, and client deliverables..."
+              className="w-full bg-[#F5F5F7] p-3 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
           </div>
         </div>
 

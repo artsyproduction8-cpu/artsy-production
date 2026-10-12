@@ -138,6 +138,12 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             BOOK NOW
           </Link>
           <Link
+            href="/creators"
+            className="text-[12.5px] font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
+          >
+            CREATORS
+          </Link>
+          <Link
             href="/services"
             className="text-[12.5px] font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
           >
@@ -289,6 +295,13 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             className="text-sm font-semibold uppercase tracking-wider text-white hover:text-[#3B82F6] py-1 transition-colors"
           >
             BOOK NOW
+          </Link>
+          <Link
+            href="/creators"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="text-sm font-semibold uppercase tracking-wider text-white hover:text-[#3B82F6] py-1 transition-colors"
+          >
+            CREATORS
           </Link>
           <Link
             href="/services"

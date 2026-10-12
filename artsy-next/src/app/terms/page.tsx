@@ -57,6 +57,13 @@ export default function TermsPage() {
             </p>
           </section>
 
+          <section>
+            <h2 className="text-lg font-bold text-[#1D1D1F] mb-3">6. Direct Engagement Prohibition</h2>
+            <p className="p-4 bg-amber-50/60 rounded-xl border border-amber-200/80 text-[#1D1D1F]">
+              <strong>Direct Engagement Prohibition:</strong> Client agrees not to contact, engage, or contract any Artsy creator outside the platform for a period of 90 days following project completion. Violation may result in account suspension and legal action.
+            </p>
+          </section>
+
           <section className="p-6 bg-[#F5F5F7] rounded-2xl border border-[#E5E5E7]">
             <h2 className="text-base font-bold text-[#1D1D1F] mb-2">Statutory Contact</h2>
             <p className="text-xs text-[#86868B]">

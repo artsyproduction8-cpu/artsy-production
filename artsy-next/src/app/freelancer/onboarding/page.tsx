@@ -536,6 +536,8 @@ export default function FreelancerOnboarding() {
                         raw proxies, audio stems, and project files provided by Artsy Production remain strictly
                         proprietary to client accounts. I shall not mirror, publicly broadcast, or circulate
                         unreleased footage without written approval from Artsy Studio Administration.
+                        <br /><br />
+                        <strong>NON-COMPETE &amp; DIRECT ENGAGEMENT PROHIBITION:</strong> Creator agrees not to solicit, contact, or engage with Artsy clients outside the platform for 90 days following project completion. Violation may result in account suspension, forfeiture of pending payouts, and legal action.
                       </span>
                     </label>
                   </div>

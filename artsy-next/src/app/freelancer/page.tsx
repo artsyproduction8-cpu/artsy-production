@@ -835,6 +835,9 @@ export default function FreelancerDashboard() {
               <p>
                 <strong className="text-[#1D1D1F]">3. Timely Direct Payouts:</strong> Payouts are credited directly to your verified bank account via direct NEFT upon client milestone completion and signoff, subject to applicable statutory withholding.
               </p>
+              <p>
+                <strong className="text-[#1D1D1F]">4. Non-Compete:</strong> Creator agrees not to solicit, contact, or engage with Artsy clients outside the platform for 90 days following project completion. Violation may result in account suspension, forfeiture of pending payouts, and legal action.
+              </p>
             </div>
 
             <label className="flex items-start gap-3 cursor-pointer p-3 bg-blue-50/50 rounded-xl border border-blue-100">

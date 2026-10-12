@@ -86,6 +86,34 @@ function ConfiguratorContent() {
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
+  // Preferred Creator Request State
+  const [preferredCreatorId, setPreferredCreatorId] = useState<string>(
+    searchParams.get('preferredCreator') || searchParams.get('preferred_creator_id') || ''
+  );
+  const [preferredCreatorName, setPreferredCreatorName] = useState<string>(
+    searchParams.get('creatorName') || ''
+  );
+
+  useEffect(() => {
+    const creatorId = searchParams.get('preferredCreator') || searchParams.get('preferred_creator_id');
+    const nameParam = searchParams.get('creatorName');
+    if (creatorId) {
+      setPreferredCreatorId(creatorId);
+      if (nameParam) {
+        setPreferredCreatorName(decodeURIComponent(nameParam));
+      } else {
+        fetch(`/api/creators/${creatorId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.creator?.public_display_name) {
+              setPreferredCreatorName(data.creator.public_display_name);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [searchParams]);
+
   // Sync state if searchParams change dynamically
   useEffect(() => {
     const sService = (searchParams.get('service') || searchParams.get('category') || '').toLowerCase();
@@ -202,6 +230,8 @@ function ConfiguratorContent() {
         audioUrl,
         notes,
         mobile,
+        preferredCreatorId,
+        preferredCreatorName,
         priceBreakdown: {
           baseCost: baseServiceCost,
           angleCost,
@@ -295,6 +325,15 @@ function ConfiguratorContent() {
                     </button>
                   ))}
                 </div>
+
+                {preferredCreatorId && (
+                  <div className="mt-4 p-3.5 bg-blue-50/90 border border-blue-200 rounded-xl flex items-center gap-3 text-xs text-blue-900 shadow-2xs">
+                    <span className="text-base shrink-0">🎬</span>
+                    <div className="leading-snug">
+                      You have requested <strong className="font-bold text-blue-950">{preferredCreatorName || 'a preferred specialist'}</strong> for this project. Artsy will confirm their availability.
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Stage 1B: Sub-Category Format Selection */}

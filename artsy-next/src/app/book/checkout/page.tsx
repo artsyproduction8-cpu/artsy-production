@@ -54,6 +54,7 @@ function CheckoutContent() {
           clientPhone,
           clientName,
           clientEmail,
+          preferred_creator_id: bookingData?.preferredCreatorId || bookingData?.preferred_creator_id || null,
         }),
       });
 

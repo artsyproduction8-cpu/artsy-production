@@ -485,6 +485,7 @@ export default function FreelancerWorkView() {
               <p><strong>2. Direct Payouts:</strong> Milestone compensation is disbursed directly to your verified bank account via NEFT upon client milestone acceptance.</p>
               <p><strong>3. Statutory Compliance:</strong> Applicable statutory TDS is credited to your verified PAN for Form 26AS compliance.</p>
               <p><strong>4. Dispute Arbitration:</strong> In event of dispute, Artsy platform activity audit logs serve as the sole evidentiary record.</p>
+              <p><strong>5. Non-Compete:</strong> Creator agrees not to solicit, contact, or engage with Artsy clients outside the platform for 90 days following project completion. Violation may result in account suspension, forfeiture of pending payouts, and legal action.</p>
             </div>
             <label className="flex items-center gap-2 cursor-pointer text-xs text-[#1D1D1F]">
               <input

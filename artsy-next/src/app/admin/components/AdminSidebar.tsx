@@ -33,6 +33,8 @@ export default function AdminSidebar() {
       items: [
         { label: 'Clients', href: '/admin/clients' },
         { label: 'Creators', href: '/admin/freelancers' },
+        { label: 'Creator Requests', href: '/admin/creator-requests' },
+        { label: 'Portfolio Review', href: '/admin/portfolio' },
         { label: 'Vetting', href: '/admin/vetting' },
         { label: 'Users & Roles', href: '/admin/users' },
       ],

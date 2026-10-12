@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/../lib/supabase';
+import { supabase, supabaseAdmin, isSupabaseConfigured } from '@/../lib/supabase';
 import { calculateFinancialWaterfall } from '@/lib/financial/engine';
 import { calculateLivePrice, ConfiguratorSelections } from '@/lib/pricing/engine';
+import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
 
 function resolveServiceKey(serviceId?: string): string {
   if (!serviceId) return 'wedding';
@@ -119,6 +120,8 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    const preferredCreatorId = body.preferred_creator_id || body.preferredCreatorId;
+
     // 5. Calculate financial waterfall on canonical amount
     const waterfall = calculateFinancialWaterfall(canonicalAmount);
 
@@ -128,9 +131,27 @@ export async function POST(request: NextRequest) {
     const isUUID = (str?: string) =>
       Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str));
 
-    if (isSupabaseConfigured && supabase) {
+    const dbClient = supabaseAdmin || supabase;
+
+    let preferredCreatorName = 'Requested Creator';
+    if (preferredCreatorId && isUUID(preferredCreatorId) && dbClient) {
       try {
-        const { error: dbError } = await supabase.from('orders').insert([
+        const { data: creatorData } = await dbClient
+          .from('creator_profiles')
+          .select('public_display_name')
+          .eq('id', preferredCreatorId)
+          .single();
+        if (creatorData?.public_display_name) {
+          preferredCreatorName = creatorData.public_display_name;
+        }
+      } catch (err) {
+        console.warn('[Preferred Creator Lookup Non-fatal]', err);
+      }
+    }
+
+    if (isSupabaseConfigured && dbClient) {
+      try {
+        const { error: dbError } = await dbClient.from('orders').insert([
           {
             order_number: internalOrderNumber,
             client_phone: clientPhone || null,
@@ -147,12 +168,55 @@ export async function POST(request: NextRequest) {
             status: 'payment_pending',
             razorpay_order_id: razorpayOrderId,
             requirements_snapshot: requirements || {},
+            preferred_creator_id: isUUID(preferredCreatorId) ? preferredCreatorId : null,
+            preferred_creator_assigned: false,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
         ]);
         if (dbError) {
           console.warn('[Order DB Insert Warning]', dbError);
+        } else if (preferredCreatorId && isUUID(preferredCreatorId)) {
+          // Notify admin: Channel: WhatsApp + in-app
+          // Message: "New booking with preferred creator. Order #X, Creator: [Name]"
+          const adminNoticeMsg = `New booking with preferred creator. Order #${internalOrderNumber}, Creator: ${preferredCreatorName}`;
+          console.log(`[ADMIN NOTIFICATION] ${adminNoticeMsg}`);
+
+          // Insert in-app notifications for admins
+          try {
+            const { data: adminUsers } = await dbClient
+              .from('users')
+              .select('id, phone')
+              .in('role', ['admin', 'super_admin']);
+
+            if (adminUsers && adminUsers.length > 0) {
+              const notificationsToInsert = adminUsers.map((adm: { id: string }) => ({
+                user_id: adm.id,
+                title: 'Preferred Creator Request',
+                message: adminNoticeMsg,
+                actionUrl: '/admin/creator-requests',
+                read: false,
+                created_at: new Date().toISOString(),
+              }));
+              await dbClient.from('notifications').insert(notificationsToInsert);
+
+              // Send WhatsApp notification to admin(s) if phone configured
+              for (const adm of adminUsers) {
+                const targetPhone = adm.phone || '+917777078742';
+                try {
+                  // Attempt meta template or utility notice
+                  await sendMetaTemplate(targetPhone, 'artsy_project_status', [
+                    internalOrderNumber,
+                    `Preferred Creator: ${preferredCreatorName}`,
+                  ]).catch(() => null);
+                } catch {
+                  // Non-fatal if meta template rejected
+                }
+              }
+            }
+          } catch (notifErr) {
+            console.warn('[Admin In-app Notif Insert Non-fatal]', notifErr);
+          }
         }
       } catch (dbErr) {
         console.warn('[Order DB Insert Exception]', dbErr);

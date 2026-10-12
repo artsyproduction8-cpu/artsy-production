@@ -317,8 +317,20 @@ export default function ClientDashboardPage() {
                     <span className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded border border-white/10 font-bold">
                       DRAFT v1.2 • PROXY 4K
                     </span>
-                    <span className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded border border-white/10 font-bold text-emerald-400">
-                      24.000 FPS • REC.709
+                    <span className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded border border-white/10 font-bold text-white/90">
+                      {new Date().toISOString().replace('T', ' ').substring(0, 19)}
+                    </span>
+                  </div>
+
+                  {/* Corner Draft Watermarks (Task 8.1) */}
+                  <div className="absolute bottom-10 left-3 z-10 pointer-events-none">
+                    <span className="bg-black/80 backdrop-blur-md px-2 py-0.5 rounded border border-white/15 text-[10px] font-mono text-white/90">
+                      Creator: CR-7412 (Aarav S.)
+                    </span>
+                  </div>
+                  <div className="absolute bottom-10 right-3 z-10 pointer-events-none">
+                    <span className="bg-black/90 backdrop-blur-md px-2.5 py-0.5 rounded border border-amber-400/40 text-[10px] font-bold text-amber-300 uppercase tracking-wider">
+                      DRAFT — Artsy Production
                     </span>
                   </div>
 

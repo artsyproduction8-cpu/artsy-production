@@ -335,6 +335,26 @@ export default function ClientReviewPage() {
                         )}
                       </div>
 
+                      {/* Draft Leakage Protection Watermarks (Task 8.1) */}
+                      {!isApproved && (
+                        <>
+                          {/* Top-right: Timestamp */}
+                          <div className="absolute top-4 right-4 bg-black/80 text-white/90 text-[10px] sm:text-xs px-2.5 py-1 rounded-md font-mono border border-white/15 backdrop-blur-xs z-20 pointer-events-none">
+                            {new Date().toISOString().replace('T', ' ').substring(0, 19)}
+                          </div>
+
+                          {/* Bottom-left: Creator Public ID */}
+                          <div className="absolute bottom-4 left-4 bg-black/80 text-white/90 text-[10px] sm:text-xs px-2.5 py-1 rounded-md font-mono border border-white/15 backdrop-blur-xs z-20 pointer-events-none">
+                            Creator: CR-7412 (Aarav S.)
+                          </div>
+
+                          {/* Bottom-right: DRAFT — Artsy Production */}
+                          <div className="absolute bottom-4 right-4 bg-black/90 text-amber-300 text-[10px] sm:text-xs font-bold px-3 py-1 rounded-md tracking-wider border border-amber-400/40 backdrop-blur-xs z-20 pointer-events-none shadow-md">
+                            DRAFT — Artsy Production
+                          </div>
+                        </>
+                      )}
+
                       {/* Frame Hover Indicator */}
                       <div className="absolute top-4 left-4 bg-black/80 text-white text-xs px-3 py-1 rounded-full font-mono flex items-center gap-2 backdrop-blur-xs">
                         <span className="w-2 h-2 rounded-full bg-emerald-400"></span>

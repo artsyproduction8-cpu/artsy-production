@@ -75,6 +75,33 @@ export default function FreelancerProfilePage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Public Portfolio state
+  const [portfolioSamples, setPortfolioSamples] = useState<any[]>([]);
+  const [loadingPortfolio, setLoadingPortfolio] = useState(false);
+  const [showAddSampleModal, setShowAddSampleModal] = useState(false);
+  const [sampleTitle, setSampleTitle] = useState('');
+  const [sampleDescription, setSampleDescription] = useState('');
+  const [sampleCategory, setSampleCategory] = useState('Wedding');
+  const [sampleVideoUrl, setSampleVideoUrl] = useState('');
+  const [sampleThumbnailUrl, setSampleThumbnailUrl] = useState('');
+  const [submittingSample, setSubmittingSample] = useState(false);
+  const [sampleError, setSampleError] = useState('');
+
+  const fetchPortfolio = async () => {
+    try {
+      setLoadingPortfolio(true);
+      const res = await fetch('/api/freelancer/portfolio');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPortfolioSamples(data.samples || []);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch creator portfolio:', e);
+    } finally {
+      setLoadingPortfolio(false);
+    }
+  };
+
   // Load from local storage or user on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -106,8 +133,50 @@ export default function FreelancerProfilePage() {
       if (currentUser?.email) setEmail(currentUser.email);
       if (currentUser?.phone) setPhone(currentUser.phone);
       if (currentUser?.full_name && !stored) setAlias(currentUser.full_name);
+
+      fetchPortfolio();
     }
   }, []);
+
+  const handleAddSampleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSampleError('');
+    if (!sampleTitle || !sampleCategory || !sampleVideoUrl || !sampleThumbnailUrl) {
+      setSampleError('Please fill in all required fields.');
+      return;
+    }
+    setSubmittingSample(true);
+    try {
+      const res = await fetch('/api/freelancer/portfolio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: sampleTitle,
+          description: sampleDescription,
+          category: sampleCategory,
+          video_url: sampleVideoUrl,
+          thumbnail_url: sampleThumbnailUrl,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setToastMessage('Portfolio sample submitted for studio approval!');
+        setTimeout(() => setToastMessage(null), 4000);
+        setShowAddSampleModal(false);
+        setSampleTitle('');
+        setSampleDescription('');
+        setSampleVideoUrl('');
+        setSampleThumbnailUrl('');
+        fetchPortfolio();
+      } else {
+        setSampleError(data.error || 'Failed to submit sample');
+      }
+    } catch (err: any) {
+      setSampleError(err.message || 'Error submitting sample');
+    } finally {
+      setSubmittingSample(false);
+    }
+  };
 
   const toggleSoftware = (item: string) => {
     setSoftware((prev) =>
@@ -890,6 +959,105 @@ export default function FreelancerProfilePage() {
                 </div>
               </div>
 
+              {/* CARD 6: Public Portfolio & Discovery Showcase */}
+              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F5F5F7] pb-4">
+                  <div>
+                    <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
+                        6
+                      </span>
+                      Public Portfolio
+                    </span>
+                    <p className="text-xs text-[#86868B] mt-1">
+                      Samples published on your public creator page (/creators). Each submission is reviewed by Artsy QA before going live.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSampleModal(true)}
+                    className="px-4 py-2 rounded-xl bg-[#1D1D1F] text-white hover:bg-black font-semibold text-xs tracking-wider transition-all shadow-xs shrink-0 cursor-pointer"
+                  >
+                    + Add Sample Reel
+                  </button>
+                </div>
+
+                {loadingPortfolio ? (
+                  <div className="p-8 text-center text-xs text-[#86868B]">
+                    Loading portfolio samples...
+                  </div>
+                ) : portfolioSamples.length === 0 ? (
+                  <div className="p-8 text-center bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]">
+                    <div className="text-2xl mb-2">🎬</div>
+                    <div className="text-xs font-bold text-[#1D1D1F]">No Public Portfolio Samples Yet</div>
+                    <div className="text-[11px] text-[#86868B] mt-1 max-w-sm mx-auto">
+                      Add your best wedding, brand, or corporate cuts. Approved samples will be displayed directly on your public discovery profile.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddSampleModal(true)}
+                      className="mt-3 px-3 py-1.5 rounded-lg bg-white border border-[#E5E5E7] text-xs font-semibold text-[#1D1D1F] hover:bg-gray-50"
+                    >
+                      Upload First Sample
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {portfolioSamples.map((sample) => (
+                      <div
+                        key={sample.id}
+                        className="bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] overflow-hidden flex flex-col justify-between"
+                      >
+                        <div className="relative aspect-video bg-black/10 overflow-hidden">
+                          <img
+                            src={sample.thumbnail_url}
+                            alt={sample.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                          <div className="absolute top-2 left-2">
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/70 text-white uppercase tracking-wider backdrop-blur-xs">
+                              {sample.category}
+                            </span>
+                          </div>
+                          <div className="absolute top-2 right-2">
+                            <span
+                              className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full capitalize shadow-xs ${
+                                sample.approval_status === 'approved'
+                                  ? 'bg-emerald-500 text-white'
+                                  : sample.approval_status === 'rejected'
+                                  ? 'bg-rose-500 text-white'
+                                  : 'bg-amber-500 text-white'
+                              }`}
+                            >
+                              {sample.approval_status}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="p-4 space-y-2">
+                          <h4 className="text-xs font-bold text-[#1D1D1F] line-clamp-1">{sample.title}</h4>
+                          {sample.description && (
+                            <p className="text-[11px] text-[#86868B] line-clamp-2">{sample.description}</p>
+                          )}
+                          <div className="text-[10px] font-mono text-[#86868B] truncate">
+                            {sample.video_url}
+                          </div>
+
+                          {sample.rejection_reason && (
+                            <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 text-[10px] text-rose-700">
+                              <strong>QA Feedback:</strong> {sample.rejection_reason}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Bottom Action Footer */}
               <div className="flex items-center justify-end pt-4">
                 <button
@@ -1236,6 +1404,127 @@ export default function FreelancerProfilePage() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Add Public Portfolio Sample Reel */}
+      {showAddSampleModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-[#E5E5E7] space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-3">
+              <div>
+                <h3 className="text-base font-bold text-[#1D1D1F]">Add Public Portfolio Sample</h3>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Submit a showcase reel for Artsy QA review. Approved reels appear on your public profile.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddSampleModal(false)}
+                className="text-xs text-[#86868B] hover:text-[#1D1D1F] p-1 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {sampleError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700">
+                {sampleError}
+              </div>
+            )}
+
+            <form onSubmit={handleAddSampleSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#1D1D1F]">
+                  Reel Title * <span className="text-[10px] text-[#86868B] font-normal">(Max 100 chars)</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  maxLength={100}
+                  value={sampleTitle}
+                  onChange={(e) => setSampleTitle(e.target.value)}
+                  placeholder="e.g. Udaipur Royal Heritage Wedding 4K Highlight"
+                  className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#1D1D1F]">
+                  Category *
+                </label>
+                <select
+                  value={sampleCategory}
+                  onChange={(e) => setSampleCategory(e.target.value)}
+                  className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-medium text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                >
+                  <option value="Wedding">Wedding</option>
+                  <option value="Brand">Brand</option>
+                  <option value="Corporate">Corporate</option>
+                  <option value="Personal">Personal</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#1D1D1F]">
+                  Video URL (Bunny Stream / Embed URL) *
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={sampleVideoUrl}
+                  onChange={(e) => setSampleVideoUrl(e.target.value)}
+                  placeholder="https://iframe.mediadelivery.net/embed/..."
+                  className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-mono text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#1D1D1F]">
+                  Thumbnail URL *
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={sampleThumbnailUrl}
+                  onChange={(e) => setSampleThumbnailUrl(e.target.value)}
+                  placeholder="https://vz-xxxx.b-cdn.net/.../thumbnail.jpg or image URL"
+                  className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-mono text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#1D1D1F]">
+                  Description <span className="text-[10px] text-[#86868B] font-normal">(Optional, max 500 chars)</span>
+                </label>
+                <textarea
+                  rows={3}
+                  maxLength={500}
+                  value={sampleDescription}
+                  onChange={(e) => setSampleDescription(e.target.value)}
+                  placeholder="Explain pacing, camera setup, color grading pass, or sound design choices..."
+                  className="w-full bg-[#F5F5F7] p-3 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#F5F5F7]">
+                <button
+                  type="button"
+                  onClick={() => setShowAddSampleModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingSample}
+                  className="px-5 py-2.5 rounded-xl bg-[#1D1D1F] text-white hover:bg-black text-xs font-bold transition-all shadow-xs disabled:opacity-50"
+                >
+                  {submittingSample ? 'Submitting Reel...' : 'Submit for Studio Review'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

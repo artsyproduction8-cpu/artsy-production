@@ -158,7 +158,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Creator ID and action required' }, { status: 400 });
     }
 
-    if (!['approve', 'reject', 'suspend', 'reactivate'].includes(action)) {
+    if (!['approve', 'reject', 'suspend', 'reactivate', 'update_public_profile'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
@@ -173,6 +173,7 @@ export async function PATCH(request: Request) {
     } else if (action === 'reject') {
       profileUpdate.approval_status = 'rejected';
       profileUpdate.rejection_reason = reason || 'Portfolio review criteria not met';
+      profileUpdate.is_public = false; // Cannot be public if rejected
       userUpdate.status = 'inactive';
     } else if (action === 'suspend') {
       profileUpdate.is_suspended = true;
@@ -183,6 +184,41 @@ export async function PATCH(request: Request) {
       profileUpdate.is_suspended = false;
       profileUpdate.suspended_reason = null;
       userUpdate.status = 'active';
+    } else if (action === 'update_public_profile') {
+      const {
+        is_public,
+        public_display_name,
+        public_specialty,
+        public_bio,
+        years_of_experience,
+        creator_tier,
+        is_accepting_work,
+      } = body;
+
+      // Check current approval_status
+      const { data: currentProf } = await dbClient
+        .from('creator_profiles')
+        .select('approval_status, total_projects_completed')
+        .eq('id', id)
+        .single();
+
+      let targetIsPublic = Boolean(is_public);
+      if (currentProf?.approval_status !== 'approved') {
+        targetIsPublic = false; // Rule: If approval_status is not 'approved', is_public must be FALSE
+      }
+
+      const completed = currentProf?.total_projects_completed || 0;
+      let calculatedTier = 'rising_talent';
+      if (completed > 50) calculatedTier = 'senior';
+      else if (completed >= 10) calculatedTier = 'standard';
+
+      profileUpdate.is_public = targetIsPublic;
+      if (public_display_name !== undefined) profileUpdate.public_display_name = public_display_name;
+      if (public_specialty !== undefined) profileUpdate.public_specialty = public_specialty;
+      if (public_bio !== undefined) profileUpdate.public_bio = public_bio;
+      if (years_of_experience !== undefined) profileUpdate.years_of_experience = Number(years_of_experience);
+      profileUpdate.creator_tier = creator_tier || calculatedTier;
+      if (is_accepting_work !== undefined) profileUpdate.is_accepting_work = Boolean(is_accepting_work);
     }
 
     // Update profile

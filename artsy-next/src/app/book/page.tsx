@@ -648,11 +648,6 @@ function ConfiguratorContent() {
                         <span className="text-xs font-bold text-[#1D1D1F] block">
                           Provide Raw Footage Cloud Link
                         </span>
-                        <span className="text-[11px] text-[#86868B] block mt-0.5">
-                          {hasRawFootage
-                            ? 'Paste your Drive, Dropbox, or WeTransfer link below'
-                            : 'Toggle ON if you have your footage ready to share now'}
-                        </span>
                       </div>
 
                       <label className="relative inline-flex items-center cursor-pointer select-none">

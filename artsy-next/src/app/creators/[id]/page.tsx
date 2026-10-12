@@ -227,18 +227,13 @@ export default function CreatorProfilePage() {
 
         {/* Portfolio Showcase Grid */}
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-tight">
-                Approved Portfolio Showcase
-              </h2>
-              <p className="text-xs text-[#86868B] mt-0.5">
-                Individually vetted creative cuts demonstrating timeline mastery and color grading.
-              </p>
-            </div>
-            <span className="text-xs font-bold text-[#86868B]">
-              {creator.samples.length} Approved Samples
-            </span>
+          <div>
+            <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-tight">
+              Approved Portfolio Showcase
+            </h2>
+            <p className="text-xs text-[#86868B] mt-0.5">
+              Individually vetted creative cuts demonstrating timeline mastery and color grading.
+            </p>
           </div>
 
           {creator.samples.length === 0 ? (

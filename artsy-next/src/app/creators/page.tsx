@@ -81,9 +81,6 @@ export default function PublicCreatorsPage() {
       <main className="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
         {/* Hero Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#E5E5E7] text-[11px] font-bold uppercase tracking-wider text-[#3B82F6] shadow-2xs mb-4">
-            <span>●</span> Verified Roster of Artists
-          </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#1D1D1F] leading-tight sm:leading-none">
             Meet Our Creative Team
           </h1>
@@ -312,24 +309,6 @@ export default function PublicCreatorsPage() {
             })}
           </div>
         )}
-
-        {/* Artsy QA Assurance Footer Banner */}
-        <div className="mt-16 bg-white rounded-3xl p-8 sm:p-10 border border-[#E5E5E7] shadow-xs text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="space-y-1 max-w-2xl">
-            <h3 className="text-base sm:text-lg font-bold text-[#1D1D1F]">
-              Direct Engagement Protection &amp; Artsy QA Certified
-            </h3>
-            <p className="text-xs sm:text-sm text-[#86868B] leading-relaxed">
-              Every project booked with a preferred creator is fully quality-controlled by our Creative Directors and backed by our frame-accurate turnaround guarantee. Pricing remains fixed regardless of creator selected.
-            </p>
-          </div>
-          <Link
-            href="/book"
-            className="shrink-0 px-6 py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
-          >
-            Start Booking →
-          </Link>
-        </div>
       </main>
 
       <Footer />

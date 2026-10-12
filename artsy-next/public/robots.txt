@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+Allow: /favicon.ico
+Allow: /icon.png
+Allow: /icon-48.png
+Allow: /icon-96.png
+Allow: /icon-192.png
+Allow: /icon-512.png
+Allow: /apple-touch-icon.png
+Allow: /logo.png
+
+Sitemap: https://artsyproduction.com/sitemap.xml

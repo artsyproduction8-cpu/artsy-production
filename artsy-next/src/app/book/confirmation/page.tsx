@@ -100,6 +100,19 @@ function ConfirmationContent() {
               <span className="text-[#86868B]">SLA Guarantee:</span>
               <span className="font-bold text-emerald-600">48h Initial Assembly Delivery</span>
             </div>
+            {confirmedOrder?.bookingData?.rawFootageUrl && (
+              <div className="flex justify-between items-center">
+                <span className="text-[#86868B]">Raw Footage Assets:</span>
+                <a
+                  href={confirmedOrder.bookingData.rawFootageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[#3B82F6] hover:underline flex items-center gap-1"
+                >
+                  <span>Cloud Folder Link ↗</span>
+                </a>
+              </div>
+            )}
             <div className="flex justify-between items-center pt-2 border-t border-[#E5E5E7]">
               <span className="text-[#86868B]">Tax Invoice:</span>
               <div className="flex items-center gap-3">

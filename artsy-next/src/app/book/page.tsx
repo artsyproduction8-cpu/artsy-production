@@ -82,12 +82,31 @@ function ConfiguratorContent() {
   const [angles, setAngles] = useState<string>('single');
   const [turnaround, setTurnaround] = useState<string>('standard');
   const [audioUrl, setAudioUrl] = useState<string>('');
+  const [additionalUrls, setAdditionalUrls] = useState<string[]>([]);
+  const [hasRawFootage, setHasRawFootage] = useState<boolean>(false);
+  const [rawFootageUrl, setRawFootageUrl] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [mobile, setMobile] = useState<string>('');
   const [otpSent, setOtpSent] = useState<boolean>(false);
   const [resendTimer, setResendTimer] = useState<number>(42);
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+  const handleAddAdditionalUrl = () => {
+    setAdditionalUrls((prev) => [...prev, '']);
+  };
+
+  const handleUpdateAdditionalUrl = (index: number, val: string) => {
+    setAdditionalUrls((prev) => {
+      const updated = [...prev];
+      updated[index] = val;
+      return updated;
+    });
+  };
+
+  const handleRemoveAdditionalUrl = (index: number) => {
+    setAdditionalUrls((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // Preferred Creator Request State
   const [preferredCreatorId, setPreferredCreatorId] = useState<string>(
@@ -286,7 +305,11 @@ function ConfiguratorContent() {
         duration: activeSub.duration,
         angles,
         turnaround,
-        audioUrl,
+        audioUrl: audioUrl.trim(),
+        additionalUrls: additionalUrls.map((u) => u.trim()).filter(Boolean),
+        referenceUrls: [audioUrl.trim(), ...additionalUrls.map((u) => u.trim()).filter(Boolean)],
+        hasRawFootage,
+        rawFootageUrl: hasRawFootage ? rawFootageUrl.trim() : '',
         notes,
         mobile,
         preferredCreatorId,
@@ -559,29 +582,118 @@ function ConfiguratorContent() {
                 </div>
               </div>
 
-              {/* Creative Brief & Music Link */}
+              {/* Creative Brief, Media & Reference Links */}
               <div className="bg-white rounded-2xl p-7 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-[#E5E5E7]">
                 <div className="mb-4 pb-3 border-b border-[#F5F5F7]">
                   <h2 className="text-sm font-bold tracking-tight text-[#1D1D1F]">
-                    Creative Brief &amp; Reference Links
+                    Creative Brief, Media &amp; Reference Links
                   </h2>
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="music-reference-input" className="text-xs font-semibold text-[#1D1D1F] block mb-1">
-                      Music Reference or Video Link <span className="text-red-500 font-bold">*</span> <span className="text-[#86868B] font-normal">(Mandatory)</span>
-                    </label>
-                    <input
-                      id="music-reference-input"
-                      type="url"
-                      required
-                      value={audioUrl}
-                      onChange={(e) => setAudioUrl(e.target.value)}
-                      placeholder="https://open.spotify.com/track/... or YouTube link (Mandatory)"
-                      className="w-full px-4 py-2.5 rounded-xl border border-[#E5E5E7] text-xs focus:outline-none focus:border-[#3B82F6]"
-                    />
+
+                <div className="space-y-5">
+                  {/* Music Reference / Video Link Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="music-reference-input" className="text-xs font-semibold text-[#1D1D1F] block">
+                        Music Reference or Video Link <span className="text-red-500 font-bold">*</span> <span className="text-[#86868B] font-normal">(Mandatory)</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleAddAdditionalUrl}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#F5F5F7] hover:bg-[#3B82F6]/10 text-[#1D1D1F] hover:text-[#3B82F6] border border-[#E5E5E7] transition-all cursor-pointer shadow-2xs"
+                      >
+                        <span className="text-sm font-bold leading-none">+</span>
+                        <span>Add</span>
+                      </button>
+                    </div>
+
+                    <div>
+                      <input
+                        id="music-reference-input"
+                        type="url"
+                        required
+                        value={audioUrl}
+                        onChange={(e) => setAudioUrl(e.target.value)}
+                        placeholder="https://open.spotify.com/track/... or YouTube link (Mandatory)"
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E5E5E7] text-xs focus:outline-none focus:border-[#3B82F6]"
+                      />
+                    </div>
+
+                    {/* Additional Non-Mandatory Reference Links */}
+                    {additionalUrls.map((link, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          type="url"
+                          value={link}
+                          onChange={(e) => handleUpdateAdditionalUrl(idx, e.target.value)}
+                          placeholder={`Additional Reference Link #${idx + 2} (Optional)`}
+                          className="flex-1 px-4 py-2.5 rounded-xl border border-[#E5E5E7] text-xs focus:outline-none focus:border-[#3B82F6]"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAdditionalUrl(idx)}
+                          title="Remove this link"
+                          className="w-9 h-9 rounded-xl border border-[#E5E5E7] hover:border-red-300 text-[#86868B] hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-colors cursor-pointer shrink-0 text-sm font-bold"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <div>
+
+                  {/* Raw Footage Ingestion Toggle */}
+                  <div className="pt-4 border-t border-[#F5F5F7] space-y-3">
+                    <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#F5F5F7]/80 border border-[#E5E5E7]/70">
+                      <div>
+                        <span className="text-xs font-bold text-[#1D1D1F] block">
+                          Provide Raw Footage Cloud Link
+                        </span>
+                        <span className="text-[11px] text-[#86868B] block mt-0.5">
+                          {hasRawFootage
+                            ? 'Paste your Drive, Dropbox, or WeTransfer link below'
+                            : 'Toggle ON if you have your footage ready to share now'}
+                        </span>
+                      </div>
+
+                      <label className="relative inline-flex items-center cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={hasRawFootage}
+                          onChange={(e) => setHasRawFootage(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-[#E5E5E7] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#3B82F6]"></div>
+                      </label>
+                    </div>
+
+                    {hasRawFootage ? (
+                      <div className="space-y-1.5">
+                        <label htmlFor="raw-footage-input" className="text-xs font-semibold text-[#1D1D1F] block">
+                          Raw Footage Cloud Link <span className="text-[#86868B] font-normal">(Google Drive, Dropbox, OneDrive, WeTransfer)</span>
+                        </label>
+                        <input
+                          id="raw-footage-input"
+                          type="url"
+                          value={rawFootageUrl}
+                          onChange={(e) => setRawFootageUrl(e.target.value)}
+                          placeholder="https://drive.google.com/drive/folders/... or WeTransfer link"
+                          className="w-full px-4 py-2.5 rounded-xl border border-[#E5E5E7] text-xs focus:outline-none focus:border-[#3B82F6]"
+                        />
+                        <p className="text-[11px] text-[#86868B] flex items-center gap-1.5 mt-1">
+                          <span>💡</span>
+                          <span>Make sure link access permissions are set to &quot;Anyone with the link can view/download&quot;.</span>
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-[#86868B] flex items-center gap-1.5 px-1">
+                        <span>📦</span>
+                        <span>You can also upload or share your raw footage after checkout via WhatsApp or your client dashboard.</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Editing Notes & Directives */}
+                  <div className="pt-4 border-t border-[#F5F5F7]">
                     <label className="text-xs font-semibold text-[#1D1D1F] block mb-1">
                       Editing Notes &amp; Specific Cut Directives
                     </label>

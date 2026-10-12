@@ -6,7 +6,7 @@ import { getAuthenticatedUser } from '@/lib/auth-cookie';
 export async function POST(request: Request) {
   // Security Fix #9: Restrict test endpoint to authenticated admin
   const authUser = getAuthenticatedUser(request);
-  if (!authUser || authUser.role !== 'admin') {
+  if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }
 

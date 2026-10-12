@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 // Auth types
-export type UserRole = 'client' | 'freelancer' | 'admin';
+export type UserRole = 'client' | 'freelancer' | 'admin' | 'super_admin';
 export type UserStatus = 'active' | 'pending' | 'suspended' | 'banned';
 
 export type OnboardingStatus =
@@ -35,6 +35,17 @@ export interface ArtsyUser {
 
 // Preset standard test accounts for instant role demo & testing
 export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
+  super_admin: {
+    id: 'usr-superadmin-000',
+    email: 'lilsammy96@gmail.com',
+    full_name: 'Super Admin',
+    phone: '+91 7777078742',
+    role: 'super_admin',
+    status: 'active',
+    avatar_url: '',
+    created_at: '2025-01-10T00:00:00.000Z',
+    updated_at: '2025-01-10T00:00:00.000Z'
+  },
   client: {
     id: 'usr-client-001',
     email: 'client@artsyprod.studio',
@@ -76,6 +87,7 @@ export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
 
 export const getRoleHomePath = (role: UserRole): string => {
   switch (role) {
+    case 'super_admin':
     case 'admin':
       return '/admin';
     case 'freelancer':
@@ -298,3 +310,5 @@ export const updateCurrentUserOnboarding = (status: OnboardingStatus): ArtsyUser
   setCurrentUser(updated);
   return updated;
 };
+
+export { getAuthenticatedUser } from '@/lib/auth-cookie';

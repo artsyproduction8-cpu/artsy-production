@@ -67,10 +67,10 @@ export async function middleware(request: NextRequest) {
 
   // Role map for protected paths
   const protectedRoutes: Array<{ prefix: string; allowedRoles: string[] }> = [
-    { prefix: '/admin', allowedRoles: ['admin'] },
-    { prefix: '/client-dashboard', allowedRoles: ['client', 'admin'] },
-    { prefix: '/client', allowedRoles: ['client', 'admin'] },
-    { prefix: '/freelancer', allowedRoles: ['freelancer', 'admin'] },
+    { prefix: '/admin', allowedRoles: ['admin', 'super_admin'] },
+    { prefix: '/client-dashboard', allowedRoles: ['client', 'admin', 'super_admin'] },
+    { prefix: '/client', allowedRoles: ['client', 'admin', 'super_admin'] },
+    { prefix: '/freelancer', allowedRoles: ['freelancer', 'admin', 'super_admin'] },
   ];
 
   for (const route of protectedRoutes) {

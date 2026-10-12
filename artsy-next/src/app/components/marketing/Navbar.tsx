@@ -77,7 +77,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
     return name.slice(0, 2).toUpperCase();
   };
 
-  const roleLabel = role === 'admin' ? 'Studio Admin' : role === 'freelancer' ? 'Creator' : 'Client';
+  const roleLabel = role === 'super_admin' ? 'Super Admin' : role === 'admin' ? 'Studio Admin' : role === 'freelancer' ? 'Creator' : 'Client';
   const roleHome = role ? getRoleHomePath(role) : '/client/review';
 
   return (

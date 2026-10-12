@@ -184,7 +184,7 @@ export default function VerifyPage() {
     }
 
     // Priority 3: Route by user role and onboarding status
-    if (user.role === 'admin') {
+    if (user.role === 'admin' || user.role === 'super_admin') {
       router.push('/admin');
     } else if (user.role === 'freelancer') {
       if (user.onboarding_status === 'approved') {

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     const isOwner =
       project.client_id === authUser.id ||
       project.assigned_creator_id === authUser.id ||
-      authUser.role === 'admin';
+      ['admin', 'super_admin'].includes(authUser.role);
 
     if (!isOwner) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

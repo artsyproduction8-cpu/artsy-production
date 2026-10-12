@@ -75,7 +75,7 @@ export async function GET(
 
     // Fix 10: Verify ownership (client_id matches authUser.id OR authUser is admin)
     if (orderDetails.orderFound) {
-      const isOwner = (orderDetails.clientId && authUser.id === orderDetails.clientId) || authUser.role === 'admin';
+      const isOwner = (orderDetails.clientId && authUser.id === orderDetails.clientId) || ['admin', 'super_admin'].includes(authUser.role);
       if (!isOwner) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }

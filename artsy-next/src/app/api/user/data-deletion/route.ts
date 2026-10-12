@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // 2. Authorization check: caller must be owner or admin
     const isOwner = authUser.id === userId;
-    const isAdmin = authUser.role === 'admin';
+    const isAdmin = ['admin', 'super_admin'].includes(authUser.role);
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json(
@@ -43,12 +43,16 @@ export async function POST(request: NextRequest) {
       // 1. Verify user exists
       const { data: user, error: userError } = await supabase
         .from('users')
-        .select('id, email, phone')
+        .select('id, email, phone, role')
         .eq('id', userId)
         .maybeSingle();
 
       if (userError || !user) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      if (user.role === 'super_admin' || user.phone === '+917777078742' || user.email === 'lilsammy96@gmail.com') {
+        return NextResponse.json({ error: 'Super Admin account cannot be deleted' }, { status: 403 });
       }
 
       // 2. Check for active uncompleted projects

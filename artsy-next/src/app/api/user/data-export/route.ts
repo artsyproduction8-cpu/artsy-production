@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     // 2. Authorization check: caller must be owner or admin
     const isOwner = authUser.id === userId;
-    const isAdmin = authUser.role === 'admin';
+    const isAdmin = ['admin', 'super_admin'].includes(authUser.role);
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json(

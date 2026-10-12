@@ -188,44 +188,48 @@ export async function POST(request: NextRequest) {
 
       // Find or create user in public.users
       let existingUser: any = null;
-      if (isSupabaseConfigured && supabase) {
+      const dbClient = (supabase && typeof supabase.from === 'function') ? supabase : anonClient;
+      if (isSupabaseConfigured && dbClient) {
         try {
-          let userQuery = supabase.from('users').select('*');
+          let userQuery = dbClient.from('users').select('*');
           if (cleanEmail) {
             userQuery = userQuery.eq('email', cleanEmail);
           } else {
-            userQuery = userQuery.or(`phone.eq.${cleanPhone},phone.ilike.%${cleanPhone}%`);
+            userQuery = userQuery.or(`phone.eq.+91${cleanPhone},phone.eq.91${cleanPhone},phone.eq.${cleanPhone}`);
           }
-          const { data } = await userQuery.maybeSingle();
-          existingUser = data;
+          const { data, error } = await userQuery.maybeSingle();
+          if (!error && data) {
+            existingUser = data;
+          }
         } catch (uErr) {
           console.warn('User query error:', uErr);
         }
       }
 
+      const isSuperAdminIdentifier = cleanPhone === '7777078742' || cleanEmail === 'lilsammy96@gmail.com';
       let resolvedUser: any;
       let isNewUser = false;
 
       if (existingUser) {
         resolvedUser = existingUser;
-        if (cleanPhone === '7777078742') {
-          resolvedUser.role = 'admin';
+        if (isSuperAdminIdentifier) {
+          resolvedUser.role = 'super_admin';
         }
-        if (isSupabaseConfigured && supabase) {
+        if (isSupabaseConfigured && dbClient) {
           try {
-            await supabase.from('users').update({ updated_at: new Date().toISOString() }).eq('id', existingUser.id);
+            await dbClient.from('users').update({ updated_at: new Date().toISOString() }).eq('id', existingUser.id);
           } catch {}
         }
       } else {
         isNewUser = true;
-        const userChosenRole = (role === 'freelancer' || role === 'editor') ? 'freelancer' : 'client';
-        const defaultRole = cleanPhone === '7777078742' ? 'admin' : userChosenRole;
-        const defaultName = cleanPhone === '7777078742'
-          ? 'Studio Director (Admin)'
-          : (cleanEmail ? cleanEmail.split('@')[0] : (defaultRole === 'freelancer' ? 'Creator Member' : 'Valued Client'));
+        // Default role for any new user MUST be 'client' (unless super admin)
+        const defaultRole = isSuperAdminIdentifier ? 'super_admin' : 'client';
+        const defaultName = isSuperAdminIdentifier
+          ? 'Super Admin'
+          : (cleanEmail ? cleanEmail.split('@')[0] : 'Valued Client');
 
         const newUserData = {
-          email: cleanEmail || `${cleanPhone}@artsyprod.studio`,
+          email: isSuperAdminIdentifier ? 'lilsammy96@gmail.com' : (cleanEmail || `${cleanPhone}@artsyprod.studio`),
           phone: formattedPhone || (cleanPhone ? `+91${cleanPhone}` : undefined),
           full_name: defaultName,
           role: defaultRole,
@@ -234,15 +238,16 @@ export async function POST(request: NextRequest) {
           updated_at: new Date().toISOString(),
         };
 
-        if (isSupabaseConfigured && supabase) {
+        if (isSupabaseConfigured && dbClient) {
           try {
-            const { data: createdUser, error: insertErr } = await supabase
+            const { data: createdUser, error: insertErr } = await dbClient
               .from('users')
               .insert([newUserData])
               .select()
               .single();
 
             if (insertErr || !createdUser) {
+              console.warn('[OTP Route] User insert warning:', insertErr);
               resolvedUser = {
                 id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `usr_${cleanPhone || Date.now()}`,
                 ...newUserData,
@@ -250,7 +255,8 @@ export async function POST(request: NextRequest) {
             } else {
               resolvedUser = createdUser;
             }
-          } catch {
+          } catch (createErr) {
+            console.warn('[OTP Route] User creation exception:', createErr);
             resolvedUser = {
               id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `usr_${cleanPhone || Date.now()}`,
               ...newUserData,
@@ -264,8 +270,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const finalRole: 'client' | 'freelancer' | 'admin' =
-        cleanPhone === '7777078742' ? 'admin' : (resolvedUser.role || role || 'client');
+      const finalRole: 'client' | 'freelancer' | 'admin' | 'super_admin' =
+        isSuperAdminIdentifier ? 'super_admin' : (resolvedUser.role || 'client');
 
       let onboarding_status: 'pending' | 'approved' | 'rejected' | null = null;
       let tracking_id: string | null = null;

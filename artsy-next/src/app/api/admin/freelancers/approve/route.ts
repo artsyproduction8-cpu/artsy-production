@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     // Security Fix #4: Strict admin authentication check
     const authUser = getAuthenticatedUser(req);
-    if (!authUser || authUser.role !== 'admin') {
+    if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
     }
 

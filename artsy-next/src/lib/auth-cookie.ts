@@ -2,9 +2,11 @@ import type { NextRequest } from 'next/server';
 
 export const AUTH_COOKIE_NAME = 'artsy_auth_token';
 
+export type UserRole = 'client' | 'freelancer' | 'admin' | 'super_admin';
+
 export interface AuthUserPayload {
   id: string;
-  role: 'client' | 'freelancer' | 'admin' | string;
+  role: UserRole | string;
   phone?: string;
   email?: string;
   full_name?: string;

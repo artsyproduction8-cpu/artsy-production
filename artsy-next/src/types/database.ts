@@ -4,7 +4,7 @@
 // Source: Artsy Production — Master Plan (Reviewed & Finalized).md
 // Note: All monetary fields are in integer paise (100 paise = 1 INR).
 
-export type UserRole = 'client' | 'freelancer' | 'admin';
+export type UserRole = 'client' | 'freelancer' | 'admin' | 'super_admin';
 export type UserStatus = 'active' | 'pending' | 'suspended' | 'banned';
 
 export interface User {

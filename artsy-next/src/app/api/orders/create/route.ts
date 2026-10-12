@@ -189,25 +189,30 @@ export async function POST(request: NextRequest) {
               .select('id, phone')
               .in('role', ['admin', 'super_admin']);
 
-            if (adminUsers && adminUsers.length > 0) {
-              const notificationsToInsert = adminUsers.map((adm: { id: string }) => ({
-                user_id: adm.id,
-                title: 'Preferred Creator Request',
-                message: adminNoticeMsg,
-                actionUrl: '/admin/creator-requests',
-                read: false,
-                created_at: new Date().toISOString(),
-              }));
-              await dbClient.from('notifications').insert(notificationsToInsert);
+            const adminList = (adminUsers && adminUsers.length > 0)
+              ? adminUsers
+              : [{ id: '50d2d4d3-b55f-4c9c-8281-a3fa324c52ad', phone: '+917777078742' }];
 
-              // Send WhatsApp notification to admin(s) if phone configured
-              for (const adm of adminUsers) {
-                const targetPhone = adm.phone || '+917777078742';
+            const notificationsToInsert = adminList.map((adm: { id: string }) => ({
+              user_id: adm.id,
+              title: 'Preferred Creator Request',
+              message: adminNoticeMsg,
+              action_url: '/admin/creator-requests',
+              read: false,
+              created_at: new Date().toISOString(),
+            }));
+            await dbClient.from('notifications').insert(notificationsToInsert);
+
+            // Send WhatsApp notification to admin(s) if phone configured
+            for (const adm of adminList) {
+              const targetPhone = adm.phone || '+917777078742';
                 try {
-                  // Attempt meta template or utility notice
+                  // Attempt meta template notice with all 4 required parameters [orderId, title, statusText, url]
                   await sendMetaTemplate(targetPhone, 'artsy_project_status', [
                     internalOrderNumber,
-                    `Preferred Creator: ${preferredCreatorName}`,
+                    'Preferred Creator Request',
+                    `Requested: ${preferredCreatorName}`,
+                    'https://artsyproduction.com/admin/creator-requests',
                   ]).catch(() => null);
                 } catch {
                   // Non-fatal if meta template rejected

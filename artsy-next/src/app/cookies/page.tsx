@@ -16,9 +16,6 @@ export default function CookiesPage() {
           <h1 className="text-4xl font-extrabold tracking-tight text-[#1D1D1F]">
             Cookie &amp; Local Storage Policy
           </h1>
-          <p className="text-sm text-[#86868B] mt-2">
-            Version 2.0 • Last Updated September 2026
-          </p>
         </div>
 
         <div className="space-y-8 text-sm leading-relaxed text-[#424245]">

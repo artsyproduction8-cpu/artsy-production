@@ -365,16 +365,11 @@ function ConfiguratorContent() {
               
               {/* Top Banner Card */}
               <div className="bg-white rounded-2xl p-7 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-[#E5E5E7]">
-                <div className="flex items-center justify-end mb-3">
-                  <span className="text-xs font-semibold text-[#86868B]">
-                    Guaranteed SLA
-                  </span>
-                </div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.03em] text-[#1D1D1F]">
-                  Configure production parameters.
+                  Configure parameters.
                 </h1>
                 <p className="mt-2 text-xs sm:text-sm text-[#86868B] leading-relaxed">
-                  Select your exact category and sub-category format. Unit pricing is calculated transparently with 18% embedded GST and 1 complimentary revision pass.
+                  Select your exact category and sub-category format.
                 </p>
               </div>
 

@@ -230,7 +230,7 @@ export default function CreatorProfilePage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-tight">
-              Approved Portfolio Showcase
+              Portfolio Showcase
             </h2>
             <p className="text-xs text-[#86868B] mt-0.5">
               Individually vetted creative cuts demonstrating timeline mastery and color grading.

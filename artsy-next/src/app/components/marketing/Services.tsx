@@ -45,7 +45,7 @@ export default function Services() {
         {/* Section Header */}
         <div className="mb-8 max-w-xl">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-[-0.03em] text-[#1D1D1F]">
-            Select a production category
+            Select category
           </h2>
           <p className="mt-2 text-xs sm:text-sm text-[#86868B] font-normal leading-relaxed">
             Explore specialized formats, transparent unit rates, guaranteed turnaround SLAs, and verified color grading.

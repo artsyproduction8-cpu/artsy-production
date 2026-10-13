@@ -274,10 +274,10 @@ export default function WorkPage() {
         <section className="w-full max-w-[1200px] mx-auto px-6 sm:px-8 mb-12">
           <div className="max-w-3xl space-y-4">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1D1D1F] uppercase">
-              STUDIO WORK &amp; CINEMATIC ARCHIVE
+              CINEMATIC ARCHIVE
             </h1>
             <p className="text-base sm:text-lg text-[#86868B] leading-relaxed">
-              Explore our curated portfolio across luxury wedding films, high-velocity DTC brand commercials, macro product showcases, and executive keynotes. Every project is conformed with deterministic color science and licensed acoustic mastering.
+              Explore our curated portfolio across luxury wedding films, high-velocity DTC brand commercials, macro product showcases, and executive keynotes. Every project is conformed with deterministic color science and acoustic mastering.
             </p>
           </div>
 

@@ -310,7 +310,7 @@ function ClientStudioSetupContent() {
               {/* Identity Block */}
               <div className="space-y-4">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-[#86868B]">
-                  {profile.accountType === 'b2b' ? 'Corporate Identity' : 'Creator Identity'}
+                  {profile.accountType === 'b2b' ? 'Corporate Identity' : 'Client Identity'}
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -418,7 +418,7 @@ function ClientStudioSetupContent() {
               {/* Ingest Pipelines Block */}
               <div className="pt-6 border-t border-[#F5F5F7] space-y-4">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-[#86868B]">
-                  Default Cloud Ingest Pipelines
+                  Cloud Ingest Pipelines
                 </h2>
 
                 <div>

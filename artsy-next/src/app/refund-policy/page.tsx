@@ -16,9 +16,6 @@ export default function RefundPolicyPage() {
           <h1 className="text-4xl font-extrabold tracking-tight text-[#1D1D1F]">
             Cancellation &amp; Refund Policy
           </h1>
-          <p className="text-sm text-[#86868B] mt-2">
-            Version 2.0 • Studio Master Plan Locked • Effective September 2026
-          </p>
         </div>
 
         <div className="space-y-8 text-sm leading-relaxed text-[#424245]">
@@ -36,8 +33,8 @@ export default function RefundPolicyPage() {
                 <thead className="bg-[#F5F5F7] border-b border-[#E5E5E7] text-[#1D1D1F] uppercase font-bold text-[11px]">
                   <tr>
                     <th className="p-4">Project Stage</th>
-                    <th className="p-4">Artsy Retention</th>
-                    <th className="p-4">Client Refund Amount</th>
+                    <th className="p-4">Retention</th>
+                    <th className="p-4">Refund Amount</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E5E5E7]">

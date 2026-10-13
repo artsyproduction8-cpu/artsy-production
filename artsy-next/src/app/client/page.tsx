@@ -140,7 +140,7 @@ export default function ClientDashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
               <span className="text-[10px] uppercase font-bold text-[#86868B] block tracking-wider">
-                ACTIVE IN PRODUCTION
+                ACTIVE
               </span>
               <div className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] mt-1.5">
                 {projects.length} {projects.length === 1 ? 'Project' : 'Projects'}
@@ -149,7 +149,7 @@ export default function ClientDashboardPage() {
 
             <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
               <span className="text-[10px] uppercase font-bold text-[#86868B] block tracking-wider">
-                FRAME REVIEW SPOTLIGHT
+                REVIEW SPOTLIGHT
               </span>
               <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1.5">
                 {projects.filter((p) => p.status === 'review_ready' || p.status === 'in_review').length} Drafts Pending
@@ -158,7 +158,7 @@ export default function ClientDashboardPage() {
 
             <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
               <span className="text-[10px] uppercase font-bold text-[#86868B] block tracking-wider">
-                MASTERS READY IN VAULT
+                READY IN VAULT
               </span>
               <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-1.5">
                 {projects.filter((p) => p.status === 'completed' || p.status === 'approved').length} Archives
@@ -173,7 +173,7 @@ export default function ClientDashboardPage() {
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F5F7]">
               <div>
                 <h2 className="text-lg font-bold text-[#1D1D1F]">
-                  Active Production Pipeline
+                  Active Pipeline
                 </h2>
                 <p className="text-xs text-[#86868B] mt-0.5">
                   Real-time SLA status, assigned senior creators, and editorial milestones

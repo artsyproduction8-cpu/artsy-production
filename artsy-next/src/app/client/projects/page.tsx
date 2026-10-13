@@ -89,7 +89,7 @@ export default function ClientProjectsPage() {
                 </div>
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
-                    Active Production Orders
+                    Active Orders
                   </h1>
                   <p className="text-xs text-[#86868B] mt-0.5">
                     Real-time SLA milestones &amp; master deliveries

@@ -835,7 +835,7 @@ export function getCategoryDetailMap(matrix: ServiceCategory[]) {
     map[cat.id] = {
       id: cat.id,
       badge: cat.badge,
-      title: `${cat.title} Post-Production`,
+      title: cat.title,
       tagline: cat.tagline,
       description: cat.description,
       subCategories: cat.products

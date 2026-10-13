@@ -62,7 +62,7 @@ export default function Footer() {
           {/* Customer Support */}
           <div className="lg:col-span-3 flex flex-col gap-3">
             <h4 className="text-xs font-bold uppercase tracking-wider !text-white text-white" style={{ color: '#FFFFFF' }}>
-              Studio Support
+              Support
             </h4>
             <div className="flex flex-col gap-2 text-xs text-[#DCDFE3]">
               <p>

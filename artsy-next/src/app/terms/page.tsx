@@ -16,9 +16,6 @@ export default function TermsPage() {
           <h1 className="text-4xl font-extrabold tracking-tight text-[#1D1D1F]">
             Terms of Service
           </h1>
-          <p className="text-sm text-[#86868B] mt-2">
-            Version 2.0 • Last Updated: September 2026 • Governing Law: Republic of India
-          </p>
         </div>
 
         <div className="space-y-8 text-sm leading-relaxed text-[#424245]">

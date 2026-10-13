@@ -39,7 +39,7 @@ export default function ServicesPage() {
           {/* Header Strip */}
           <div className="max-w-2xl mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.03em] text-[#1D1D1F]">
-              Select your production suite
+              Select your suite
             </h1>
             <p className="mt-1.5 text-xs sm:text-sm text-[#86868B] leading-relaxed">
               Transparent unit pricing, precision turnaround SLAs, and deterministic post-engineering by vetted senior colorists.

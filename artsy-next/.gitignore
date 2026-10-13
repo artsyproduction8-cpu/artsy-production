@@ -43,6 +43,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+remove things which are marked or highlighted with yellow color/
 
 # sensitive one-off rotation & admin scripts
 scripts/*rotate*.mjs

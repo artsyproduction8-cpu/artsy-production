@@ -20,7 +20,7 @@ export default function ClientSidebar() {
     : 'CL';
 
   const navItems = [
-    { label: 'Dashboard Overview', href: '/client' },
+    { label: 'Dashboard', href: '/client' },
     { label: 'My Projects', href: '/client/projects' },
     { label: 'Timestamped Review', href: '/client/review' },
     { label: 'Completed Masters', href: '/client/masters' },

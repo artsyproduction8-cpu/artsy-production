@@ -101,14 +101,10 @@ export async function POST(request: NextRequest) {
         const isMemExpired = Date.now() > memSession.expiresAt;
         if (!isMemExpired && memSession.attempts < 5) {
           let isMatch = false;
-          if (isDev && (inputCode === '123456' || inputCode === '4210')) {
-            isMatch = true;
-          } else {
-            try {
-              isMatch = await bcrypt.compare(inputCode, memSession.otpHash);
-            } catch {
-              isMatch = false;
-            }
+          try {
+            isMatch = await bcrypt.compare(inputCode, memSession.otpHash);
+          } catch {
+            isMatch = false;
           }
 
           if (isMatch) {
@@ -118,7 +114,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // If not matched in memory, check Supabase otp_sessions or dev bypass
+      // If not matched in memory, check Supabase otp_sessions
       if (!sessionVerified) {
         let dbMatched = false;
         if (isSupabaseConfigured && supabase) {
@@ -152,9 +148,6 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        if (!sessionVerified && isDev && (inputCode === '123456' || inputCode === '4210')) {
-          sessionVerified = true;
-        }
 
         if (!sessionVerified) {
           if (memSession) {
@@ -575,7 +568,9 @@ export async function POST(request: NextRequest) {
       if (!emailResult.success) {
         console.error('Failed to send OTP email via Resend:', emailResult.error);
         if (isDev) {
-          console.log(`[DEV OTP Email Fallback] Email: ${cleanEmail}, Code: ${otpCode}`);
+          if (process.env.OTP_DEBUG === 'true') {
+            console.log(`[DEV OTP Email Fallback] Email: ${cleanEmail}, Code: ${otpCode}`);
+          }
           return sendResponse({
             success: true,
             message: 'OTP generated for development testing (email fallback)',
@@ -611,7 +606,9 @@ export async function POST(request: NextRequest) {
 
     // Track 3: Gated Mock Mode or Development Fallback
     if (isDev) {
-      console.log(`[DEV OTP Dispatch] Identifier: ${identifier}, Generated OTP: ${otpCode}`);
+      if (process.env.OTP_DEBUG === 'true') {
+        console.log(`[DEV OTP Dispatch] Identifier: ${identifier}, Generated OTP: ${otpCode}`);
+      }
       return sendResponse({
         success: true,
         message: 'OTP dispatched (development testing mode)',

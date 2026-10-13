@@ -490,9 +490,7 @@ function LoginFormContent() {
 
       const data = await res.json().catch(() => ({}));
 
-      // Accept valid API response or dev mode 4210 / 123456
-      const isDevValid = cleanOtp === '4210' || cleanOtp === '123456';
-      if (!res.ok && !isDevValid) {
+      if (!res.ok) {
         throw new Error(data.error || 'Incorrect verification code. Please verify and try again.');
       }
 

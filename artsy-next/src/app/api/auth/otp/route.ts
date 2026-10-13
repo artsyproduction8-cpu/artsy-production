@@ -121,26 +121,10 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        if (!isMatch) {
-          memSession.attempts += 1;
-          if (memSession.attempts >= 5) {
-            return NextResponse.json(
-              { error: 'Too many attempts. Please request a new code.', remainingAttempts: 0 },
-              { status: 429 }
-            );
-          }
-          const remaining = Math.max(0, 5 - memSession.attempts);
-          return NextResponse.json(
-            {
-              error: `Incorrect code. ${remaining} attempts remaining.`,
-              remainingAttempts: remaining,
-            },
-            { status: 401 }
-          );
+        if (isMatch) {
+          memSession.verified = true;
+          sessionVerified = true;
         }
-
-        memSession.verified = true;
-        sessionVerified = true;
       }
 
       // If not matched in memory, check Supabase otp_sessions or dev bypass
@@ -179,6 +163,24 @@ export async function POST(request: NextRequest) {
         }
 
         if (!sessionVerified) {
+          if (memSession) {
+            memSession.attempts += 1;
+            if (memSession.attempts >= 5) {
+              return NextResponse.json(
+                { error: 'Too many attempts. Please request a new code.', remainingAttempts: 0 },
+                { status: 429 }
+              );
+            }
+            const remaining = Math.max(0, 5 - memSession.attempts);
+            return NextResponse.json(
+              {
+                error: `Incorrect code. ${remaining} attempts remaining.`,
+                remainingAttempts: remaining,
+              },
+              { status: 401 }
+            );
+          }
+
           return NextResponse.json(
             { error: 'Invalid or expired OTP. Please request a new code.' },
             { status: 401 }

@@ -374,6 +374,8 @@ export async function POST(request: NextRequest) {
 
     const sendResponse = (payload: any, init?: { status?: number }) => {
       const resp = NextResponse.json(payload, init);
+      resp.headers.set('X-RateLimit-Limit', '5');
+      resp.headers.set('X-RateLimit-Remaining', Math.max(0, rateLimit.remaining).toString());
       if (rateLimit.mode === 'redis') {
         resp.headers.set('X-RateLimit-Mode', 'redis');
       } else {

@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
 
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute
-    const maxRequests = pathname.startsWith('/api/auth') ? 10 : 100;
+    const maxRequests = pathname.startsWith('/api/auth') ? 5 : 100;
 
     const record = requestCounterMap.get(rateLimitKey);
 

@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute
-    const maxRequests = pathname.startsWith('/api/auth') ? 10 : 100;
+    const maxRequests = pathname.startsWith('/api/auth') ? 5 : 100;
 
     const record = ipRequestMap.get(ip);
 

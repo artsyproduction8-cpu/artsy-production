@@ -23,6 +23,15 @@ fi
 if echo "$INPUT" | grep -qE '[A-Za-z]:\\Users\\[A-Za-z0-9]+'; then
   echo "BLOCKED: local Windows user path"; FAIL=1
 fi
+if echo "$INPUT" | grep -qE '\bgQ[A-Za-z0-9_-]{40,}\b'; then
+  echo "BLOCKED: Upstash token pattern"; FAIL=1
+fi
+if echo "$INPUT" | grep -qE '\brzp_(live|test)_[A-Za-z0-9]{14,}'; then
+  echo "BLOCKED: Razorpay key pattern"; FAIL=1
+fi
+if echo "$INPUT" | grep -qE '\bre_[A-Za-z0-9_-]{20,}'; then
+  echo "BLOCKED: Resend API key pattern"; FAIL=1
+fi
 
 if [ $FAIL -eq 1 ]; then exit 1; fi
 echo "PASS: no PII or secrets detected"

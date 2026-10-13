@@ -369,16 +369,18 @@ export async function POST(request: NextRequest) {
     // ACTION: SEND — Generate and dispatch OTP
     // ────────────────────────────────────────────────────────
 
+    // 1. Rate Limiting Check (Max 5 requests per 10 minutes per identifier/IP)
+    const rateLimit = await checkRateLimit(`${identifier}_${ip}`, 'auth', 5, 600);
+
     const sendResponse = (payload: any, init?: { status?: number }) => {
       const resp = NextResponse.json(payload, init);
-      if (!process.env.UPSTASH_REDIS_REST_URL) {
+      if (rateLimit.mode === 'redis') {
+        resp.headers.set('X-RateLimit-Mode', 'redis');
+      } else {
         resp.headers.set('X-RateLimit-Mode', 'in-memory-fallback');
       }
       return resp;
     };
-
-    // 1. Rate Limiting Check (Max 5 requests per 10 minutes per identifier/IP)
-    const rateLimit = await checkRateLimit(`${identifier}_${ip}`, 'auth', 5, 600);
     if (!rateLimit.allowed) {
       return sendResponse(
         { error: `Too many OTP requests. Please wait ${Math.ceil(rateLimit.resetSeconds / 60)} minutes before retrying.` },

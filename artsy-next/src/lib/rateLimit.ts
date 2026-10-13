@@ -28,6 +28,7 @@ export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   resetSeconds: number;
+  mode: 'redis' | 'in-memory-fallback';
 }
 
 export async function checkRateLimit(
@@ -68,6 +69,7 @@ export async function checkRateLimit(
           allowed: currentCount <= maxAllowed,
           remaining: Math.max(0, maxAllowed - currentCount),
           resetSeconds: ttl > 0 ? ttl : windowSeconds,
+          mode: 'redis',
         };
       }
     } catch (err) {
@@ -87,6 +89,7 @@ export async function checkRateLimit(
       allowed: true,
       remaining: maxAllowed - 1,
       resetSeconds: windowSeconds,
+      mode: 'in-memory-fallback',
     };
   }
 
@@ -98,5 +101,6 @@ export async function checkRateLimit(
     allowed: existing.count <= maxAllowed,
     remaining,
     resetSeconds,
+    mode: 'in-memory-fallback',
   };
 }

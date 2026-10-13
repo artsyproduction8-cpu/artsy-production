@@ -40,11 +40,24 @@ export async function checkRateLimit(
   const key = `ratelimit:${prefix}:${identifier}`;
   const now = Date.now();
 
-  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
-  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  let upstashUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  let upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+
+  if (upstashUrl) {
+    upstashUrl = upstashUrl
+      .replace(/^UPSTASH_REDIS_REST_URL\s*=\s*/i, '')
+      .replace(/^['"]+|['"]+$/g, '')
+      .trim();
+  }
+  if (upstashToken) {
+    upstashToken = upstashToken
+      .replace(/^UPSTASH_REDIS_REST_TOKEN\s*=\s*/i, '')
+      .replace(/^['"]+|['"]+$/g, '')
+      .trim();
+  }
 
   // 1. Try Upstash Redis if configured
-  if (upstashUrl && upstashToken && !upstashUrl.includes('your-upstash')) {
+  if (upstashUrl && upstashToken && !upstashUrl.includes('your-upstash') && upstashUrl.startsWith('http')) {
     try {
       const res = await fetch(`${upstashUrl}/pipeline`, {
         method: 'POST',

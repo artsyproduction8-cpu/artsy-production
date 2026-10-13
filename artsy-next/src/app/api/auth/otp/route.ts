@@ -96,34 +96,23 @@ export async function POST(request: NextRequest) {
       let sessionVerified = false;
 
       if (memSession) {
-        if (Date.now() > memSession.expiresAt) {
-          return NextResponse.json(
-            { error: 'This code has expired. Request a new one.' },
-            { status: 401 }
-          );
-        }
-
-        if (memSession.attempts >= 5) {
-          return NextResponse.json(
-            { error: 'Too many attempts. Please request a new code.', remainingAttempts: 0 },
-            { status: 429 }
-          );
-        }
-
-        let isMatch = false;
-        if (isDev && (inputCode === '123456' || inputCode === '4210')) {
-          isMatch = true;
-        } else {
-          try {
-            isMatch = await bcrypt.compare(inputCode, memSession.otpHash);
-          } catch {
-            isMatch = false;
+        const isMemExpired = Date.now() > memSession.expiresAt;
+        if (!isMemExpired && memSession.attempts < 5) {
+          let isMatch = false;
+          if (isDev && (inputCode === '123456' || inputCode === '4210')) {
+            isMatch = true;
+          } else {
+            try {
+              isMatch = await bcrypt.compare(inputCode, memSession.otpHash);
+            } catch {
+              isMatch = false;
+            }
           }
-        }
 
-        if (isMatch) {
-          memSession.verified = true;
-          sessionVerified = true;
+          if (isMatch) {
+            memSession.verified = true;
+            sessionVerified = true;
+          }
         }
       }
 

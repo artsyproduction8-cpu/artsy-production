@@ -208,7 +208,12 @@ export async function POST(request: NextRequest) {
         }
         if (isSupabaseConfigured && dbClient) {
           try {
-            await dbClient.from('users').update({ updated_at: new Date().toISOString() }).eq('id', existingUser.id);
+            const updates: any = { updated_at: new Date().toISOString() };
+            if (!existingUser.token_version || Number(existingUser.token_version) < 2) {
+              updates.token_version = 2;
+              resolvedUser.token_version = 2;
+            }
+            await dbClient.from('users').update(updates).eq('id', existingUser.id);
           } catch {}
         }
       } else {
@@ -223,6 +228,7 @@ export async function POST(request: NextRequest) {
           full_name: defaultName,
           role: defaultRole,
           status: 'active',
+          token_version: 2,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -326,7 +332,7 @@ export async function POST(request: NextRequest) {
         full_name: resolvedUser.full_name ?? null,
         onboarded: Boolean(resolvedUser.onboarded),
         status: 'active',
-        token_version: Number(resolvedUser.token_version || 2),
+        token_version: Number(resolvedUser.token_version && Number(resolvedUser.token_version) >= 2 ? resolvedUser.token_version : 2),
       };
 
       if (finalRole === 'freelancer') {

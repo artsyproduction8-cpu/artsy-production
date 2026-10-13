@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute
-    const maxRequests = pathname.startsWith('/api/auth') ? 5 : 100;
+    const maxRequests = pathname.startsWith('/api/auth') ? 30 : 100;
 
     const record = ipRequestMap.get(ip);
 
@@ -51,8 +51,10 @@ export async function middleware(request: NextRequest) {
     }
 
     const response = NextResponse.next();
-    response.headers.set('X-RateLimit-Limit', maxRequests.toString());
-    response.headers.set('X-RateLimit-Remaining', Math.max(0, maxRequests - (record?.count || 1)).toString());
+    if (!pathname.startsWith('/api/auth')) {
+      response.headers.set('X-RateLimit-Limit', maxRequests.toString());
+      response.headers.set('X-RateLimit-Remaining', Math.max(0, maxRequests - (record?.count || 1)).toString());
+    }
     return response;
   }
 

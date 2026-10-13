@@ -4,7 +4,7 @@
  */
 
 /**
- * Formats a name to First Name + Last Initial (e.g., "Aarav Sen" -> "Aarav S.")
+ * Formats a name to First Name + Last Initial (e.g., "Artsy Creator" -> "Artsy C.")
  */
 export function formatPublicCreatorName(fullName?: string | null): string {
   if (!fullName || !fullName.trim()) return 'Artsy Creator';

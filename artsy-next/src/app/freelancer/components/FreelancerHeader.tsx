@@ -5,14 +5,16 @@ import { useAuth, logout } from '@/lib/auth';
 
 export default function FreelancerHeader() {
   const { user } = useAuth();
-  const creatorName = user?.full_name || 'Aarav Sen';
-  const creatorInitials =
-    creatorName
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'AS';
+  const creatorName = user?.full_name || '';
+  const creatorInitials = creatorName.trim()
+    ? creatorName
+        .split(/\s+/)
+        .filter((n) => n.length > 0)
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : 'CR';
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A] border-b border-[#262626]">

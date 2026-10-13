@@ -32,6 +32,7 @@ export async function GET(request: Request) {
       const authHeader = Buffer.from(`${b2KeyId}:${b2Key}`).toString('base64');
       const authRes = await fetch('https://api.backblazeb2.com/b2api/v2/b2_authorize_account', {
         headers: { Authorization: `Basic ${authHeader}` },
+        signal: AbortSignal.timeout(4000),
       });
 
       if (authRes.ok) {
@@ -43,6 +44,7 @@ export async function GET(request: Request) {
           method: 'POST',
           headers: { Authorization: authorizationToken },
           body: JSON.stringify({ accountId }),
+          signal: AbortSignal.timeout(4000),
         });
 
         if (bucketRes.ok) {
@@ -96,6 +98,7 @@ export async function GET(request: Request) {
       if (bunnyLibraryId) {
         const libRes = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}`, {
           headers: { AccessKey: bunnyApiKey },
+          signal: AbortSignal.timeout(4000),
         });
         if (libRes.ok) {
           const libJson = await libRes.json();
@@ -131,6 +134,7 @@ export async function GET(request: Request) {
     try {
       const projRes = await fetch('https://api.supabase.com/v1/projects/cldewthefsteotdvftlj', {
         headers: { Authorization: `Bearer ${supabaseMgmtToken}` },
+        signal: AbortSignal.timeout(4000),
       });
       if (projRes.ok) {
         const projData = await projRes.json();
@@ -168,6 +172,7 @@ export async function GET(request: Request) {
     try {
       const vRes = await fetch('https://api.vercel.com/v2/user', {
         headers: { Authorization: `Bearer ${vercelToken}` },
+        signal: AbortSignal.timeout(4000),
       });
       if (vRes.ok) {
         const vUser = await vRes.json();
@@ -269,6 +274,7 @@ export async function GET(request: Request) {
     try {
       const cfRes = await fetch('https://api.cloudflare.com/client/v4/user/tokens/verify', {
         headers: { Authorization: `Bearer ${cloudflareToken}` },
+        signal: AbortSignal.timeout(4000),
       });
       if (cfRes.ok) {
         cloudflareData = {

@@ -11,7 +11,7 @@ export default function FreelancerAgreementPage() {
   const [ndaChecked, setNdaChecked] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const creatorName = user?.full_name || 'Aarav Sen';
+  const creatorName = user?.full_name || '';
 
   const handleSign = () => {
     if (!ndaChecked) {

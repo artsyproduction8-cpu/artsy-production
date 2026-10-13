@@ -48,6 +48,7 @@ export async function checkRateLimit(
           ['EXPIRE', key, windowSeconds, 'NX'],
           ['TTL', key],
         ]),
+        signal: AbortSignal.timeout(3000),
       });
 
       if (res.ok) {

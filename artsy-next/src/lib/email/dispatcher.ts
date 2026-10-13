@@ -71,6 +71,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(6000),
     });
 
     const data = await response.json();
@@ -113,6 +114,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify(sandboxPayload),
+        signal: AbortSignal.timeout(6000),
       });
 
       const fallbackData = await fallbackRes.json();

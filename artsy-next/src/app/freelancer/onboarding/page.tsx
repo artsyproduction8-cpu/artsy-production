@@ -59,8 +59,8 @@ export default function FreelancerOnboarding() {
 
     const currentUser = getCurrentUser();
     const candidateUserId = currentUser?.id || `usr-creator-${Date.now().toString().slice(-6)}`;
-    const candidateEmail = currentUser?.email || 'artsyproduction8@gmail.com';
-    const candidatePhone = currentUser?.phone || '+91 9876543211';
+    const candidateEmail = currentUser?.email || '';
+    const candidatePhone = currentUser?.phone || '';
 
     try {
       const res = await fetch('/api/freelancer/onboard', {
@@ -191,7 +191,7 @@ export default function FreelancerOnboarding() {
                         required
                         value={alias}
                         onChange={(e) => setAlias(e.target.value)}
-                        placeholder="e.g. Kinetik Cuts / Aarav Sen"
+                        placeholder="e.g. Creator Alias / Full Name"
                         className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
                       />
                       <span className="text-[11px] text-[#86868B]">Shown on internal production cue sheets</span>

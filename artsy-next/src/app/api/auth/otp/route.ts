@@ -222,11 +222,9 @@ export async function POST(request: NextRequest) {
         }
       } else {
         isNewUser = true;
-        // Default role for any new user MUST be 'client' (unless super admin)
-        const defaultRole = isSuperAdminIdentifier ? 'super_admin' : 'client';
-        const defaultName = isSuperAdminIdentifier
-          ? 'Super Admin'
-          : (cleanEmail ? cleanEmail.split('@')[0] : 'Valued Client');
+        const requestedRole: 'client' | 'freelancer' = role === 'freelancer' ? 'freelancer' : 'client';
+        const defaultRole = isSuperAdminIdentifier ? 'super_admin' : requestedRole;
+        const defaultName = isSuperAdminIdentifier ? 'Super Admin' : null;
 
         const newUserData = {
           email: isSuperAdminIdentifier ? 'lilsammy96@gmail.com' : (cleanEmail || `${cleanPhone}@artsyprod.studio`),
@@ -334,21 +332,25 @@ export async function POST(request: NextRequest) {
         role: finalRole,
         phone: resolvedUser.phone || formattedPhone || (cleanPhone ? `+91${cleanPhone}` : ''),
         email: resolvedUser.email || cleanEmail || '',
+        full_name: resolvedUser.full_name || 'Valued Member',
+        onboarded: Boolean(resolvedUser.onboarded),
         onboarding_status,
         tracking_id,
         rejection_reason,
         rejected_at,
-        full_name: resolvedUser.full_name || 'Valued Member',
         status: 'active',
       };
 
       const response = NextResponse.json({
         success: true,
+        isNewUser,
         user: {
           id: userPayload.id,
           role: userPayload.role,
           phone: userPayload.phone,
           email: userPayload.email,
+          full_name: userPayload.full_name,
+          onboarded: userPayload.onboarded,
           onboarding_status: userPayload.onboarding_status,
           tracking_id: userPayload.tracking_id,
           rejection_reason: userPayload.rejection_reason,

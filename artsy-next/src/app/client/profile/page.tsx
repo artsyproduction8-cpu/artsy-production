@@ -10,17 +10,17 @@ export default function ClientProfilePage() {
   const { user } = useAuth();
 
   // Profile local state
-  const [fullName, setFullName] = useState(user?.full_name || 'Sneha Patel');
-  const [email, setEmail] = useState(user?.email || 'sneha@weddingfilms.in');
-  const [phone, setPhone] = useState(user?.phone || '+919876543210');
+  const [fullName, setFullName] = useState(user?.full_name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phone || '');
 
   // Billing address state
-  const [companyName, setCompanyName] = useState('Patel Wedding Studios LLP');
-  const [addressLine, setAddressLine] = useState('402, Signature One, S.G. Highway');
-  const [city, setCity] = useState('Ahmedabad');
-  const [state, setState] = useState('Gujarat');
-  const [pincode, setPincode] = useState('380054');
-  const [gstin, setGstin] = useState('24ABCDE1234F1Z5');
+  const [companyName, setCompanyName] = useState('');
+  const [addressLine, setAddressLine] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [gstin, setGstin] = useState('');
 
   // Notification Preferences
   const [notifyWhatsApp, setNotifyWhatsApp] = useState(true);

@@ -24,15 +24,15 @@ interface ClientProfileData {
 
 const DEFAULT_PROFILE: ClientProfileData = {
   accountType: 'b2c',
-  displayName: 'Sneha Patel Films',
-  legalName: 'Sneha Patel',
+  displayName: '',
+  legalName: '',
   gstin: '',
-  phone: '+91 9876543210',
-  email: 'client@artsyprod.studio',
+  phone: '',
+  email: '',
   ingestProvider: 'Google Drive Enterprise',
-  ingestLink: 'https://drive.google.com/drive/folders/artsy-raw-ingest-8841',
-  brandLuts: 'Kodak 2383 Film Print Emulation, Warm Sangeet Tones',
-  collaborators: 'director@kapoorstudios.in, producer@kapoorstudios.in',
+  ingestLink: '',
+  brandLuts: '',
+  collaborators: '',
 };
 
 function ClientStudioSetupContent() {
@@ -43,6 +43,7 @@ function ClientStudioSetupContent() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<ClientProfileData>(DEFAULT_PROFILE);
   const [savedNotice, setSavedNotice] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // OTP Verification Modal State
   const [otpModal, setOtpModal] = useState<{
@@ -74,49 +75,62 @@ function ClientStudioSetupContent() {
     return () => clearInterval(interval);
   }, [otpModal.countdown]);
 
-  // Load existing profile from localStorage on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('artsy_client_profile');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          setProfile((prev) => ({ ...prev, ...parsed }));
-        } else if (user) {
-          setProfile((prev) => ({
-            ...prev,
-            displayName: user.full_name || prev.displayName,
-            legalName: user.full_name || prev.legalName,
-            phone: user.phone || prev.phone,
-            email: user.email || prev.email,
-          }));
-        }
-      } catch { }
+    if (user) {
+      setProfile((prev) => ({
+        ...prev,
+        displayName: user.full_name || '',
+        legalName: user.full_name || '',
+        phone: user.phone || '',
+        email: user.email || '',
+      }));
     }
   }, [user]);
 
   // Save profile handler
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('artsy_client_profile', JSON.stringify(profile));
-      if (user) {
-        setCurrentUser({
-          ...user,
-          full_name: profile.displayName || user.full_name,
-          phone: profile.phone,
-          email: profile.email,
-        });
-      }
+    setError(null);
+    if (!profile.legalName.trim()) {
+      setError('Full name is required');
+      return;
     }
-    setSavedNotice(true);
-    if (isOnboarding) {
-      setTimeout(() => {
-        const dest = sessionStorage.getItem('artsy_redirect') || '/client/projects';
-        router.push(dest);
-      }, 1200);
-    } else {
-      setTimeout(() => setSavedNotice(false), 3500);
+
+    try {
+      const res = await fetch('/api/user/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: profile.legalName,
+          display_name: profile.displayName || profile.legalName,
+        }),
+      });
+
+      if (res.ok) {
+        if (user) {
+          setCurrentUser({
+            ...user,
+            full_name: profile.legalName.trim(),
+            display_name: (profile.displayName || profile.legalName).trim(),
+            phone: profile.phone,
+            email: profile.email,
+            onboarded: true,
+          });
+        }
+        await fetch('/api/user/complete-onboarding', { method: 'POST' });
+        setSavedNotice(true);
+        if (isOnboarding) {
+          const dest = sessionStorage.getItem('artsy_redirect') || '/client';
+          router.push(dest);
+        } else {
+          setTimeout(() => setSavedNotice(false), 3500);
+        }
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Failed to save profile');
+      }
+    } catch {
+      setError('Failed to save profile');
     }
   };
 
@@ -288,6 +302,11 @@ function ClientStudioSetupContent() {
 
             {/* Profile Form */}
             <form onSubmit={handleSave} className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E5E7] shadow-xs space-y-7">
+              {error && (
+                <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs font-medium">
+                  {error}
+                </div>
+              )}
               {/* Identity Block */}
               <div className="space-y-4">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-[#86868B]">
@@ -303,21 +322,22 @@ function ClientStudioSetupContent() {
                       type="text"
                       value={profile.displayName}
                       onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
-                      placeholder={profile.accountType === 'b2b' ? 'e.g. S. Kapoor Studios' : 'e.g. Sneha Patel Films'}
+                      placeholder={profile.accountType === 'b2b' ? 'e.g. Studio Agency' : 'e.g. Studio Name'}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E5E7] bg-[#F5F5F7] text-xs font-semibold text-[#1D1D1F] focus:bg-white focus:border-[#3B82F6] focus:outline-none"
                     />
                   </div>
 
-                  <div>
+                  <div className="space-y-2">
                     <label className="block text-xs font-bold text-[#1D1D1F] mb-1.5">
-                      {profile.accountType === 'b2b' ? 'Registered Company Name' : 'Full Legal Name (For Billing)'}
+                      {profile.accountType === 'b2b' ? 'Registered Company Name *' : 'Full Name *'}
                     </label>
                     <input
                       type="text"
                       value={profile.legalName}
                       onChange={(e) => setProfile({ ...profile, legalName: e.target.value })}
-                      placeholder={profile.accountType === 'b2b' ? 'e.g. S. Kapoor Studios Private Limited' : 'e.g. Sneha Patel'}
+                      placeholder="Your full name (as on ID)"
                       className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E5E7] bg-[#F5F5F7] text-xs font-semibold text-[#1D1D1F] focus:bg-white focus:border-[#3B82F6] focus:outline-none"
+                      required
                     />
                   </div>
                 </div>

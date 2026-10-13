@@ -20,58 +20,7 @@ interface NotificationItem {
   category?: 'projects' | 'payments' | 'general';
 }
 
-const FALLBACK_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'notif-001',
-    event_number: 22,
-    title: 'Master Cut Ready for Review',
-    message: 'Your Udaipur Palace Royal Wedding highlight master cut is ready for timestamped review.',
-    action_url: '/client/review',
-    read: false,
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    category: 'projects',
-  },
-  {
-    id: 'notif-002',
-    event_number: 4,
-    title: 'GST Tax Invoice Generated',
-    message: 'Statutory tax invoice #ART-INV-2026-004 (₹8,000) is now available in your Vault.',
-    action_url: '/client/invoices',
-    read: false,
-    created_at: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-    category: 'payments',
-  },
-  {
-    id: 'notif-003',
-    event_number: 11,
-    title: 'Editor Assigned to Workroom',
-    message: 'Senior Wedding Editor Kabir Sharma was assigned to project AP-8841.',
-    action_url: '/client/projects',
-    read: true,
-    created_at: new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString(),
-    category: 'projects',
-  },
-  {
-    id: 'notif-004',
-    event_number: 2,
-    title: 'Payment Confirmed & Vault Locked',
-    message: 'Razorpay payment receipt rzp_pay_9921 verified. ₹8,000 held in production escrow.',
-    action_url: '/client/invoices',
-    read: true,
-    created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    category: 'payments',
-  },
-  {
-    id: 'notif-005',
-    event_number: 8,
-    title: 'Media Ingest Verified',
-    message: '142 GB raw Sony FX6 and RED log footage verified with zero checksum errors.',
-    action_url: '/client/files',
-    read: true,
-    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    category: 'projects',
-  },
-];
+const FALLBACK_NOTIFICATIONS: NotificationItem[] = [];
 
 export default function ClientNotificationsPage() {
   const { user } = useAuth();
@@ -111,7 +60,7 @@ export default function ClientNotificationsPage() {
       } catch (err) {
         console.warn('Failed to load from Supabase notifications, using fallback', err);
       }
-      setNotifications(FALLBACK_NOTIFICATIONS);
+      setNotifications([]);
       setLoading(false);
     }
 

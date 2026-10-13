@@ -267,8 +267,8 @@ function LoginFormContent() {
   const [step, setStep] = useState<'credentials' | 'otp'>(initialStep);
 
   // Dual Credentials: BOTH phone and email are required
-  const [phoneInput, setPhoneInput] = useState(initialStep === 'otp' ? '9876543210' : '');
-  const [emailInput, setEmailInput] = useState(initialStep === 'otp' ? 'client@artsyprod.studio' : '');
+  const [phoneInput, setPhoneInput] = useState('');
+  const [emailInput, setEmailInput] = useState('');
   const [otpInput, setOtpInput] = useState('');
 
   // Countdown timer for OTP
@@ -398,6 +398,9 @@ function LoginFormContent() {
 
     setIsLoading(true);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
       const bodyPayload = {
         phone: cleanDigits,
@@ -410,7 +413,9 @@ function LoginFormContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(bodyPayload),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       const data = await res.json().catch(() => ({}));
 
@@ -436,8 +441,13 @@ function LoginFormContent() {
         otpInputRef.current?.focus();
       }, 100);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Unable to send verification code. Please try again.';
-      setError(msg);
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+      } else {
+        const msg = err instanceof Error ? err.message : 'Unable to send verification code. Please try again.';
+        setError(msg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -457,6 +467,9 @@ function LoginFormContent() {
 
     setIsLoading(true);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
       const cleanDigits = phoneInput.replace(/\D/g, '');
       const cleanEmail = emailInput.trim().toLowerCase();
@@ -471,7 +484,9 @@ function LoginFormContent() {
           action: 'verify',
           role: isFreelancerIntent ? 'freelancer' : 'client',
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       const data = await res.json().catch(() => ({}));
 
@@ -481,42 +496,58 @@ function LoginFormContent() {
         throw new Error(data.error || 'Incorrect verification code. Please verify and try again.');
       }
 
-      // Initialize session
-      if (isFreelancerIntent) {
-        const creatorUser: ArtsyUser = {
-          id: data.user?.id || `usr-creator-${Date.now().toString().slice(-6)}`,
-          email: cleanEmail,
-          phone: `+91${cleanDigits}`,
-          full_name: 'Creator Candidate',
-          role: 'freelancer',
-          status: 'active',
-          onboarding_status: 'pending',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setCurrentUser(creatorUser);
+      // Initialize session using ONLY verified server response
+      const serverRole = data.user?.role || (isFreelancerIntent ? 'freelancer' : 'client');
+      const verifiedUser: ArtsyUser = {
+        id: data.user?.id || (cleanEmail ? `usr-${cleanEmail.split('@')[0]}` : `usr-${Date.now().toString().slice(-6)}`),
+        role: serverRole, // ← ALWAYS from server
+        phone: data.user?.phone || `+91${cleanDigits}`,
+        email: data.user?.email || cleanEmail,
+        full_name: data.user?.full_name || (serverRole === 'freelancer' ? 'Creator Candidate' : ''),
+        onboarded: data.user?.onboarded ?? false,
+        onboarding_status: data.user?.onboarding_status || null,
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
 
-        // Creator Flow: Proceed to creator application form filling
-        router.push('/freelancer/onboarding');
+      setCurrentUser(verifiedUser);
+
+      // Clear the signup intent
+      try {
+        sessionStorage.removeItem('artsy_signup_intent');
+        localStorage.removeItem('artsy_signup_intent');
+      } catch {}
+
+      // Route strictly by REAL role:
+      if (serverRole === 'admin' || serverRole === 'super_admin') {
+        router.push('/admin');
+      } else if (serverRole === 'freelancer') {
+        if (data.user?.onboarding_status === 'approved') {
+          router.push('/freelancer');
+        } else if (data.user?.onboarding_status === 'pending' || data.user?.onboarding_status === 'pending_review') {
+          router.push('/freelancer/pending-approval');
+        } else if (data.user?.onboarding_status === 'rejected') {
+          router.push('/freelancer/rejected');
+        } else {
+          router.push('/freelancer/onboarding');
+        }
       } else {
-        const clientUser: ArtsyUser = {
-          id: data.user?.id || `usr-client-${Date.now().toString().slice(-6)}`,
-          email: cleanEmail,
-          phone: `+91${cleanDigits}`,
-          full_name: 'Studio Client',
-          role: 'client',
-          status: 'active',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        setCurrentUser(clientUser);
-
-        // Client Flow: Proceed to Workspace & Ingest Setup form filling
-        router.push('/client/studio?onboarding=true');
+        // Client
+        if (data.user?.onboarded === false) {
+          router.push('/client/studio?onboarding=true');
+        } else {
+          router.push(sessionStorage.getItem('artsy_redirect') || '/client');
+        }
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Invalid code. Please try again.';
-      setError(msg);
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+      } else {
+        const msg = err instanceof Error ? err.message : 'Invalid code. Please try again.';
+        setError(msg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -527,6 +558,9 @@ function LoginFormContent() {
     if (countdown > 0) return;
     setError(null);
     setIsLoading(true);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
       const cleanDigits = phoneInput.replace(/\D/g, '');
@@ -541,11 +575,18 @@ function LoginFormContent() {
           role: isFreelancerIntent ? 'freelancer' : 'client',
           action: 'send',
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       setCountdown(45);
-    } catch {
-      setError('Unable to resend verification code. Please try again.');
+    } catch (err: unknown) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out. Please try again.');
+      } else {
+        setError('Unable to resend verification code. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

@@ -25,10 +25,12 @@ export interface ArtsyUser {
   id: string;
   email: string;
   full_name: string;
+  display_name?: string;
   phone?: string;
   role: UserRole;
   status: UserStatus;
   avatar_url?: string;
+  onboarded?: boolean;
   agreement_accepted?: boolean;
   agreement_accepted_at?: string;
   agreement_version?: string;
@@ -55,9 +57,9 @@ export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
   },
   client: {
     id: 'usr-client-001',
-    email: 'client@artsyprod.studio',
-    full_name: 'Sneha Patel',
-    phone: '+91 9876543210',
+    email: 'client@artsyproduction.com',
+    full_name: 'Client Partner',
+    phone: '',
     role: 'client',
     status: 'active',
     avatar_url: '',
@@ -66,9 +68,9 @@ export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
   },
   freelancer: {
     id: 'usr-editor-002',
-    email: 'editor@artsyprod.studio',
-    full_name: 'Aarav Sen',
-    phone: '+91 9876543211',
+    email: 'creator@artsyproduction.com',
+    full_name: 'Creator Partner',
+    phone: '',
     role: 'freelancer',
     status: 'active',
     avatar_url: '',
@@ -126,10 +128,29 @@ export const setCurrentUser = (user: ArtsyUser | null) => {
       body: JSON.stringify({ user }),
     }).catch(() => {});
   } else {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+    const LOCAL_KEYS = [
+      'artsy_auth_user',
+      'artsy_client_profile',
+      'artsy_creator_profile',
+      'artsy_creator_agreements',
+      'artsy_active_booking',
+      'artsy_quotes',
+      'artsy_financial_ledger',
+      'artsy_signup_intent',
+      'artsy_pending_auth',
+      'artsy_redirect',
+    ];
+    LOCAL_KEYS.forEach((key) => {
+      try { localStorage.removeItem(key); } catch {}
+    });
+
+    try { sessionStorage.clear(); } catch {}
+
     try {
-      document.cookie = `artsy_auth_token=; path=/; max-age=0; SameSite=Lax`;
+      document.cookie = 'artsy_auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+      document.cookie = 'artsy_auth_token=; path=/; max-age=0; SameSite=Lax';
     } catch {}
+
     // Invalidate server HttpOnly cookie
     fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
   }
@@ -172,14 +193,37 @@ export const hasAnyRole = (roles: UserRole[]): boolean => {
 };
 
 // Logout user and redirect to login
-export const logout = (redirectTo: string = '/auth/login') => {
-  setCurrentUser(null);
-  if (typeof window !== 'undefined') {
-    fetch('/api/auth/session', { method: 'DELETE' }).finally(() => {
-      window.location.href = redirectTo;
-    });
+export function logout(redirectTo: string = '/auth/login'): void {
+  if (typeof window === 'undefined') return;
+
+  const LOCAL_KEYS = [
+    'artsy_auth_user',
+    'artsy_client_profile',
+    'artsy_creator_profile',
+    'artsy_creator_agreements',
+    'artsy_active_booking',
+    'artsy_quotes',
+    'artsy_financial_ledger',
+    'artsy_signup_intent',
+    'artsy_pending_auth',
+    'artsy_redirect',
+  ];
+  LOCAL_KEYS.forEach((key) => {
+    try { localStorage.removeItem(key); } catch {}
+  });
+
+  try { sessionStorage.clear(); } catch {}
+
+  document.cookie = 'artsy_auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+  document.cookie = 'artsy_auth_token=; path=/; max-age=0; SameSite=Lax';
+
+  fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
+
+  const destination = redirectTo || '/auth/login';
+  if (window.location.pathname !== destination) {
+    window.location.href = destination;
   }
-};
+}
 
 export const signOut = logout;
 

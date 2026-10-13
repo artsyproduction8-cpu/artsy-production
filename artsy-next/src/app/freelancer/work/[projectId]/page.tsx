@@ -151,7 +151,7 @@ export default function FreelancerWorkView() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            phone: '+919876543210',
+            phone: user?.phone || '',
             message: `⚠️ Artsy Editorial Alert: Check-in for Project #${projectId} flagged as ${status.toUpperCase()}: "${message}"`,
             projectId,
           }),
@@ -199,7 +199,7 @@ export default function FreelancerWorkView() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: order?.clients?.phone || '+919876543210',
+          phone: order?.clients?.phone || '',
           eventType: 'QA_SUBMITTED',
           projectId: projectId || 'AP-8841',
         }),

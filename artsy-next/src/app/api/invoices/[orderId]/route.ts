@@ -8,8 +8,8 @@ import { getAuthenticatedUser } from '@/lib/auth-cookie';
 async function resolveOrderDetails(orderId: string) {
   let totalPaise = 800000;
   let clientName = 'Artsy Client';
-  let clientPhone = '+919876543210';
-  let clientEmail = 'client@artsyproduction.in';
+  let clientPhone = '';
+  let clientEmail = '';
   let serviceName = 'Wedding Highlight Cinema (Post-Production)';
   let clientId: string | null = null;
   let orderFound = false;

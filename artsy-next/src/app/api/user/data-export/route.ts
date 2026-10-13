@@ -98,9 +98,9 @@ export async function GET(request: NextRequest) {
       fiduciary: 'Artsy Production',
       user: {
         id: userId,
-        phone: '+919876543210',
-        email: 'client@artsyproduction.in',
-        role: 'client'
+        phone: authUser?.phone || '',
+        email: authUser?.email || '',
+        role: authUser?.role || 'client'
       },
       projects: [],
       orders: [],

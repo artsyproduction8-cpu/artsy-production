@@ -56,9 +56,10 @@ export async function GET() {
   );
 
   if (isMetaTokenPresent && metaPhoneId) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2500);
       const metaRes = await fetch(`https://graph.facebook.com/v23.0/${metaPhoneId}`, {
         headers: { Authorization: `Bearer ${metaAccessToken}` },
         signal: controller.signal,
@@ -75,6 +76,8 @@ export async function GET() {
         waError = errJson.error?.message || `Meta Graph API returned status ${metaRes.status}`;
       }
     } catch (fetchErr: any) {
+      clearTimeout(timeoutId);
+      console.warn('[Health] Meta API timeout or error:', fetchErr.message);
       waStatus = 'disconnected';
       waSessionStatus = 'disconnected';
       waError = fetchErr.name === 'AbortError' ? 'Meta Graph API timeout' : (fetchErr.message || 'Connection failed');

@@ -22,67 +22,7 @@ interface FileRecordItem {
   created_at: string;
 }
 
-const FALLBACK_FILES: FileRecordItem[] = [
-  {
-    id: 'f-001',
-    project_id: 'AP-8841',
-    project_title: 'Udaipur Palace Royal Wedding — Master Highlight',
-    file_name: 'Udaipur_Royal_Wedding_Master_ProRes422HQ_4K.mov',
-    file_size_bytes: 48318382080, // ~45 GB
-    file_type: 'master_delivery',
-    storage_provider: 'b2',
-    retention_delete_at: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(), // 25 days left
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'delivered',
-  },
-  {
-    id: 'f-002',
-    project_id: 'AP-8841',
-    project_title: 'Udaipur Palace Royal Wedding — Master Highlight',
-    file_name: 'FX6_Day1_Vows_SLog3_A001_C001.mxf',
-    file_size_bytes: 34359738368, // ~32 GB
-    file_type: 'raw_footage',
-    storage_provider: 'b2',
-    retention_delete_at: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(), // 4 days left (Expiring Soon)
-    created_at: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'expiring_soon',
-  },
-  {
-    id: 'f-003',
-    project_id: 'AP-8841',
-    project_title: 'Udaipur Palace Royal Wedding — Master Highlight',
-    file_name: 'Stereo_Audio_Mix_Master_24bit48k.wav',
-    file_size_bytes: 157286400, // ~150 MB
-    file_type: 'audio_stem',
-    storage_provider: 'b2',
-    retention_delete_at: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days left (Expiring Soon)
-    created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'expiring_soon',
-  },
-  {
-    id: 'f-004',
-    project_id: 'AP-8845',
-    project_title: 'Autumn Commercial Brand Campaign & Direct UGC',
-    file_name: 'Autumn_Campaign_RoughCut_v02_Proxy1080p.mp4',
-    file_size_bytes: 3221225472, // ~3 GB
-    file_type: 'proxy',
-    storage_provider: 'b2',
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'in_progress',
-  },
-  {
-    id: 'f-005',
-    project_id: 'AP-8845',
-    project_title: 'Autumn Commercial Brand Campaign & Direct UGC',
-    file_name: 'RED_Komodo_6K_Commercial_Ingest_Archive.zip',
-    file_size_bytes: 85899345920, // ~80 GB
-    file_type: 'raw_footage',
-    storage_provider: 'b2',
-    retention_delete_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'in_progress',
-  },
-];
+const FALLBACK_FILES: FileRecordItem[] = [];
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -268,6 +208,20 @@ export default function ClientFilesPage() {
             {loading ? (
               <div className="text-center py-16 text-xs text-[#86868B]">
                 Loading file records...
+              </div>
+            ) : files.length === 0 ? (
+              <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8 space-y-3">
+                <div className="text-4xl mb-3">📁</div>
+                <h3 className="text-lg font-semibold text-[#1D1D1F]">No files uploaded yet</h3>
+                <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+                  Raw camera footage, HLS streaming proxies, and master delivery exports will appear here with automated 15-day and 30-day retention policies.
+                </p>
+                <Link
+                  href="/book"
+                  className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm"
+                >
+                  Book New Project →
+                </Link>
               </div>
             ) : groupedFiles.length === 0 ? (
               <div className="bg-white border border-[#E5E5E7] rounded-2xl p-12 text-center space-y-2">

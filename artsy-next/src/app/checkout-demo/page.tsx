@@ -5,9 +5,9 @@ import RazorpayCheckoutButton from '@/components/RazorpayCheckoutButton';
 
 export default function CheckoutDemoPage() {
   const [rupees, setRupees] = useState<number>(500);
-  const [name, setName] = useState<string>('Test Client');
-  const [email, setEmail] = useState<string>('client@artsyproduction.in');
-  const [contact, setContact] = useState<string>('9876543210');
+  const [name, setName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [contact, setContact] = useState<string>('');
   const [paymentResult, setPaymentResult] = useState<{
     order_id: string;
     payment_id: string;

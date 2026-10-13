@@ -7,18 +7,20 @@ import { useAuth, logout } from '@/lib/auth';
 export default function FreelancerSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
-  const creatorName = user?.full_name || 'Aarav Sen';
-  const creatorInitials =
-    creatorName
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'AS';
+  const creatorName = user?.full_name || 'Creator Partner';
+  const creatorInitials = creatorName.trim()
+    ? creatorName
+        .split(/\s+/)
+        .filter((n) => n.length > 0)
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : 'CP';
 
   const navItems = [
     { label: 'Active Job Slate', href: '/freelancer' },
-    { label: 'Project Workroom #8841', href: '/freelancer/work/AP-8841' },
+    { label: 'Project Workroom', href: '/freelancer' },
     { label: 'Earnings Ledger & Payouts', href: '/freelancer/payouts' },
     { label: 'Software & Gear Profile', href: '/freelancer/profile' },
     { label: 'Master Agreement & NDA', href: '/freelancer/agreement' },

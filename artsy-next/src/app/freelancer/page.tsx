@@ -13,10 +13,6 @@ export default function FreelancerDashboard() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('demo') === 'true' || urlParams.get('approved') === 'true') {
-          setCurrentUser(PRESET_USERS.freelancer);
-        }
         const stored = localStorage.getItem('artsy_creator_profile');
         if (stored) setProfileData(JSON.parse(stored));
       } catch {}
@@ -94,8 +90,8 @@ export default function FreelancerDashboard() {
     setTimeout(() => setPulseSubmitted(false), 3000);
   };
 
-  const creatorName = user?.full_name || 'Aarav Sen';
-  const creatorInitials = creatorName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'AS';
+  const creatorName = user?.full_name || 'Creator Partner';
+  const creatorInitials = creatorName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'CP';
 
   if (isIncomplete) {
     return (
@@ -368,10 +364,10 @@ export default function FreelancerDashboard() {
                         </span>
                       </div>
                       <h1 className="text-3xl font-extrabold tracking-tight text-white">
-                        Aarav Sen
+                        {creatorName}
                       </h1>
                       <p className="text-xs tracking-wider text-[#86868B] mt-1 font-medium">
-                        Kinetik Studio • Mumbai
+                        Artsy Creator Network
                       </p>
                     </div>
                     <div className="mt-8 pt-4 border-t border-white/10 space-y-1">
@@ -592,6 +588,16 @@ export default function FreelancerDashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {2 - acceptedJobs.length - declinedJobs.length <= 0 ? (
+                    <div className="col-span-full bg-white rounded-2xl border border-dashed border-[#E5E5E7] p-12 text-center space-y-3">
+                      <div className="text-3xl">📥</div>
+                      <h3 className="text-base font-bold text-[#1D1D1F]">No dispatch offers pending</h3>
+                      <p className="text-xs text-[#86868B] max-w-sm mx-auto">
+                        New client ingest slates matching your editorial specialization will appear here as orders enter production.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
                   {/* Job Card 01 */}
                   {!declinedJobs.includes('AP-9042') && (
                     <div className="bg-white rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col justify-between">
@@ -794,6 +800,8 @@ export default function FreelancerDashboard() {
                         )}
                       </div>
                     </div>
+                  )}
+                    </>
                   )}
                 </div>
               </section>

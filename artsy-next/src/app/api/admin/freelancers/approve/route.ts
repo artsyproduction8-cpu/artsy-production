@@ -25,9 +25,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'creatorId is required' }, { status: 400 });
     }
 
-    const recipientEmail = email || 'artsyproduction8@gmail.com';
-    const recipientPhone = phone || '+91 9876543211';
-    const creatorName = name || 'Editor';
+    const recipientEmail = email || '';
+    const recipientPhone = phone || '';
+    const creatorName = name || 'Creator';
 
     if (action === 'approve') {
       // 1. Update Supabase if connected

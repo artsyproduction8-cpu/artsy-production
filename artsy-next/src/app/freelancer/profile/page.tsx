@@ -9,15 +9,13 @@ export default function FreelancerProfilePage() {
   const { user } = useAuth();
 
   // Profile data states
-  const [alias, setAlias] = useState('Aarav Sen');
-  const [showreelUrl, setShowreelUrl] = useState('https://vimeo.com/aaravsen/cuts2025');
-  const [philosophy, setPhilosophy] = useState(
-    'Rhythm-driven micro-cutting, naturalistic audio soundscapes, color grading with Kodak 2383 film density emulations, and narrative arc pacing tailored for commercial impact.'
-  );
+  const [alias, setAlias] = useState(user?.full_name || '');
+  const [showreelUrl, setShowreelUrl] = useState('');
+  const [philosophy, setPhilosophy] = useState('');
 
   // Contact details
-  const [email, setEmail] = useState(user?.email || 'editor@artsyprod.studio');
-  const [phone, setPhone] = useState(user?.phone || '+91 9876543211');
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phone || '');
 
   // Change contact modals
   const [isChangingPhone, setIsChangingPhone] = useState(false);
@@ -56,20 +54,20 @@ export default function FreelancerProfilePage() {
   ]);
 
   // Banking and compliance details
-  const [bankName, setBankName] = useState('HDFC Bank');
-  const [bankAccount, setBankAccount] = useState('50100482910481');
-  const [ifsc, setIfsc] = useState('HDFC0001234');
-  const [pan, setPan] = useState('ABCDE1234F');
-  const [legalName, setLegalName] = useState('Aarav Sen');
+  const [bankName, setBankName] = useState('');
+  const [bankAccount, setBankAccount] = useState('');
+  const [ifsc, setIfsc] = useState('');
+  const [pan, setPan] = useState('');
+  const [legalName, setLegalName] = useState(user?.full_name || '');
   const [showMaskedAccount, setShowMaskedAccount] = useState(true);
 
   // Change bank details modal/drawer
   const [isChangingBank, setIsChangingBank] = useState(false);
-  const [tempBankName, setTempBankName] = useState('HDFC Bank');
-  const [tempAccount, setTempAccount] = useState('50100482910481');
-  const [tempIfsc, setTempIfsc] = useState('HDFC0001234');
-  const [tempLegalName, setTempLegalName] = useState('Aarav Sen');
-  const [tempPan, setTempPan] = useState('ABCDE1234F');
+  const [tempBankName, setTempBankName] = useState('');
+  const [tempAccount, setTempAccount] = useState('');
+  const [tempIfsc, setTempIfsc] = useState('');
+  const [tempLegalName, setTempLegalName] = useState(user?.full_name || '');
+  const [tempPan, setTempPan] = useState('');
 
   // Save toast notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -514,7 +512,7 @@ export default function FreelancerProfilePage() {
                       required
                       value={alias}
                       onChange={(e) => setAlias(e.target.value)}
-                      placeholder="e.g. Kinetik Cuts / Aarav Sen"
+                      placeholder="e.g. Creator Alias / Full Name"
                       className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
                     />
                   </div>

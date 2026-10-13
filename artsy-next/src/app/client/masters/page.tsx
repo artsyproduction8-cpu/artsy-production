@@ -14,24 +14,11 @@ interface MasterDeliverable {
   downloads: { label: string; format: string; size: string; url: string }[];
 }
 
-const MASTERS: MasterDeliverable[] = [
-  {
-    id: 'mst-001',
-    projectTitle: 'Udaipur Palace Royal Wedding — Master Highlight Cinema',
-    orderRef: 'AP-8841 (ARTSY-892410)',
-    completedDate: 'September 28, 2026',
-    resolution: '3840 x 2160 (4K UHD) • Rec.709 D65',
-    audioSpec: '24-bit 48kHz Stereo Master (-14 LUFS)',
-    downloads: [
-      { label: 'ProRes 422 HQ Master', format: 'Apple ProRes (.mov)', size: '14.2 GB', url: '#' },
-      { label: 'H.264 High-Bitrate Delivery', format: 'MP4 4K (80 Mbps)', size: '2.4 GB', url: '#' },
-      { label: '9:16 Vertical Instagram Cut', format: 'MP4 1080x1920', size: '480 MB', url: '#' },
-      { label: 'Uncompressed Audio Stems', format: 'WAV 24-bit (ZIP)', size: '1.1 GB', url: '#' },
-    ],
-  },
-];
+const MASTERS: MasterDeliverable[] = [];
 
 export default function ClientMastersPage() {
+  const masters = MASTERS;
+
   return (
     <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
       <ClientHeader />
@@ -56,8 +43,23 @@ export default function ClientMastersPage() {
               </p>
             </div>
 
-            {/* Masters Grid */}
-            <div className="space-y-6">
+            {/* Masters Grid or Empty State */}
+            {masters.length === 0 ? (
+              <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8 space-y-3">
+                <div className="text-4xl mb-3">📦</div>
+                <h3 className="text-lg font-semibold text-[#1D1D1F]">No completed masters yet</h3>
+                <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+                  Final unwatermarked 4K DCI ProRes masters, social cutdowns, and isolated audio stem packages will appear here once approved.
+                </p>
+                <Link
+                  href="/book"
+                  className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm"
+                >
+                  Book New Project →
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-6">
               {MASTERS.map((master) => (
                 <div
                   key={master.id}
@@ -107,6 +109,7 @@ export default function ClientMastersPage() {
                 </div>
               ))}
             </div>
+            )}
           </div>
         </main>
       </div>

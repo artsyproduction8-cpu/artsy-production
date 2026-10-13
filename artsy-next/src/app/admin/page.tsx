@@ -58,68 +58,7 @@ interface TelemetryNode {
   details: string;
 }
 
-const INITIAL_ORDERS: OrderItem[] = [
-  {
-    id: 'ord-1',
-    orderNum: 'AP-8841',
-    title: 'Udaipur Palace Royal Wedding 4K',
-    client: 'Oberoi & Singhania Media',
-    type: 'Wedding Cinema',
-    cameraProfile: 'Sony S-Log3.Cine (3 Cams FX6)',
-    amount: 8000,
-    status: 'unassigned',
-    assignedEditor: null,
-    hoursRemaining: 18,
-  },
-  {
-    id: 'ord-2',
-    orderNum: 'AP-8842',
-    title: 'Verve FW26 Streetwear Commercial Reel',
-    client: 'Verve Apparel DTC',
-    type: 'Brand UGC',
-    cameraProfile: 'iPhone 16 Pro ProRes Log & FX3',
-    amount: 4500,
-    status: 'in_progress',
-    assignedEditor: 'Aanya Sen',
-    hoursRemaining: 14,
-  },
-  {
-    id: 'ord-3',
-    orderNum: 'AP-8845',
-    title: 'Swiss Chronograph 3D Macro Showcase',
-    client: 'Geneva Horology Labs',
-    type: 'Commercial 3D',
-    cameraProfile: 'RED IPP2 Wide Gamut 8K',
-    amount: 6000,
-    status: 'unassigned',
-    assignedEditor: null,
-    hoursRemaining: 36,
-  },
-  {
-    id: 'ord-4',
-    orderNum: 'AP-8837',
-    title: 'Fintech Mobile App Launch Trailer',
-    client: 'NeoCred Technologies',
-    type: 'Brand UGC',
-    cameraProfile: 'Kinetic 4K Screen Rec + Alexa Mini',
-    amount: 4500,
-    status: 'review_ready',
-    assignedEditor: 'Kabir Verma',
-    hoursRemaining: 8,
-  },
-  {
-    id: 'ord-5',
-    orderNum: 'AP-8835',
-    title: 'Goa Coastal Luxury Resort Master Cut',
-    client: 'Taj Gateway Hospitality',
-    type: 'Wedding Cinema',
-    cameraProfile: 'Sony FX3 + Canon Log 3',
-    amount: 8000,
-    status: 'in_progress',
-    assignedEditor: 'Vikram Joshi',
-    hoursRemaining: 22,
-  },
-];
+const INITIAL_ORDERS: OrderItem[] = [];
 
 const INITIAL_CANDIDATES: VettingCandidate[] = [
   {
@@ -171,7 +110,7 @@ const INITIAL_CANDIDATES: VettingCandidate[] = [
 const INITIAL_PAYOUTS: VaultPayout[] = [
   {
     id: 'PAY-8841-AS',
-    creatorName: 'Aarav Sen',
+    creatorName: 'Creator Partner',
     projectRef: 'AP-8841 (Udaipur Royal Wedding)',
     grossAmount: 4794,
     tdsDeduction: 48,
@@ -303,8 +242,21 @@ export default function UnifiedAdminDashboard() {
     }
   };
 
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch('/api/admin/orders');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.orders)) {
+        setOrders(data.orders);
+      }
+    } catch (e) {
+      console.warn('Orders fetch failed:', e);
+    }
+  };
+
   useEffect(() => {
     fetchRealtime();
+    fetchOrders();
   }, []);
 
   // SLA Countdown
@@ -1035,45 +987,52 @@ export default function UnifiedAdminDashboard() {
               </div>
 
               <div className="space-y-3">
-                {orders.slice(0, 3).map((order) => (
-                  <div
-                    key={order.id}
-                    className="p-4 rounded-2xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
-                          {order.orderNum}
-                        </span>
-                        <span className="text-xs font-bold text-[#1D1D1F]">{order.title}</span>
-                      </div>
-                      <div className="text-[11px] text-[#86868B] mt-1">
-                        Client: {order.client} • {order.cameraProfile} • ₹{order.amount.toLocaleString('en-IN')} INR
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      {order.assignedEditor ? (
-                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                          Assigned ({order.assignedEditor})
-                        </span>
-                      ) : (
-                        <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                          Unassigned
-                        </span>
-                      )}
-                      <button
-                        onClick={() => {
-                          setActiveTab('dispatch');
-                          setAssigningOrderId(order.id);
-                        }}
-                        className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white cursor-pointer transition-colors shadow-2xs"
-                      >
-                        {order.assignedEditor ? 'Reassign' : 'Assign'}
-                      </button>
-                    </div>
+                {orders.length === 0 ? (
+                  <div className="p-8 text-center bg-[#F5F5F7] rounded-2xl border border-dashed border-[#E5E5E7]">
+                    <div className="text-2xl mb-1">🎬</div>
+                    <div className="text-xs font-semibold text-[#86868B]">No production orders registered yet.</div>
                   </div>
-                ))}
+                ) : (
+                  orders.slice(0, 3).map((order) => (
+                    <div
+                      key={order.id}
+                      className="p-4 rounded-2xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                            {order.orderNum}
+                          </span>
+                          <span className="text-xs font-bold text-[#1D1D1F]">{order.title}</span>
+                        </div>
+                        <div className="text-[11px] text-[#86868B] mt-1">
+                          Client: {order.client} • {order.cameraProfile} • ₹{order.amount.toLocaleString('en-IN')} INR
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {order.assignedEditor ? (
+                          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                            Assigned ({order.assignedEditor})
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                            Unassigned
+                          </span>
+                        )}
+                        <button
+                          onClick={() => {
+                            setActiveTab('dispatch');
+                            setAssigningOrderId(order.id);
+                          }}
+                          className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white cursor-pointer transition-colors shadow-2xs"
+                        >
+                          {order.assignedEditor ? 'Reassign' : 'Assign'}
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 

@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
             quoteId: quoteId || null,
           },
         }),
+        signal: AbortSignal.timeout(8000),
       });
 
       if (!rzpRes.ok) {

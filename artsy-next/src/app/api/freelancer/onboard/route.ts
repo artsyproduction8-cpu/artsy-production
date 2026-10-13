@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const trackingId = `ART-${new Date().getFullYear()}-VET-${Math.floor(1000 + Math.random() * 9000)}`;
     const candidateUserId = userId || `usr-creator-${Date.now().toString().slice(-6)}`;
     const candidateEmail = email || `${alias?.toLowerCase().replace(/\s+/g, '') || 'editor'}@artsyprod.studio`;
-    const candidatePhone = phone || '+91 9876543211';
+    const candidatePhone = phone || '';
 
     // 1. Ensure user and creator profile exist in Supabase with status = 'pending'
     if (supabase && typeof supabase.from === 'function') {

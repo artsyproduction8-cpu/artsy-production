@@ -7,15 +7,17 @@ import { useAuth, logout } from '@/lib/auth';
 export default function ClientSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
-  const clientName = user?.full_name || 'Sneha Patel';
+  const clientName = user?.full_name || 'Client';
 
-  const clientInitials =
-    clientName
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2) || 'SP';
+  const clientInitials = clientName.trim()
+    ? clientName
+        .split(/\s+/)
+        .filter((n) => n.length > 0)
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : 'CL';
 
   const navItems = [
     { label: 'Dashboard Overview', href: '/client' },

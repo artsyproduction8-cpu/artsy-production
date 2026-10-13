@@ -5,8 +5,16 @@ import { useAuth, logout } from '@/lib/auth';
 
 export default function ClientHeader() {
   const { user } = useAuth();
-  const clientName = user?.full_name || 'Sneha Patel';
-  const clientInitials = clientName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'SP';
+  const clientName = user?.full_name || '';
+  const clientInitials = clientName.trim()
+    ? clientName
+        .split(/\s+/)
+        .filter((n) => n.length > 0)
+        .slice(0, 2)
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : 'CL';
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A] border-b border-[#262626]">

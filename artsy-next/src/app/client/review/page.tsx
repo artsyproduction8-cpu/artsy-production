@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import ClientSidebar from '../components/ClientSidebar';
 import ClientHeader from '../components/ClientHeader';
@@ -22,7 +23,7 @@ interface RevisionItem {
 export default function ClientReviewPage() {
   const { user } = useAuth();
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTimecode, setCurrentTimecode] = useState('02:44:18');
+  const [currentTimecode, setCurrentTimecode] = useState('00:00:00');
   const [activeCategory, setActiveCategory] = useState('COLOR');
   const [noteText, setNoteText] = useState('');
   const [isApproved, setIsApproved] = useState(false);
@@ -31,16 +32,30 @@ export default function ClientReviewPage() {
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [showChangeOrderModal, setShowChangeOrderModal] = useState(false);
   const [showStudioModal, setShowStudioModal] = useState(false);
+  const [hasProjects, setHasProjects] = useState<boolean | null>(null);
   const [studioProfile, setStudioProfile] = useState({
-    studioName: 'S. Kapoor Studios',
-    legalName: 'S. Kapoor Studios Private Limited',
-    gstin: '07AAAAA0000A1Z5',
+    studioName: user?.full_name || '',
+    legalName: '',
+    gstin: '',
     ingestProvider: 'Google Drive Enterprise',
-    ingestLink: 'https://drive.google.com/drive/folders/artsy-raw-ingest-8841',
-    brandLuts: 'Kodak 2383 Film Print Emulation, Warm Sangeet Tones',
-    collaborators: 'director@kapoorstudios.in, producer@kapoorstudios.in',
+    ingestLink: '',
+    brandLuts: 'Standard Rec.709 Master',
+    collaborators: '',
   });
   const [studioSavedNotice, setStudioSavedNotice] = useState(false);
+
+  useEffect(() => {
+    async function checkProjects() {
+      try {
+        const res = await fetch('/api/client/projects');
+        const data = await res.json();
+        setHasProjects(Boolean(data.projects && data.projects.length > 0));
+      } catch {
+        setHasProjects(false);
+      }
+    }
+    checkProjects();
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -113,30 +128,7 @@ export default function ClientReviewPage() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  const [revisions, setRevisions] = useState<RevisionItem[]>([
-    {
-      id: '1',
-      timecode: '01:14:02',
-      tag: 'COLOR',
-      tagBg: 'bg-[#3B82F6]',
-      author: 'DIRECTOR',
-      timeAgo: '3h ago',
-      text: 'Ease the speed ramp into the sangeet entry and warm up skin tones. Midtones look slightly green under the palace lamps.',
-      status: 'IN PROGRESS BY COLORIST',
-      statusColor: 'text-[#3B82F6]'
-    },
-    {
-      id: '2',
-      timecode: '02:30:10',
-      tag: 'AUDIO',
-      tagBg: 'bg-[#1D1D1F]',
-      author: 'PRODUCER',
-      timeAgo: '1h ago',
-      text: 'Swap background foley to license track variant B. Sitar crescendo clashes with the officiant vows.',
-      status: 'PENDING REVIEW',
-      statusColor: 'text-[#86868B]'
-    }
-  ]);
+  const [revisions, setRevisions] = useState<RevisionItem[]>([]);
 
   const handleAddAnnotation = (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,7 +159,7 @@ export default function ClientReviewPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        phone: '+919876543210',
+        phone: user?.phone || '',
         eventType: 'MILESTONE_COMPLETED',
         projectId: 'AP-8841',
       }),
@@ -186,7 +178,7 @@ export default function ClientReviewPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: '+919876543210',
+          phone: user?.phone || '',
           message: `🎬 Artsy Revision Alert: Client requested Revision Pass Round ${nextRound} on Project #AP-8841. 48h turnaround timer initiated.`,
           projectId: 'AP-8841',
         }),
@@ -238,7 +230,24 @@ export default function ClientReviewPage() {
 
         {/* Main Content Pane */}
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 bg-[#F5F5F7] min-h-screen">
-          <div className="flex flex-col w-full max-w-full overflow-x-hidden">
+          {hasProjects === false ? (
+            <div className="p-6 md:p-8 max-w-4xl mx-auto pt-16">
+              <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8 space-y-3">
+                <div className="text-4xl mb-3">🎬</div>
+                <h3 className="text-lg font-semibold text-[#1D1D1F]">No active cuts in review</h3>
+                <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+                  When your senior editor submits a rough cut or fine cut, it will appear here with frame-accurate timecode annotations and revision controls.
+                </p>
+                <Link
+                  href="/book"
+                  className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm"
+                >
+                  Book New Project →
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col w-full max-w-full overflow-x-hidden">
             
             {/* ORDER BANNER / METADATA PLATE */}
             <section className="p-6 md:p-8 pb-0 max-w-7xl w-full">
@@ -764,6 +773,7 @@ export default function ClientReviewPage() {
               </section>
             </div>
           </div>
+          )}
         </main>
       </div>
 

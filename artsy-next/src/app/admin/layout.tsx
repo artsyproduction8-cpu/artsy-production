@@ -1,15 +1,29 @@
 'use client';
-
-import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth';
 import AdminHeader from './components/AdminHeader';
 import AdminSidebar from './components/AdminSidebar';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
+  const router = useRouter();
+  const [authorized, setAuthorized] = useState(false);
 
-  // Public login page does not render admin shell
-  if (pathname === '/admin/login') {
-    return <>{children}</>;
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (!user) {
+      router.push('/auth/login?redirect=/admin');
+      return;
+    }
+    if (user.role !== 'admin' && user.role !== 'super_admin') {
+      router.push('/auth/login?unauthorized=true');
+      return;
+    }
+    setAuthorized(true);
+  }, [router]);
+
+  if (!authorized) {
+    return null;
   }
 
   return (

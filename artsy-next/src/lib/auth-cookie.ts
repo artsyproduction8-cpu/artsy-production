@@ -10,6 +10,7 @@ export interface AuthUserPayload {
   phone?: string;
   email?: string;
   full_name?: string;
+  onboarded?: boolean;
   onboarding_status?: string | null;
   tracking_id?: string | null;
   rejection_reason?: string | null;

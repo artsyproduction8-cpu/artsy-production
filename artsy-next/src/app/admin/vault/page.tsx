@@ -18,7 +18,7 @@ interface PayoutRecord {
 const INITIAL_PAYOUTS: PayoutRecord[] = [
   {
     id: 'PAY-8841-AS',
-    creatorName: 'Aarav Sen',
+    creatorName: 'Creator Partner',
     projectRef: 'AP-8841 (Udaipur Royal Wedding)',
     grossAmount: 4794,
     tdsDeduction: 48,

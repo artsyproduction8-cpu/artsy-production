@@ -323,7 +323,7 @@ export async function POST(request: NextRequest) {
         role: finalRole,
         phone: resolvedUser.phone || formattedPhone || (cleanPhone ? `+91${cleanPhone}` : ''),
         email: resolvedUser.email || cleanEmail || '',
-        full_name: resolvedUser.full_name || 'Valued Member',
+        full_name: resolvedUser.full_name ?? null,
         onboarded: Boolean(resolvedUser.onboarded),
         onboarding_status,
         tracking_id,

@@ -20,6 +20,7 @@ interface LocalOtpSession {
   expiresAt: number;
   attempts: number;
   verified: boolean;
+  role?: string;
 }
 
 declare global {
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
         (cleanPhone ? memoryOtpSessions.get(`+91${cleanPhone}`) : undefined) ||
         (cleanEmail ? memoryOtpSessions.get(cleanEmail) : undefined);
 
+      let sessionRole: string | null = memSession?.role || null;
       let sessionVerified = false;
 
       if (memSession) {
@@ -123,7 +125,7 @@ export async function POST(request: NextRequest) {
           try {
             const { data: dbSession } = await supabase
               .from('otp_sessions')
-              .select('id, phone, otp_hash, expires_at, verified')
+              .select('id, phone, otp_hash, expires_at, verified, role')
               .eq('phone', cleanPhone || identifier)
               .eq('verified', false)
               .gt('expires_at', new Date().toISOString())
@@ -132,6 +134,9 @@ export async function POST(request: NextRequest) {
               .maybeSingle();
 
             if (dbSession) {
+              if (dbSession.role) {
+                sessionRole = dbSession.role;
+              }
               if (dbSession.otp_hash.startsWith('$2a$') || dbSession.otp_hash.startsWith('$2b$')) {
                 dbMatched = await bcrypt.compare(inputCode, dbSession.otp_hash);
               } else if (dbSession.otp_hash.length === 64) {
@@ -218,7 +223,7 @@ export async function POST(request: NextRequest) {
         }
       } else {
         isNewUser = true;
-        const requestedRole: 'client' | 'freelancer' = role === 'freelancer' ? 'freelancer' : 'client';
+        const requestedRole: 'client' | 'freelancer' = (role === 'freelancer' || sessionRole === 'freelancer') ? 'freelancer' : 'client';
         const defaultRole = isSuperAdminIdentifier ? 'super_admin' : requestedRole;
         const defaultName = isSuperAdminIdentifier ? 'Super Admin' : null;
 
@@ -411,6 +416,7 @@ export async function POST(request: NextRequest) {
       expiresAt: expiresAtMs,
       attempts: 0,
       verified: false,
+      role: role || 'client',
     };
     memoryOtpSessions.set(identifier, sessionObj);
     if (cleanPhone) {
@@ -436,6 +442,7 @@ export async function POST(request: NextRequest) {
             expires_at: expiresAtIso,
             verified: false,
             ip_address: ip,
+            role: role || 'client',
             created_at: new Date().toISOString(),
           },
         ]);

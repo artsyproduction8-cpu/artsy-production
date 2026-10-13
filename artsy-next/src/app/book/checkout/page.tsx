@@ -307,7 +307,7 @@ function CheckoutContent() {
                   <span>100% Upfront Payment Protection</span>
                 </div>
                 <p className="leading-relaxed">
-                  Funds remain securely protected. Your matched Artsy Creator is paid only after you review and approve the final master cut.
+                  Funds remain securely protected. Your matched creator is paid only after you review and approve the final master cut.
                 </p>
               </div>
 

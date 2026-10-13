@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
                   const { sendInvoiceEmail } = await import('@/lib/email/dispatcher');
                   const invoice = generateInvoiceData({
                     orderId: order.order_number || order.id,
-                    clientName: order.client_name || 'Valued Client',
+                    clientName: order.client_name || '',
                     clientPhone: order.client_phone || '',
                     clientEmail: order.client_email,
                     totalPaise: amountPaise || order.gross_amount,

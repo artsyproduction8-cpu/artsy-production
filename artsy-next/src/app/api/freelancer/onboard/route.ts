@@ -1,26 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/../lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
+import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 export async function POST(req: NextRequest) {
   try {
+    const authUser = getAuthenticatedUser(req);
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const {
       alias,
       legalName,
-      email,
-      phone,
       philosophy,
       software,
       languages,
       pan,
-      userId,
     } = body;
 
     const trackingId = `ART-${new Date().getFullYear()}-VET-${Math.floor(1000 + Math.random() * 9000)}`;
-    const candidateUserId = userId || `usr-creator-${Date.now().toString().slice(-6)}`;
-    const candidateEmail = email || `${alias?.toLowerCase().replace(/\s+/g, '') || 'editor'}@artsyprod.studio`;
-    const candidatePhone = phone || '';
+    const candidateUserId = authUser.id;
+    const candidateEmail = authUser.email || '';
+    const candidatePhone = authUser.phone || '';
 
     // 1. Ensure user and creator profile exist in Supabase with status = 'pending'
     if (supabase && typeof supabase.from === 'function') {
@@ -36,7 +39,7 @@ export async function POST(req: NextRequest) {
             id: candidateUserId,
             email: candidateEmail,
             phone: candidatePhone,
-            full_name: legalName || alias || 'Artsy Creator',
+            full_name: legalName || alias || null,
             role: 'freelancer',
             status: 'active',
           });

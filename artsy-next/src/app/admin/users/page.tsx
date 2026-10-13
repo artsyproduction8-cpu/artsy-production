@@ -91,7 +91,7 @@ export default function AdminUsersManagementPage() {
             </span>
           </div>
           <p className="text-sm text-[#86868B] mt-1">
-            Manage studio directors and admin delegates. Only the Super Admin (+917777078742) can modify role assignments.
+            Manage studio directors and admin delegates. Only the Super Admin ({process.env.NEXT_PUBLIC_SUPPORT_PHONE || 'Designated Contact'}) can modify role assignments.
           </p>
         </div>
 
@@ -120,7 +120,7 @@ export default function AdminUsersManagementPage() {
               Super Admin Ownership Protection Active
             </div>
             <div className="text-xs text-[#86868B]">
-              Designated Account: <span className="font-mono font-semibold text-purple-700">+917777078742 (lilsammy96@gmail.com)</span>. Protected against deletion, role alteration, or non-owner modification by Postgres triggers.
+              Designated Account: <span className="font-mono font-semibold text-purple-700">{process.env.NEXT_PUBLIC_SUPPORT_PHONE || 'Designated Super Admin'}</span>. Protected against deletion, role alteration, or non-owner modification by Postgres triggers.
             </div>
           </div>
         </div>

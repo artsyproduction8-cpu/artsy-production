@@ -51,7 +51,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
 
-      if (user.role === 'super_admin' || user.phone === '+917777078742' || user.email === 'lilsammy96@gmail.com') {
+      const SUPER_ADMIN_PHONE = process.env.SUPER_ADMIN_PHONE;
+      if (!SUPER_ADMIN_PHONE) {
+        throw new Error('SUPER_ADMIN_PHONE env var is required');
+      }
+
+      if (user.role === 'super_admin' || user.phone === SUPER_ADMIN_PHONE || user.email === 'lilsammy96@gmail.com') {
         return NextResponse.json({ error: 'Super Admin account cannot be deleted' }, { status: 403 });
       }
 

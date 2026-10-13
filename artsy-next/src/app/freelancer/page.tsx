@@ -338,7 +338,7 @@ export default function FreelancerDashboard() {
                         Action Required: Creator Master Services Agreement &amp; NDA
                       </h3>
                       <p className="text-xs text-amber-700 mt-0.5">
-                        You must execute the Artsy Creator Agreement before accepting jobs or downloading client raw footage proxies.
+                        You must execute the Creator Agreement before accepting jobs or downloading client raw footage proxies.
                       </p>
                     </div>
                   </div>
@@ -367,7 +367,7 @@ export default function FreelancerDashboard() {
                         {creatorName}
                       </h1>
                       <p className="text-xs tracking-wider text-[#86868B] mt-1 font-medium">
-                        Artsy Creator Network
+                        Creator Network
                       </p>
                     </div>
                     <div className="mt-8 pt-4 border-t border-white/10 space-y-1">

@@ -1,5 +1,16 @@
 import type { NextRequest } from 'next/server';
 
+(function assertDistinctSecrets() {
+  const jwt = process.env.JWT_SECRET;
+  const cookie = process.env.COOKIE_SIGNING_SECRET;
+  if (jwt && cookie && jwt === cookie) {
+    console.error(
+      '[SECURITY] JWT_SECRET and COOKIE_SIGNING_SECRET are identical. ' +
+      'They MUST be different values. Rotate manually.'
+    );
+  }
+})();
+
 export const AUTH_COOKIE_NAME = 'artsy_auth_token';
 
 export type UserRole = 'client' | 'freelancer' | 'admin' | 'super_admin';

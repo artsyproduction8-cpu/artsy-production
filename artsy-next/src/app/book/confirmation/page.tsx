@@ -78,7 +78,7 @@ function ConfirmationContent() {
               Project Booked &amp; Ingestion Initialized
             </h1>
             <p className="text-xs sm:text-sm text-[#86868B] max-w-md mx-auto leading-relaxed">
-              Order <span className="font-mono font-bold text-[#1D1D1F]">{orderId}</span> has been confirmed. Your project is now entering the Artsy Creator Dispatch Queue.
+              Order <span className="font-mono font-bold text-[#1D1D1F]">{orderId}</span> has been confirmed. Your project is now entering the Creator Dispatch Queue.
             </p>
           </div>
 
@@ -153,7 +153,7 @@ function ConfirmationContent() {
               <div className="p-4 rounded-xl border border-[#E5E5E7] bg-[#F5F5F7]">
                 <span className="font-mono text-[11px] font-bold text-[#3B82F6] block mb-1">CREATOR DISPATCH</span>
                 <p className="text-xs text-[#86868B] leading-relaxed">
-                  Top-matched verified Artsy Creators receive an anonymised job card. First to claim begins edit within 12 hours.
+                  Top-matched verified creators receive an anonymised job card. First to claim begins edit within 12 hours.
                 </p>
               </div>
 

@@ -91,12 +91,12 @@ export default function Contact() {
             <div className="pt-2 flex items-center gap-4 text-xs font-semibold text-[#86868B]">
               <span>Direct WhatsApp Desk:</span>
               <a 
-                href={`https://wa.me/${process.env.NEXT_PUBLIC_DEDICATED_WHATSAPP_NUMBER || '917777078742'}`} 
+                href={`https://wa.me/${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || process.env.NEXT_PUBLIC_DEDICATED_WHATSAPP_NUMBER || '').replace(/\D/g, '')}`} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-[#3B82F6] hover:underline font-bold inline-flex items-center gap-1"
               >
-                +91 77770 78742 (Studio Support) →
+                {process.env.NEXT_PUBLIC_SUPPORT_PHONE || 'Studio Support'} (Direct Desk) →
               </a>
             </div>
           </div>

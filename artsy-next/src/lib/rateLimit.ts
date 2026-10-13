@@ -16,6 +16,14 @@ interface RateLimitRecord {
 // In-memory store for development/fallback
 const memoryStore = new Map<string, RateLimitRecord>();
 
+if (!process.env.UPSTASH_REDIS_REST_URL) {
+  console.warn(
+    '[SECURITY] UPSTASH_REDIS_REST_URL not set — rate limiting is ' +
+    'per-instance and bypassable in serverless. Provision Upstash and ' +
+    'set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN.'
+  );
+}
+
 export interface RateLimitResult {
   allowed: boolean;
   remaining: number;

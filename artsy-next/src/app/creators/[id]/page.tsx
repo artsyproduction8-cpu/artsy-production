@@ -84,11 +84,12 @@ export default function CreatorProfilePage() {
     );
   }
 
-  const initials = (creator.public_display_name || 'Artsy Creator')
+  const initials = (creator.public_display_name || '')
     .split(' ')
+    .filter(Boolean)
     .map((n) => n[0])
     .slice(0, 2)
-    .join('');
+    .join('') || 'CR';
 
   const isRisingTalent =
     creator.creator_tier === 'rising_talent' || creator.total_projects_completed < 10;

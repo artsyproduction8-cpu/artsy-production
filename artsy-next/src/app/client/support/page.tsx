@@ -84,12 +84,12 @@ export default function ClientSupportPage() {
                     Direct communication with your designated studio production supervisor for urgent cuts, ingest queries, and revision requests.
                   </p>
                   <a
-                    href="https://wa.me/917777078742"
+                    href={`https://wa.me/${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || '').replace(/\D/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs"
                   >
-                    Chat on WhatsApp (+91 77770 78742)
+                    Chat on WhatsApp {process.env.NEXT_PUBLIC_SUPPORT_PHONE ? `(${process.env.NEXT_PUBLIC_SUPPORT_PHONE})` : ''}
                   </a>
                 </div>
 

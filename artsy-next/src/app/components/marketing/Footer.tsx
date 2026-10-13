@@ -78,9 +78,9 @@ export default function Footer() {
                 <span className="text-white font-semibold">Phone:</span>{' '}
                 <a
                   className="hover:text-white transition-colors"
-                  href="tel:+918369251112"
+                  href={`tel:${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || '').replace(/\s+/g, '')}`}
                 >
-                  +91 836 925 1112
+                  {process.env.NEXT_PUBLIC_SUPPORT_PHONE || 'Contact Support'}
                 </a>
               </p>
               <p className="text-xs text-[#DCDFE3]/80 mt-0.5">

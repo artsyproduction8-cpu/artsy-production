@@ -154,7 +154,7 @@ export function claimJobByCreator(jobId: string, creatorId: string): { success: 
   if (index === -1) return { success: false, message: 'Job not found' };
 
   if (jobs[index].status !== 'open_claim') {
-    return { success: false, message: 'This job has already been claimed by another Artsy Creator.' };
+    return { success: false, message: 'This job has already been claimed by another creator.' };
   }
 
   jobs[index].status = 'claimed';

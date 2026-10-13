@@ -4,10 +4,10 @@
  */
 
 /**
- * Formats a name to First Name + Last Initial (e.g., "Artsy Creator" -> "Artsy C.")
+ * Formats a name to First Name + Last Initial (e.g., "Jane Doe" -> "Jane D.")
  */
 export function formatPublicCreatorName(fullName?: string | null): string {
-  if (!fullName || !fullName.trim()) return 'Artsy Creator';
+  if (!fullName || !fullName.trim()) return '';
   const parts = fullName.trim().split(/\s+/);
   if (parts.length === 1) return parts[0];
   const firstName = parts[0];

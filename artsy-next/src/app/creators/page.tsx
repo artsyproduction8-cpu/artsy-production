@@ -196,11 +196,12 @@ export default function PublicCreatorsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {creators.map((c) => {
-              const initials = (c.public_display_name || 'Artsy Creator')
+              const initials = (c.public_display_name || '')
                 .split(' ')
+                .filter(Boolean)
                 .map((n) => n[0])
                 .slice(0, 2)
-                .join('');
+                .join('') || 'CR';
 
               const isRisingTalent =
                 c.creator_tier === 'rising_talent' || c.total_projects_completed < 10;

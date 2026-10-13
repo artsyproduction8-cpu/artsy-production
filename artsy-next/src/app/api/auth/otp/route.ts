@@ -318,20 +318,23 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const userPayload = {
+      const userPayload: any = {
         id: String(resolvedUser.id),
         role: finalRole,
         phone: resolvedUser.phone || formattedPhone || (cleanPhone ? `+91${cleanPhone}` : ''),
         email: resolvedUser.email || cleanEmail || '',
         full_name: resolvedUser.full_name ?? null,
         onboarded: Boolean(resolvedUser.onboarded),
-        onboarding_status,
-        tracking_id,
-        rejection_reason,
-        rejected_at,
         status: 'active',
         token_version: Number(resolvedUser.token_version || 2),
       };
+
+      if (finalRole === 'freelancer') {
+        userPayload.onboarding_status = onboarding_status;
+        userPayload.tracking_id = tracking_id;
+        userPayload.rejection_reason = rejection_reason;
+        userPayload.rejected_at = rejected_at;
+      }
 
       const response = NextResponse.json({
         success: true,
@@ -356,7 +359,7 @@ export async function POST(request: NextRequest) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
-        maxAge: 604800,
+        maxAge: 86400,
       });
 
       return response;
@@ -366,10 +369,18 @@ export async function POST(request: NextRequest) {
     // ACTION: SEND — Generate and dispatch OTP
     // ────────────────────────────────────────────────────────
 
+    const sendResponse = (payload: any, init?: { status?: number }) => {
+      const resp = NextResponse.json(payload, init);
+      if (!process.env.UPSTASH_REDIS_REST_URL) {
+        resp.headers.set('X-RateLimit-Mode', 'in-memory-fallback');
+      }
+      return resp;
+    };
+
     // 1. Rate Limiting Check (Max 5 requests per 10 minutes per identifier/IP)
     const rateLimit = await checkRateLimit(`${identifier}_${ip}`, 'auth', 5, 600);
     if (!rateLimit.allowed) {
-      return NextResponse.json(
+      return sendResponse(
         { error: `Too many OTP requests. Please wait ${Math.ceil(rateLimit.resetSeconds / 60)} minutes before retrying.` },
         { status: 429 }
       );
@@ -488,7 +499,7 @@ export async function POST(request: NextRequest) {
       }
 
       if (waResult.success) {
-        return NextResponse.json({
+        return sendResponse({
           success: true,
           message: 'OTP sent via WhatsApp',
           channel: 'whatsapp',
@@ -499,7 +510,7 @@ export async function POST(request: NextRequest) {
 
       console.warn('[OTP Route] Meta WhatsApp failed, falling back to email:', waResult.error);
       if (!cleanEmail) {
-        return NextResponse.json(
+        return sendResponse(
           { error: `WhatsApp delivery failed: ${waResult.error || 'Please try again or use email verification.'}` },
           { status: 502 }
         );
@@ -530,7 +541,7 @@ export async function POST(request: NextRequest) {
         variables: { otp: otpCode },
       });
 
-      return NextResponse.json({
+      return sendResponse({
         success: true,
         message: 'OTP sent via WhatsApp',
         channel: 'whatsapp',
@@ -548,7 +559,7 @@ export async function POST(request: NextRequest) {
         console.error('Failed to send OTP email via Resend:', emailResult.error);
         if (isDev) {
           console.log(`[DEV OTP Email Fallback] Email: ${cleanEmail}, Code: ${otpCode}`);
-          return NextResponse.json({
+          return sendResponse({
             success: true,
             message: 'OTP generated for development testing (email fallback)',
             channel: 'email',
@@ -557,7 +568,7 @@ export async function POST(request: NextRequest) {
             ...(shouldExposeDevOtp && { devOtp: otpCode }),
           });
         }
-        return NextResponse.json(
+        return sendResponse(
           { error: 'Failed to send verification email. Please try again.' },
           { status: 502 }
         );
@@ -571,7 +582,7 @@ export async function POST(request: NextRequest) {
         variables: { otp: otpCode },
       });
 
-      return NextResponse.json({
+      return sendResponse({
         success: true,
         message: 'OTP sent via Email',
         channel: 'email',
@@ -584,7 +595,7 @@ export async function POST(request: NextRequest) {
     // Track 3: Gated Mock Mode or Development Fallback
     if (isDev) {
       console.log(`[DEV OTP Dispatch] Identifier: ${identifier}, Generated OTP: ${otpCode}`);
-      return NextResponse.json({
+      return sendResponse({
         success: true,
         message: 'OTP dispatched (development testing mode)',
         channel: 'dev',
@@ -595,7 +606,7 @@ export async function POST(request: NextRequest) {
 
     // Track 4: Delivery failure — NEVER fall back to 123456 or return fake success
     console.error(`[OTP Route] No delivery channel available for identifier: ${identifier}. WhatsApp configured: ${hasOpenWA}, Email present: ${Boolean(cleanEmail)}`);
-    return NextResponse.json(
+    return sendResponse(
       {
         error: cleanPhone && !hasOpenWA
           ? 'WhatsApp service is not available on this server. Please use email verification or contact studio support.'

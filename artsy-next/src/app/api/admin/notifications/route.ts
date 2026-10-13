@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       const res = await sendMetaTemplate(
         original.recipient,
         'artsy_account_confirmed',
-        ['Valued Member', 'https://artsyproduction.com/client']
+        [original.metadata?.name || '', 'https://artsyproduction.com/client']
       );
       retrySuccess = res.success;
       providerId = res.messageId;

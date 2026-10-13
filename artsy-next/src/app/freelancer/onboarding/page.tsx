@@ -129,7 +129,7 @@ export default function FreelancerOnboarding() {
       ...(currentUser || {}),
       id: candidateUserId,
       email: candidateEmail,
-      full_name: legalName || alias || 'Artsy Creator',
+      full_name: legalName || alias || null,
       phone: candidatePhone,
       role: 'freelancer' as const,
       status: 'active' as const,
@@ -141,7 +141,7 @@ export default function FreelancerOnboarding() {
       created_at: currentUser?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    setCurrentUser(pendingUser);
+    setCurrentUser(pendingUser as any);
 
     setSubmitting(false);
     setShowModal(true);

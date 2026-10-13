@@ -20,7 +20,11 @@ export interface AuthUserPayload {
 }
 
 function getSigningSecret(): string {
-  return process.env.COOKIE_SIGNING_SECRET || 'artsy-production-default-cookie-signing-secret-2026-locked';
+  return (
+    process.env.COOKIE_SIGNING_SECRET ||
+    process.env.JWT_SECRET ||
+    'artsy-production-default-cookie-signing-secret-2026-locked'
+  );
 }
 
 function rightRotate(value: number, amount: number): number {
@@ -219,6 +223,10 @@ export function verifyAndParseAuthCookie(cookieValue?: string | null): AuthUserP
         // Fix 11: Check cookie expiration
         if (parsed.exp && Date.now() > parsed.exp) {
           return null; // Expired cookie
+        }
+        // C1: Revocation enforcement — reject tokens issued prior to token_version bump
+        if (!parsed.token_version || Number(parsed.token_version) < 2) {
+          return null; // Revoked token version
         }
         return parsed as AuthUserPayload;
       }

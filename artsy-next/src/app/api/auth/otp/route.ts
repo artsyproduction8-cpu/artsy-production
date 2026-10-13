@@ -330,6 +330,7 @@ export async function POST(request: NextRequest) {
         rejection_reason,
         rejected_at,
         status: 'active',
+        token_version: Number(resolvedUser.token_version || 2),
       };
 
       const response = NextResponse.json({

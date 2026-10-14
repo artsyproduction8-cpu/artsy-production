@@ -20,7 +20,7 @@ export default function ContactPage() {
     { name: 'Contact', url: '/contact' },
   ]);
 
-  const supportPhone = process.env.NEXT_PUBLIC_SUPPORT_PHONE || process.env.SUPER_ADMIN_PHONE || '+917777078742';
+  const supportPhone = process.env.NEXT_PUBLIC_SUPPORT_PHONE || process.env.SUPER_ADMIN_PHONE || '+91-XXXXXXXXXX';
   const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_URL || `https://wa.me/${supportPhone.replace(/[^0-9]/g, '')}`;
   const businessAddress = process.env.BUSINESS_ADDRESS || 'Artsy Production Studio, Bandra Kurla Complex, Mumbai, Maharashtra 400051, India';
 

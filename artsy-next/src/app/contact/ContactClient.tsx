@@ -107,7 +107,7 @@ export default function ContactClient() {
                 type="email"
                 required
                 maxLength={200}
-                placeholder="rohit@cinemaproductions.com"
+                placeholder="producer@company"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-sm text-[#1D1D1F] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] transition-all"

@@ -54,7 +54,7 @@ export function organizationSchema() {
     ],
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+917777078742',
+      telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || process.env.SUPER_ADMIN_PHONE || '+91-XXXXXXXXXX',
       contactType: 'customer service',
       areaServed: ['IN', 'AE', 'US', 'GB'],
       availableLanguage: ['English', 'Hindi'],
@@ -69,7 +69,7 @@ export function localBusinessSchema() {
     name: 'Artsy Production',
     image: `${BASE_URL}/logo.png`,
     url: BASE_URL,
-    telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || process.env.SUPER_ADMIN_PHONE || '+917777078742',
+    telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || process.env.SUPER_ADMIN_PHONE || '+91-XXXXXXXXXX',
     priceRange: '₹₹₹',
     address: {
       '@type': 'PostalAddress',

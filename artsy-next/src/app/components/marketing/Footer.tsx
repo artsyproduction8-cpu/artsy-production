@@ -6,7 +6,7 @@ export default function Footer() {
   const youtubeUrl = process.env.NEXT_PUBLIC_YOUTUBE_URL || 'https://www.youtube.com/@artsyproduction';
   const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/artsyproduction';
   const linkedinUrl = process.env.NEXT_PUBLIC_LINKEDIN_URL || 'https://www.linkedin.com/company/artsy-production';
-  const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_URL || 'https://wa.me/917777078742';
+  const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_URL || (process.env.NEXT_PUBLIC_SUPPORT_PHONE ? `https://wa.me/${process.env.NEXT_PUBLIC_SUPPORT_PHONE.replace(/[^0-9]/g, '')}` : 'https://wa.me/');
 
   return (
     <footer className="w-full bg-[#0A0A0A] border-t border-white/10 py-14 sm:py-16 text-white">

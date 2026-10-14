@@ -17,10 +17,22 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'optional',
 });
 
+import { GoogleAnalytics } from '@next/third-parties/google';
+import Script from 'next/script';
+
 export const metadata: Metadata = {
   title: 'ARTSY — Place for Perspective | Cinematic Post-Production',
   description: 'High-contrast post-production studio and technological platform. Curated elite film editors, seamless cloud workflow, and transparent pricing for weddings, high-growth brands, and corporate cinema.',
-  metadataBase: new URL('https://artsyproduction.com'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'),
+  alternates: {
+    canonical: './',
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: {
+      'msvalidate.01': process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION || '',
+    },
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -91,6 +103,17 @@ export default function RootLayout({
       >
         <FontLoader />
         {children}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+        )}
+        {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
+          <Script
+            defer
+            data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
+            src="https://plausible.io/js/script.js"
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );

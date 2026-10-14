@@ -3,15 +3,24 @@ import { generateUploadUrl } from '@/lib/storage/b2-client';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin } from '@/lib/supabase';
 
-export async function POST(request: NextRequest) {
-  try {
-    // Security Fix #6: Require authenticated session
-    const authUser = getAuthenticatedUser(request);
-    if (!authUser) {
-      return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
-    }
+const ALLOWED_MIME_TYPES = ['video/mp4', 'video/quicktime', 'image/jpeg', 'image/png', 'application/pdf'];
 
-    const body = await request.json();
+export async function POST(request: NextRequest) {
+  // Security Fix #6: Require authenticated session
+  const authUser = await getAuthenticatedUser(request);
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
+  }
+
+  // M9: Safe JSON parsing
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+  }
+
+  try {
     const { fileName, contentType = 'video/mp4', projectId } = body;
 
     if (!fileName) {
@@ -20,6 +29,14 @@ export async function POST(request: NextRequest) {
 
     if (!projectId) {
       return NextResponse.json({ error: 'projectId is required' }, { status: 400 });
+    }
+
+    // Fix M6: Validate content-type against allowlist
+    if (!ALLOWED_MIME_TYPES.includes(contentType)) {
+      return NextResponse.json(
+        { error: `Disallowed content type: ${contentType}. Allowed formats: ${ALLOWED_MIME_TYPES.join(', ')}` },
+        { status: 400 }
+      );
     }
 
     // Security Fix #1: Verify project ownership or assignment with fail-closed check
@@ -65,6 +82,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err: unknown) {
     console.error('Presigned URL error:', err);
+    // M10: Do not leak error details
     return NextResponse.json(
       { error: 'Failed to generate presigned upload URL' },
       { status: 500 }

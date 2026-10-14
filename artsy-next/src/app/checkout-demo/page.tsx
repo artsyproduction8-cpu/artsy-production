@@ -115,6 +115,7 @@ export default function CheckoutDemoPage() {
           <div className="pt-2">
             <RazorpayCheckoutButton
               amount={amountPaise}
+              serviceId="wedding"
               name="Artsy Production"
               description="Post-Production Film Booking"
               prefill={{ name, email, contact }}
@@ -162,7 +163,7 @@ export default function CheckoutDemoPage() {
             Integration Pipeline
           </div>
           <ol className="list-decimal pl-4 space-y-1 text-stone-400">
-            <li><strong className="text-stone-300">Order Creation:</strong> Frontend calls <code className="text-amber-400">POST /api/create-order</code> with amount in paise. Backend uses Razorpay SDK to create order.</li>
+            <li><strong className="text-stone-300">Order Creation:</strong> Frontend calls <code className="text-amber-400">POST /api/orders/create</code> with service selections. Backend calculates canonical amount server-side and calls Razorpay API.</li>
             <li><strong className="text-stone-300">Checkout Modal:</strong> Razorpay Standard Checkout opens with <code className="text-amber-400">order_id</code> and public key.</li>
             <li><strong className="text-stone-300">Signature Verification:</strong> Client sends <code className="text-amber-400">razorpay_order_id</code>, <code className="text-amber-400">razorpay_payment_id</code>, and <code className="text-amber-400">razorpay_signature</code> to <code className="text-amber-400">POST /api/verify-payment</code>.</li>
             <li><strong className="text-stone-300">Security Check:</strong> Server calculates <code className="text-amber-400">HMAC-SHA256(order_id + &quot;|&quot; + payment_id, KEY_SECRET)</code> with timing-safe comparison.</li>

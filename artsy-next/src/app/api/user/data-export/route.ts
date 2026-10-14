@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 1. Authenticate caller identity
-    const authUser = getAuthenticatedUser(request);
+    const authUser = await getAuthenticatedUser(request);
     if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
     }

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 
-const SUPER_ADMIN_EMAIL = 'lilsammy96@gmail.com';
+const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 
 export async function GET(request: Request) {
   const SUPER_ADMIN_PHONE = process.env.SUPER_ADMIN_PHONE;
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     throw new Error('SUPER_ADMIN_PHONE env var is required');
   }
 
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }

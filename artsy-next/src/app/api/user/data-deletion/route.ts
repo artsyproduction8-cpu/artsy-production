@@ -7,11 +7,20 @@ import { getAuthenticatedUser } from '@/lib/auth-cookie';
  * Right to Erasure:
  * 1. Inserts request into data_deletion_requests
  * 2. Anonymizes PII (phone, email, full_name)
- * 3. Preserves statutory financial ledger records with anonymized identifier
+ * 3. Anonymizes creator profile (PAN, bank details)
+ * 4. Invalidates active sessions and deletes OTP sessions
+ * 5. Preserves statutory financial ledger records with anonymized identifier
  */
 export async function POST(request: NextRequest) {
+  // M9: Safe JSON parsing
+  let body: any;
   try {
-    const body = await request.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+  }
+
+  try {
     const { userId, reason } = body;
 
     if (!userId) {
@@ -19,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Authenticate caller identity
-    const authUser = getAuthenticatedUser(request);
+    const authUser = await getAuthenticatedUser(request);
     if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
     }
@@ -52,11 +61,14 @@ export async function POST(request: NextRequest) {
       }
 
       const SUPER_ADMIN_PHONE = process.env.SUPER_ADMIN_PHONE;
-      if (!SUPER_ADMIN_PHONE) {
-        throw new Error('SUPER_ADMIN_PHONE env var is required');
-      }
+      const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 
-      if (user.role === 'super_admin' || user.phone === SUPER_ADMIN_PHONE || user.email === 'lilsammy96@gmail.com') {
+      const isSuperAdminAccount =
+        user.role === 'super_admin' ||
+        (SUPER_ADMIN_PHONE && user.phone === SUPER_ADMIN_PHONE) ||
+        (SUPER_ADMIN_EMAIL && user.email === SUPER_ADMIN_EMAIL);
+
+      if (isSuperAdminAccount) {
         return NextResponse.json({ error: 'Super Admin account cannot be deleted' }, { status: 403 });
       }
 
@@ -64,7 +76,7 @@ export async function POST(request: NextRequest) {
       const { data: activeProjects } = await supabase
         .from('projects')
         .select('id, status')
-        .eq('user_id', userId)
+        .eq('client_id', userId)
         .not('status', 'in', '("completed","cancelled","refunded","archived")');
 
       if (activeProjects && activeProjects.length > 0) {
@@ -87,17 +99,41 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      // 4. Anonymize user PII in public.users
-      const anonymizedTag = `deleted_${userId.slice(0, 8)}`;
+      // 4. Fix I: Anonymize user PII in public.users with UNIQUE phone & email
+      const anonymizedTag = `deleted_${userId.slice(0, 8)}_${Date.now().toString().slice(-4)}`;
+      const uniqueAnonymizedPhone = `+9100${Math.floor(10000000 + Math.random() * 90000000)}`;
+
       await supabase
         .from('users')
         .update({
           full_name: 'Anonymized User (DPDP)',
           email: `${anonymizedTag}@deleted.artsyproduction.in`,
-          phone: `+910000000000`,
+          phone: uniqueAnonymizedPhone,
+          token_version: 999999, // Invalidate all active tokens
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);
+
+      // 5. Cascade anonymization to creator_profiles (wipe PAN, bank details)
+      await supabase
+        .from('creator_profiles')
+        .update({
+          pan_number: null,
+          bank_account: null,
+          ifsc: null,
+          upi_id: null,
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+
+      // 6. Delete OTP sessions
+      if (user.phone) {
+        await supabase
+          .from('otp_sessions')
+          .delete()
+          .eq('phone', user.phone);
+      }
 
       return NextResponse.json({
         success: true,
@@ -113,10 +149,10 @@ export async function POST(request: NextRequest) {
       message: 'DPDP Data Erasure simulated in offline mock mode. PII masked.',
       mockUserId: userId
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[INTERNAL] [DPDP DELETION ERROR]:', err);
     return NextResponse.json(
-      { error: 'Unable to process request' },
+      { error: 'Unable to process data deletion request' },
       { status: 500 }
     );
   }

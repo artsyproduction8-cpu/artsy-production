@@ -2,20 +2,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
-export async function POST(request: NextRequest) {
-  try {
-    // Security Fix #6: Require authenticated user
-    const authUser = getAuthenticatedUser(request);
-    if (!authUser) {
-      return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
-    }
+const ALLOWED_MIME_TYPES = ['video/mp4', 'video/quicktime', 'image/jpeg', 'image/png', 'application/pdf'];
 
-    const body = await request.json();
+export async function POST(request: NextRequest) {
+  // Security Fix #6: Require authenticated user
+  const authUser = await getAuthenticatedUser(request);
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
+  }
+
+  // M9: Safe JSON parsing
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+  }
+
+  try {
     const { projectId, fileName, fileSizeBytes, mimeType, fileType = 'raw_footage' } = body;
 
     if (!projectId || !fileName) {
       return NextResponse.json(
         { error: 'projectId and fileName are required' },
+        { status: 400 }
+      );
+    }
+
+    // Fix M6: MIME allowlist check
+    if (mimeType && !ALLOWED_MIME_TYPES.includes(mimeType)) {
+      return NextResponse.json(
+        { error: `Disallowed MIME type: ${mimeType}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}` },
         { status: 400 }
       );
     }
@@ -94,6 +111,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err: unknown) {
     console.error('Presigned URL error:', err);
+    // M10: Do not leak error details
     return NextResponse.json(
       { error: 'Failed to generate upload URL' },
       { status: 500 }

@@ -39,7 +39,7 @@ const NODES: PipelineNode[] = [
     status: 'healthy',
     latencyMs: 12,
     uptimePct: 99.95,
-    details: 'Baileys Session Connected • Dedicated Node: +91 7777078742',
+    details: 'Baileys Session Connected • Dedicated Node: Active',
   },
   {
     name: 'Supabase PostgreSQL DB & Auth',
@@ -147,7 +147,7 @@ export default function AdminTelemetryPage() {
         <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs">
           <div className="text-[10px] uppercase font-bold text-[#86868B]">WhatsApp Gateway</div>
           <div className="text-xl font-extrabold text-emerald-600 mt-1">Active (Port 2785)</div>
-          <div className="text-[11px] text-[#86868B] mt-1">Dedicated: +91 7777078742</div>
+          <div className="text-[11px] text-[#86868B] mt-1">Dedicated Node: Connected</div>
         </div>
       </div>
 

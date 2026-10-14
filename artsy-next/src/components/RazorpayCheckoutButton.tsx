@@ -3,7 +3,10 @@
 import React, { useState } from 'react';
 
 export interface RazorpayCheckoutButtonProps {
-  amount: number; // In paise (e.g., 50000 = ₹500)
+  amount?: number; // In paise (display only; canonical amount is computed server-side)
+  serviceId?: string;
+  requirements?: Record<string, any>;
+  quoteId?: string;
   currency?: string;
   name?: string;
   description?: string;
@@ -45,7 +48,10 @@ function loadRazorpayScript(): Promise<boolean> {
 }
 
 export default function RazorpayCheckoutButton({
-  amount,
+  amount = 600000,
+  serviceId = 'wedding',
+  requirements = {},
+  quoteId,
   currency = 'INR',
   name = 'Artsy Production',
   description = 'Creative Studio Services',
@@ -72,29 +78,29 @@ export default function RazorpayCheckoutButton({
         throw new Error('Failed to load Razorpay Checkout SDK. Check your internet connection.');
       }
 
-      // 2. Call backend endpoint to create order
-      const createOrderRes = await fetch('/api/create-order', {
+      // 2. Call canonical server endpoint to create order with server-computed amount (Security Fix B)
+      const createOrderRes = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount,
+          serviceId: serviceId || 'wedding',
+          requirements: requirements || {},
+          quoteId: quoteId || null,
           currency,
-          receipt: receipt || `rcpt_${Date.now()}`,
-          notes: {
-            description,
-            service: name,
-          },
+          clientPhone: prefill.contact || null,
+          clientName: prefill.name || null,
+          clientEmail: prefill.email || null,
         }),
       });
 
       const orderData = await createOrderRes.json();
 
-      if (!createOrderRes.ok || !orderData.order_id) {
+      if (!createOrderRes.ok || !orderData.success || (!orderData.orderId && !orderData.razorpayOrderId)) {
         throw new Error(orderData.error || 'Failed to create payment order');
       }
 
-      const { order_id, key_id } = orderData;
-      const razorpayKey = key_id || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      const order_id = orderData.razorpayOrderId || orderData.orderId;
+      const razorpayKey = orderData.razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
 
       // 3. Configure and open Razorpay modal
       const options = {

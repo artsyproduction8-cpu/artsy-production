@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   try {
     // 1. Server-side auth check for admin role
-    const authUser = getAuthenticatedUser(request);
-    if (!authUser || authUser.role !== 'admin') {
+    const authUser = await getAuthenticatedUser(request);
+    if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json(
         { error: 'Unauthorized: Admin access required for statutory GSTR-1 exports' },
         { status: 401 }

@@ -3,7 +3,7 @@ import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 
 export async function GET(request: Request) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }
@@ -20,7 +20,8 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false });
 
     if (refErr) {
-      return NextResponse.json({ error: refErr.message }, { status: 500 });
+      console.error('Error fetching refunds:', refErr);
+      return NextResponse.json({ error: 'Failed to fetch refunds' }, { status: 500 });
     }
 
     const orderIds = (refunds || []).map((r: any) => r.order_id).filter(Boolean);
@@ -47,14 +48,14 @@ export async function GET(request: Request) {
       success: true,
       refunds: enrichedRefunds,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Error fetching refunds:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PATCH(request: Request) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }
@@ -89,7 +90,8 @@ export async function PATCH(request: Request) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('Error updating refund status:', error);
+      return NextResponse.json({ error: 'Failed to update refund' }, { status: 500 });
     }
 
     // Record audit log
@@ -106,8 +108,8 @@ export async function PATCH(request: Request) {
     ]);
 
     return NextResponse.json({ success: true, refund: updated });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Error updating refund:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

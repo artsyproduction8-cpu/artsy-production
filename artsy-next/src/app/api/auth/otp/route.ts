@@ -85,6 +85,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'OTP code is required.' }, { status: 400 });
       }
 
+      // Security Fix L: Distributed rate limiting on OTP verification (10 attempts per 10 mins per identifier)
+      const verifyLimit = await checkRateLimit(`verify_${identifier}`, 'auth', 10, 600);
+      if (!verifyLimit.allowed) {
+        return NextResponse.json(
+          { error: `Too many attempts. Wait ${Math.ceil(verifyLimit.resetSeconds / 60)} minutes.` },
+          { status: 429 }
+        );
+      }
+
       const inputCode = String(code).trim();
 
       // Check in-memory store first
@@ -195,7 +204,12 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const isSuperAdminIdentifier = cleanPhone === '7777078742' || cleanEmail === 'lilsammy96@gmail.com';
+      const superAdminPhone = process.env.SUPER_ADMIN_PHONE?.replace(/\D/g, '').slice(-10);
+      const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase().trim();
+      const isSuperAdminIdentifier = Boolean(
+        (superAdminPhone && cleanPhone === superAdminPhone) ||
+        (superAdminEmail && cleanEmail === superAdminEmail)
+      );
       let resolvedUser: any;
       let isNewUser = false;
 
@@ -221,7 +235,9 @@ export async function POST(request: NextRequest) {
         const defaultName = isSuperAdminIdentifier ? 'Super Admin' : null;
 
         const newUserData = {
-          email: isSuperAdminIdentifier ? 'lilsammy96@gmail.com' : (cleanEmail || `${cleanPhone}@artsyprod.studio`),
+          email: isSuperAdminIdentifier
+            ? (superAdminEmail || `${cleanPhone}@artsyprod.studio`)
+            : (cleanEmail || `${cleanPhone}@artsyprod.studio`),
           phone: formattedPhone || (cleanPhone ? `+91${cleanPhone}` : undefined),
           full_name: defaultName,
           role: defaultRole,
@@ -340,6 +356,24 @@ export async function POST(request: NextRequest) {
         userPayload.rejected_at = rejected_at;
       }
 
+      // Security Fix J: Record DPDP Consent with valid user_id
+      if (consentGiven && isSupabaseConfigured && dbClient && resolvedUser?.id) {
+        try {
+          await dbClient.from('consent_records').insert([
+            {
+              user_id: resolvedUser.id,
+              consent_type: 'authentication_and_order_updates',
+              consent_version: 'v2.2',
+              ip_address: ip && ip.includes('.') ? ip : null,
+              user_agent: request.headers.get('user-agent') || null,
+              granted_at: new Date().toISOString(),
+            },
+          ]);
+        } catch (err) {
+          console.warn('DPDP consent insert warning:', err);
+        }
+      }
+
       const response = NextResponse.json({
         success: true,
         isNewUser,
@@ -373,26 +407,37 @@ export async function POST(request: NextRequest) {
     // ACTION: SEND — Generate and dispatch OTP
     // ────────────────────────────────────────────────────────
 
-    // 1. Rate Limiting Check (Max 5 requests per 10 minutes per identifier/IP)
-    const rateLimit = await checkRateLimit(`${identifier}_${ip}`, 'auth', 5, 600);
+    // 1. Rate Limiting Check (Fix P: Split identifier and IP buckets)
+    const identifierLimit = await checkRateLimit(identifier, 'auth', 5, 600);
+    if (!identifierLimit.allowed) {
+      const resp = NextResponse.json(
+        { error: `Too many OTP requests. Please wait ${Math.ceil(identifierLimit.resetSeconds / 60)} minutes before retrying.` },
+        { status: 429 }
+      );
+      resp.headers.set('X-RateLimit-Limit', '5');
+      resp.headers.set('X-RateLimit-Remaining', '0');
+      return resp;
+    }
 
+    const ipLimit = await checkRateLimit(`ip_${ip}`, 'auth', 30, 600);
+    if (!ipLimit.allowed) {
+      const resp = NextResponse.json(
+        { error: `Too many requests from this network. Please wait ${Math.ceil(ipLimit.resetSeconds / 60)} minutes before retrying.` },
+        { status: 429 }
+      );
+      resp.headers.set('X-RateLimit-Limit', '30');
+      resp.headers.set('X-RateLimit-Remaining', '0');
+      return resp;
+    }
+
+    const remainingAttempts = Math.min(identifierLimit.remaining, ipLimit.remaining);
     const sendResponse = (payload: any, init?: { status?: number }) => {
       const resp = NextResponse.json(payload, init);
       resp.headers.set('X-RateLimit-Limit', '5');
-      resp.headers.set('X-RateLimit-Remaining', Math.max(0, rateLimit.remaining).toString());
-      if (rateLimit.mode === 'redis') {
-        resp.headers.set('X-RateLimit-Mode', 'redis');
-      } else {
-        resp.headers.set('X-RateLimit-Mode', 'in-memory-fallback');
-      }
+      resp.headers.set('X-RateLimit-Remaining', Math.max(0, remainingAttempts).toString());
+      resp.headers.set('X-RateLimit-Mode', identifierLimit.mode === 'redis' ? 'redis' : 'in-memory-fallback');
       return resp;
     };
-    if (!rateLimit.allowed) {
-      return sendResponse(
-        { error: `Too many OTP requests. Please wait ${Math.ceil(rateLimit.resetSeconds / 60)} minutes before retrying.` },
-        { status: 429 }
-      );
-    }
 
     // 2. Cryptographically Secure 6-digit OTP generation (Fix 3B)
     const otpCode = crypto.randomInt(100000, 1000000).toString();
@@ -444,24 +489,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Record DPDP Consent
-    if (consentGiven && isSupabaseConfigured && supabase) {
-      try {
-        await supabase.from('consent_records').insert([
-          {
-            consent_type: 'authentication_and_order_updates',
-            consent_version: 'v2.2',
-            ip_address: ip,
-            user_agent: request.headers.get('user-agent') || null,
-            granted_at: new Date().toISOString(),
-          },
-        ]);
-      } catch (err) {
-        console.warn('DPDP consent insert warning:', err);
-      }
-    }
-
-    // 5. Dual-Track Dispatch Chain (Priority 1: OpenWA WhatsApp -> Priority 2: Resend Email -> Error)
+    // 4. Dual-Track Dispatch Chain (Priority 1: OpenWA WhatsApp -> Priority 2: Resend Email -> Error)
     const gatewayUrl = process.env.WHATSAPP_GATEWAY_URL?.trim();
     const hasOpenWA = Boolean(
       gatewayUrl &&
@@ -513,7 +541,7 @@ export async function POST(request: NextRequest) {
           success: true,
           message: 'OTP sent via WhatsApp',
           channel: 'whatsapp',
-          remainingAttempts: rateLimit.remaining,
+          remainingAttempts: remainingAttempts,
           ...(shouldExposeDevOtp && { devOtp: otpCode }),
         });
       }
@@ -556,7 +584,7 @@ export async function POST(request: NextRequest) {
         message: 'OTP sent via WhatsApp',
         channel: 'whatsapp',
         messageId: waMessageId,
-        remainingAttempts: rateLimit.remaining,
+        remainingAttempts: remainingAttempts,
         ...(shouldExposeDevOtp && { devOtp: otpCode }),
       });
     }
@@ -576,7 +604,7 @@ export async function POST(request: NextRequest) {
             message: 'OTP generated for development testing (email fallback)',
             channel: 'email',
             email: cleanEmail,
-            remainingAttempts: rateLimit.remaining,
+            remainingAttempts: remainingAttempts,
             ...(shouldExposeDevOtp && { devOtp: otpCode }),
           });
         }
@@ -599,7 +627,7 @@ export async function POST(request: NextRequest) {
         message: 'OTP sent via Email',
         channel: 'email',
         email: cleanEmail,
-        remainingAttempts: rateLimit.remaining,
+        remainingAttempts: remainingAttempts,
         ...(shouldExposeDevOtp && { devOtp: otpCode }),
       });
     }
@@ -613,7 +641,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'OTP dispatched (development testing mode)',
         channel: 'dev',
-        remainingAttempts: rateLimit.remaining,
+        remainingAttempts: remainingAttempts,
         ...(shouldExposeDevOtp && { devOtp: otpCode }),
       });
     }

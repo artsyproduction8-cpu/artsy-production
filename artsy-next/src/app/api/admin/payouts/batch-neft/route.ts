@@ -21,7 +21,7 @@ interface NeftBatchRecord {
 export async function GET(request: NextRequest) {
   try {
     // Security Fix #4: Enforce admin authentication
-    const authUser = getAuthenticatedUser(request);
+    const authUser = await getAuthenticatedUser(request);
     if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
     }
@@ -189,8 +189,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Security Fix #4: Enforce admin authentication
-    const authUser = getAuthenticatedUser(request);
-    if (!authUser || authUser.role !== 'admin') {
+    const authUser = await getAuthenticatedUser(request);
+    if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
     }
 

@@ -4,7 +4,7 @@ import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
 
 export async function GET(request: Request) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }

@@ -5,7 +5,13 @@ const DEFAULT_DEV_KEY = 'artsy_production_secret_encryption_key_2026_32char'; //
 const ENCRYPTION_KEY = process.env.PII_ENCRYPTION_KEY || DEFAULT_DEV_KEY;
 
 function getKey(): Buffer {
-  return crypto.createHash('sha256').update(String(ENCRYPTION_KEY)).digest();
+  const key = process.env.PII_ENCRYPTION_KEY;
+  if (!key || key.length < 32) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('[FATAL] PII_ENCRYPTION_KEY must be set and >= 32 characters in production');
+    }
+  }
+  return crypto.createHash('sha256').update(String(key || DEFAULT_DEV_KEY)).digest();
 }
 
 /**

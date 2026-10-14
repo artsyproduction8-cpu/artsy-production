@@ -3,6 +3,8 @@ import { supabase, supabaseAdmin, isSupabaseConfigured } from '@/../lib/supabase
 import { calculateFinancialWaterfall } from '@/lib/financial/engine';
 import { calculateLivePrice, ConfiguratorSelections } from '@/lib/pricing/engine';
 import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
+import { checkRateLimit } from '@/lib/rateLimit';
+import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 function resolveServiceKey(serviceId?: string): string {
   if (!serviceId) return 'wedding';
@@ -26,6 +28,17 @@ function resolveServiceKey(serviceId?: string): string {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Fix M8: Rate limiting per user or IP (10 orders per 10 minutes)
+    const authUser = await getAuthenticatedUser(request);
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anon';
+    const rateKey = authUser ? `order_${authUser.id}` : `order_ip_${ip}`;
+    const limit = await checkRateLimit(rateKey, 'api', 10, 600);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: `Too many order creation attempts. Please wait ${Math.ceil(limit.resetSeconds / 60)} minutes before trying again.` },
+        { status: 429 }
+      );
+    }
     const body = await request.json().catch(() => ({}));
     const {
       serviceId,

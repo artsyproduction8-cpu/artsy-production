@@ -18,10 +18,11 @@
     "baileys-antiban": "^4.10.0",
     "bcryptjs": "^3.0.3",
     "mediainfo.js": "^0.3.8",
-    "next": "16.3.5",
+    "next": "16.4.0",
     "razorpay": "^2.9.8",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -30,10 +31,13 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.4.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
     "vercel": "^63.1.0"
+  },
+  "overrides": {
+    "source-map-js": ">=1.2.2"
   }
 }

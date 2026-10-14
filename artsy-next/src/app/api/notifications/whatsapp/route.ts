@@ -26,7 +26,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     // Security Fix: Require admin authentication for arbitrary WhatsApp dispatches
-    const authUser = getAuthenticatedUser(req);
+    const authUser = await getAuthenticatedUser(req);
     if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
     }

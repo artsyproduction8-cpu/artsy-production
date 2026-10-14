@@ -16,8 +16,8 @@ import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 export async function POST(request: NextRequest) {
   try {
     // Security Fix #5: Strict freelancer authentication; remove silent demo fallback
-    const authUser = getAuthenticatedUser(request);
-    if (!authUser || (authUser.role !== 'freelancer' && authUser.role !== 'admin')) {
+    const authUser = await getAuthenticatedUser(request);
+    if (!authUser || !['freelancer', 'admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json({ error: 'Unauthorized: Freelancer access required' }, { status: 401 });
     }
 

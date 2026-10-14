@@ -4,14 +4,21 @@ import { validateHeaderBytesServer } from '@/lib/storage/validator';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 export async function POST(request: NextRequest) {
-  try {
-    // Security Fix #7: Authenticate user
-    const authUser = getAuthenticatedUser(request);
-    if (!authUser) {
-      return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
-    }
+  // Security Fix #7: Authenticate user
+  const authUser = await getAuthenticatedUser(request);
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
+  }
 
-    const body = await request.json();
+  // M9: Safe JSON parsing
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+  }
+
+  try {
     const { projectId, key, fileName, fileSize = 0, mimeType = 'video/mp4', headerHex } = body;
 
     if (!projectId || !key || !fileName) {
@@ -107,6 +114,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err: unknown) {
     console.error('Storage confirm error:', err);
+    // M10: Error message masking
     return NextResponse.json(
       { error: 'Failed to confirm storage upload' },
       { status: 500 }

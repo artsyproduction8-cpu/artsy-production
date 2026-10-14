@@ -3,7 +3,7 @@ import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 
 export async function GET(request: Request) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser) {
     return NextResponse.json({ error: 'Unauthorized: Session required' }, { status: 401 });
   }
@@ -22,18 +22,18 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error('[Freelancer Portfolio GET Error]', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to fetch portfolio samples' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, samples: samples || [] });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Freelancer Portfolio GET Error]', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser) {
     return NextResponse.json({ error: 'Unauthorized: Session required' }, { status: 401 });
   }
@@ -54,23 +54,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (title.length > 100) {
-      return NextResponse.json({ error: 'Title cannot exceed 100 characters' }, { status: 400 });
-    }
-
-    if (description && description.length > 500) {
-      return NextResponse.json({ error: 'Description cannot exceed 500 characters' }, { status: 400 });
-    }
-
-    const validCategories = ['Wedding', 'Brand', 'Corporate', 'Personal'];
-    if (!validCategories.includes(category)) {
-      return NextResponse.json(
-        { error: 'Category must be one of: Wedding, Brand, Corporate, Personal' },
-        { status: 400 }
-      );
-    }
-
-    // Ensure creator profile exists for this user in creator_profiles
+    // Ensure creator profile exists
     const { data: existingProfile } = await dbClient
       .from('creator_profiles')
       .select('id')
@@ -78,11 +62,15 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (!existingProfile) {
+      const displayName = authUser.full_name
+        ? authUser.full_name.split(' ')[0] + ' ' + (authUser.full_name.split(' ')[1]?.[0] || 'A') + '.'
+        : 'Creator C.';
+
       // Upsert profile record if missing
       await dbClient.from('creator_profiles').insert([
         {
           id: authUser.id,
-          public_display_name: authUser.name ? authUser.name.split(' ')[0] + ' ' + (authUser.name.split(' ')[1]?.[0] || 'A') + '.' : 'Creator C.',
+          public_display_name: displayName,
           approval_status: 'pending',
           is_public: false,
           created_at: new Date().toISOString(),
@@ -111,12 +99,12 @@ export async function POST(request: Request) {
 
     if (insertError) {
       console.error('[Freelancer Portfolio Insert Error]', insertError);
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to save sample' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, sample: newSample });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Freelancer Portfolio POST Error]', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

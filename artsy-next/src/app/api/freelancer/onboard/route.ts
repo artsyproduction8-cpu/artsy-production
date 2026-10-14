@@ -2,15 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/../lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { encryptPII } from '@/lib/crypto/pii';
 
 export async function POST(req: NextRequest) {
-  try {
-    const authUser = getAuthenticatedUser(req);
-    if (!authUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  // 1. Authenticate caller
+  const authUser = await getAuthenticatedUser(req);
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-    const body = await req.json();
+  // M9: Safe JSON parsing
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+  }
+
+  try {
     const {
       alias,
       legalName,
@@ -24,6 +33,10 @@ export async function POST(req: NextRequest) {
     const candidateUserId = authUser.id;
     const candidateEmail = authUser.email || '';
     const candidatePhone = authUser.phone || '';
+
+    // Fix M: Encrypt PAN before saving to database
+    const cleanPan = typeof pan === 'string' && pan.trim().length > 0 ? pan.trim().toUpperCase() : null;
+    const encryptedPan = cleanPan ? encryptPII(cleanPan) : null;
 
     // 1. Ensure user and creator profile exist in Supabase with status = 'pending'
     if (supabase && typeof supabase.from === 'function') {
@@ -54,7 +67,7 @@ export async function POST(req: NextRequest) {
             software: Array.isArray(software) ? software : ['DaVinci Resolve Studio'],
             approval_status: 'pending',
             onboarding_status: 'pending',
-            pan_number: pan || null,
+            pan_number: encryptedPan,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           },
@@ -86,6 +99,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error handling creator onboarding submission:', error);
+    // M10: Do not leak error details
     return NextResponse.json(
       { success: false, error: 'Internal server error processing creator application' },
       { status: 500 }

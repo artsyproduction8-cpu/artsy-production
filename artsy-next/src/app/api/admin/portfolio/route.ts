@@ -3,7 +3,7 @@ import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 
 export async function GET(request: Request) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     const { data: samples, error } = await query;
     if (error) {
       console.error('[Admin Portfolio GET Error]', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to fetch portfolio samples' }, { status: 500 });
     }
 
     // Enrich with creator names
@@ -53,14 +53,14 @@ export async function GET(request: Request) {
     }));
 
     return NextResponse.json({ success: true, samples: enriched });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Admin Portfolio GET Error]', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
 
     if (updateError) {
       console.error('[Admin Portfolio Update Error]', updateError);
-      return NextResponse.json({ error: updateError.message }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to update sample' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -111,8 +111,8 @@ export async function POST(request: Request) {
       message: `Sample ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
       action,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[Admin Portfolio Action Error]', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -79,11 +79,14 @@ export async function POST(request: NextRequest) {
     const changes = entry?.changes?.[0];
     const value = changes?.value;
 
+    // Redact helper for PII protection (Fix L2)
+    const redactPhone = (p?: string) => (p ? p.slice(0, 3) + '****' + p.slice(-4) : 'none');
+
     // Log event type, messages, statuses, errors
     if (value) {
       if (value.messages) {
         console.log('[WhatsApp Webhook] Incoming message event:', {
-          from: value.messages[0]?.from,
+          from: redactPhone(value.messages[0]?.from),
           id: value.messages[0]?.id,
           type: value.messages[0]?.type,
           timestamp: value.messages[0]?.timestamp,
@@ -93,7 +96,7 @@ export async function POST(request: NextRequest) {
         console.log('[WhatsApp Webhook] Message status update:', {
           id: value.statuses[0]?.id,
           status: value.statuses[0]?.status,
-          recipient_id: value.statuses[0]?.recipient_id,
+          recipient_id: redactPhone(value.statuses[0]?.recipient_id),
           errors: value.statuses[0]?.errors,
         });
       }
@@ -101,7 +104,7 @@ export async function POST(request: NextRequest) {
         console.warn('[WhatsApp Webhook] Webhook value error:', value.errors);
       }
     } else {
-      console.log('[WhatsApp Webhook] Received payload:', typeof payload === 'object' ? JSON.stringify(payload) : payload);
+      console.log('[WhatsApp Webhook] Received payload: [REDACTED]');
     }
 
     // Acknowledge receipt immediately with 200 OK

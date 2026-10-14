@@ -169,7 +169,7 @@ const INITIAL_NODES: TelemetryNode[] = [
     status: 'healthy',
     latencyMs: 12,
     uptime: '99.95%',
-    details: 'Baileys Session Connected • Dedicated Node: +91 7777078742',
+    details: 'Baileys Session Connected • Dedicated Node: Active',
   },
   {
     name: 'Supabase PostgreSQL DB & Auth',

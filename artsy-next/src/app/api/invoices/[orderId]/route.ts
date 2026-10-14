@@ -62,7 +62,7 @@ export async function GET(
 ) {
   try {
     // Fix 10: Require authenticated user
-    const authUser = getAuthenticatedUser(request);
+    const authUser = await getAuthenticatedUser(request);
     if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -241,7 +241,7 @@ export async function POST(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const authUser = getAuthenticatedUser(request);
+    const authUser = await getAuthenticatedUser(request);
     if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -250,12 +250,13 @@ export async function POST(
     const body = await request.json().catch(() => ({}));
     const orderDetails = await resolveOrderDetails(orderId);
 
+    const isAdmin = ['admin', 'super_admin'].includes(authUser.role);
     if (orderDetails.orderFound) {
-      if (orderDetails.clientId && authUser.id !== orderDetails.clientId && authUser.role !== 'admin') {
+      if (orderDetails.clientId && authUser.id !== orderDetails.clientId && !isAdmin) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     } else {
-      if (authUser.role !== 'admin') {
+      if (!isAdmin) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
     }

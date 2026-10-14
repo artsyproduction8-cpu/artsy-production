@@ -3,7 +3,7 @@ import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   const { id } = await params;
 
   if (!authUser || authUser.role !== 'super_admin') {

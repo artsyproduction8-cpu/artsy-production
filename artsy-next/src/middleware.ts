@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyAndParseAuthCookie, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
+import { verifyAndParseAuthCookie, verifyAndParseAuthCookieSync, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 
 // In-memory bucket for edge rate limiting
 const requestCounterMap = new Map<string, { count: number; resetTime: number }>();
@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
 
     // Use composite key: authenticated user ID if logged in, otherwise trusted IP
     const authCookie = request.cookies.get(AUTH_COOKIE_NAME);
-    const authUser = authCookie?.value ? verifyAndParseAuthCookie(authCookie.value) : null;
+    const authUser = authCookie?.value ? verifyAndParseAuthCookieSync(authCookie.value) : null;
     const rateLimitKey = authUser?.id ? `usr_${authUser.id}_${pathname}` : `ip_${trustedEdgeIp}`;
 
     const now = Date.now();
@@ -100,7 +100,7 @@ export async function middleware(request: NextRequest) {
       }
 
       // HMAC signature verification & role authorization check
-      const user = verifyAndParseAuthCookie(authCookie.value);
+      const user = await verifyAndParseAuthCookie(authCookie.value);
       if (!user) {
         // Invalid or unsigned/tampered cookie -> always reject and redirect to login
         const loginUrl = new URL('/auth/login', request.url);

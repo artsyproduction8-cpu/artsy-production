@@ -3,7 +3,7 @@ import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(request: Request) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

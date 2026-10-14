@@ -3,12 +3,19 @@ import { getAuthenticatedUser, signAuthCookieValue, AUTH_COOKIE_NAME, AuthUserPa
 import { supabaseAdmin, supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
-  const authUser = getAuthenticatedUser(request);
+  const authUser = await getAuthenticatedUser(request);
   if (!authUser) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = await request.json();
+  // M9: Safe JSON parsing
+  let body: any;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+  }
+
   const { full_name } = body;
 
   if (!full_name || typeof full_name !== 'string' || full_name.trim().length < 2) {
@@ -16,6 +23,12 @@ export async function POST(request: Request) {
   }
 
   const trimmedName = full_name.trim();
+
+  // L4: Enforce max length on name
+  if (trimmedName.length > 100) {
+    return NextResponse.json({ error: 'Full name must not exceed 100 characters' }, { status: 400 });
+  }
+
   const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : supabase;
 
   if (dbClient && typeof dbClient.from === 'function') {
@@ -49,4 +62,3 @@ export async function POST(request: Request) {
 
   return response;
 }
-

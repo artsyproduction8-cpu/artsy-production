@@ -46,9 +46,9 @@ export interface ArtsyUser {
 export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
   super_admin: {
     id: 'usr-superadmin-000',
-    email: 'lilsammy96@gmail.com',
+    email: 'admin@artsyproduction.com',
     full_name: 'Super Admin',
-    phone: '+91 7777078742',
+    phone: '+91 9999999999',
     role: 'super_admin',
     status: 'active',
     avatar_url: '',
@@ -196,21 +196,14 @@ export const hasAnyRole = (roles: UserRole[]): boolean => {
 export function logout(redirectTo: string = '/auth/login'): void {
   if (typeof window === 'undefined') return;
 
-  const LOCAL_KEYS = [
-    'artsy_auth_user',
-    'artsy_client_profile',
-    'artsy_creator_profile',
-    'artsy_creator_agreements',
-    'artsy_active_booking',
-    'artsy_quotes',
-    'artsy_financial_ledger',
-    'artsy_signup_intent',
-    'artsy_pending_auth',
-    'artsy_redirect',
-  ];
-  LOCAL_KEYS.forEach((key) => {
-    try { localStorage.removeItem(key); } catch {}
-  });
+  // M1: Purge all artsy_* keys from localStorage
+  try {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith('artsy_'))
+      .forEach((k) => {
+        try { localStorage.removeItem(k); } catch {}
+      });
+  } catch {}
 
   try { sessionStorage.clear(); } catch {}
 

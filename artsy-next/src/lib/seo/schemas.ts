@@ -49,7 +49,7 @@ export function organizationSchema() {
     logo: `${BASE_URL}/logo.png`,
     sameAs: sameAs.length > 0 ? sameAs : [
       'https://www.youtube.com/@artsyproduction',
-      'https://www.instagram.com/artsyproduction',
+      'https://www.instagram.com/artsy__production/',
       'https://www.linkedin.com/company/artsy-production',
     ],
     contactPoint: {

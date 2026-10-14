@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useParams, notFound } from 'next/navigation';
 import Navbar from '../../components/marketing/Navbar';
 import Footer from '../../components/marketing/Footer';
+import LiteYouTubeEmbed from '@/components/LiteYouTubeEmbed';
+import { extractYouTubeId } from '@/lib/youtube';
 
 interface PortfolioSample {
   id: string;
@@ -13,6 +15,7 @@ interface PortfolioSample {
   category: string;
   video_url: string;
   thumbnail_url: string;
+  youtube_id?: string;
   display_order: number;
 }
 
@@ -33,6 +36,8 @@ interface CreatorDetail {
 export default function CreatorProfilePage() {
   const { id } = useParams<{ id: string }>();
   const [creator, setCreator] = useState<CreatorDetail | null>(null);
+  const [portfolioVideos, setPortfolioVideos] = useState<PortfolioSample[]>([]);
+  const [showAllWorks, setShowAllWorks] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isNotFound, setIsNotFound] = useState(false);
   const [activeVideo, setActiveVideo] = useState<PortfolioSample | null>(null);
@@ -62,7 +67,20 @@ export default function CreatorProfilePage() {
       }
     };
 
+    const fetchPortfolio = async () => {
+      try {
+        const res = await fetch(`/api/creators/${id}/portfolio`);
+        const data = await res.json();
+        if (data.success && Array.isArray(data.samples)) {
+          setPortfolioVideos(data.samples);
+        }
+      } catch (err) {
+        console.error('Failed to load creator portfolio:', err);
+      }
+    };
+
     fetchCreator();
+    fetchPortfolio();
   }, [id]);
 
   if (isNotFound) {
@@ -226,78 +244,76 @@ export default function CreatorProfilePage() {
           </div>
         </div>
 
-        {/* Portfolio Showcase Grid */}
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-tight">
-              Portfolio Showcase
-            </h2>
-            <p className="text-xs text-[#86868B] mt-0.5">
-              Individually vetted creative cuts demonstrating timeline mastery and color grading.
-            </p>
-          </div>
+        {/* Selected Works Section */}
+        {portfolioVideos.length > 0 && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-tight">
+                  Selected Works
+                </h2>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Official Artsy catalog films and commercial cuts created by {creator.public_display_name}.
+                </p>
+              </div>
 
-          {creator.samples.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-[#E5E5E7] shadow-xs">
-              <div className="text-2xl mb-2">🎬</div>
-              <h3 className="text-sm font-bold text-[#1D1D1F]">Portfolio samples undergoing QA</h3>
-              <p className="text-xs text-[#86868B] mt-1">
-                Sample reels are currently in review with our Creative Director.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {creator.samples.map((sample) => (
-                <div
-                  key={sample.id}
-                  onClick={() => setActiveVideo(sample)}
-                  className="bg-white rounded-3xl overflow-hidden border border-[#E5E5E7] shadow-xs hover:shadow-md hover:border-[#DCDFE3] transition-all cursor-pointer group flex flex-col justify-between"
+              {portfolioVideos.length > 6 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllWorks(!showAllWorks)}
+                  className="self-start sm:self-auto text-xs font-bold text-[#3B82F6] hover:text-[#2563EB] transition-colors cursor-pointer"
                 >
-                  <div className="relative aspect-video bg-[#0A0A0A] overflow-hidden">
-                    <img
-                      src={sample.thumbnail_url}
-                      alt={sample.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
+                  {showAllWorks ? 'Show Less ↑' : `View All (${portfolioVideos.length}) →`}
+                </button>
+              )}
+            </div>
 
-                    {/* Category Tag */}
-                    <div className="absolute top-3 left-3">
-                      <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-black/60 text-white backdrop-blur-xs border border-white/10">
-                        {sample.category}
-                      </span>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {(showAllWorks ? portfolioVideos : portfolioVideos.slice(0, 6)).map((sample) => {
+                const ytid = sample.youtube_id || extractYouTubeId(sample.video_url) || '';
 
-                    {/* Play Button Icon */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-12 h-12 rounded-full bg-white/90 group-hover:bg-[#3B82F6] text-[#1D1D1F] group-hover:text-white flex items-center justify-center shadow-md transition-all group-hover:scale-110">
-                        <span className="text-sm font-bold ml-0.5">▶</span>
+                return (
+                  <div
+                    key={sample.id}
+                    className="bg-white rounded-3xl overflow-hidden border border-[#E5E5E7] shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      {ytid ? (
+                        <LiteYouTubeEmbed
+                          id={ytid}
+                          title={sample.title}
+                          thumbnailUrl={sample.thumbnail_url}
+                        />
+                      ) : (
+                        <div className="relative aspect-video bg-black">
+                          <img
+                            src={sample.thumbnail_url}
+                            alt={sample.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+
+                      <div className="p-5 space-y-1.5">
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-[#1D1D1F] text-white inline-block">
+                          {sample.category}
+                        </span>
+                        <h3 className="text-sm font-bold text-[#1D1D1F] leading-snug">
+                          {sample.title}
+                        </h3>
+                        {sample.description && (
+                          <p className="text-xs text-[#86868B] line-clamp-2 leading-relaxed">
+                            {sample.description}
+                          </p>
+                        )}
                       </div>
                     </div>
-
-                    {/* Watermark Notice */}
-                    <div className="absolute bottom-2 right-2 text-[9px] font-mono text-white/50 tracking-wider">
-                      ARTSY PREVIEW
-                    </div>
                   </div>
-
-                  <div className="p-5">
-                    <h3 className="text-sm font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors leading-snug">
-                      {sample.title}
-                    </h3>
-                    {sample.description && (
-                      <p className="text-xs text-[#86868B] mt-1.5 line-clamp-2 leading-relaxed">
-                        {sample.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Video Lightbox Modal */}
         {activeVideo && (

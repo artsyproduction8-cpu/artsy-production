@@ -21,6 +21,7 @@ export default function FreelancerSidebar() {
   const navItems = [
     { label: 'Active Job Slate', href: '/freelancer' },
     { label: 'Project Workroom', href: '/freelancer' },
+    { label: 'My Work', href: '/freelancer/portfolio' },
     { label: 'Earnings Ledger & Payouts', href: '/freelancer/payouts' },
     { label: 'Software & Gear Profile', href: '/freelancer/profile' },
     { label: 'Master Agreement & NDA', href: '/freelancer/agreement' },

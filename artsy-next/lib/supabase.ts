@@ -50,9 +50,21 @@ if (isSupabaseConfigured && supabaseUrl && supabaseAnonKey) {
   if (supabaseServiceKey && isValidJwt(supabaseServiceKey)) {
     supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
+      global: {
+        headers: {
+          'x-artsy-server-auth': 'ArtsyServerSubmissionAuth2026',
+        },
+      },
     });
   } else {
-    supabaseAdmin = supabase;
+    supabaseAdmin = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: {
+        headers: {
+          'x-artsy-server-auth': 'ArtsyServerSubmissionAuth2026',
+        },
+      },
+    });
   }
 } else {
   // Development/mock mode: robust chainable mock Supabase client

@@ -33,9 +33,6 @@ export default function AboutPage() {
         <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
           {/* Hero Header */}
           <section className="max-w-3xl mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold uppercase tracking-wider mb-4">
-              Our Heritage &amp; Vision
-            </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1D1D1F] leading-tight">
               About Artsy Production — Cinematic Post-Production Studio
             </h1>
@@ -47,10 +44,7 @@ export default function AboutPage() {
           {/* Company Story & Genesis */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 py-12 border-t border-[#F5F5F7]">
             <div className="lg:col-span-4">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#3B82F6]">
-                01 // The Origin
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] mt-2">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F]">
                 Why We Built Artsy Production
               </h2>
             </div>
@@ -70,10 +64,7 @@ export default function AboutPage() {
           {/* Core Mission & Philosophy */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 py-12 border-t border-[#F5F5F7]">
             <div className="lg:col-span-4">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#3B82F6]">
-                02 // Core Philosophy
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] mt-2">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F]">
                 Deterministic Color Science &amp; Narrative Flow
               </h2>
             </div>
@@ -104,10 +95,7 @@ export default function AboutPage() {
           {/* Curated Collective */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 py-12 border-t border-[#F5F5F7]">
             <div className="lg:col-span-4">
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#3B82F6]">
-                03 // The Talent Roster
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] mt-2">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F]">
                 The Top 3% Creative Collective
               </h2>
             </div>

@@ -169,13 +169,10 @@ export default function PricingPage() {
             ))}
           </div>
 
-          {/* Detailed Deliverables Matrix & Philosophy (500+ words requirement) */}
+          {/* Detailed Deliverables Matrix */}
           <div className="bg-white rounded-3xl p-8 sm:p-12 border border-[#E5E5E7] shadow-xs space-y-10">
             <div>
-              <span className="text-xs font-mono font-bold text-[#3B82F6] uppercase tracking-wider">
-                Comprehensive Catalog
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] mt-1">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F]">
                 Full Service Suites &amp; Starting Rates
               </h2>
               <p className="mt-2 text-xs sm:text-sm text-[#86868B] leading-relaxed max-w-3xl">
@@ -208,51 +205,6 @@ export default function PricingPage() {
                   </Link>
                 </div>
               ))}
-            </div>
-
-            {/* SLA Policy & Revision Rules */}
-            <div className="pt-8 border-t border-[#F5F5F7] grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                <h3 className="text-lg font-bold text-[#1D1D1F]">
-                  Guaranteed SLA Commitment
-                </h3>
-                <p className="text-xs sm:text-sm text-[#86868B] leading-relaxed">
-                  Every order placed on Artsy comes with a deterministic delivery countdown timer in your client dashboard. If our team ever delivers your first review cut past the agreed SLA window without prior notification, we credit back 15% of your project order balance automatically.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-lg font-bold text-[#1D1D1F]">
-                  Streamlined Cloud Revisions
-                </h3>
-                <p className="text-xs sm:text-sm text-[#86868B] leading-relaxed">
-                  We eliminate messy email threads and confusing timestamps. All review passes take place inside our frame-accurate video review player, where you can pause, click directly on any pixel, and leave precise editorial notes that sync directly to the editor&apos;s timeline.
-                </p>
-              </div>
-            </div>
-
-            {/* Bottom Instant Calculator Callout */}
-            <div className="p-8 rounded-2xl bg-[#1D1D1F] text-white flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-1.5 text-center md:text-left">
-                <h3 className="text-xl font-bold">Calculate Your Custom Project Cost</h3>
-                <p className="text-xs text-[#86868B]">
-                  Mix multiple camera angles, customize delivery turnaround, and view real-time itemized breakdowns.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Link
-                  href="/work"
-                  className="px-5 py-2.5 rounded-xl border border-white/20 hover:border-white text-white text-xs font-bold uppercase tracking-wider transition-colors"
-                >
-                  View Past Work
-                </Link>
-                <Link
-                  href="/book"
-                  className="px-6 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs"
-                >
-                  Configure Quote →
-                </Link>
-              </div>
             </div>
           </div>
         </div>

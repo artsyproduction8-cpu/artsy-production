@@ -38,9 +38,6 @@ export default function ContactPage() {
         <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
           {/* Header Strip */}
           <div className="max-w-3xl mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold uppercase tracking-wider mb-3">
-              Direct Communication Channel
-            </div>
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#1D1D1F] leading-tight">
               Contact Artsy Production Studio
             </h1>
@@ -115,9 +112,6 @@ export default function ContactPage() {
                     <div>
                       <div className="font-bold text-[#1D1D1F]">Operational Studio Hours</div>
                       <div className="text-[#86868B] mt-0.5">Monday – Friday: 09:00 AM – 07:00 PM IST</div>
-                      <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">
-                        * Overnight 24/7 sprint monitoring active for Rush SLA contracts.
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -147,46 +141,7 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* Footage Ingestion Protocol & Security Standards */}
-          <section className="mt-16 pt-12 border-t border-[#E5E5E7]">
-            <div className="max-w-2xl mb-8">
-              <span className="text-xs font-mono font-bold text-[#3B82F6] uppercase tracking-wider">
-                Security &amp; Workflow Protocol
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] mt-1">
-                How Studio Hand-Off &amp; Ingestion Works
-              </h2>
-              <p className="mt-2 text-xs sm:text-sm text-[#86868B] leading-relaxed">
-                We handle terabytes of high-value raw footage daily for celebrity weddings, brand product reveals, and corporate keynotes. Our security infrastructure ensures your assets remain strictly confidential.
-              </p>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-[#E5E5E7] shadow-xs space-y-2">
-                <div className="text-xs font-mono font-bold text-[#3B82F6]">01 // Transfer Protocols</div>
-                <h3 className="text-sm font-bold text-[#1D1D1F]">Secure Encrypted Ingest</h3>
-                <p className="text-xs text-[#86868B] leading-relaxed">
-                  Upload directly to our private AWS S3 vault via pre-signed, multipart acceleration URLs. We also support Google Drive, Dropbox, Frame.io, or physical hard drive courier hand-offs in Mumbai.
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-[#E5E5E7] shadow-xs space-y-2">
-                <div className="text-xs font-mono font-bold text-[#3B82F6]">02 // Checksum Validation</div>
-                <h3 className="text-sm font-bold text-[#1D1D1F]">MD5 Hash Verification</h3>
-                <p className="text-xs text-[#86868B] leading-relaxed">
-                  Every transferred file is automatically verified with byte-level checksum hash comparisons to guarantee zero corruption or dropped frames before editorial assembly begins.
-                </p>
-              </div>
-
-              <div className="bg-white p-6 rounded-2xl border border-[#E5E5E7] shadow-xs space-y-2">
-                <div className="text-xs font-mono font-bold text-[#3B82F6]">03 // Legal Safeguards</div>
-                <h3 className="text-sm font-bold text-[#1D1D1F]">Binding Mutual NDA</h3>
-                <p className="text-xs text-[#86868B] leading-relaxed">
-                  All footage is strictly covered by our standard Non-Disclosure Agreement. Our creators operate on sandboxed local storage without unmonitored export privileges.
-                </p>
-              </div>
-            </div>
-          </section>
 
           {/* Common Contact FAQs */}
           <section className="mt-16 pt-12 border-t border-[#E5E5E7]">

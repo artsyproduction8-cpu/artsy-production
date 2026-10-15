@@ -29,7 +29,7 @@ export default function WorkClient() {
         {/* Interactive Filter Pills */}
         <div className="mt-8 flex flex-wrap items-center gap-2 pt-6 border-t border-[#F5F5F7]">
           {[
-            { id: 'all', label: 'All Work' },
+            { id: 'all', label: 'All Portfolio' },
             { id: 'wedding', label: 'Wedding Cinema' },
             { id: 'brand', label: 'Brand & UGC' },
             { id: 'product', label: 'Product & Commercial' },

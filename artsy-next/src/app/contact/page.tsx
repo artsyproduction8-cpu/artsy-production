@@ -22,7 +22,7 @@ export default function ContactPage() {
 
   const supportPhone = process.env.NEXT_PUBLIC_SUPPORT_PHONE || process.env.SUPER_ADMIN_PHONE || '+91-XXXXXXXXXX';
   const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_URL || `https://wa.me/${supportPhone.replace(/[^0-9]/g, '')}`;
-  const businessAddress = process.env.BUSINESS_ADDRESS || 'Artsy Production Studio, Bandra Kurla Complex, Mumbai, Maharashtra 400051, India';
+  const businessAddress = process.env.BUSINESS_ADDRESS || 'Artsy Production, Juinagar Railway Station, Navi Mumbai, Maharashtra 400705, India';
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] flex flex-col font-sans selection:bg-[#3B82F6] selection:text-white">
@@ -97,15 +97,7 @@ export default function ContactPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3.5">
-                    <span className="text-lg">✉️</span>
-                    <div>
-                      <div className="font-bold text-[#1D1D1F]">Direct Editorial Email</div>
-                      <a href="mailto:hello@artsyproduction.com" className="text-[#3B82F6] hover:underline mt-0.5 inline-block">
-                        hello@artsyproduction.com
-                      </a>
-                    </div>
-                  </div>
+
 
                   <div className="flex items-start gap-3.5">
                     <span className="text-lg">⏰</span>
@@ -134,7 +126,7 @@ export default function ContactPage() {
                     href="/work"
                     className="px-5 py-2.5 rounded-xl border border-white/20 hover:border-white text-white text-xs font-bold uppercase tracking-wider text-center transition-colors"
                   >
-                    Browse Work
+                    Browse Portfolio
                   </Link>
                 </div>
               </div>

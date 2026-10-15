@@ -220,7 +220,7 @@ export default function PricingPage() {
                   href="/work"
                   className="px-5 py-2.5 rounded-xl border border-white/20 hover:border-white text-white text-xs font-bold uppercase tracking-wider transition-colors"
                 >
-                  View Past Work
+                  View Portfolio
                 </Link>
                 <Link
                   href="/book"

@@ -110,10 +110,10 @@ export default function ClientSupportPage() {
                     For contractual inquiries, large-scale drive shipments, and custom multi-project enterprise invoicing.
                   </p>
                   <a
-                    href="mailto:support@artsyproduction.in"
+                    href="mailto:artsyproduction8@gmail.com"
                     className="text-xs font-bold text-[#3B82F6] hover:underline"
                   >
-                    support@artsyproduction.in
+                    artsyproduction8@gmail.com
                   </a>
                 </div>
 
@@ -134,13 +134,13 @@ export default function ClientSupportPage() {
                     </div>
                     <div>
                       <span className="text-[#86868B]">Statutory Email:</span>{' '}
-                      <a href="mailto:grievance@artsyproduction.in" className="text-[#3B82F6] font-semibold hover:underline">
-                        grievance@artsyproduction.in
+                      <a href="mailto:artsyproduction8@gmail.com" className="text-[#3B82F6] font-semibold hover:underline">
+                        artsyproduction8@gmail.com
                       </a>
                     </div>
                     <div>
                       <span className="text-[#86868B]">Registered Office:</span>{' '}
-                      <span className="text-[#1D1D1F]">Artsy Production Hub, Bandra Kurla Complex, Mumbai, MH 400051</span>
+                      <span className="text-[#1D1D1F]">Artsy Production, Juinagar Railway Station, Navi Mumbai, Maharashtra 400705, India</span>
                     </div>
                   </div>
                 </div>

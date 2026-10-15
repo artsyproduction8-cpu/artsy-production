@@ -153,7 +153,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             href="/work"
             className="text-[12.5px] font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
           >
-            WORK
+            PORTFOLIO
           </Link>
         </nav>
 
@@ -315,7 +315,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             onClick={() => setIsMobileMenuOpen(false)}
             className="text-sm font-semibold uppercase tracking-wider text-white hover:text-[#3B82F6] py-1 transition-colors"
           >
-            WORK
+            PORTFOLIO
           </Link>
           <div className="pt-3 border-t border-white/15 flex flex-col gap-2">
             {!isAuthenticated ? (

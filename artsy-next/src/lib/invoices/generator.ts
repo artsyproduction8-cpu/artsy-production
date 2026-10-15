@@ -114,10 +114,10 @@ export function generateInvoiceData(params: {
       tradeName: 'Artsy Production',
       gstin: process.env.ARTSY_GSTIN || '27AAAAA0000A1Z5',
       pan: process.env.ARTSY_PAN || 'AAAAA0000A',
-      address: 'Artsy Creative Studios, Studio Row, Mumbai, MH, 400001',
+      address: 'Artsy Production, Juinagar Railway Station, Navi Mumbai, Maharashtra 400705, India',
       state: 'Maharashtra',
       stateCode: '27',
-      email: 'billing@artsyproduction.in',
+      email: 'artsyproduction8@gmail.com',
       phone: '+91 98765 43210'
     },
     clientDetails: {

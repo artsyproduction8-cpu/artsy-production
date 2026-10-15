@@ -167,7 +167,7 @@ export default function FreelancerRejectedPage() {
           {/* 9. Support link */}
           <div className="text-center pt-1">
             <Link
-              href="mailto:creators@artsyproduction.in"
+              href="mailto:artsyproduction8@gmail.com"
               className="text-xs font-semibold text-[#3B82F6] hover:underline inline-flex items-center gap-1"
             >
               Questions about this decision? Contact our creator team →

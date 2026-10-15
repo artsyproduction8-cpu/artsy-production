@@ -75,7 +75,7 @@ export default function PrivacyPage() {
             <div className="text-xs space-y-1 text-white/90 font-mono">
               <div><strong className="text-white">Officer:</strong> Privacy &amp; Grievance Redressal Cell</div>
               <div><strong className="text-white">Organization:</strong> Artsy Production</div>
-              <div><strong className="text-white">Email:</strong> grievance@artsyproduction.in</div>
+              <div><strong className="text-white">Email:</strong> artsyproduction8@gmail.com</div>
               <div><strong className="text-white">Direct Line:</strong> +91 836 925 1112</div>
               <div><strong className="text-white">Response SLA:</strong> Within 48 business hours</div>
             </div>

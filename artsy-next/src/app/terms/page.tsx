@@ -68,7 +68,7 @@ export default function TermsPage() {
               <br />
               <strong className="text-[#1D1D1F]">Artsy Production</strong>
               <br />
-              Email: legal@artsyproduction.in • Phone: +91 836 925 1112
+              Email: artsyproduction8@gmail.com • Phone: +91 836 925 1112
             </p>
           </section>
         </div>

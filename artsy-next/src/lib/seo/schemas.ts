@@ -71,10 +71,10 @@ export function localBusinessSchema() {
     priceRange: '₹₹₹',
     address: {
       '@type': 'PostalAddress',
-      streetAddress: process.env.BUSINESS_ADDRESS || 'Artsy Production Hub, Bandra Kurla Complex',
-      addressLocality: 'Mumbai',
+      streetAddress: process.env.BUSINESS_ADDRESS || 'Artsy Production, Juinagar Railway Station',
+      addressLocality: 'Navi Mumbai',
       addressRegion: 'Maharashtra',
-      postalCode: '400051',
+      postalCode: '400705',
       addressCountry: 'IN',
     },
     openingHoursSpecification: [

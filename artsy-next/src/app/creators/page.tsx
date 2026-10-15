@@ -6,7 +6,7 @@ import CreatorsClient from './CreatorsClient';
 import { breadcrumbSchema } from '@/lib/seo/schemas';
 
 export const metadata: Metadata = {
-  title: 'Our Creators — Film Editors & Colorists | Artsy',
+  title: 'Film Editors & Colorists | Artsy',
   description:
     "Meet Artsy Production's curated roster of elite film editors, colorists, and sound designers. Vetted talent for weddings, commercials, and corporate cinema.",
   alternates: {
@@ -23,7 +23,7 @@ export default function PublicCreatorsPage() {
   const collectionSchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
-    name: 'Our Creators — Film Editors & Colorists | Artsy',
+    name: 'Film Editors & Colorists | Artsy',
     description:
       "Meet Artsy Production's curated roster of elite film editors, colorists, and sound designers.",
     url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/creators`,
@@ -52,7 +52,7 @@ export default function PublicCreatorsPage() {
         {/* Hero Header with Expanded Editorial Copy */}
         <div className="max-w-3xl mx-auto mb-10 text-center">
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#1D1D1F] leading-tight">
-            Our Creators — Film Editors &amp; Colorists
+            Film Editors &amp; Colorists
           </h1>
           <p className="mt-4 text-sm sm:text-base text-[#86868B] max-w-2xl mx-auto leading-relaxed">
             Every editor and colorist in our collective is rigorously evaluated across technical color science, auditory storytelling, and deadline discipline. We reject 97% of applicants so you never have to gamble on quality.

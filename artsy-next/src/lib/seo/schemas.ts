@@ -37,7 +37,6 @@ export function organizationSchema() {
   const sameAs = [
     process.env.NEXT_PUBLIC_YOUTUBE_URL,
     process.env.NEXT_PUBLIC_INSTAGRAM_URL,
-    process.env.NEXT_PUBLIC_LINKEDIN_URL,
   ].filter(Boolean) as string[];
 
   return {
@@ -50,7 +49,6 @@ export function organizationSchema() {
     sameAs: sameAs.length > 0 ? sameAs : [
       'https://www.youtube.com/@artsyproduction',
       'https://www.instagram.com/artsy__production/',
-      'https://www.linkedin.com/company/artsy-production',
     ],
     contactPoint: {
       '@type': 'ContactPoint',

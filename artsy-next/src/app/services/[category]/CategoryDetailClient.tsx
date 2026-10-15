@@ -84,9 +84,6 @@ export default function CategoryDetailClient({ initialCategoryKey }: CategoryDet
 
       {/* Category Hero Banner */}
       <div className="bg-white rounded-2xl p-8 sm:p-10 border border-[#E5E5E7] shadow-[0_4px_24px_rgba(0,0,0,0.04)] mb-10">
-        <div className="inline-block text-xs font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-3 py-1 rounded-full uppercase tracking-wider mb-3">
-          {category.badge}
-        </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-[-0.03em] text-[#1D1D1F]">
           {category.title}
         </h1>

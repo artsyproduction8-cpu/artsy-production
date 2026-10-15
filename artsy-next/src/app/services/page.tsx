@@ -64,9 +64,6 @@ export default function ServicesPage() {
           {/* Turnaround & SLAs Section */}
           <section className="mt-16 pt-12 border-t border-[#E5E5E7]">
             <div className="max-w-3xl space-y-4">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full uppercase tracking-wider">
-                Deterministic Delivery
-              </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
                 Turnaround Times &amp; Guaranteed SLAs
               </h2>

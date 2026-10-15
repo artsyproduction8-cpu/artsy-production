@@ -93,9 +93,6 @@ export default function PricingPage() {
         <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
           {/* Header Strip */}
           <div className="max-w-3xl mb-12 text-center mx-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold uppercase tracking-wider mb-3">
-              Deterministic Pricing Philosophy
-            </div>
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#1D1D1F] leading-tight">
               Post-Production Pricing &amp; Package Matrix
             </h1>

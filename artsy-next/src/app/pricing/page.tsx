@@ -206,6 +206,30 @@ export default function PricingPage() {
                 </div>
               ))}
             </div>
+
+            {/* Bottom Instant Calculator Callout */}
+            <div className="p-8 rounded-2xl bg-[#1D1D1F] text-white flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-1.5 text-center md:text-left">
+                <h3 className="text-xl font-bold">Calculate Your Custom Project Cost</h3>
+                <p className="text-xs text-[#86868B]">
+                  Mix multiple camera angles, customize delivery turnaround, and view real-time itemized breakdowns.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href="/work"
+                  className="px-5 py-2.5 rounded-xl border border-white/20 hover:border-white text-white text-xs font-bold uppercase tracking-wider transition-colors"
+                >
+                  View Past Work
+                </Link>
+                <Link
+                  href="/book"
+                  className="px-6 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs"
+                >
+                  Configure Quote →
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </main>

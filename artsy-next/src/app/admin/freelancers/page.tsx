@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 
 interface CreatorItem {
   id: string;
@@ -13,6 +14,10 @@ interface CreatorItem {
   rating: number;
   total_jobs: number;
   total_earned: number; // in paisa
+  is_public?: boolean;
+  public_display_name?: string;
+  public_specialty?: string;
+  creator_tier?: string;
   created_at: string;
 }
 
@@ -43,6 +48,19 @@ export default function AdminFreelancersPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+
+  // Add Creator Modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newFullName, setNewFullName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [newSpecialty, setNewSpecialty] = useState('');
+  const [newSkills, setNewSkills] = useState('Wedding Cinema, Color Grading');
+  const [newBio, setNewBio] = useState('');
+  const [newExperience, setNewExperience] = useState(4);
+  const [newTier, setNewTier] = useState<'rising_talent' | 'standard' | 'senior'>('standard');
+  const [newIsPublic, setNewIsPublic] = useState(true);
 
   const fetchCreators = async () => {
     setLoading(true);
@@ -106,6 +124,54 @@ export default function AdminFreelancersPage() {
     }
   };
 
+  const handleCreateCreator = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFullName.trim() || !newEmail.trim()) {
+      alert('Full Name and Email are required.');
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const res = await fetch('/api/admin/creators', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          full_name: newFullName.trim(),
+          email: newEmail.trim(),
+          phone: newPhone.trim(),
+          public_specialty: newSpecialty.trim() || 'Video Editor',
+          skills: newSkills.split(',').map((s) => s.trim()).filter(Boolean),
+          bio: newBio.trim(),
+          public_bio: newBio.trim(),
+          years_of_experience: Number(newExperience) || 3,
+          creator_tier: newTier,
+          is_public: newIsPublic,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFeedback(`✓ New creator "${newFullName}" successfully registered and added to roster!`);
+        setShowAddModal(false);
+        // Reset form
+        setNewFullName('');
+        setNewEmail('');
+        setNewPhone('');
+        setNewSpecialty('');
+        setNewBio('');
+        fetchCreators();
+      } else {
+        alert(data.error || 'Failed to create creator.');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error creating creator.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const filteredCreators = creators.filter((c) => {
     const matchesSearch =
       !search ||
@@ -128,7 +194,7 @@ export default function AdminFreelancersPage() {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      maximumFractionDigits: 2,
+      maximumFractionDigits: 0,
     }).format((paisa || 0) / 100);
   };
 
@@ -138,27 +204,36 @@ export default function AdminFreelancersPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-[#1D1D1F]">Creator & Talent Roster</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-[#1D1D1F]">Creator &amp; Talent Roster</h1>
             <span className="text-[11px] font-bold bg-[#3B82F6]/10 text-[#3B82F6] px-2.5 py-0.5 rounded-full">
-              Real-time DB
+              Live Database
             </span>
           </div>
           <p className="text-sm text-[#86868B] mt-1">
-            Vetted colorists, editors, and VFX artists. Manage approval status, active project workloads, and NEFT payouts.
+            Manage real creator profiles, edit bios &amp; specialties, control public /creators listing, or add new team members.
           </p>
         </div>
 
-        <button
-          onClick={fetchCreators}
-          className="px-4 py-2 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-semibold rounded-xl text-[#1D1D1F] transition-all shadow-2xs cursor-pointer"
-        >
-          Refresh Roster
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+          >
+            <span>+</span> Add New Creator
+          </button>
+          <button
+            onClick={fetchCreators}
+            className="px-4 py-2 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-semibold rounded-xl text-[#1D1D1F] transition-all shadow-2xs cursor-pointer"
+          >
+            Refresh Roster
+          </button>
+        </div>
       </div>
 
       {feedback && (
-        <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs font-medium">
-          {feedback}
+        <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs font-medium flex items-center justify-between">
+          <span>{feedback}</span>
+          <button onClick={() => setFeedback(null)} className="text-blue-600 font-bold ml-2">✕</button>
         </div>
       )}
 
@@ -187,7 +262,7 @@ export default function AdminFreelancersPage() {
             className="bg-[#F5F5F7] border border-[#E5E5E7] rounded-lg px-2 py-1 text-xs font-medium text-[#1D1D1F] focus:outline-none"
           >
             <option value="all">All Creators</option>
-            <option value="approved">Approved & Active</option>
+            <option value="approved">Approved &amp; Active</option>
             <option value="pending">Pending Vetting</option>
             <option value="rejected">Rejected</option>
             <option value="suspended">Suspended</option>
@@ -206,13 +281,13 @@ export default function AdminFreelancersPage() {
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold">
-                  <th className="py-3 px-4">Creator Name</th>
+                  <th className="py-3 px-4">Creator / Legal Name</th>
                   <th className="py-3 px-4">Contact</th>
                   <th className="py-3 px-4">Skills</th>
-                  <th className="py-3 px-4">Vetting Status</th>
-                  <th className="py-3 px-4">Studio Rating</th>
-                  <th className="py-3 px-4">Completed Jobs</th>
-                  <th className="py-3 px-4">Total Earned</th>
+                  <th className="py-3 px-4">Public Status</th>
+                  <th className="py-3 px-4">Rating</th>
+                  <th className="py-3 px-4">Completed</th>
+                  <th className="py-3 px-4">Earned</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -220,12 +295,11 @@ export default function AdminFreelancersPage() {
                 {filteredCreators.map((creator) => (
                   <tr
                     key={creator.id}
-                    onClick={() => openCreatorDetail(creator.id)}
-                    className="hover:bg-[#F5F5F7]/70 transition-colors cursor-pointer"
+                    className="hover:bg-[#F5F5F7]/70 transition-colors"
                   >
                     <td className="py-3 px-4">
                       <div className="font-bold text-[#1D1D1F]">{creator.display_name}</div>
-                      <div className="text-[10px] font-mono text-[#86868B]">{creator.id.slice(0, 8)}</div>
+                      <div className="text-[10px] font-mono text-[#86868B]">{creator.id.slice(0, 8)}...</div>
                     </td>
                     <td className="py-3 px-4">
                       <div className="font-medium text-[#1D1D1F]">{creator.email}</div>
@@ -244,74 +318,49 @@ export default function AdminFreelancersPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                          creator.is_suspended
-                            ? 'bg-red-50 text-red-700 border border-red-200'
-                            : creator.approval_status === 'approved'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : creator.approval_status === 'rejected'
-                            ? 'bg-gray-100 text-gray-700'
-                            : 'bg-amber-50 text-amber-700'
-                        }`}
-                      >
-                        {creator.is_suspended
-                          ? 'SUSPENDED'
-                          : creator.approval_status.toUpperCase()}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                            creator.is_suspended
+                              ? 'bg-red-50 text-red-700 border border-red-200'
+                              : creator.approval_status === 'approved'
+                              ? 'bg-emerald-50 text-emerald-700'
+                              : creator.approval_status === 'rejected'
+                              ? 'bg-gray-100 text-gray-700'
+                              : 'bg-amber-50 text-amber-700'
+                          }`}
+                        >
+                          {creator.is_suspended ? 'SUSPENDED' : creator.approval_status.toUpperCase()}
+                        </span>
+                        {creator.is_public && creator.approval_status === 'approved' && !creator.is_suspended && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700">
+                            LIVE
+                          </span>
+                        )}
+                      </div>
                     </td>
-                    <td className="py-3 px-4 font-semibold text-[#1D1D1F] flex items-center gap-1">
+                    <td className="py-3 px-4 font-semibold text-[#1D1D1F]">
                       <span className="text-amber-500">★</span> {creator.rating.toFixed(1)}
                     </td>
                     <td className="py-3 px-4 font-mono font-medium text-[#1D1D1F]">
-                      {creator.total_jobs} Projects
+                      {creator.total_jobs} Jobs
                     </td>
                     <td className="py-3 px-4 font-mono font-bold text-emerald-600">
                       {formatInr(creator.total_earned)}
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        {creator.approval_status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => handleAction(creator.id, 'approve')}
-                              disabled={actionLoading === creator.id}
-                              className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-semibold cursor-pointer"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleAction(creator.id, 'reject')}
-                              disabled={actionLoading === creator.id}
-                              className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-[10px] font-semibold cursor-pointer"
-                            >
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        {creator.approval_status === 'approved' && !creator.is_suspended && (
-                          <button
-                            onClick={() => handleAction(creator.id, 'suspend')}
-                            disabled={actionLoading === creator.id}
-                            className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded text-[10px] font-semibold cursor-pointer"
-                          >
-                            Suspend
-                          </button>
-                        )}
-                        {creator.is_suspended && (
-                          <button
-                            onClick={() => handleAction(creator.id, 'reactivate')}
-                            disabled={actionLoading === creator.id}
-                            className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded text-[10px] font-semibold cursor-pointer"
-                          >
-                            Reactivate
-                          </button>
-                        )}
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link
+                          href={`/admin/freelancers/${creator.id}`}
+                          className="px-2.5 py-1 bg-[#1D1D1F] hover:bg-black text-white rounded text-[10px] font-semibold cursor-pointer"
+                        >
+                          Edit Profile ↗
+                        </Link>
                         <button
                           onClick={() => openCreatorDetail(creator.id)}
                           className="px-2 py-1 bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] rounded text-[10px] font-semibold cursor-pointer"
                         >
-                          View →
+                          View Workload
                         </button>
                       </div>
                     </td>
@@ -323,7 +372,7 @@ export default function AdminFreelancersPage() {
         )}
       </div>
 
-      {/* Creator Detail Modal / Drawer (Task 3.3) */}
+      {/* Creator Detail Drawer / Modal */}
       {selectedCreatorId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl max-w-4xl w-full p-6 space-y-6 shadow-2xl border border-[#E5E5E7] max-h-[90vh] overflow-y-auto">
@@ -336,12 +385,20 @@ export default function AdminFreelancersPage() {
                   ID: {selectedCreatorId} • {creatorDetail?.email} • {creatorDetail?.phone || 'No phone'}
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedCreatorId(null)}
-                className="text-[#86868B] hover:text-[#1D1D1F] text-xl font-bold cursor-pointer"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/admin/freelancers/${selectedCreatorId}`}
+                  className="px-3 py-1.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-xl"
+                >
+                  Edit Full Profile &amp; Settings ↗
+                </Link>
+                <button
+                  onClick={() => setSelectedCreatorId(null)}
+                  className="text-[#86868B] hover:text-[#1D1D1F] text-xl font-bold cursor-pointer px-2"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {detailLoading ? (
@@ -366,7 +423,7 @@ export default function AdminFreelancersPage() {
                   </div>
                 </div>
 
-                {/* 1. All Assignments */}
+                {/* Assignments */}
                 <div>
                   <h3 className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider mb-2">
                     Assignments ({creatorDetail.assignments.length})
@@ -397,10 +454,10 @@ export default function AdminFreelancersPage() {
                   )}
                 </div>
 
-                {/* 2. All Payouts with TDS Breakdown */}
+                {/* Payouts */}
                 <div>
                   <h3 className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider mb-2">
-                    Payouts & TDS Breakdown ({creatorDetail.payouts.length})
+                    Payouts &amp; Settlements ({creatorDetail.payouts.length})
                   </h3>
                   {creatorDetail.payouts.length === 0 ? (
                     <div className="p-3 bg-[#F5F5F7] rounded-xl text-xs text-[#86868B]">No payout records found.</div>
@@ -411,10 +468,8 @@ export default function AdminFreelancersPage() {
                           <tr>
                             <th className="py-2 px-3">Gross Fee</th>
                             <th className="py-2 px-3">TDS Rate</th>
-                            <th className="py-2 px-3">TDS Amount</th>
                             <th className="py-2 px-3">Net Disbursed</th>
                             <th className="py-2 px-3">Status</th>
-                            <th className="py-2 px-3">UTR / Ref</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-[#E5E5E7]">
@@ -422,43 +477,8 @@ export default function AdminFreelancersPage() {
                             <tr key={p.id}>
                               <td className="py-2 px-3 font-mono">{formatInr(p.gross_amount)}</td>
                               <td className="py-2 px-3">{p.tds_rate || '1.0'}%</td>
-                              <td className="py-2 px-3 font-mono text-amber-700">{formatInr(p.tds_amount)}</td>
                               <td className="py-2 px-3 font-mono font-bold text-emerald-600">{formatInr(p.net_payout)}</td>
                               <td className="py-2 px-3 capitalize">{p.status}</td>
-                              <td className="py-2 px-3 font-mono text-[10px] text-[#86868B]">{p.neft_utr_reference || '—'}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. Revisions */}
-                <div>
-                  <h3 className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider mb-2">
-                    Revisions Submitted ({creatorDetail.revisions.length})
-                  </h3>
-                  {creatorDetail.revisions.length === 0 ? (
-                    <div className="p-3 bg-[#F5F5F7] rounded-xl text-xs text-[#86868B]">No revision iterations logged.</div>
-                  ) : (
-                    <div className="border border-[#E5E5E7] rounded-xl overflow-hidden">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B]">
-                          <tr>
-                            <th className="py-2 px-3">Round</th>
-                            <th className="py-2 px-3">Client Feedback</th>
-                            <th className="py-2 px-3">Status</th>
-                            <th className="py-2 px-3">Date</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#E5E5E7]">
-                          {creatorDetail.revisions.map((r: any) => (
-                            <tr key={r.id}>
-                              <td className="py-2 px-3 font-bold">Round #{r.revision_number || 1}</td>
-                              <td className="py-2 px-3 max-w-xs truncate">{r.feedback_notes || '—'}</td>
-                              <td className="py-2 px-3 capitalize">{r.status}</td>
-                              <td className="py-2 px-3 text-[#86868B]">{new Date(r.created_at).toLocaleDateString()}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -469,7 +489,13 @@ export default function AdminFreelancersPage() {
               </div>
             ) : null}
 
-            <div className="flex justify-end pt-4 border-t border-[#E5E5E7]">
+            <div className="flex justify-between items-center pt-4 border-t border-[#E5E5E7]">
+              <Link
+                href={`/admin/freelancers/${selectedCreatorId}`}
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+              >
+                Go to Full Editor Screen →
+              </Link>
               <button
                 onClick={() => setSelectedCreatorId(null)}
                 className="px-4 py-2 bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] rounded-xl text-xs font-semibold cursor-pointer"
@@ -477,6 +503,159 @@ export default function AdminFreelancersPage() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Creator Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-[#E5E5E7] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start border-b border-[#E5E5E7] pb-4">
+              <div>
+                <h2 className="text-lg font-bold text-[#1D1D1F]">Register New Creator Member</h2>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Create a real database profile for your team member, editor, or colorist.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-[#86868B] hover:text-[#1D1D1F] text-xl font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCreator} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#1D1D1F]">Full Legal Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={newFullName}
+                    onChange={(e) => setNewFullName(e.target.value)}
+                    placeholder="e.g. Rahul Sharma"
+                    className="w-full bg-[#F5F5F7] px-3 py-2 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#1D1D1F]">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    placeholder="rahul@example.com"
+                    className="w-full bg-[#F5F5F7] px-3 py-2 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#1D1D1F]">Phone Number</label>
+                  <input
+                    type="text"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="+91 9876543210"
+                    className="w-full bg-[#F5F5F7] px-3 py-2 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#1D1D1F]">Specialty / Headline</label>
+                  <input
+                    type="text"
+                    value={newSpecialty}
+                    onChange={(e) => setNewSpecialty(e.target.value)}
+                    placeholder="e.g. Wedding Cinema &amp; Colorist"
+                    className="w-full bg-[#F5F5F7] px-3 py-2 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#1D1D1F]">Skills (Comma separated)</label>
+                <input
+                  type="text"
+                  value={newSkills}
+                  onChange={(e) => setNewSkills(e.target.value)}
+                  placeholder="Wedding Films, 4K Color Grading, Sound Design"
+                  className="w-full bg-[#F5F5F7] px-3 py-2 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#1D1D1F]">Years of Experience</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={newExperience}
+                    onChange={(e) => setNewExperience(Number(e.target.value))}
+                    className="w-full bg-[#F5F5F7] px-3 py-2 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#1D1D1F]">Creator Tier</label>
+                  <select
+                    value={newTier}
+                    onChange={(e) => setNewTier(e.target.value as any)}
+                    className="w-full bg-[#F5F5F7] px-3 py-2 text-xs font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                  >
+                    <option value="rising_talent">Rising Talent (&lt; 10 completed)</option>
+                    <option value="standard">Standard (10 - 50 completed)</option>
+                    <option value="senior">Senior (&gt; 50 completed)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-[#1D1D1F]">Short Bio / Overview</label>
+                <textarea
+                  rows={2}
+                  value={newBio}
+                  onChange={(e) => setNewBio(e.target.value)}
+                  placeholder="Creative overview, software tools, narrative pacing style..."
+                  className="w-full bg-[#F5F5F7] p-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                />
+              </div>
+
+              <div className="p-3 bg-[#F5F5F7] rounded-xl flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-[#1D1D1F] block">Show on /creators Directory</span>
+                  <span className="text-[11px] text-[#86868B]">Make publicly discoverable immediately</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={newIsPublic}
+                  onChange={(e) => setNewIsPublic(e.target.checked)}
+                  className="w-4 h-4 rounded text-blue-600 cursor-pointer"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-[#E5E5E7]">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] rounded-xl text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="px-5 py-2 bg-[#1D1D1F] hover:bg-black text-white rounded-xl text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {creating ? 'Registering...' : 'Register &amp; Add Creator'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

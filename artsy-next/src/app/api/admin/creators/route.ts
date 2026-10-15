@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { randomUUID } from 'crypto';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -56,6 +57,13 @@ export async function GET(request: Request) {
         .eq('creator_id', creatorId)
         .order('created_at', { ascending: false });
 
+      // Fetch portfolio samples
+      const { data: samples } = await dbClient
+        .from('portfolio_samples')
+        .select('*')
+        .eq('creator_id', creatorId)
+        .order('display_order', { ascending: true });
+
       // Active projects count
       const { count: activeWorkload } = await dbClient
         .from('projects')
@@ -75,10 +83,18 @@ export async function GET(request: Request) {
           assignments: assignments || [],
           payouts: payouts || [],
           revisions: revisions || [],
+          samples: (samples || []).map((s: any) => ({
+            id: s.id,
+            title: s.title,
+            category: s.category,
+            video_url: s.video_url,
+            codec: s.description || 'ProRes 422',
+            resolution: s.thumbnail_url?.includes('4k') ? '4K UHD' : '1080p Full HD',
+          })),
           metrics: {
             activeWorkload: activeWorkload || 0,
             totalProjectsCompleted: profile?.total_projects_completed || (assignments || []).filter((a: any) => a.status === 'completed').length,
-            rating: 4.9, // Studio average rating benchmark
+            rating: profile?.avg_rating || 4.9,
           },
         },
       });
@@ -122,9 +138,13 @@ export async function GET(request: Request) {
         skills: p.skills || ['Video Editing', 'Color Grading'],
         approval_status: p.approval_status || 'pending',
         is_suspended: p.is_suspended || u.status === 'suspended',
-        rating: 4.9,
+        rating: p.avg_rating || 4.9,
         total_jobs: p.total_projects_completed || 0,
         total_earned: earnedMap[u.id] || 0,
+        is_public: Boolean(p.is_public),
+        public_display_name: p.public_display_name || u.full_name,
+        public_specialty: p.public_specialty || '',
+        creator_tier: p.creator_tier || 'rising_talent',
         created_at: u.created_at,
       };
     });
@@ -154,12 +174,148 @@ export async function PATCH(request: Request) {
     const body = await request.json().catch(() => ({}));
     const { id, action, reason } = body;
 
-    if (!id || !action) {
-      return NextResponse.json({ error: 'Creator ID and action required' }, { status: 400 });
+    if (!action) {
+      return NextResponse.json({ error: 'Action required' }, { status: 400 });
     }
 
-    if (!['approve', 'reject', 'suspend', 'reactivate', 'update_public_profile'].includes(action)) {
+    if (!['approve', 'reject', 'suspend', 'reactivate', 'update_public_profile', 'update_profile', 'create', 'delete'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    }
+
+    // CREATE CREATOR
+    if (action === 'create') {
+      const {
+        full_name,
+        email,
+        phone,
+        bio,
+        skills,
+        software,
+        portfolio_url,
+        years_of_experience,
+        public_display_name,
+        public_specialty,
+        public_bio,
+        creator_tier,
+        is_public,
+        is_accepting_work,
+        avg_rating,
+        total_projects_completed
+      } = body;
+
+      if (!full_name || !email) {
+        return NextResponse.json({ error: 'Full name and email are required to register a creator' }, { status: 400 });
+      }
+
+      const newId = randomUUID();
+      const now = new Date().toISOString();
+
+      const nameParts = full_name.trim().split(' ');
+      const suggestedName = nameParts.length > 1
+        ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`
+        : nameParts[0];
+
+      // Parse arrays
+      const skillsArray = Array.isArray(skills)
+        ? skills
+        : typeof skills === 'string'
+        ? skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : ['Video Editing', 'Color Grading'];
+
+      const softwareArray = Array.isArray(software)
+        ? software
+        : typeof software === 'string'
+        ? software.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : ['Premiere Pro', 'DaVinci Resolve'];
+
+      const expNum = Number(years_of_experience) || 3;
+      const completedNum = Number(total_projects_completed) || 0;
+      const tierVal = creator_tier || (completedNum > 50 ? 'senior' : completedNum >= 10 ? 'standard' : 'rising_talent');
+
+      // 1. Insert into users
+      const { error: userErr } = await dbClient.from('users').insert([{
+        id: newId,
+        full_name: full_name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone ? phone.trim() : null,
+        role: 'freelancer',
+        status: 'active',
+        created_at: now,
+        updated_at: now,
+      }]);
+
+      if (userErr) {
+        return NextResponse.json({ error: `Failed creating user: ${userErr.message}` }, { status: 500 });
+      }
+
+      // 2. Insert into creator_profiles
+      const { error: profErr } = await dbClient.from('creator_profiles').insert([{
+        id: newId,
+        user_id: newId,
+        bio: bio || public_bio || `${full_name} is a verified Artsy Production editing partner.`,
+        skills: skillsArray,
+        software: softwareArray,
+        portfolio_url: portfolio_url || null,
+        experience_years: expNum,
+        years_of_experience: expNum,
+        approval_status: 'approved',
+        approved_by: authUser.id,
+        approved_at: now,
+        is_suspended: false,
+        is_public: is_public !== undefined ? Boolean(is_public) : true,
+        public_display_name: public_display_name || suggestedName,
+        public_specialty: public_specialty || (skillsArray[0] ? `${skillsArray[0]} Specialist` : 'Video Editor & Colorist'),
+        public_bio: public_bio || bio || `${full_name} crafts premium cinematic edits and color grading.`,
+        creator_tier: tierVal,
+        is_accepting_work: is_accepting_work !== undefined ? Boolean(is_accepting_work) : true,
+        avg_rating: avg_rating ? Number(avg_rating) : 4.9,
+        total_projects_completed: completedNum,
+        created_at: now,
+        updated_at: now,
+      }]);
+
+      if (profErr) {
+        await dbClient.from('users').delete().eq('id', newId);
+        return NextResponse.json({ error: `Failed creating profile: ${profErr.message}` }, { status: 500 });
+      }
+
+      // Audit log
+      await dbClient.from('audit_logs').insert([{
+        admin_id: authUser.id,
+        admin_email: authUser.email || 'admin@artsyproduction.com',
+        action: 'CREATOR_CREATE',
+        target_table: 'creator_profiles',
+        target_id: newId,
+        new_values: { full_name, email, role: 'freelancer' },
+        created_at: now,
+      }]);
+
+      return NextResponse.json({ success: true, creatorId: newId, action: 'create' });
+    }
+
+    // For all other actions, ID is required
+    if (!id) {
+      return NextResponse.json({ error: 'Creator ID required' }, { status: 400 });
+    }
+
+    // DELETE CREATOR
+    if (action === 'delete') {
+      const { error: delErr } = await dbClient.from('users').delete().eq('id', id);
+      if (delErr) {
+        return NextResponse.json({ error: `Failed deleting creator: ${delErr.message}` }, { status: 500 });
+      }
+
+      await dbClient.from('audit_logs').insert([{
+        admin_id: authUser.id,
+        admin_email: authUser.email || 'admin@artsyproduction.com',
+        action: 'CREATOR_DELETE',
+        target_table: 'users',
+        target_id: id,
+        new_values: { reason: reason || 'Admin deleted creator profile' },
+        created_at: new Date().toISOString(),
+      }]);
+
+      return NextResponse.json({ success: true, creatorId: id, action: 'delete' });
     }
 
     let profileUpdate: Record<string, any> = { updated_at: new Date().toISOString() };
@@ -184,8 +340,15 @@ export async function PATCH(request: Request) {
       profileUpdate.is_suspended = false;
       profileUpdate.suspended_reason = null;
       userUpdate.status = 'active';
-    } else if (action === 'update_public_profile') {
+    } else if (action === 'update_public_profile' || action === 'update_profile') {
       const {
+        full_name,
+        email,
+        phone,
+        bio,
+        skills,
+        software,
+        portfolio_url,
         is_public,
         public_display_name,
         public_specialty,
@@ -193,7 +356,14 @@ export async function PATCH(request: Request) {
         years_of_experience,
         creator_tier,
         is_accepting_work,
+        avg_rating,
+        total_projects_completed,
       } = body;
+
+      // Update user details if provided
+      if (full_name !== undefined) userUpdate.full_name = full_name.trim();
+      if (email !== undefined) userUpdate.email = email.trim().toLowerCase();
+      if (phone !== undefined) userUpdate.phone = phone.trim();
 
       // Check current approval_status
       const { data: currentProf } = await dbClient
@@ -202,23 +372,40 @@ export async function PATCH(request: Request) {
         .eq('id', id)
         .single();
 
-      let targetIsPublic = Boolean(is_public);
-      if (currentProf?.approval_status !== 'approved') {
-        targetIsPublic = false; // Rule: If approval_status is not 'approved', is_public must be FALSE
+      let targetIsPublic = is_public !== undefined ? Boolean(is_public) : undefined;
+      if (currentProf?.approval_status !== 'approved' && targetIsPublic) {
+        targetIsPublic = false; // Rule: Cannot be public if not approved
       }
 
-      const completed = currentProf?.total_projects_completed || 0;
-      let calculatedTier = 'rising_talent';
-      if (completed > 50) calculatedTier = 'senior';
-      else if (completed >= 10) calculatedTier = 'standard';
-
-      profileUpdate.is_public = targetIsPublic;
+      if (targetIsPublic !== undefined) profileUpdate.is_public = targetIsPublic;
       if (public_display_name !== undefined) profileUpdate.public_display_name = public_display_name;
       if (public_specialty !== undefined) profileUpdate.public_specialty = public_specialty;
       if (public_bio !== undefined) profileUpdate.public_bio = public_bio;
-      if (years_of_experience !== undefined) profileUpdate.years_of_experience = Number(years_of_experience);
-      profileUpdate.creator_tier = creator_tier || calculatedTier;
+      if (bio !== undefined) profileUpdate.bio = bio;
+      if (portfolio_url !== undefined) profileUpdate.portfolio_url = portfolio_url;
+      if (years_of_experience !== undefined) {
+        profileUpdate.years_of_experience = Number(years_of_experience);
+        profileUpdate.experience_years = Number(years_of_experience);
+      }
+      if (creator_tier !== undefined) profileUpdate.creator_tier = creator_tier;
       if (is_accepting_work !== undefined) profileUpdate.is_accepting_work = Boolean(is_accepting_work);
+      if (avg_rating !== undefined) profileUpdate.avg_rating = Number(avg_rating);
+      if (total_projects_completed !== undefined) profileUpdate.total_projects_completed = Number(total_projects_completed);
+
+      if (skills !== undefined) {
+        profileUpdate.skills = Array.isArray(skills)
+          ? skills
+          : typeof skills === 'string'
+          ? skills.split(',').map((s: string) => s.trim()).filter(Boolean)
+          : [];
+      }
+      if (software !== undefined) {
+        profileUpdate.software = Array.isArray(software)
+          ? software
+          : typeof software === 'string'
+          ? software.split(',').map((s: string) => s.trim()).filter(Boolean)
+          : [];
+      }
     }
 
     // Update profile
@@ -234,7 +421,7 @@ export async function PATCH(request: Request) {
         action: `CREATOR_${action.toUpperCase()}`,
         target_table: 'creator_profiles',
         target_id: id,
-        new_values: { action, reason: reason || null },
+        new_values: { action, reason: reason || null, profileUpdate, userUpdate },
         created_at: new Date().toISOString(),
       },
     ]);
@@ -244,4 +431,8 @@ export async function PATCH(request: Request) {
     console.error('Error updating creator:', err);
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
   }
+}
+
+export async function POST(request: Request) {
+  return PATCH(request);
 }

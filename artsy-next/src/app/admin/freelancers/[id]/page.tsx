@@ -2,260 +2,140 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/auth';
+import { useParams, useRouter } from 'next/navigation';
 
 interface SampleReel {
   id: string;
   title: string;
   category: string;
   video_url: string;
-  codec: string;
-  resolution: string;
+  codec?: string;
+  resolution?: string;
 }
-
-interface CreatorDetail {
-  id: string;
-  user_id: string;
-  displayName: string;
-  bio: string;
-  skills: string[];
-  software: string[];
-  experience: string;
-  rating: number;
-  completed_projects_count: number;
-  on_time_delivery_rate: number;
-  portfolio_url: string;
-  pan_masked: string;
-  bank_status: string;
-  approval_status: 'pending' | 'approved' | 'rejected';
-  rejection_reason?: string;
-  samples: SampleReel[];
-  created_at: string;
-}
-
-const ROSTER_DATABASE: Record<string, CreatorDetail> = {
-  'creator-1': {
-    id: 'creator-1',
-    user_id: 'usr-creator-1',
-    displayName: 'Kabir Verma',
-    bio: 'Senior DaVinci Resolve colorist and multi-cam timeline conform lead specializing in luxury destination wedding cinema and narrative shorts.',
-    skills: ['4K Color Grading', 'Wedding Films', 'Multi-Cam Sync', 'Audio Stem Mastering'],
-    software: ['DaVinci Resolve Studio', 'Premiere Pro', 'Audition'],
-    experience: '5+ Years (Senior Independent)',
-    rating: 4.96,
-    completed_projects_count: 48,
-    on_time_delivery_rate: 98,
-    portfolio_url: 'https://vimeo.com/showcase/kabir-cinematic',
-    pan_masked: 'AAAPL****K (Verified)',
-    bank_status: 'HDFC Bank • Verified for NEFT',
-    approval_status: 'approved',
-    samples: [
-      {
-        id: 'smp-1',
-        title: 'Udaipur Palace Royal Wedding 4K Highlight',
-        category: 'Wedding Cinema',
-        video_url: 'https://vimeo.com/76979871',
-        codec: 'Apple ProRes 422 HQ',
-        resolution: '3840x2160 DCI 4K',
-      },
-      {
-        id: 'smp-2',
-        title: 'Heritage S-Log3 Gamut Conform Reel',
-        category: 'Color Grading',
-        video_url: 'https://vimeo.com/76979872',
-        codec: 'DaVinci Wide Gamut',
-        resolution: '4K Ultra HD',
-      },
-    ],
-    created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  'creator-2': {
-    id: 'creator-2',
-    user_id: 'usr-creator-2',
-    displayName: 'Aanya Sen',
-    bio: 'Short-form UGC and high-retention video editor for high-growth direct-to-consumer and fintech applications.',
-    skills: ['Viral Hook Editing', 'Brand UGC', 'Motion Callouts', 'Sound Design'],
-    software: ['Premiere Pro', 'After Effects', 'CapCut Pro'],
-    experience: '3 Years (Mid-Level Creator)',
-    rating: 4.92,
-    completed_projects_count: 72,
-    on_time_delivery_rate: 100,
-    portfolio_url: 'https://vimeo.com/showcase/aanya-ugc',
-    pan_masked: 'BVTPS****M (Verified)',
-    bank_status: 'ICICI Bank • Verified for NEFT',
-    approval_status: 'pending',
-    samples: [
-      {
-        id: 'smp-3',
-        title: 'Fintech App Onboarding 3-Second Hook Variant',
-        category: 'Brand UGC',
-        video_url: 'https://vimeo.com/76979873',
-        codec: 'H.265 / HEVC',
-        resolution: '1080x1920 9:16',
-      },
-    ],
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  'creator-3': {
-    id: 'creator-3',
-    user_id: 'usr-creator-3',
-    displayName: 'Rohan Mehra',
-    bio: 'Macro commercial specialist with focus on 3D product rendering, watch showcases, and dynamic typography.',
-    skills: ['Product Commercials', '3D Cutaways', 'Cinema Lighting Conform', 'Colorist'],
-    software: ['Premiere Pro', 'After Effects', 'Blender'],
-    experience: '4 Years (Commercial Specialist)',
-    rating: 4.88,
-    completed_projects_count: 39,
-    on_time_delivery_rate: 96,
-    portfolio_url: 'https://vimeo.com/showcase/rohan-3d',
-    pan_masked: 'CCKPR****D (Verified)',
-    bank_status: 'Axis Bank • Verified for NEFT',
-    approval_status: 'pending',
-    samples: [
-      {
-        id: 'smp-4',
-        title: 'Luxury Chronograph Dial Macro Cutaway',
-        category: 'Product Commercial',
-        video_url: 'https://vimeo.com/76979874',
-        codec: 'ProRes 4444 XQ',
-        resolution: '4K Cinema',
-      },
-    ],
-    created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  'creator-4': {
-    id: 'creator-4',
-    user_id: 'usr-creator-4',
-    displayName: 'Vikram Joshi',
-    bio: 'Corporate keynote editor, technical event broadcaster, and executive multi-cam speech cutter.',
-    skills: ['Corporate Keynotes', 'Multi-Cam Sync', 'Noise Reduction', 'Multilingual Captions'],
-    software: ['Premiere Pro', 'DaVinci Resolve', 'iZotope RX'],
-    experience: '6+ Years (Lead Supervisor)',
-    rating: 4.94,
-    completed_projects_count: 53,
-    on_time_delivery_rate: 97,
-    portfolio_url: 'https://vimeo.com/showcase/vikram-corp',
-    pan_masked: 'AABPJ****R (Verified)',
-    bank_status: 'State Bank of India • Verified for NEFT',
-    approval_status: 'approved',
-    samples: [
-      {
-        id: 'smp-5',
-        title: 'Global Tech Keynote 3-Camera Master Cut',
-        category: 'Corporate Keynote',
-        video_url: 'https://vimeo.com/76979875',
-        codec: 'ProRes 422',
-        resolution: '3840x2160 UHD',
-      },
-    ],
-    created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-};
 
 export default function AdminFreelancerDetail() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const router = useRouter();
 
-  const [freelancer, setFreelancer] = useState<CreatorDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [actionNotice, setActionNotice] = useState<string | null>(null);
-  const [rejecting, setRejecting] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Public Profile Settings state
-  const [isPublic, setIsPublic] = useState(false);
+  // Core Account & Personal Details
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [status, setStatus] = useState('active');
+  const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved' | 'rejected'>('approved');
+  const [isSuspended, setIsSuspended] = useState(false);
+  const [bio, setBio] = useState('');
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [skillsText, setSkillsText] = useState('');
+  const [softwareText, setSoftwareText] = useState('');
+  const [rating, setRating] = useState(4.9);
+  const [completedProjects, setCompletedProjects] = useState(0);
+
+  // Public Profile (/creators Directory) Settings
+  const [isPublic, setIsPublic] = useState(true);
   const [publicDisplayName, setPublicDisplayName] = useState('');
   const [publicSpecialty, setPublicSpecialty] = useState('');
   const [publicBio, setPublicBio] = useState('');
-  const [yearsOfExperience, setYearsOfExperience] = useState(3);
-  const [creatorTier, setCreatorTier] = useState<'rising_talent' | 'standard' | 'senior'>('rising_talent');
+  const [yearsOfExperience, setYearsOfExperience] = useState(5);
+  const [creatorTier, setCreatorTier] = useState<'rising_talent' | 'standard' | 'senior'>('senior');
   const [isAcceptingWork, setIsAcceptingWork] = useState(true);
-  const [savingPublicProfile, setSavingPublicProfile] = useState(false);
+
+  // Relational data
+  const [samples, setSamples] = useState<SampleReel[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [revisions, setRevisions] = useState<any[]>([]);
+  const [activeWorkload, setActiveWorkload] = useState(0);
+
+  const fetchCreatorData = async () => {
+    if (!id) return;
+    setLoading(true);
+    setErrorMessage(null);
+    try {
+      const res = await fetch(`/api/admin/creators?id=${id}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.success || !data.creator) {
+        setErrorMessage(data.error || 'Creator profile not found in database.');
+        setLoading(false);
+        return;
+      }
+
+      const c = data.creator;
+      const p = c.profile || {};
+
+      setFullName(c.display_name || '');
+      setEmail(c.email || '');
+      setPhone(c.phone || '');
+      setStatus(c.status || 'active');
+      setApprovalStatus(p.approval_status || 'approved');
+      setIsSuspended(Boolean(p.is_suspended || c.status === 'suspended'));
+      setBio(p.bio || '');
+      setPortfolioUrl(p.portfolio_url || '');
+
+      const skillsArr = Array.isArray(p.skills) ? p.skills : [];
+      setSkillsText(skillsArr.join(', '));
+
+      const swArr = Array.isArray(p.software) ? p.software : [];
+      setSoftwareText(swArr.join(', '));
+
+      setRating(Number(p.avg_rating || c.metrics?.rating || 4.9));
+      setCompletedProjects(Number(p.total_projects_completed || c.metrics?.totalProjectsCompleted || 0));
+
+      setIsPublic(Boolean(p.is_public));
+      setPublicDisplayName(p.public_display_name || c.display_name || '');
+      setPublicSpecialty(p.public_specialty || (skillsArr[0] ? `${skillsArr[0]} Specialist` : 'Video Editor'));
+      setPublicBio(p.public_bio || p.bio || '');
+      setYearsOfExperience(Number(p.years_of_experience || p.experience_years || 5));
+      setCreatorTier(p.creator_tier || 'standard');
+      setIsAcceptingWork(p.is_accepting_work !== false);
+
+      setSamples(c.samples || []);
+      setAssignments(c.assignments || []);
+      setPayouts(c.payouts || []);
+      setRevisions(c.revisions || []);
+      setActiveWorkload(c.metrics?.activeWorkload || 0);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed connecting to server.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDetail = async () => {
-      try {
-        let found = ROSTER_DATABASE[id] || ROSTER_DATABASE['creator-1'];
-
-        try {
-          const { data, error } = await supabase
-            .from('creator_profiles')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-          if (!error && data) {
-            found = {
-              ...found,
-              id: data.id,
-              displayName: data.displayName || data.full_name || found.displayName,
-              bio: data.bio || found.bio,
-              approval_status: data.approval_status || found.approval_status,
-              rejection_reason: data.rejection_reason || found.rejection_reason,
-            };
-
-            // Calculate auto-suggested public display name (e.g. "FirstName L.")
-            const nameParts = (data.full_name || data.displayName || found.displayName || '').trim().split(' ');
-            const suggestedName = nameParts.length > 1
-              ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`
-              : nameParts[0] || 'Creator';
-
-            // Auto-calculate creator_tier
-            const completed = data.total_projects_completed ?? found.completed_projects_count ?? 0;
-            const autoTier = completed > 50 ? 'senior' : completed >= 10 ? 'standard' : 'rising_talent';
-
-            setIsPublic(Boolean(data.is_public));
-            setPublicDisplayName(data.public_display_name || suggestedName);
-            setPublicSpecialty(data.public_specialty || (found.skills?.[0] ? `${found.skills[0]} Specialist` : 'Cinematography & Color'));
-            setPublicBio(data.public_bio || data.bio || found.bio || '');
-            setYearsOfExperience(data.years_of_experience ?? 3);
-            setCreatorTier(data.creator_tier || autoTier);
-            setIsAcceptingWork(data.is_accepting_work !== false);
-          } else {
-            // Mock defaults
-            const nameParts = found.displayName.trim().split(' ');
-            const suggestedName = nameParts.length > 1 ? `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.` : nameParts[0];
-            const autoTier = (found.completed_projects_count || 0) > 50 ? 'senior' : (found.completed_projects_count || 0) >= 10 ? 'standard' : 'rising_talent';
-            setIsPublic(found.approval_status === 'approved');
-            setPublicDisplayName(suggestedName);
-            setPublicSpecialty(found.skills[0] || 'Cinematic Editing');
-            setPublicBio(found.bio);
-            setYearsOfExperience(4);
-            setCreatorTier(autoTier);
-            setIsAcceptingWork(true);
-          }
-        } catch {
-          // fallback
-        }
-
-        setFreelancer(found);
-      } catch (err) {
-        console.error('Error fetching creator detail:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetail();
+    fetchCreatorData();
   }, [id]);
 
-  const handleSavePublicProfile = async () => {
-    if (!freelancer) return;
-    if (freelancer.approval_status !== 'approved' && isPublic) {
-      alert('Creator must have approval_status = "approved" to be made public.');
-      return;
-    }
+  const handleSaveAll = async () => {
+    if (!id) return;
+    setSaving(true);
+    setActionNotice(null);
+    setErrorMessage(null);
+
+    const skillsArray = skillsText.split(',').map((s) => s.trim()).filter(Boolean);
+    const softwareArray = softwareText.split(',').map((s) => s.trim()).filter(Boolean);
 
     try {
-      setSavingPublicProfile(true);
       const res = await fetch('/api/admin/creators', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: freelancer.id,
-          action: 'update_public_profile',
+          id,
+          action: 'update_profile',
+          full_name: fullName,
+          email,
+          phone,
+          bio,
+          skills: skillsArray,
+          software: softwareArray,
+          portfolio_url: portfolioUrl,
+          avg_rating: rating,
+          total_projects_completed: completedProjects,
           is_public: isPublic,
           public_display_name: publicDisplayName,
           public_specialty: publicSpecialty,
@@ -268,445 +148,567 @@ export default function AdminFreelancerDetail() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setActionNotice('Public profile settings saved successfully.');
-        setTimeout(() => setActionNotice(null), 4000);
+        setActionNotice('Creator profile & discovery settings successfully saved to database.');
+        setTimeout(() => setActionNotice(null), 5000);
       } else {
-        alert(data.error || 'Failed to save public profile settings');
+        setErrorMessage(data.error || 'Failed to update creator profile.');
       }
     } catch (err: any) {
-      alert(err.message || 'Error saving public profile');
+      setErrorMessage(err.message || 'Error occurred while saving.');
     } finally {
-      setSavingPublicProfile(false);
+      setSaving(false);
     }
   };
 
-  const handleApprove = async () => {
-    if (!freelancer) return;
+  const handleQuickStatus = async (action: 'approve' | 'reject' | 'suspend' | 'reactivate') => {
+    if (!id) return;
+    setSaving(true);
     try {
-      await supabase
-        .from('creator_profiles')
-        .update({
-          approval_status: 'approved',
-          approved_at: new Date().toISOString(),
-        })
-        .eq('id', freelancer.id);
-    } catch {
-      // mock
+      const res = await fetch('/api/admin/creators', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionNotice(`Creator status updated: ${action.toUpperCase()}`);
+        fetchCreatorData();
+      } else {
+        setErrorMessage(data.error || 'Action failed.');
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Action error');
+    } finally {
+      setSaving(false);
     }
-
-    setFreelancer((prev) => (prev ? { ...prev, approval_status: 'approved' } : null));
-    setActionNotice(`${freelancer.displayName} approved to roster. Onboarding pact dispatched.`);
-    setTimeout(() => setActionNotice(null), 4000);
   };
 
-  const handleReject = async () => {
-    if (!freelancer || !rejectReason.trim()) return;
-    try {
-      await supabase
-        .from('creator_profiles')
-        .update({
-          approval_status: 'rejected',
-          rejection_reason: rejectReason,
-        })
-        .eq('id', freelancer.id);
-    } catch {
-      // mock
+  const handleDeleteCreator = async () => {
+    if (!confirm(`Are you sure you want to permanently delete "${fullName || 'this creator'}"? This will remove their profile and portfolio samples cascade.`)) {
+      return;
     }
 
-    setFreelancer((prev) =>
-      prev ? { ...prev, approval_status: 'rejected', rejection_reason: rejectReason } : null
-    );
-    setRejecting(false);
-    setActionNotice(`Candidate ${freelancer.displayName} archived.`);
-    setTimeout(() => setActionNotice(null), 4000);
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/creators', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, action: 'delete' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert('Creator deleted successfully.');
+        router.push('/admin/freelancers');
+      } else {
+        setErrorMessage(data.error || 'Failed to delete creator.');
+        setSaving(false);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Delete error');
+      setSaving(false);
+    }
+  };
+
+  const formatInr = (paisa: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format((paisa || 0) / 100);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F5F7]">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
         <div className="w-8 h-8 border-2 border-[#1D1D1F] border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-xs text-[#86868B] font-mono">Loading creator record from database...</div>
       </div>
     );
   }
 
-  if (!freelancer) {
-    return null;
-  }
-
-  const initials = freelancer.displayName
+  const initials = (fullName || 'Creator')
     .split(' ')
     .map((n) => n[0])
     .join('')
     .slice(0, 2)
     .toUpperCase();
 
-
   return (
-    <div className="p-6 md:p-8 space-y-6 max-w-5xl mx-auto">
-      {/* Notice Alert */}
-        {actionNotice && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 shadow-sm flex items-center justify-between">
-            <span>✓ {actionNotice}</span>
-            <button
-              onClick={() => setActionNotice(null)}
-              className="text-emerald-700 hover:text-emerald-900 font-bold"
-            >
-              ✕
-            </button>
-          </div>
-        )}
+    <div className="p-6 md:p-10 space-y-8 max-w-6xl mx-auto">
+      {/* Alert Notices */}
+      {actionNotice && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 shadow-xs flex items-center justify-between">
+          <span className="font-semibold">✓ {actionNotice}</span>
+          <button onClick={() => setActionNotice(null)} className="text-emerald-700 hover:text-emerald-900 font-bold">✕</button>
+        </div>
+      )}
+      {errorMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-800 shadow-xs flex items-center justify-between">
+          <span className="font-semibold">⚠ {errorMessage}</span>
+          <button onClick={() => setErrorMessage(null)} className="text-red-700 hover:text-red-900 font-bold">✕</button>
+        </div>
+      )}
 
-        {/* Back Link */}
+      {/* Top Navigation & Status Bar */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <Link
             href="/admin/freelancers"
-            className="text-xs font-medium text-[#86868B] hover:text-[#1D1D1F] inline-flex items-center gap-1"
+            className="text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] inline-flex items-center gap-1.5 transition-colors"
           >
-            ← Back to Roster Verification Queue
+            ← Back to Talent &amp; Creator Roster
+          </Link>
+          <div className="flex items-center gap-3 mt-2">
+            <h1 className="text-2xl font-extrabold text-[#1D1D1F] tracking-tight">{fullName || 'Creator Member'}</h1>
+            <span
+              className={`px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                isSuspended
+                  ? 'bg-red-50 text-red-700 border border-red-200'
+                  : approvalStatus === 'approved'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+              }`}
+            >
+              {isSuspended ? 'SUSPENDED' : approvalStatus}
+            </span>
+            {isPublic && approvalStatus === 'approved' && !isSuspended && (
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                LIVE ON /creators
+              </span>
+            )}
+          </div>
+          <div className="text-xs font-mono text-[#86868B] mt-1">
+            Database UUID: {id}
+          </div>
+        </div>
+
+        {/* Global Save and Actions */}
+        <div className="flex flex-wrap items-center gap-2">
+          {approvalStatus === 'pending' && (
+            <button
+              onClick={() => handleQuickStatus('approve')}
+              disabled={saving}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer"
+            >
+              Approve Creator
+            </button>
+          )}
+          {!isSuspended && approvalStatus === 'approved' && (
+            <button
+              onClick={() => handleQuickStatus('suspend')}
+              disabled={saving}
+              className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold rounded-xl border border-amber-200 cursor-pointer"
+            >
+              Suspend
+            </button>
+          )}
+          {isSuspended && (
+            <button
+              onClick={() => handleQuickStatus('reactivate')}
+              disabled={saving}
+              className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-xl border border-blue-200 cursor-pointer"
+            >
+              Reactivate
+            </button>
+          )}
+          <button
+            onClick={handleDeleteCreator}
+            disabled={saving}
+            className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-xl border border-red-200 cursor-pointer"
+          >
+            Delete
+          </button>
+          <button
+            onClick={handleSaveAll}
+            disabled={saving}
+            className="px-5 py-2 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold rounded-xl shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+          >
+            {saving ? 'Saving...' : 'Save All Changes'}
+          </button>
+        </div>
+      </div>
+
+      {/* Overview Metric Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-4 bg-white rounded-2xl border border-[#E5E5E7] shadow-2xs">
+          <div className="text-[11px] font-bold uppercase text-[#86868B]">Active Workload</div>
+          <div className="text-xl font-extrabold text-[#1D1D1F] mt-1">{activeWorkload} Projects</div>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-[#E5E5E7] shadow-2xs">
+          <div className="text-[11px] font-bold uppercase text-[#86868B]">Delivered Masters</div>
+          <div className="text-xl font-extrabold text-emerald-600 mt-1">{completedProjects} Jobs</div>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-[#E5E5E7] shadow-2xs">
+          <div className="text-[11px] font-bold uppercase text-[#86868B]">Platform Rating</div>
+          <div className="text-xl font-extrabold text-amber-500 mt-1">★ {rating.toFixed(2)}</div>
+        </div>
+        <div className="p-4 bg-white rounded-2xl border border-[#E5E5E7] shadow-2xs">
+          <div className="text-[11px] font-bold uppercase text-[#86868B]">Tier</div>
+          <div className="text-xl font-extrabold text-[#1D1D1F] capitalize mt-1">
+            {creatorTier.replace('_', ' ')}
+          </div>
+        </div>
+      </div>
+
+      {/* Section 1: Public Profile & Directory Listing (/creators) */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E5E7] shadow-2xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#E5E5E7] gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+              <h2 className="text-base font-bold text-[#1D1D1F]">Public Directory Settings (/creators)</h2>
+            </div>
+            <p className="text-xs text-[#86868B] mt-0.5">
+              Control public visibility, pseudonym display name, specialty headline, and tier shown on the public site.
+            </p>
+          </div>
+          <Link
+            href={`/creators/${id}`}
+            target="_blank"
+            className="text-xs font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
+          >
+            Preview Public Page ↗
           </Link>
         </div>
 
-        {/* Profile Dossier Card */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7] shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 pb-6 border-b border-[#E5E5E7]">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#1D1D1F] text-white flex items-center justify-center font-extrabold text-base shadow-sm">
-                {initials}
-              </div>
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h1 className="text-xl sm:text-2xl font-extrabold text-[#1D1D1F] tracking-tight">
-                    {freelancer.displayName}
-                  </h1>
-                  <span
-                    className={`px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-                      freelancer.approval_status === 'approved'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : freelancer.approval_status === 'pending'
-                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                        : 'bg-red-50 text-red-700 border border-red-200'
-                    }`}
-                  >
-                    {freelancer.approval_status}
-                  </span>
-                </div>
-                <p className="text-xs text-[#86868B] mt-0.5">{freelancer.experience}</p>
-                <div className="flex items-center gap-4 mt-2 text-xs">
-                  <span className="font-bold text-[#1D1D1F]">★ {freelancer.rating} Platform Rating</span>
-                  <span className="text-[#86868B]">•</span>
-                  <span className="text-[#86868B]">{freelancer.completed_projects_count} Master Deliveries</span>
-                  <span className="text-[#86868B]">•</span>
-                  <span className="text-emerald-600 font-semibold">{freelancer.on_time_delivery_rate}% On-Time</span>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Toggles */}
+          <div className="p-4 bg-[#F5F5F7] rounded-2xl border border-[#E5E5E7] flex items-center justify-between">
+            <div>
+              <span className="text-xs font-bold text-[#1D1D1F] block">Listed on /creators Directory</span>
+              <span className="text-[11px] text-[#86868B]">
+                {approvalStatus !== 'approved'
+                  ? 'Must be approved to display publicly'
+                  : isPublic
+                  ? 'Active and discoverable by clients'
+                  : 'Hidden from public directory'}
+              </span>
             </div>
-
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2">
-              {freelancer.approval_status === 'pending' && (
-                <>
-                  <button
-                    onClick={handleApprove}
-                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm cursor-pointer"
-                  >
-                    Approve Roster Access
-                  </button>
-                  <button
-                    onClick={() => setRejecting(true)}
-                    className="px-4 py-2.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-xl transition-all cursor-pointer"
-                  >
-                    Archive
-                  </button>
-                </>
-              )}
-            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isPublic}
+                disabled={approvalStatus !== 'approved'}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 disabled:opacity-50"></div>
+            </label>
           </div>
 
-          {/* Rejection Form Modal / Drawer */}
-          {rejecting && (
-            <div className="p-4 mt-6 bg-red-50/60 rounded-xl border border-red-200 space-y-3">
-              <h3 className="text-xs font-bold text-red-900 uppercase tracking-wider">
-                Specify Archive / Revision Reason
-              </h3>
-              <input
-                type="text"
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="e.g. Uncompressed timeline export needed for audio mastering proof..."
-                className="w-full p-2.5 bg-white border border-red-200 rounded-lg text-xs text-[#1D1D1F] outline-none"
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={handleReject}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg cursor-pointer"
-                >
-                  Confirm Archive
-                </button>
-                <button
-                  onClick={() => setRejecting(false)}
-                  className="px-3 py-2 bg-white text-[#1D1D1F] text-xs rounded-lg border border-[#E5E5E7] cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Bio & Editorial Philosophy */}
-          <div className="pt-6 space-y-4">
+          <div className="p-4 bg-[#F5F5F7] rounded-2xl border border-[#E5E5E7] flex items-center justify-between">
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#86868B] mb-1.5">
-                Editorial Background &amp; Philosophy
-              </h2>
-              <p className="text-xs text-[#1D1D1F] leading-relaxed max-w-3xl">
-                {freelancer.bio}
-              </p>
+              <span className="text-xs font-bold text-[#1D1D1F] block">Accepting Work</span>
+              <span className="text-[11px] text-[#86868B]">
+                {isAcceptingWork ? 'Available for client booking requests' : 'Fully Booked / Paused'}
+              </span>
             </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isAcceptingWork}
+                onChange={(e) => setIsAcceptingWork(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1D1D1F]"></div>
+            </label>
+          </div>
 
-            {/* Skills & Software */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]">
-                <h3 className="text-[11px] font-bold uppercase text-[#86868B] mb-2">Verified Editorial Skills</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {freelancer.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-2.5 py-1 bg-white text-[#1D1D1F] text-xs font-medium rounded-lg border border-[#E5E5E7]"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
+          {/* Public Display Name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F] flex items-center justify-between">
+              <span>Public Display Name</span>
+              <span className="text-[10px] text-[#86868B] font-normal">e.g. Vikram R. (Protects Full PII)</span>
+            </label>
+            <input
+              type="text"
+              value={publicDisplayName}
+              onChange={(e) => setPublicDisplayName(e.target.value)}
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
 
-              <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]">
-                <h3 className="text-[11px] font-bold uppercase text-[#86868B] mb-2">Software Stack Mastery</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {freelancer.software.map((sw) => (
-                    <span
-                      key={sw}
-                      className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg"
-                    >
-                      {sw}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
+          {/* Public Specialty */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">
+              Public Specialty / Headline
+            </label>
+            <input
+              type="text"
+              value={publicSpecialty}
+              onChange={(e) => setPublicSpecialty(e.target.value)}
+              placeholder="e.g. Wedding Cinema &amp; Film Colorist"
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
 
-            {/* Tax & Banking Compliance */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]">
-                <span className="text-[10px] font-bold text-[#86868B] uppercase">Section 194J-Tech TDS PAN (2%)</span>
-                <div className="text-xs font-mono font-bold text-[#1D1D1F] mt-1">{freelancer.pan_masked}</div>
-              </div>
-              <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]">
-                <span className="text-[10px] font-bold text-[#86868B] uppercase">Automated NEFT Settlement</span>
-                <div className="text-xs font-bold text-[#1D1D1F] mt-1">{freelancer.bank_status}</div>
-              </div>
-            </div>
+          {/* Experience Years */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">
+              Years of Experience
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={50}
+              value={yearsOfExperience}
+              onChange={(e) => setYearsOfExperience(Number(e.target.value))}
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+
+          {/* Tier */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">
+              Creator Tier
+            </label>
+            <select
+              value={creatorTier}
+              onChange={(e) => setCreatorTier(e.target.value as any)}
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            >
+              <option value="rising_talent">Rising Talent (&lt; 10 completed projects)</option>
+              <option value="standard">Standard (10 - 50 completed projects)</option>
+              <option value="senior">Senior (&gt; 50 completed projects)</option>
+            </select>
           </div>
         </div>
 
-        {/* Public Profile Settings Card (Task 7) */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7] shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#E5E5E7] gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
-                <h2 className="text-base font-bold text-[#1D1D1F]">Public Profile Settings</h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#F5F5F7] text-[#86868B] uppercase">
-                  /creators discovery
-                </span>
-              </div>
-              <p className="text-xs text-[#86868B] mt-1">
-                Configure discovery visibility, pseudonym display name, tier, and client request availability.
-              </p>
-            </div>
+        {/* Public Bio */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-[#1D1D1F]">
+            Public Bio / Narrative (Displayed on /creators profile)
+          </label>
+          <textarea
+            rows={3}
+            value={publicBio}
+            onChange={(e) => setPublicBio(e.target.value)}
+            placeholder="Creative narrative highlighting editing style, cinematic influences, and client deliverables..."
+            className="w-full bg-[#F5F5F7] p-3 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+          />
+        </div>
+      </div>
 
-            <button
-              onClick={handleSavePublicProfile}
-              disabled={savingPublicProfile}
-              className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50"
-            >
-              {savingPublicProfile ? 'Saving...' : 'Save Public Settings'}
-            </button>
+      {/* Section 2: Core Talent & Account Credentials */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E5E7] shadow-2xs space-y-6">
+        <div className="pb-4 border-b border-[#E5E5E7]">
+          <h2 className="text-base font-bold text-[#1D1D1F]">Core Member &amp; Contact Details</h2>
+          <p className="text-xs text-[#86868B] mt-0.5">
+            Internal contact details, skills list, external portfolio reel, and completed project stats.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">Full Legal / Real Name</label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-semibold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Toggles Row */}
-            <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-[#1D1D1F] block">Public Discovery Status</span>
-                <span className="text-[11px] text-[#86868B]">
-                  {freelancer.approval_status !== 'approved'
-                    ? 'Requires "approved" roster status to enable'
-                    : isPublic
-                    ? 'Listed on /creators directory'
-                    : 'Hidden from public directory'}
-                </span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  disabled={freelancer.approval_status !== 'approved'}
-                  checked={isPublic}
-                  onChange={(e) => {
-                    if (freelancer.approval_status !== 'approved') {
-                      alert('Creator must have approval_status = "approved" before making profile public.');
-                      return;
-                    }
-                    setIsPublic(e.target.value === 'true' || e.target.checked);
-                  }}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 disabled:opacity-50"></div>
-              </label>
-            </div>
-
-            <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-[#1D1D1F] block">Accepting Work</span>
-                <span className="text-[11px] text-[#86868B]">
-                  {isAcceptingWork ? 'Available for client booking requests' : 'Fully Booked / Paused'}
-                </span>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isAcceptingWork}
-                  onChange={(e) => setIsAcceptingWork(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1D1D1F]"></div>
-              </label>
-            </div>
-
-            {/* Display Name */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#1D1D1F] flex items-center justify-between">
-                <span>Public Display Name (First Name + Last Initial)</span>
-                <span className="text-[10px] text-[#86868B] font-normal">PII Protected</span>
-              </label>
-              <input
-                type="text"
-                value={publicDisplayName}
-                onChange={(e) => setPublicDisplayName(e.target.value)}
-                placeholder="e.g. Aarav S."
-                className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
-              />
-            </div>
-
-            {/* Specialty */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#1D1D1F]">
-                Public Specialty / Headline
-              </label>
-              <input
-                type="text"
-                value={publicSpecialty}
-                onChange={(e) => setPublicSpecialty(e.target.value)}
-                placeholder="e.g. Wedding Cinema & 4K Color Grading"
-                className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
-              />
-            </div>
-
-            {/* Experience */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#1D1D1F]">
-                Years of Experience
-              </label>
-              <input
-                type="number"
-                min={0}
-                max={50}
-                value={yearsOfExperience}
-                onChange={(e) => setYearsOfExperience(Number(e.target.value))}
-                className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
-              />
-            </div>
-
-            {/* Tier */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#1D1D1F] flex items-center justify-between">
-                <span>Creator Tier</span>
-                <span className="text-[10px] text-[#86868B] font-normal">
-                  Auto-calculated ({freelancer.completed_projects_count || 0} projects)
-                </span>
-              </label>
-              <select
-                value={creatorTier}
-                onChange={(e) => setCreatorTier(e.target.value as any)}
-                className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
-              >
-                <option value="rising_talent">Rising Talent (&lt; 10 completed projects)</option>
-                <option value="standard">Standard (10 - 50 completed projects)</option>
-                <option value="senior">Senior (&gt; 50 completed projects)</option>
-              </select>
-            </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">Email Address</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
           </div>
 
-          {/* Public Bio */}
-          <div className="space-y-1.5 pt-2">
-            <label className="text-xs font-bold text-[#1D1D1F]">
-              Public Bio (Client-Facing)
-            </label>
-            <textarea
-              rows={3}
-              value={publicBio}
-              onChange={(e) => setPublicBio(e.target.value)}
-              placeholder="Narrative bio highlighting creative style, pacing, and client deliverables..."
-              className="w-full bg-[#F5F5F7] p-3 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">Phone Number</label>
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+91 9900000000"
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+
+          <div className="space-y-1.5 md:col-span-2">
+            <label className="text-xs font-bold text-[#1D1D1F]">External Portfolio Link (Vimeo / Drive / Showcase)</label>
+            <input
+              type="url"
+              value={portfolioUrl}
+              onChange={(e) => setPortfolioUrl(e.target.value)}
+              placeholder="https://vimeo.com/showcase/..."
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">Completed Deliveries</label>
+            <input
+              type="number"
+              min={0}
+              value={completedProjects}
+              onChange={(e) => setCompletedProjects(Number(e.target.value))}
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
             />
           </div>
         </div>
 
-        {/* Sample Timeline Cuts */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7] shadow-sm space-y-4">
-          <div className="flex justify-between items-center pb-4 border-b border-[#E5E5E7]">
-            <div>
-              <h2 className="text-base font-bold text-[#1D1D1F]">Sample Timeline Cuts</h2>
-              <p className="text-xs text-[#86868B] mt-0.5">
-                Evaluated for pacing, grade gamut conform, audio mastering, and sync precision.
-              </p>
-            </div>
-            <a
-              href={freelancer.portfolio_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-semibold text-[#3B82F6] hover:underline"
-            >
-              External Portfolio ↗
-            </a>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">
+              Verified Skills (Comma Separated)
+            </label>
+            <input
+              type="text"
+              value={skillsText}
+              onChange={(e) => setSkillsText(e.target.value)}
+              placeholder="e.g. Wedding Cinema, 4K Color Grading, Sound Design, Multi-Cam"
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
           </div>
 
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">
+              Software Stack (Comma Separated)
+            </label>
+            <input
+              type="text"
+              value={softwareText}
+              onChange={(e) => setSoftwareText(e.target.value)}
+              placeholder="e.g. DaVinci Resolve Studio, Premiere Pro, After Effects"
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-[#1D1D1F]">Internal Background &amp; Bio</label>
+          <textarea
+            rows={2}
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            className="w-full bg-[#F5F5F7] p-3 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+          />
+        </div>
+      </div>
+
+      {/* Section 3: Portfolio Samples */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E5E7] shadow-2xs space-y-4">
+        <div className="flex justify-between items-center pb-4 border-b border-[#E5E5E7]">
+          <div>
+            <h2 className="text-base font-bold text-[#1D1D1F]">Database Portfolio Samples ({samples.length})</h2>
+            <p className="text-xs text-[#86868B] mt-0.5">
+              Live samples stored in portfolio_samples table linked to this creator.
+            </p>
+          </div>
+        </div>
+
+        {samples.length === 0 ? (
+          <div className="p-6 bg-[#F5F5F7] rounded-2xl text-center text-xs text-[#86868B]">
+            No portfolio samples attached to this creator yet.
+          </div>
+        ) : (
           <div className="space-y-3">
-            {freelancer.samples.map((sample) => (
+            {samples.map((sample) => (
               <div
                 key={sample.id}
-                className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="p-4 bg-[#F5F5F7] rounded-2xl border border-[#E5E5E7] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#3B82F6]">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
                     {sample.category}
                   </span>
                   <h3 className="text-xs font-bold text-[#1D1D1F] mt-0.5">{sample.title}</h3>
                   <p className="text-[11px] text-[#86868B] mt-0.5">
-                    Codec: {sample.codec} • Canvas: {sample.resolution}
+                    Codec: {sample.codec || 'ProRes 422'} • Resolution: {sample.resolution || '4K UHD'}
                   </p>
                 </div>
-                <a
-                  href={sample.video_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3.5 py-1.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-lg transition-all text-center"
-                >
-                  Play Timeline ↗
-                </a>
+                {sample.video_url && (
+                  <a
+                    href={sample.video_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-1.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-lg transition-all text-center"
+                  >
+                    Play Reel ↗
+                  </a>
+                )}
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Section 4: Assignments & Payouts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Assignments */}
+        <div className="bg-white rounded-3xl p-6 border border-[#E5E5E7] shadow-2xs space-y-4">
+          <h2 className="text-sm font-bold text-[#1D1D1F] uppercase tracking-wider">
+            Assignments History ({assignments.length})
+          </h2>
+          {assignments.length === 0 ? (
+            <div className="p-4 bg-[#F5F5F7] rounded-xl text-xs text-[#86868B] text-center">
+              No project assignments logged.
+            </div>
+          ) : (
+            <div className="border border-[#E5E5E7] rounded-xl overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B]">
+                  <tr>
+                    <th className="py-2 px-3">Project</th>
+                    <th className="py-2 px-3">Status</th>
+                    <th className="py-2 px-3">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E5E5E7]">
+                  {assignments.map((a: any) => (
+                    <tr key={a.id}>
+                      <td className="py-2 px-3 font-mono text-blue-600">{a.project_id || a.id.slice(0, 8)}</td>
+                      <td className="py-2 px-3 capitalize">{a.status}</td>
+                      <td className="py-2 px-3 text-[#86868B]">{new Date(a.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Payouts */}
+        <div className="bg-white rounded-3xl p-6 border border-[#E5E5E7] shadow-2xs space-y-4">
+          <h2 className="text-sm font-bold text-[#1D1D1F] uppercase tracking-wider">
+            Payouts &amp; Settlements ({payouts.length})
+          </h2>
+          {payouts.length === 0 ? (
+            <div className="p-4 bg-[#F5F5F7] rounded-xl text-xs text-[#86868B] text-center">
+              No payout records logged.
+            </div>
+          ) : (
+            <div className="border border-[#E5E5E7] rounded-xl overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B]">
+                  <tr>
+                    <th className="py-2 px-3">Gross</th>
+                    <th className="py-2 px-3">TDS</th>
+                    <th className="py-2 px-3">Net</th>
+                    <th className="py-2 px-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E5E5E7]">
+                  {payouts.map((p: any) => (
+                    <tr key={p.id}>
+                      <td className="py-2 px-3 font-mono">{formatInr(p.gross_amount)}</td>
+                      <td className="py-2 px-3 text-amber-700">{formatInr(p.tds_amount)}</td>
+                      <td className="py-2 px-3 font-mono font-bold text-emerald-600">{formatInr(p.net_payout)}</td>
+                      <td className="py-2 px-3 capitalize">{p.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { createErrorResponse } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -10,13 +11,13 @@ export async function GET(request: Request) {
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database client unavailable' }, { status: 500 });
+    return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);
   }
 
   try {
     const { data: dbOrders, error } = await dbClient
       .from('orders')
-      .select('id, order_number, client_name, client_phone, client_email, service_key, gross_amount, status, requirements_snapshot, created_at')
+      .select('id, order_number, client_id, client_name, client_phone, client_email, service_key, gross_amount, status, requirements_snapshot, created_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -53,7 +54,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, orders: formattedOrders });
   } catch (err: any) {
-    console.error('Failed to fetch admin orders:', err);
-    return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to fetch studio production orders', 500);
   }
 }

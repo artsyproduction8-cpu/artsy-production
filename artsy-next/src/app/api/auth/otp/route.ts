@@ -3,11 +3,11 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
-import { sendWhatsAppOTP } from '@/lib/whatsapp/openwa-dispatcher';
 import { sendMetaOTP } from '@/lib/whatsapp/meta-cloud-dispatcher';
 import { sendOtpEmail } from '@/lib/email/dispatcher';
 import { supabaseAdmin as supabase, supabase as anonClient, isSupabaseConfigured } from '@/lib/supabase';
 import { signAuthCookieValue, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
+import { createErrorResponse } from '@/lib/api-response';
 
 // Helper for legacy sha256 fallback compatibility
 function legacyHashOtp(otp: string, identifier: string): string {
@@ -81,9 +81,12 @@ export async function POST(request: NextRequest) {
     // ────────────────────────────────────────────────────────
     const isVerifyAction = action === 'verify' || body.verify === true;
     if (isVerifyAction) {
-      if (!code) {
+      const submittedCode = code || body.otp;
+      if (!submittedCode) {
         return NextResponse.json({ error: 'OTP code is required.' }, { status: 400 });
       }
+
+      const inputCode = String(submittedCode).trim();
 
       // Security Fix L: Distributed rate limiting on OTP verification (10 attempts per 10 mins per identifier)
       const verifyLimit = await checkRateLimit(`verify_${identifier}`, 'auth', 10, 600);
@@ -93,8 +96,6 @@ export async function POST(request: NextRequest) {
           { status: 429 }
         );
       }
-
-      const inputCode = String(code).trim();
 
       // Check in-memory store first
       const memSession =
@@ -182,6 +183,15 @@ export async function POST(request: NextRequest) {
             { status: 401 }
           );
         }
+      }
+
+      if (body.purpose === 'verify_only') {
+        return NextResponse.json({
+          success: true,
+          verified: true,
+          message: 'Contact detail verified successfully.',
+          destination: cleanEmail || formattedPhone,
+        });
       }
 
       // Find or create user in public.users
@@ -489,20 +499,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Dual-Track Dispatch Chain (Priority 1: OpenWA WhatsApp -> Priority 2: Resend Email -> Error)
-    const gatewayUrl = process.env.WHATSAPP_GATEWAY_URL?.trim();
-    const hasOpenWA = Boolean(
-      gatewayUrl &&
-      gatewayUrl.length > 0 &&
-      process.env.WHATSAPP_GATEWAY_API_KEY &&
-      !process.env.WHATSAPP_GATEWAY_API_KEY.includes('YOUR_OPERATOR_KEY')
+    // 4. Dispatch Chain (Priority 1: Meta Cloud API WhatsApp -> Priority 2: Resend Email -> Dev Fallback -> Error)
+    const hasMetaWA = Boolean(
+      process.env.WHATSAPP_ACCESS_TOKEN &&
+      process.env.WHATSAPP_PHONE_NUMBER_ID &&
+      !process.env.WHATSAPP_ACCESS_TOKEN.includes('WILL_BE_PROVIDED')
     );
 
-    let dispatchedViaWA = false;
-    let waMessageId: string | undefined;
-
     // Track 1: WhatsApp via Meta Cloud API Authentication Template
-    if (cleanPhone && process.env.WHATSAPP_OTP_TEMPLATE_NAME) {
+    if (cleanPhone && hasMetaWA && process.env.WHATSAPP_OTP_TEMPLATE_NAME) {
       const waResult = await sendMetaOTP(cleanPhone, otpCode);
 
       // Log to notification_delivery_log
@@ -541,13 +546,14 @@ export async function POST(request: NextRequest) {
           success: true,
           message: 'OTP sent via WhatsApp',
           channel: 'whatsapp',
+          messageId: waResult.messageId,
           remainingAttempts: remainingAttempts,
           ...(shouldExposeDevOtp && { devOtp: otpCode }),
         });
       }
 
       console.warn('[OTP Route] Meta WhatsApp failed, falling back to email:', waResult.error);
-      if (!cleanEmail) {
+      if (!cleanEmail && !isDev) {
         return sendResponse(
           { error: `WhatsApp delivery failed: ${waResult.error || 'Please try again or use email verification.'}` },
           { status: 502 }
@@ -555,41 +561,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Track 1B: WhatsApp via OpenWA (Local development / dedicated gateway fallback)
-    if (cleanPhone && hasOpenWA) {
-      try {
-        const waResult = await sendWhatsAppOTP(cleanPhone, otpCode);
-        if (waResult.success) {
-          dispatchedViaWA = true;
-          waMessageId = waResult.messageId;
-        } else {
-          console.warn('[OTP Route] OpenWA WhatsApp dispatch failed:', waResult.error);
-        }
-      } catch (waErr) {
-        console.error('[OTP Route] OpenWA WhatsApp exception:', waErr);
-      }
-    }
-
-    if (dispatchedViaWA) {
-      // Record notification event #1 (OTP_SENT)
-      await dispatchNotification({
-        eventNumber: 1,
-        userId: `anon_${cleanPhone}`,
-        recipientPhone: formattedPhone!,
-        variables: { otp: otpCode },
-      });
-
-      return sendResponse({
-        success: true,
-        message: 'OTP sent via WhatsApp',
-        channel: 'whatsapp',
-        messageId: waMessageId,
-        remainingAttempts: remainingAttempts,
-        ...(shouldExposeDevOtp && { devOtp: otpCode }),
-      });
-    }
-
-    // Track 2: Resend Email (Vercel production default or fallback)
+    // Track 2: Resend Email (Primary for email auth or automatic fallback)
     if (cleanEmail && process.env.RESEND_API_KEY && !process.env.RESEND_API_KEY.includes('YOUR_RESEND_KEY')) {
       const emailResult = await sendOtpEmail(cleanEmail, otpCode);
 
@@ -597,7 +569,7 @@ export async function POST(request: NextRequest) {
         console.error('Failed to send OTP email via Resend:', emailResult.error);
         if (isDev) {
           if (process.env.OTP_DEBUG === 'true') {
-            console.log(`[DEV OTP Email Fallback] Email: ${cleanEmail}, Code: ${otpCode}`);
+            console.log('[DEV OTP Email Fallback] Email: [REDACTED], Code: [REDACTED]');
           }
           return sendResponse({
             success: true,
@@ -635,32 +607,28 @@ export async function POST(request: NextRequest) {
     // Track 3: Gated Mock Mode or Development Fallback
     if (isDev) {
       if (process.env.OTP_DEBUG === 'true') {
-        console.log(`[DEV OTP Dispatch] Identifier: ${identifier}, Generated OTP: ${otpCode}`);
+        console.log('[DEV OTP Dispatch] Identifier: [REDACTED], Generated OTP: [REDACTED]');
       }
       return sendResponse({
         success: true,
         message: 'OTP dispatched (development testing mode)',
         channel: 'dev',
         remainingAttempts: remainingAttempts,
-        ...(shouldExposeDevOtp && { devOtp: otpCode }),
+        devOtp: otpCode,
       });
     }
 
-    // Track 4: Delivery failure — NEVER fall back to 123456 or return fake success
-    console.error(`[OTP Route] No delivery channel available for identifier: ${identifier}. WhatsApp configured: ${hasOpenWA}, Email present: ${Boolean(cleanEmail)}`);
+    // Track 4: Delivery failure — NEVER fall back or return fake success
+    console.error(`[OTP Route] No delivery channel available for identifier: [REDACTED]. WhatsApp configured: ${hasMetaWA}, Email present: ${Boolean(cleanEmail)}`);
     return sendResponse(
       {
-        error: cleanPhone && !hasOpenWA
+        error: cleanPhone && !hasMetaWA
           ? 'WhatsApp service is not available on this server. Please use email verification or contact studio support.'
           : 'Failed to dispatch verification code. Please check your contact information and try again.',
       },
       { status: 502 }
     );
   } catch (error: unknown) {
-    console.error('[INTERNAL] Auth OTP dispatch error:', error);
-    return NextResponse.json(
-      { error: 'Unable to process request' },
-      { status: 500 }
-    );
+    return createErrorResponse(error, 'Unable to process authentication request. Please try again.', 500);
   }
 }

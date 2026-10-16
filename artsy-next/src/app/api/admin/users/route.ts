@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { createErrorResponse } from '@/lib/api-response';
 
 const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
 
 export async function GET(request: Request) {
   const SUPER_ADMIN_PHONE = process.env.SUPER_ADMIN_PHONE;
-  if (!SUPER_ADMIN_PHONE) {
-    throw new Error('SUPER_ADMIN_PHONE env var is required');
-  }
 
   const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
@@ -17,7 +15,7 @@ export async function GET(request: Request) {
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database client unavailable' }, { status: 500 });
+    return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);
   }
 
   try {
@@ -29,7 +27,7 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: true });
 
     if (adminErr) {
-      return NextResponse.json({ error: adminErr.message }, { status: 500 });
+      return createErrorResponse(adminErr, 'Failed to fetch administrator accounts', 500);
     }
 
     // 2. Fetch clients eligible for promotion
@@ -41,7 +39,10 @@ export async function GET(request: Request) {
       .limit(20);
 
     const enrichedAdmins = (admins || []).map((u: any) => {
-      const isSuperAdmin = u.role === 'super_admin' || u.phone === SUPER_ADMIN_PHONE || u.email === SUPER_ADMIN_EMAIL;
+      const isSuperAdmin =
+        u.role === 'super_admin' ||
+        (Boolean(SUPER_ADMIN_PHONE) && u.phone === SUPER_ADMIN_PHONE) ||
+        (Boolean(SUPER_ADMIN_EMAIL) && u.email === SUPER_ADMIN_EMAIL);
       return {
         ...u,
         role: isSuperAdmin ? 'super_admin' : u.role,
@@ -57,7 +58,6 @@ export async function GET(request: Request) {
       clientCandidates: clientCandidates || [],
     });
   } catch (err: any) {
-    console.error('Error fetching admin users:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to retrieve administrative users', 500);
   }
 }

@@ -168,6 +168,7 @@ export async function POST(request: NextRequest) {
         const { error: dbError } = await dbClient.from('orders').insert([
           {
             order_number: internalOrderNumber,
+            client_id: authUser?.id && isUUID(authUser.id) ? authUser.id : null,
             client_phone: clientPhone || null,
             client_name: clientName || null,
             client_email: clientEmail || null,
@@ -194,7 +195,7 @@ export async function POST(request: NextRequest) {
           // Notify admin: Channel: WhatsApp + in-app
           // Message: "New booking with preferred creator. Order #X, Creator: [Name]"
           const adminNoticeMsg = `New booking with preferred creator. Order #${internalOrderNumber}, Creator: ${preferredCreatorName}`;
-          console.log(`[ADMIN NOTIFICATION] ${adminNoticeMsg}`);
+          console.log(`[ADMIN NOTIFICATION] New booking with preferred creator. Order #${internalOrderNumber}, Creator: [REDACTED]`);
 
           // Insert in-app notifications for admins
           try {

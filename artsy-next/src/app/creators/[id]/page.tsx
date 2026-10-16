@@ -153,17 +153,17 @@ export default async function CreatorProfilePage({ params }: PageProps) {
       {/* Structured Data: BreadcrumbList + Person + ProfilePage + VideoObjects */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs).replace(/</g, '\\u003c') }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(profilePageJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(profilePageJsonLd).replace(/</g, '\\u003c') }}
       />
       {videoSchemas.map((vSchema, idx) => (
         <script
           key={idx}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(vSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(vSchema).replace(/</g, '\\u003c') }}
         />
       ))}
 

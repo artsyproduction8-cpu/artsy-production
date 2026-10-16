@@ -65,6 +65,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verify captured status server-side with Razorpay API
+    const rzpKeyId = process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+    const isRzpLive = rzpKeyId && key_secret && !rzpKeyId.includes('your-');
+
+    let orderRecord: any = null;
+    if (isSupabaseConfigured && supabaseAdmin && typeof supabaseAdmin.from === 'function') {
+      try {
+        const { data: ord } = await supabaseAdmin
+          .from('orders')
+          .select('id, gross_amount, status')
+          .eq('razorpay_order_id', order_id)
+          .maybeSingle();
+        orderRecord = ord;
+      } catch (e) {
+        console.warn('[Verify Payment Order Lookup Warning]:', e);
+      }
+    }
+
+    if (isRzpLive) {
+      const rzpAuth = Buffer.from(`${rzpKeyId}:${key_secret}`).toString('base64');
+      const paymentRes = await fetch(
+        `https://api.razorpay.com/v1/payments/${payment_id}`,
+        {
+          headers: { Authorization: `Basic ${rzpAuth}` },
+          signal: AbortSignal.timeout(6000),
+        }
+      );
+
+      if (!paymentRes.ok) {
+        return NextResponse.json(
+          { success: false, error: 'Could not verify payment with Razorpay' },
+          { status: 400 }
+        );
+      }
+
+      const rzpPayment = await paymentRes.json();
+
+      if (rzpPayment.status !== 'captured') {
+        return NextResponse.json(
+          { success: false, error: 'Payment not captured' },
+          { status: 400 }
+        );
+      }
+
+      if (orderRecord && orderRecord.gross_amount && rzpPayment.amount !== orderRecord.gross_amount) {
+        return NextResponse.json(
+          { success: false, error: 'Payment amount mismatch' },
+          { status: 400 }
+        );
+      }
+    }
+
     // Mark as paid in database if matching order exists
     if (isSupabaseConfigured && supabaseAdmin && typeof supabaseAdmin.from === 'function') {
       try {

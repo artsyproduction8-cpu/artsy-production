@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { generateInvoiceData } from '@/lib/invoices/generator';
 import { archiveInvoiceToVault } from '@/lib/invoices/vault';
 import { sendInvoiceEmail } from '@/lib/email/dispatcher';
@@ -14,10 +14,11 @@ async function resolveOrderDetails(orderId: string) {
   let clientId: string | null = null;
   let orderFound = false;
 
-  if (supabaseAdmin) {
+  const dbClient = supabaseAdmin || supabase;
+  if (dbClient) {
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
     
-    let query = supabaseAdmin.from('orders').select('*, users(full_name, phone, email)');
+    let query = dbClient.from('orders').select('*, users(full_name, phone, email)');
     if (isUUID) {
       query = query.eq('id', orderId);
     } else {
@@ -251,14 +252,16 @@ export async function POST(
     const orderDetails = await resolveOrderDetails(orderId);
 
     const isAdmin = ['admin', 'super_admin'].includes(authUser.role);
-    if (orderDetails.orderFound) {
-      if (orderDetails.clientId && authUser.id !== orderDetails.clientId && !isAdmin) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } else {
-      if (!isAdmin) {
-        return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-      }
+    if (!orderDetails.orderFound) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    const isAuthorized =
+      isAdmin ||
+      (Boolean(orderDetails.clientId) && authUser.id === orderDetails.clientId);
+
+    if (!isAuthorized) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const recipientEmail = body.email || orderDetails.clientEmail;

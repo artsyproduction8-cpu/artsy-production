@@ -3,7 +3,17 @@ import { generateUploadUrl } from '@/lib/storage/b2-client';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin } from '@/lib/supabase';
 
-const ALLOWED_MIME_TYPES = ['video/mp4', 'video/quicktime', 'image/jpeg', 'image/png', 'application/pdf'];
+const ALLOWED_MIME_TYPES = [
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+];
+const MIN_SIZE = 100 * 1024;              // 100 KB
+const MAX_SIZE = 5 * 1024 * 1024 * 1024;  // 5 GB
 
 export async function POST(request: NextRequest) {
   // Security Fix #6: Require authenticated session
@@ -21,7 +31,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { fileName, contentType = 'video/mp4', projectId } = body;
+    const { fileName, contentType, mimeType: inputMime, fileSizeBytes, projectId } = body;
+    const mimeType = inputMime || contentType;
 
     if (!fileName) {
       return NextResponse.json({ error: 'fileName is required' }, { status: 400 });
@@ -31,10 +42,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'projectId is required' }, { status: 400 });
     }
 
-    // Fix M6: Validate content-type against allowlist
-    if (!ALLOWED_MIME_TYPES.includes(contentType)) {
+    // Fix M6: Enforce MIME allowlist
+    if (!mimeType || !ALLOWED_MIME_TYPES.includes(mimeType)) {
       return NextResponse.json(
-        { error: `Disallowed content type: ${contentType}. Allowed formats: ${ALLOWED_MIME_TYPES.join(', ')}` },
+        { error: 'Invalid or missing MIME type' },
+        { status: 400 }
+      );
+    }
+
+    // Fix M6: Enforce file size boundaries (100KB - 5GB)
+    if (typeof fileSizeBytes !== 'number' || fileSizeBytes < MIN_SIZE || fileSizeBytes > MAX_SIZE) {
+      return NextResponse.json(
+        { error: 'File size must be between 100KB and 5GB' },
         { status: 400 }
       );
     }

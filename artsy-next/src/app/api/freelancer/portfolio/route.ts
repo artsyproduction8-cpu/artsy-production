@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { validateVideoUrl, validateImageUrl } from '@/lib/validation/urls';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -54,6 +55,22 @@ export async function POST(request: Request) {
       );
     }
 
+    const validVideoUrl = validateVideoUrl(video_url);
+    if (!validVideoUrl) {
+      return NextResponse.json(
+        { error: 'Invalid video URL. Must be a valid YouTube or Vimeo HTTPS link.' },
+        { status: 400 }
+      );
+    }
+
+    const validThumbnailUrl = validateImageUrl(thumbnail_url);
+    if (!validThumbnailUrl) {
+      return NextResponse.json(
+        { error: 'Invalid thumbnail URL. Must be a valid HTTPS image URL.' },
+        { status: 400 }
+      );
+    }
+
     // Ensure creator profile exists
     const { data: existingProfile } = await dbClient
       .from('creator_profiles')
@@ -87,8 +104,8 @@ export async function POST(request: Request) {
           title: title.trim(),
           description: description?.trim() || null,
           category,
-          video_url: video_url.trim(),
-          thumbnail_url: thumbnail_url.trim(),
+          video_url: validVideoUrl,
+          thumbnail_url: validThumbnailUrl,
           approval_status: 'pending',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),

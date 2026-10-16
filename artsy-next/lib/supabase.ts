@@ -26,6 +26,10 @@ const isValidHttpUrl = (url?: string) => {
   if (!url || isPlaceholder(url)) return false;
   try {
     const parsed = new URL(url);
+    if (process.env.NODE_ENV === 'production' && parsed.protocol !== 'https:') {
+      console.error('[SECURITY FATAL] NEXT_PUBLIC_SUPABASE_URL must use https:// in production.');
+      return false;
+    }
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';
   } catch {
     return false;
@@ -42,8 +46,15 @@ const isValidJwt = (val?: string) => {
   return parts.length === 3 && parts[0].length > 0 && parts[1].length > 0;
 };
 
+if (process.env.NODE_ENV === 'production' && !isSupabaseConfigured) {
+  throw new Error(
+    '[FATAL CONFIG ERROR] Database connection is unconfigured in production. ' +
+    'NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set to valid HTTPS endpoints.'
+  );
+}
+
 if (isSupabaseConfigured && supabaseUrl && supabaseAnonKey) {
-  // Production mode: real Supabase client
+  // Production mode: real Supabase client over TLS 1.3
   supabase = createClient(supabaseUrl, supabaseAnonKey);
 
   // If service role key is present and is a valid JWT, create admin client
@@ -162,7 +173,6 @@ export const signInWithWhatsApp = async (phoneNumber: string) => {
   return {
     success: true,
     message: `OTP simulation: In production, this would send OTP via WhatsApp to ${phoneNumber}`,
-    ...(process.env.NODE_ENV === 'development' && process.env.MOCK_WHATSAPP === 'true' && { testCode: '123456' }),
   }
 }
 
@@ -187,44 +197,6 @@ export const verifyWhatsAppOtp = async (phoneNumber: string, code: string, fullN
       return { success: false, error: data.error || 'Verification failed' };
     } catch {
       // Fall through to fallback
-    }
-  }
-
-  // In mock mode strictly within local development:
-  if (process.env.NODE_ENV === 'development' && process.env.MOCK_WHATSAPP === 'true' && code === '123456') {
-    // Try to get existing user or create new one
-    const { data: existingUser, error: fetchError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('phone', phoneNumber)
-      .single()
-
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows returned
-      return { success: false, error: fetchError }
-    }
-
-    if (existingUser) {
-      // Update last sign-in
-      await supabase
-        .from('users')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', existingUser.id)
-
-      return { success: true, user: existingUser }
-    } else {
-      const mockUser = {
-        id: crypto.randomUUID(),
-        email: `${phoneNumber.replace(/\D/g, '')}@artsyprod.studio`,
-        phone: phoneNumber,
-        full_name: fullName || `User ${phoneNumber.slice(-4)}`,
-        role: role,
-        status: 'active',
-        avatar_url: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-
-      return { success: true, user: mockUser }
     }
   }
 
@@ -300,8 +272,6 @@ export const createOrder = async (orderData: {
   return data
 }
 
-// Initialize sample data (for development)
 export const initializeSampleData = async () => {
-  // This would typically be run via Supabase migrations or seed scripts
-  console.log('Sample data initialization would happen here')
-}
+  // Sample data initialization managed via migrations
+};

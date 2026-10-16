@@ -2,7 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
-const ALLOWED_MIME_TYPES = ['video/mp4', 'video/quicktime', 'image/jpeg', 'image/png', 'application/pdf'];
+const ALLOWED_MIME_TYPES = [
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+];
+const MIN_SIZE = 100 * 1024;              // 100 KB
+const MAX_SIZE = 5 * 1024 * 1024 * 1024;  // 5 GB
 
 export async function POST(request: NextRequest) {
   // Security Fix #6: Require authenticated user
@@ -29,10 +39,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Fix M6: MIME allowlist check
-    if (mimeType && !ALLOWED_MIME_TYPES.includes(mimeType)) {
+    // Fix M6: Enforce MIME allowlist
+    if (!mimeType || !ALLOWED_MIME_TYPES.includes(mimeType)) {
       return NextResponse.json(
-        { error: `Disallowed MIME type: ${mimeType}. Allowed: ${ALLOWED_MIME_TYPES.join(', ')}` },
+        { error: 'Invalid or missing MIME type' },
+        { status: 400 }
+      );
+    }
+
+    // Fix M6: Enforce file size boundaries (100KB - 5GB)
+    if (typeof fileSizeBytes !== 'number' || fileSizeBytes < MIN_SIZE || fileSizeBytes > MAX_SIZE) {
+      return NextResponse.json(
+        { error: 'File size must be between 100KB and 5GB' },
         { status: 400 }
       );
     }

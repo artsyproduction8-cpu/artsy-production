@@ -67,6 +67,9 @@ async function getCreatorData(id: string) {
   }
 }
 
+export const revalidate = 300;
+export const dynamic = 'force-static';
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const data = await getCreatorData(id);

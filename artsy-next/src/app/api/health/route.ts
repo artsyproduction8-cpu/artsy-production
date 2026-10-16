@@ -21,11 +21,13 @@ export async function GET() {
         dbStatus = 'connected';
         dbMode = 'connected';
       } else {
-        dbStatus = `degraded: ${error.message}`;
+        console.error('[Health Check DB Warning]:', error.message);
+        dbStatus = 'degraded';
         dbMode = 'connected';
       }
     } catch (err: unknown) {
-      dbStatus = `error: ${err instanceof Error ? err.message : String(err)}`;
+      console.error('[Health Check DB Error]:', err);
+      dbStatus = 'degraded';
     }
   } else {
     dbStatus = 'mock';
@@ -44,7 +46,7 @@ export async function GET() {
 
   // 4. WhatsApp Health (Meta Cloud API)
   const metaAccessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  const metaPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID || '1389485034246532';
+  const metaPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   let waStatus: 'connected' | 'disconnected' = 'disconnected';
   let waSessionStatus: 'registered' | 'unregistered' | 'disconnected' = 'disconnected';
   let waError: string | undefined = undefined;
@@ -103,13 +105,11 @@ export async function GET() {
   const healthPayload = {
     status: isHealthy ? 'ok' : 'degraded',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime ? Math.floor(process.uptime()) : null,
     environment: process.env.NODE_ENV || 'development',
     services: {
       database: {
         status: dbStatus,
         mode: dbMode,
-        latencyMs: dbLatencyMs,
       },
       storage: {
         provider: 'backblaze_b2',
@@ -126,10 +126,7 @@ export async function GET() {
       whatsapp: {
         provider: 'meta_cloud_api',
         status: waStatus,
-        phoneNumber: '+91 83694 11627',
-        phoneNumberId: metaPhoneId,
         sessionStatus: waSessionStatus,
-        ...(waError ? { error: waError } : {}),
       },
       notifications: {
         provider: 'resend_email',
@@ -138,7 +135,6 @@ export async function GET() {
         whatsapp_status: waStatus,
       },
     },
-    responseTimeMs,
     version: '2.3.0',
   };
 

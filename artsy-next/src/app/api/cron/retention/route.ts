@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { deleteObject } from '@/lib/storage/b2-client';
+import { createErrorResponse } from '@/lib/api-response';
 
 /**
  * Retention & Deletion Lifecycle Cron (§6.5)
@@ -149,10 +150,6 @@ export async function GET(request: NextRequest) {
       mode: supabase ? 'live_supabase' : 'mock_offline'
     });
   } catch (err: any) {
-    console.error('[RETENTION CRON ERROR]:', err);
-    return NextResponse.json(
-      { success: false, error: err.message || 'Internal retention error' },
-      { status: 500 }
-    );
+    return createErrorResponse(err, 'Automated file retention processing encountered an error', 500);
   }
 }

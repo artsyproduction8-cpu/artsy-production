@@ -128,18 +128,11 @@ export default function ClientFilesPage() {
           <div className="p-6 md:p-8 space-y-8 max-w-6xl mx-auto">
             {/* Header */}
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Link href="/client" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
-                  Dashboard
-                </Link>
-                <span className="text-xs text-[#86868B]">/</span>
-                <span className="text-xs font-bold text-[#1D1D1F]">My Files</span>
-              </div>
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
-                My Files
+                Files &amp; Footage
               </h1>
               <p className="text-sm text-[#86868B] mt-1">
-                Raw camera ingests, proxies, audio stems, and finished high-bitrate master exports.
+                View and download your raw footage, preview drafts, and final 4K video exports.
               </p>
             </div>
 
@@ -152,10 +145,10 @@ export default function ClientFilesPage() {
                   </div>
                   <div>
                     <h2 className="text-sm font-bold text-amber-900">
-                      Retention Alert: {expiringFiles.length} file{expiringFiles.length > 1 ? 's' : ''} scheduled for auto-purge within 7 days
+                      Storage Notice: {expiringFiles.length} file{expiringFiles.length > 1 ? 's' : ''} will be removed within 7 days
                     </h2>
                     <p className="text-xs text-amber-800/80 mt-0.5 leading-relaxed">
-                      Under Artsy statutory retention (15 days raw / 30 days master post-approval), these files will be permanently erased. Download copies now or request cold vault archiving.
+                      Raw video footage is stored for 15 days and final master files for 30 days after project completion. Please download any files you want to keep on your computer or drive.
                     </p>
                   </div>
                 </div>
@@ -173,7 +166,7 @@ export default function ClientFilesPage() {
                     rel="noopener noreferrer"
                     className="px-4 py-2 bg-white border border-amber-200 hover:bg-amber-100/50 text-amber-900 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                   >
-                    Request Extension
+                    Need More Time? Chat with Us
                   </a>
                 </div>
               </div>
@@ -184,8 +177,8 @@ export default function ClientFilesPage() {
               {(
                 [
                   { key: 'all', label: 'All Files' },
-                  { key: 'delivered', label: 'Delivered Masters' },
-                  { key: 'in_progress', label: 'In Progress / Proxies' },
+                  { key: 'delivered', label: 'Final Videos' },
+                  { key: 'in_progress', label: 'Drafts & Proxies' },
                   { key: 'expiring_soon', label: `Expiring Soon (${expiringFiles.length})` },
                 ] as const
               ).map((tab) => (
@@ -207,20 +200,20 @@ export default function ClientFilesPage() {
             {/* Projects and File Cards */}
             {loading ? (
               <div className="text-center py-16 text-xs text-[#86868B]">
-                Loading file records...
+                Loading files...
               </div>
             ) : files.length === 0 ? (
               <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8 space-y-3">
                 <div className="text-4xl mb-3">📁</div>
                 <h3 className="text-lg font-semibold text-[#1D1D1F]">No files uploaded yet</h3>
                 <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-                  Raw camera footage, HLS streaming proxies, and master delivery exports will appear here with automated 15-day and 30-day retention policies.
+                  Your raw video footage, draft previews, and final video downloads will appear here once your project starts.
                 </p>
                 <Link
                   href="/book"
                   className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm"
                 >
-                  Book New Project →
+                  Start New Project →
                 </Link>
               </div>
             ) : groupedFiles.length === 0 ? (
@@ -282,7 +275,11 @@ export default function ClientFilesPage() {
                                       : 'bg-zinc-100 text-zinc-700'
                                   }`}
                                 >
-                                  {file.file_type.replace('_', ' ')}
+                                  {file.file_type === 'master_delivery'
+                                    ? 'Final Video'
+                                    : file.file_type === 'raw_footage'
+                                    ? 'Raw Footage'
+                                    : file.file_type.replace('_', ' ')}
                                 </span>
                                 {isExpiring && (
                                   <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
@@ -301,7 +298,7 @@ export default function ClientFilesPage() {
                                 <div className="flex items-center gap-2 mt-1 text-[11px] text-[#86868B]">
                                   <span>{formatBytes(file.file_size_bytes)}</span>
                                   <span>•</span>
-                                  <span>B2 Vault</span>
+                                  <span>Cloud Storage</span>
                                 </div>
                               </div>
                             </div>
@@ -309,7 +306,7 @@ export default function ClientFilesPage() {
                             <div className="pt-4 mt-3 border-t border-[#F5F5F7] space-y-2">
                               {file.retention_delete_at && (
                                 <div className="text-[10px] text-[#86868B]">
-                                  Purge date:{' '}
+                                  Available until:{' '}
                                   <span className="font-semibold text-[#1D1D1F]">
                                     {new Date(file.retention_delete_at).toLocaleDateString()}
                                   </span>

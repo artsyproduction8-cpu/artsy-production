@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
+import { createErrorResponse } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database client unavailable' }, { status: 500 });
+    return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);
   }
 
   const { searchParams } = new URL(request.url);
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
     const { data: logs, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return createErrorResponse(error, 'Failed to retrieve notification logs', 500);
     }
 
     let filtered = logs || [];
@@ -55,8 +56,7 @@ export async function GET(request: Request) {
       notifications: filtered,
     });
   } catch (err: any) {
-    console.error('Error fetching notification logs:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to fetch notification records', 500);
   }
 }
 
@@ -127,7 +127,6 @@ export async function POST(request: Request) {
       error: errorMsg,
     });
   } catch (err: any) {
-    console.error('Error retrying notification:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to retry notification delivery', 500);
   }
 }

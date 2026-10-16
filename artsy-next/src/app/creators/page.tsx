@@ -63,17 +63,17 @@ export default function PublicCreatorsPage() {
         <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E5E5E7] shadow-xs mb-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="text-sm font-bold text-[#1D1D1F] mb-1">
-              Are You an Elite Video Editor?
+              Are You a Video Editor?
             </div>
             <p className="text-xs text-[#86868B] leading-relaxed">
-              Join Artsy&apos;s curated roster. Receive steady premium projects, dedicated account management, and prompt milestone payouts.
+              Join the Artsy creator team. Get regular client projects, clear instructions, and quick bank payouts for every video you edit.
             </p>
           </div>
           <Link
             href="/freelancer/onboarding"
             className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs"
           >
-            <span>Apply as an Artsy Creator</span>
+            <span>Apply as a Creator</span>
             <span>→</span>
           </Link>
         </div>

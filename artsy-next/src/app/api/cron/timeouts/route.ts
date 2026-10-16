@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
+import { createErrorResponse } from '@/lib/api-response';
 
 /**
  * Project Approval & Creator Offer Timeout Cron (§6.7, §6.8)
@@ -234,10 +235,6 @@ export async function GET(request: NextRequest) {
       mode: supabase ? 'live_supabase' : 'mock_offline'
     });
   } catch (err: any) {
-    console.error('[TIMEOUTS CRON ERROR]:', err);
-    return NextResponse.json(
-      { success: false, error: err.message || 'Internal timeouts cron error' },
-      { status: 500 }
-    );
+    return createErrorResponse(err, 'Automated timeouts processing encountered an error', 500);
   }
 }

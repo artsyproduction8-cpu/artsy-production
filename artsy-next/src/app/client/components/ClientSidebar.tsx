@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth, logout } from '@/lib/auth';
@@ -7,6 +8,51 @@ import { useAuth, logout } from '@/lib/auth';
 export default function ClientSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
+
+  const syncAvatar = () => {
+    if (user?.avatar_url) {
+      setAvatarUrl(user.avatar_url);
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const storedProfile = localStorage.getItem('artsy_client_profile');
+        if (storedProfile) {
+          const p = JSON.parse(storedProfile);
+          if (p.logoUrl) {
+            setAvatarUrl(p.logoUrl);
+            return;
+          }
+        }
+        const storedAuth = localStorage.getItem('artsy_auth_user');
+        if (storedAuth) {
+          const u = JSON.parse(storedAuth);
+          if (u.avatar_url) {
+            setAvatarUrl(u.avatar_url);
+            return;
+          }
+        }
+      } catch {}
+    }
+    setAvatarUrl('');
+  };
+
+  useEffect(() => {
+    syncAvatar();
+
+    const handleUpdate = () => syncAvatar();
+    window.addEventListener('artsy_auth_change', handleUpdate);
+    window.addEventListener('artsy_profile_updated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      window.removeEventListener('artsy_auth_change', handleUpdate);
+      window.removeEventListener('artsy_profile_updated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, [user]);
+
   const clientName = user?.full_name || 'Client';
 
   const clientInitials = clientName.trim()
@@ -22,14 +68,12 @@ export default function ClientSidebar() {
   const navItems = [
     { label: 'Dashboard', href: '/client' },
     { label: 'My Projects', href: '/client/projects' },
-    { label: 'Timestamped Review', href: '/client/review' },
-    { label: 'Completed Masters', href: '/client/masters' },
-    { label: 'Tax Invoices', href: '/client/invoices' },
-    { label: 'My Files & Retention', href: '/client/files' },
-    { label: 'Notifications', href: '/client/notifications' },
-    { label: 'Support & Grievance', href: '/client/support' },
-    { label: 'Profile Settings', href: '/client/profile' },
-    { label: 'Workspace & Ingest Setup', href: '/client/studio' },
+    { label: 'Review Drafts', href: '/client/review' },
+    { label: 'Final Downloads', href: '/client/masters' },
+    { label: 'Invoices & Receipts', href: '/client/invoices' },
+    { label: 'Files & Footage', href: '/client/files' },
+    { label: 'Profile & Studio', href: '/client/profile' },
+    { label: 'Help & Support', href: '/client/support' },
   ];
 
   return (
@@ -39,9 +83,15 @@ export default function ClientSidebar() {
         <div className="space-y-6">
           <div>
             <div className="text-sm font-bold text-[#1D1D1F]">{clientName}</div>
-            <span className="inline-block mt-1 text-[10px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-2 py-0.5 rounded">
-              Verified Producer
-            </span>
+            {user?.role === 'admin' || user?.role === 'super_admin' ? (
+              <span className="inline-block mt-1 text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
+                Admin Preview
+              </span>
+            ) : (
+              <span className="inline-block mt-1 text-[10px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-2 py-0.5 rounded">
+                Verified Client
+              </span>
+            )}
           </div>
 
           <nav className="flex flex-col space-y-1">
@@ -70,9 +120,17 @@ export default function ClientSidebar() {
 
         {/* Bottom User & Sign Out */}
         <div className="pt-4 border-t border-[#E5E5E7] flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-xs select-none shrink-0">
-            {clientInitials}
-          </div>
+          {avatarUrl || user?.avatar_url ? (
+            <img
+              src={avatarUrl || user?.avatar_url}
+              alt="Profile Logo"
+              className="w-8 h-8 rounded-full object-cover border border-[#E5E5E7] shrink-0 bg-white"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-xs select-none shrink-0">
+              {clientInitials}
+            </div>
+          )}
           <button
             type="button"
             onClick={() => logout()}

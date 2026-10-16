@@ -30,37 +30,33 @@ export default function ClientInvoicesPage() {
           <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
             {/* Header */}
             <div>
-              <div className="flex items-center gap-2">
-                <Link href="/client/projects" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
-                  Projects
-                </Link>
-                <span className="text-xs text-[#86868B]">/</span>
-                <span className="text-xs font-bold text-[#1D1D1F]">Tax Invoices</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
-                Tax Invoices &amp; Billing
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
+                Invoices &amp; Receipts
               </h1>
+              <p className="text-sm text-[#86868B] mt-1">
+                View and download official payment receipts and GST tax invoices for your projects.
+              </p>
             </div>
 
             {/* Invoices Table or Empty State */}
             {invoices.length === 0 ? (
               <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8 space-y-3">
                 <div className="text-4xl mb-3">🧾</div>
-                <h3 className="text-lg font-semibold text-[#1D1D1F]">No tax invoices generated yet</h3>
+                <h3 className="text-lg font-semibold text-[#1D1D1F]">No invoices yet</h3>
                 <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-                  Statutory 18% GST tax invoices with input tax credit breakdown will appear here once an order is confirmed.
+                  Your payment receipts and GST tax invoices will appear here once an order is placed.
                 </p>
                 <Link
                   href="/book"
                   className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm"
                 >
-                  Book New Project →
+                  Start New Project →
                 </Link>
               </div>
             ) : (
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E5E7] shadow-xs space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base font-bold text-[#1D1D1F]">Tax Invoices</h2>
+                  <h2 className="text-base font-bold text-[#1D1D1F]">All Invoices</h2>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -68,8 +64,8 @@ export default function ClientInvoicesPage() {
                     <thead>
                       <tr className="border-b border-[#E5E5E7] text-[#86868B] font-bold uppercase text-[10px]">
                         <th className="py-3 px-3">Invoice # / Date</th>
-                        <th className="py-3 px-3">Project Title</th>
-                        <th className="py-3 px-3">Base Price</th>
+                        <th className="py-3 px-3">Project</th>
+                        <th className="py-3 px-3">Price</th>
                         <th className="py-3 px-3">GST (18%)</th>
                         <th className="py-3 px-3">Total Paid</th>
                         <th className="py-3 px-3">Payment Status</th>
@@ -104,7 +100,7 @@ export default function ClientInvoicesPage() {
                                   : 'bg-blue-50 text-blue-700 border border-blue-200'
                               }`}
                             >
-                              {inv.status === 'released' ? 'Disbursed' : 'Secured In Vault'}
+                              {inv.status === 'released' ? 'Completed' : 'Paid & Secured'}
                             </span>
                           </td>
                           <td className="py-3 px-3 text-right">

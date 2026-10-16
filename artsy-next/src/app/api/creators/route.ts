@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { createErrorResponse } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,8 +41,7 @@ export async function GET(request: Request) {
     const { data: creators, error } = await query;
 
     if (error) {
-      console.error('Error fetching creators_public_view:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return createErrorResponse(error, 'Failed to retrieve creators catalog', 500);
     }
 
     let filtered = creators || [];
@@ -58,8 +58,7 @@ export async function GET(request: Request) {
       creators: filtered,
       total: filtered.length,
     });
-  } catch (err: any) {
-    console.error('Error in /api/creators:', err);
-    return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
+  } catch (err: unknown) {
+    return createErrorResponse(err, 'Failed to process creators request', 500);
   }
 }

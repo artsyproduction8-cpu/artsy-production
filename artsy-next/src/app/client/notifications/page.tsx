@@ -152,13 +152,6 @@ export default function ClientNotificationsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Link href="/client" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
-                    Dashboard
-                  </Link>
-                  <span className="text-xs text-[#86868B]">/</span>
-                  <span className="text-xs font-bold text-[#1D1D1F]">Notifications</span>
-                </div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
                     Notifications

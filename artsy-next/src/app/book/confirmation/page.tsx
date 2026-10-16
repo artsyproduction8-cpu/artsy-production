@@ -35,8 +35,8 @@ function ConfirmationContent() {
             .catch(() => {});
         }
       }
-      // Ensure client role is preserved for this confirmed booking
-      if (!getCurrentUser()) {
+      // Ensure client role is preserved for this confirmed booking in dev mode
+      if (process.env.NODE_ENV !== 'production' && !getCurrentUser()) {
         setCurrentUser(PRESET_USERS.client);
       }
     }

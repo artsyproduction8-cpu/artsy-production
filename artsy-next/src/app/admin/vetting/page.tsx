@@ -333,7 +333,7 @@ export default function AdminVettingPage() {
             <div className="space-y-2 text-xs text-[#86868B]">
               <div className="flex items-center justify-between p-2 rounded-lg bg-[#F5F5F7]">
                 <span>WhatsApp Template SLA</span>
-                <span className="font-bold text-emerald-600">Active (OpenWA)</span>
+                <span className="font-bold text-emerald-600">Active (Meta Cloud API)</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-[#F5F5F7]">
                 <span>Acceptance Timeout</span>

@@ -22,7 +22,11 @@ async function resolveOrderDetails(orderId: string) {
     if (isUUID) {
       query = query.eq('id', orderId);
     } else {
-      query = query.or(`order_number.eq.${orderId},razorpay_order_id.eq.${orderId}`);
+      const cleanOrderId = orderId.replace(/[^a-zA-Z0-9_-]/g, '');
+      if (!cleanOrderId) {
+        return { orderId, clientId: null, orderFound: false, clientName, clientPhone, clientEmail, serviceName, totalPaise };
+      }
+      query = query.or(`order_number.eq.${cleanOrderId},razorpay_order_id.eq.${cleanOrderId}`);
     }
 
     const { data: order } = await query.maybeSingle();

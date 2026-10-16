@@ -37,7 +37,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey || apiKey.includes('your-resend') || apiKey === '[PASTE YOUR RESEND API KEY HERE]') {
-    console.warn('[Resend Email Mock] RESEND_API_KEY not configured. Simulated send to:', options.to);
+    console.warn('[Resend Email Mock] RESEND_API_KEY not configured. Simulated send to: [REDACTED]');
     return {
       success: true,
       id: `mock_email_${Date.now()}`,
@@ -91,7 +91,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
         errorMsgStr.includes('verify a domain'));
 
     if (isSandboxRestriction) {
-      console.warn(`[Resend Sandbox Notice] Recipient ${recipients.join(', ')} cannot be directly delivered in sandbox mode. Forwarding to verified account owner: ${SANDBOX_OWNER_EMAIL}`);
+      console.warn('[Resend Sandbox Notice] Recipient [REDACTED] cannot be directly delivered in sandbox mode. Forwarding to verified account owner.');
 
       const sandboxPayload = {
         ...payload,

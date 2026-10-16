@@ -163,13 +163,13 @@ const INITIAL_NODES: TelemetryNode[] = [
     details: 'PoPs: Mumbai, Delhi, Bengaluru • Auto MP4/HLS Transcode Active',
   },
   {
-    name: 'OpenWA WhatsApp Gateway',
+    name: 'WhatsApp Meta Cloud API',
     role: 'Automated Creator & Client WhatsApp Notifications',
-    endpoint: 'http://localhost:2785',
+    endpoint: 'graph.facebook.com/v23.0',
     status: 'healthy',
-    latencyMs: 12,
-    uptime: '99.95%',
-    details: 'Baileys Session Connected • Dedicated Node: Active',
+    latencyMs: 18,
+    uptime: '99.99%',
+    details: 'Meta Official Business API • Verified Template Engine Active',
   },
   {
     name: 'Supabase PostgreSQL DB & Auth',
@@ -406,14 +406,14 @@ export default function UnifiedAdminDashboard() {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="text-[11px] uppercase font-bold text-[#86868B] tracking-wider">
-              Studio Operations Command Hub
+              Admin Operations Dashboard
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
             Welcome, {adminName}
           </h1>
           <p className="text-xs sm:text-sm text-[#86868B] mt-1 max-w-2xl">
-            Unified executive control center. Oversee project dispatch slates, creator applicant vetting, production vault settlements, pricing engine calibration, and pipeline telemetry in real-time.
+            Admin control center. Manage projects, creator applications, payouts, pricing, and system health in real time.
           </p>
         </div>
 
@@ -421,11 +421,11 @@ export default function UnifiedAdminDashboard() {
           <button
             onClick={() => {
               setActiveTab('vetting');
-              showToast('Switched to Roster Vetting Queue.');
+              showToast('Switched to Creator Applications.');
             }}
             className="px-3.5 py-2 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
           >
-            <span>Review Talent</span>
+            <span>Review Creators</span>
             <span className="bg-white/20 text-white px-1.5 py-0.5 rounded text-[10px]">
               {pendingCandidatesCount}
             </span>
@@ -433,11 +433,11 @@ export default function UnifiedAdminDashboard() {
           <button
             onClick={() => {
               setActiveTab('vault');
-              showToast('Switched to Production Vault Ledger.');
+              showToast('Switched to Payments & Payouts.');
             }}
             className="px-3.5 py-2 rounded-xl bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
           >
-            <span>Production Vault</span>
+            <span>Payouts</span>
             <span className="text-emerald-400 font-mono text-[11px]">
               ₹{readyPayoutTotal.toLocaleString('en-IN')}
             </span>
@@ -446,13 +446,13 @@ export default function UnifiedAdminDashboard() {
             href="/admin/freelancers"
             className="px-3.5 py-2 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
           >
-            <span>Freelancer Roster →</span>
+            <span>Creator Network →</span>
           </Link>
           <Link
             href="/admin/clients"
             className="px-3.5 py-2 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
           >
-            <span>Client Accounts →</span>
+            <span>Clients &amp; Projects →</span>
           </Link>
           <button
             onClick={handlePingNodes}
@@ -460,7 +460,7 @@ export default function UnifiedAdminDashboard() {
             className="px-3.5 py-2 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
           >
             <span className={`w-2 h-2 rounded-full ${isPinging ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'}`}></span>
-            <span>{isPinging ? 'Pinging...' : 'Ping Telemetry'}</span>
+            <span>{isPinging ? 'Checking...' : 'Check Status'}</span>
           </button>
         </div>
       </div>
@@ -748,12 +748,12 @@ export default function UnifiedAdminDashboard() {
       {/* Unified Tab Navigation Bar */}
       <div className="bg-white rounded-2xl p-2 border border-[#E5E5E7] shadow-xs flex items-center gap-1.5 overflow-x-auto no-scrollbar">
         {[
-          { id: 'overview', label: 'All Operations', icon: '⚡' },
-          { id: 'dispatch', label: `Dispatch Slate (${orders.length})`, icon: '🎬' },
-          { id: 'vetting', label: `Vetting Queue (${pendingCandidatesCount})`, icon: '📋' },
-          { id: 'vault', label: 'Vault & Payouts', icon: '🏦' },
-          { id: 'pricing', label: 'Pricing Engine & SLAs', icon: '⚙️' },
-          { id: 'telemetry', label: 'System Telemetry', icon: '📡' },
+          { id: 'overview', label: 'Overview', icon: '⚡' },
+          { id: 'dispatch', label: `Projects (${orders.length})`, icon: '🎬' },
+          { id: 'vetting', label: `Creator Applications (${pendingCandidatesCount})`, icon: '📋' },
+          { id: 'vault', label: 'Payments & Payouts', icon: '🏦' },
+          { id: 'pricing', label: 'Pricing & Plans', icon: '⚙️' },
+          { id: 'telemetry', label: 'System Status', icon: '📡' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -953,7 +953,7 @@ export default function UnifiedAdminDashboard() {
                     Pipeline Telemetry
                   </h3>
                   <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                    Real-time monitoring of Backblaze B2 raw ingest vaults, BunnyCDN video proxies, and OpenWA WhatsApp dispatch health.
+                    Real-time monitoring of Backblaze B2 raw ingest vaults, BunnyCDN video proxies, and WhatsApp Meta Cloud API dispatch health.
                   </p>
                 </div>
                 <div className="mt-5 pt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
@@ -1820,7 +1820,7 @@ export default function UnifiedAdminDashboard() {
             </div>
 
             <div className="space-y-2 text-[#A1A1AA] max-h-64 overflow-y-auto">
-              <div>[SYSTEM] OpenWA WhatsApp Gateway session heartbeat ACK (200 OK)</div>
+              <div>[SYSTEM] WhatsApp Meta Cloud API session heartbeat ACK (200 OK)</div>
               <div>[INGEST] Backblaze B2 multipart upload token issued for Order #AP-8841</div>
               <div>[STREAM] BunnyCDN proxy encoding complete: AP-8841_Rec709_Proxy.m3u8</div>
               <div>[SECURITY] Middleware Edge Route Guard verified admin session signature</div>

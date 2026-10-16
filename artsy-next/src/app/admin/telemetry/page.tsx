@@ -33,13 +33,13 @@ const NODES: PipelineNode[] = [
     details: 'PoPs: Mumbai, Delhi, Bengaluru • Auto MP4/HLS Transcode Active',
   },
   {
-    name: 'OpenWA WhatsApp Gateway',
+    name: 'WhatsApp Meta Cloud API',
     role: 'Automated Creator & Client WhatsApp Notifications',
-    endpoint: 'http://localhost:2785',
+    endpoint: 'graph.facebook.com/v23.0',
     status: 'healthy',
-    latencyMs: 12,
-    uptimePct: 99.95,
-    details: 'Baileys Session Connected • Dedicated Node: Active',
+    latencyMs: 18,
+    uptimePct: 99.99,
+    details: 'Meta Official Business API • Verified Template Engine Active',
   },
   {
     name: 'Supabase PostgreSQL DB & Auth',
@@ -65,7 +65,7 @@ export default function AdminTelemetryPage() {
   const [nodes, setNodes] = useState<PipelineNode[]>(NODES);
   const [isPinging, setIsPinging] = useState(false);
   const [logs, setLogs] = useState<string[]>([
-    '[SYSTEM] OpenWA WhatsApp Gateway session heartbeat ACK (200 OK)',
+    '[SYSTEM] WhatsApp Meta Cloud API session heartbeat ACK (200 OK)',
     '[INGEST] Backblaze B2 multipart upload token issued for Order #AP-8841',
     '[STREAM] BunnyCDN proxy encoding complete: AP-8841_Rec709_Proxy.m3u8',
     '[SECURITY] Middleware Edge Route Guard verified admin session signature',

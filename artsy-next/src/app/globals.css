@@ -1,6 +1,9 @@
 @import "tailwindcss";
+@source "../..";
 @import "./tokens.css";
 @import "./animations.css";
+/* touch */
+
 
 @theme {
   --color-canvas: #FFFFFF;
@@ -134,4 +137,4 @@ p {
 
 .coverflow-card.is-dragging {
   transition: none !important;
-}
+} 

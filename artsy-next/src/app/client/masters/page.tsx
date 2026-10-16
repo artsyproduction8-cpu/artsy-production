@@ -28,18 +28,11 @@ export default function ClientMastersPage() {
           <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
             {/* Header */}
             <div>
-              <div className="flex items-center gap-2">
-                <Link href="/client/projects" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
-                  Projects
-                </Link>
-                <span className="text-xs text-[#86868B]">/</span>
-                <span className="text-xs font-bold text-[#1D1D1F]">Completed Masters</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
-                Completed Masters &amp; Vault Deliverables
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
+                Final Downloads
               </h1>
               <p className="text-sm text-[#86868B] mt-1">
-                Download your uncompressed 4K master timelines, social vertical cuts, and audio stem archives.
+                Download your finished, approved videos and files in full 4K quality without watermarks.
               </p>
             </div>
 
@@ -47,15 +40,15 @@ export default function ClientMastersPage() {
             {masters.length === 0 ? (
               <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8 space-y-3">
                 <div className="text-4xl mb-3">📦</div>
-                <h3 className="text-lg font-semibold text-[#1D1D1F]">No completed masters yet</h3>
+                <h3 className="text-lg font-semibold text-[#1D1D1F]">No final downloads yet</h3>
                 <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-                  Final unwatermarked 4K DCI ProRes masters, social cutdowns, and isolated audio stem packages will appear here once approved.
+                  Once you review and approve a video draft, your full quality 4K video, social media cuts, and audio files will appear here ready to download.
                 </p>
                 <Link
                   href="/book"
                   className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm"
                 >
-                  Book New Project →
+                  Start New Project →
                 </Link>
               </div>
             ) : (
@@ -80,7 +73,7 @@ export default function ClientMastersPage() {
                   {/* Downloads Cards */}
                   <div>
                     <h3 className="text-xs font-bold uppercase tracking-wider text-[#86868B] mb-3">
-                      Available High-Bitrate Downloads
+                      Ready to Download
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       {master.downloads.map((dl, i) => (
@@ -99,7 +92,7 @@ export default function ClientMastersPage() {
                             onClick={() => alert(`Starting download for ${dl.label}...`)}
                             className="w-full py-2 rounded-xl bg-white hover:bg-slate-50 border border-[#E5E5E7] text-xs font-bold text-[#1D1D1F] transition-colors shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <span>Download</span>
+                            <span>Download File</span>
                             <span>↓</span>
                           </button>
                         </div>

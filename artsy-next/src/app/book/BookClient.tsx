@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from '../components/marketing/Navbar';
 import Footer from '../components/marketing/Footer';
+import { useAuth } from '@/lib/auth';
 
 import {
   loadPricingMatrix,
@@ -36,6 +37,7 @@ function resolveCategoryFromQuery(serviceQuery: string, subDict: Record<string, 
 export default function BookClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
 
   const [matrix, setMatrix] = useState<ServiceCategory[]>(DEFAULT_PRICING_MATRIX);
   const [cameraAngles, setCameraAngles] = useState<CameraAngleRule[]>(DEFAULT_CAMERA_ANGLES);
@@ -91,6 +93,12 @@ export default function BookClient() {
   const [resendTimer, setResendTimer] = useState<number>(42);
   const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (user?.phone && !mobile) {
+      setMobile(user.phone.replace(/\D/g, '').slice(-10));
+    }
+  }, [user]);
 
   const handleAddAdditionalUrl = () => {
     setAdditionalUrls((prev) => [...prev, '']);
@@ -296,6 +304,7 @@ export default function BookClient() {
     }
     setIsProcessing(true);
     const orderId = generateBookingOrderId();
+    const effectiveMobile = isAuthenticated && user ? (user.phone || mobile || '') : mobile;
     const bookingPayload = {
       orderId,
       bookingData: {
@@ -311,7 +320,10 @@ export default function BookClient() {
         hasRawFootage,
         rawFootageUrl: hasRawFootage ? rawFootageUrl.trim() : '',
         notes,
-        mobile,
+        mobile: effectiveMobile,
+        clientId: isAuthenticated && user ? user.id : undefined,
+        clientEmail: isAuthenticated && user ? user.email : undefined,
+        clientName: isAuthenticated && user ? (user.full_name || 'Client') : undefined,
         preferredCreatorId,
         preferredCreatorName,
         priceBreakdown: {
@@ -769,80 +781,126 @@ export default function BookClient() {
 
                 {/* Mobile Auth & Dispatch */}
                 <div id="booking-mobile-input" className="pt-5 border-t border-[#F5F5F7] scroll-mt-28">
-                  <label htmlFor="mobile-number-checkout" className="text-xs font-semibold text-[#1D1D1F] block mb-1.5">
-                    Mobile Number for WhatsApp Delivery Link
-                  </label>
-                  
-                  {!otpSent ? (
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <span className="absolute left-3.5 top-2.5 text-xs text-[#86868B] font-mono select-none">
-                          +91
-                        </span>
-                        <input
-                          id="mobile-number-checkout"
-                          type="tel"
-                          inputMode="numeric"
-                          autoComplete="tel-national"
-                          maxLength={10}
-                          value={mobile}
-                          onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-                          placeholder="9876543210"
-                          className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-[#E5E5E7] text-xs font-mono focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
-                        />
+                  {isAuthenticated && user ? (
+                    <div className="space-y-3">
+                      <div className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                              {(user.full_name || user.email || 'CL').slice(0, 2)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-[#1D1D1F] truncate">
+                                  {user.full_name || 'Client Account'}
+                                </span>
+                                <span className="inline-flex items-center text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-semibold shrink-0">
+                                  ✓ Logged In
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-[#86868B] truncate">
+                                {user.email}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {user.phone ? (
+                          <div className="text-[11px] text-[#86868B] flex items-center gap-1.5 pt-2 border-t border-[#E5E5E7] font-mono">
+                            <span>Phone on file:</span>
+                            <span className="text-[#1D1D1F] font-semibold">{user.phone}</span>
+                          </div>
+                        ) : null}
                       </div>
+
                       <button
                         type="button"
-                        onClick={handleSendOtp}
-                        className="px-4 py-2.5 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer shrink-0"
+                        id="auth-confirm-booking-btn"
+                        disabled={isProcessing}
+                        onClick={handleSimulatePayment}
+                        className="w-full py-3.5 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50 mt-1 flex items-center justify-center gap-2"
                       >
-                        Send OTP
+                        {isProcessing ? 'Confirming Booking...' : 'Confirm & Book Project →'}
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between text-[11px] text-[#86868B]">
-                        <span>OTP sent to +91 {mobile}</span>
-                        <button
-                          type="button"
-                          onClick={() => setOtpSent(false)}
-                          className="text-[#3B82F6] hover:underline"
-                        >
-                          Change
-                        </button>
-                      </div>
+                    <>
+                      <label htmlFor="mobile-number-checkout" className="text-xs font-semibold text-[#1D1D1F] block mb-1.5">
+                        Mobile Number for WhatsApp Delivery Link
+                      </label>
+                      
+                      {!otpSent ? (
+                        <div className="flex gap-2">
+                          <div className="relative flex-1">
+                            <span className="absolute left-3.5 top-2.5 text-xs text-[#86868B] font-mono select-none">
+                              +91
+                            </span>
+                            <input
+                              id="mobile-number-checkout"
+                              type="tel"
+                              inputMode="numeric"
+                              autoComplete="tel-national"
+                              maxLength={10}
+                              value={mobile}
+                              onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                              placeholder="9876543210"
+                              className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-[#E5E5E7] text-xs font-mono focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleSendOtp}
+                            className="px-4 py-2.5 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer shrink-0"
+                          >
+                            Send OTP
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between text-[11px] text-[#86868B]">
+                            <span>OTP sent to +91 {mobile}</span>
+                            <button
+                              type="button"
+                              onClick={() => setOtpSent(false)}
+                              className="text-[#3B82F6] hover:underline"
+                            >
+                              Change
+                            </button>
+                          </div>
 
-                      <div className="flex gap-2">
-                        {otp.map((digit, i) => (
-                          <input
-                            key={i}
-                            id={`otp-${i}`}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={digit}
-                            onChange={(e) => {
-                              const newOtp = [...otp];
-                              newOtp[i] = e.target.value;
-                              setOtp(newOtp);
-                              if (e.target.value && i < 5) {
-                                document.getElementById(`otp-${i + 1}`)?.focus();
-                              }
-                            }}
-                            className="w-10 h-10 text-center font-bold text-sm rounded-lg border border-[#E5E5E7] focus:outline-none focus:border-[#3B82F6]"
-                          />
-                        ))}
-                      </div>
+                          <div className="flex gap-2">
+                            {otp.map((digit, i) => (
+                              <input
+                                key={i}
+                                id={`otp-${i}`}
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={1}
+                                value={digit}
+                                onChange={(e) => {
+                                  const newOtp = [...otp];
+                                  newOtp[i] = e.target.value;
+                                  setOtp(newOtp);
+                                  if (e.target.value && i < 5) {
+                                    document.getElementById(`otp-${i + 1}`)?.focus();
+                                  }
+                                }}
+                                className="w-10 h-10 text-center font-bold text-sm rounded-lg border border-[#E5E5E7] focus:outline-none focus:border-[#3B82F6]"
+                              />
+                            ))}
+                          </div>
 
-                      <button
-                        type="button"
-                        disabled={isProcessing}
-                        onClick={handleSimulatePayment}
-                        className="w-full py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50 mt-2"
-                      >
-                        {isProcessing ? 'Confirming Booking...' : 'Confirm Booking'}
-                      </button>
-                    </div>
+                          <button
+                            type="button"
+                            disabled={isProcessing}
+                            onClick={handleSimulatePayment}
+                            className="w-full py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50 mt-2"
+                          >
+                            {isProcessing ? 'Confirming Booking...' : 'Confirm Booking'}
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -865,13 +923,18 @@ export default function BookClient() {
           </div>
           <button
             type="button"
+            disabled={isProcessing}
             onClick={() => {
-              const el = document.getElementById('booking-mobile-input');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              if (isAuthenticated) {
+                handleSimulatePayment();
+              } else {
+                const el = document.getElementById('booking-mobile-input');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }
             }}
-            className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors"
+            className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
           >
-            Checkout Details ↓
+            {isProcessing ? 'Confirming...' : isAuthenticated ? 'Confirm & Book →' : 'Checkout Details ↓'}
           </button>
         </div>
 

@@ -7,8 +7,8 @@ import { setCurrentUser, ArtsyUser } from '@/lib/auth';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('karan@artsy.production');
-  const [passkey, setPasskey] = useState('ARTSY-OPS-2026');
+  const [email, setEmail] = useState('');
+  const [passkey, setPasskey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,27 +17,12 @@ export default function AdminLoginPage() {
     setIsLoading(true);
     setError(null);
 
-    try {
-      // Simulate auth check
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      const adminUser: ArtsyUser = {
-        id: 'admin-karan-001',
-        email: email.trim(),
-        full_name: 'Karan (Studio Director)',
-        role: 'admin',
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      setCurrentUser(adminUser);
-      router.push('/admin');
-    } catch {
-      setError('Invalid admin credentials.');
-    } finally {
-      setIsLoading(false);
-    }
+    // Secure Redirection: Admin access requires server-verified HMAC session via OTP portal
+    const targetEmail = email.trim();
+    const loginUrl = targetEmail
+      ? `/auth/login?email=${encodeURIComponent(targetEmail)}&redirect=/admin`
+      : '/auth/login?redirect=/admin';
+    router.push(loginUrl);
   };
 
   return (

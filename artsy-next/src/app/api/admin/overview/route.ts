@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { createErrorResponse } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database client unavailable' }, { status: 500 });
+    return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);
   }
 
   try {
@@ -220,7 +221,6 @@ export async function GET(request: Request) {
       },
     });
   } catch (err: any) {
-    console.error('Error in admin overview API:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to generate studio administration overview', 500);
   }
 }

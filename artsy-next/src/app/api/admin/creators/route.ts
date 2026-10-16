@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { randomUUID } from 'crypto';
+import { maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
+import { createErrorResponse } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -11,7 +13,7 @@ export async function GET(request: Request) {
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database client unavailable' }, { status: 500 });
+    return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);
   }
 
   const { searchParams } = new URL(request.url);
@@ -71,6 +73,14 @@ export async function GET(request: Request) {
         .eq('assigned_creator_id', creatorId)
         .in('status', ['creator_assigned', 'in_production', 'review_ready', 'revision_requested']);
 
+      // Apply field-level masking to sensitive financial PII
+      const safeProfile = profile ? {
+        ...profile,
+        pan_number: profile.pan_number ? maskPAN(profile.pan_number) : null,
+        bank_account_number: profile.bank_account_number ? maskBankAccount(profile.bank_account_number) : null,
+        bank_ifsc_code: profile.bank_ifsc_code ? maskIFSC(profile.bank_ifsc_code) : null,
+      } : {};
+
       return NextResponse.json({
         success: true,
         creator: {
@@ -79,7 +89,7 @@ export async function GET(request: Request) {
           phone: creatorUser?.phone || '',
           email: creatorUser?.email || '',
           status: creatorUser?.status || 'active',
-          profile: profile || {},
+          profile: safeProfile,
           assignments: assignments || [],
           payouts: payouts || [],
           revisions: revisions || [],
@@ -154,8 +164,7 @@ export async function GET(request: Request) {
       creators,
     });
   } catch (err: any) {
-    console.error('Error fetching creators:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to fetch creator profiles', 500);
   }
 }
 
@@ -245,7 +254,7 @@ export async function PATCH(request: Request) {
       }]);
 
       if (userErr) {
-        return NextResponse.json({ error: `Failed creating user: ${userErr.message}` }, { status: 500 });
+        return createErrorResponse(userErr, 'Failed to create creator account', 500);
       }
 
       // 2. Insert into creator_profiles
@@ -276,7 +285,7 @@ export async function PATCH(request: Request) {
 
       if (profErr) {
         await dbClient.from('users').delete().eq('id', newId);
-        return NextResponse.json({ error: `Failed creating profile: ${profErr.message}` }, { status: 500 });
+        return createErrorResponse(profErr, 'Failed to create creator profile', 500);
       }
 
       // Audit log
@@ -302,7 +311,7 @@ export async function PATCH(request: Request) {
     if (action === 'delete') {
       const { error: delErr } = await dbClient.from('users').delete().eq('id', id);
       if (delErr) {
-        return NextResponse.json({ error: `Failed deleting creator: ${delErr.message}` }, { status: 500 });
+        return createErrorResponse(delErr, 'Failed to delete creator', 500);
       }
 
       await dbClient.from('audit_logs').insert([{
@@ -428,8 +437,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true, creatorId: id, action });
   } catch (err: any) {
-    console.error('Error updating creator:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to update creator profile', 500);
   }
 }
 

@@ -90,19 +90,6 @@ export default function ClientInvoiceDetailPage({
             {/* Header & Actions */}
             <div className="no-print flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Link href="/client" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
-                    Dashboard
-                  </Link>
-                  <span className="text-xs text-[#86868B]">/</span>
-                  <Link href="/client/invoices" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
-                    Tax Invoices
-                  </Link>
-                  <span className="text-xs text-[#86868B]">/</span>
-                  <span className="text-xs font-bold text-[#1D1D1F]">
-                    {invoice?.invoiceNumber || invoiceId}
-                  </span>
-                </div>
                 <h1 className="text-2xl font-extrabold tracking-tight text-[#1D1D1F]">
                   Tax Invoice
                 </h1>

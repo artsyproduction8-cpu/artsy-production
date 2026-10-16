@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth, getCurrentUser, setCurrentUser, PRESET_USERS } from '@/lib/auth';
+import { useAuth, getCurrentUser, setCurrentUser, PRESET_USERS, logout } from '@/lib/auth';
 import FreelancerHeader from '../components/FreelancerHeader';
 import FreelancerSidebar from '../components/FreelancerSidebar';
 
@@ -84,6 +84,73 @@ export default function FreelancerProfilePage() {
   const [sampleThumbnailUrl, setSampleThumbnailUrl] = useState('');
   const [submittingSample, setSubmittingSample] = useState(false);
   const [sampleError, setSampleError] = useState('');
+
+  // DPDP Privacy & Account Deletion States
+  const [isExportingData, setIsExportingData] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handleExportData = async () => {
+    if (!user?.id) {
+      alert('Authentication required to export data.');
+      return;
+    }
+    setIsExportingData(true);
+    try {
+      const res = await fetch(`/api/user/data-export?userId=${encodeURIComponent(user.id)}`);
+      if (!res.ok) throw new Error('Data export request failed');
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `artsy-creator-portfolio-${user.id}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch {
+      alert('Unable to generate data export portfolio at this time.');
+    } finally {
+      setIsExportingData(false);
+    }
+  };
+
+  const handleConfirmAccountDeletion = async () => {
+    if (!user?.id) return;
+    if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') {
+      setDeleteError('Please type DELETE to confirm data erasure.');
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    setDeleteError(null);
+
+    try {
+      const res = await fetch('/api/user/data-deletion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          reason: deleteReason.trim() || 'Creator requested erasure under DPDP Act',
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Failed to complete data deletion');
+      }
+
+      alert('Your creator account and personal data have been anonymized in accordance with the DPDP Act.');
+      logout('/auth/login');
+    } catch (err: any) {
+      setDeleteError(err.message || 'Deletion failed. Please try again.');
+      setIsDeletingAccount(false);
+    }
+  };
 
   const fetchPortfolio = async () => {
     try {
@@ -195,8 +262,6 @@ export default function FreelancerProfilePage() {
       alias,
       showreelUrl,
       philosophy,
-      email,
-      phone,
       software,
       experience,
       capacity,
@@ -206,15 +271,11 @@ export default function FreelancerProfilePage() {
       storageSpec,
       audioSpec,
       reels,
-      bankName,
-      bankAccount,
-      ifsc,
-      pan,
-      legalName,
       updatedAt: new Date().toISOString(),
     };
 
     if (typeof window !== 'undefined') {
+      // Exclude sensitive financial PII (bank, PAN, IFSC) from localStorage
       localStorage.setItem('artsy_creator_profile', JSON.stringify(payload));
 
       const currentUser = getCurrentUser() || PRESET_USERS.freelancer;
@@ -416,13 +477,13 @@ export default function FreelancerProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="text-[11px] uppercase tracking-wider text-[#86868B] font-bold">
-                  CREATOR WORKSTATION • ROSTER PROFILE
+                  CREATOR PROFILE
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1D1D1F] mt-1">
-                  Software &amp; Gear Profile
+                  Profile &amp; Skills
                 </h1>
                 <p className="text-xs text-[#86868B] mt-1">
-                  Manage your authenticated creator identity, contact credentials, editing toolchains, hardware specs, and direct NEFT settlement banking.
+                  Manage your creator profile, contact information, software tools, hardware setup, and bank account for payouts.
                 </p>
               </div>
 
@@ -448,10 +509,10 @@ export default function FreelancerProfilePage() {
                     <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                       1
                     </span>
-                    Identity &amp; Contact Credentials
+                    Personal &amp; Contact Information
                   </span>
                   <span className="text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full font-bold border border-emerald-200">
-                    Senior Cutter • Vetted
+                    Verified Creator
                   </span>
                 </div>
 
@@ -461,7 +522,7 @@ export default function FreelancerProfilePage() {
                   <div className="flex flex-col justify-between gap-2 p-3 bg-white rounded-lg border border-[#E5E5E7]">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-[#86868B] uppercase tracking-wider">
-                        Registered Email
+                        Email Address
                       </span>
                       <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                         ✓ Verified
@@ -483,7 +544,7 @@ export default function FreelancerProfilePage() {
                   <div className="flex flex-col justify-between gap-2 p-3 bg-white rounded-lg border border-[#E5E5E7]">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold text-[#86868B] uppercase tracking-wider">
-                        Registered Mobile Number
+                        Phone Number
                       </span>
                       <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                         ✓ Verified
@@ -497,7 +558,7 @@ export default function FreelancerProfilePage() {
                       onClick={handleStartChangePhone}
                       className="self-start text-[11px] font-semibold text-[#3B82F6] hover:underline cursor-pointer"
                     >
-                      Change Mobile Number →
+                      Change Phone Number →
                     </button>
                   </div>
                 </div>
@@ -505,7 +566,7 @@ export default function FreelancerProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      CREATOR ALIAS *
+                      CREATOR / DISPLAY NAME *
                     </label>
                     <input
                       type="text"
@@ -519,7 +580,7 @@ export default function FreelancerProfilePage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      SHOWREEL / MASTER PORTFOLIO URL *
+                      PORTFOLIO / SHOWREEL LINK *
                     </label>
                     <input
                       type="url"
@@ -534,13 +595,13 @@ export default function FreelancerProfilePage() {
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-[#1D1D1F]">
-                    EDITING PHILOSOPHY &amp; SIGNATURE PACING *
+                    ABOUT YOUR EDITING STYLE *
                   </label>
                   <textarea
                     rows={3}
                     value={philosophy}
                     onChange={(e) => setPhilosophy(e.target.value)}
-                    placeholder="Detail your approach to micro-pacing, sound design integration, narrative arc retention, and color palette discipline..."
+                    placeholder="Tell us about your editing background, storytelling style, pacing, and strengths..."
                     className="bg-[#F5F5F7] p-3.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all resize-none"
                   ></textarea>
                 </div>
@@ -553,13 +614,13 @@ export default function FreelancerProfilePage() {
                     <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                       2
                     </span>
-                    Software Suites &amp; Production Capacity
+                    Editing Software &amp; Availability
                   </span>
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-semibold text-[#1D1D1F]">
-                    PRIMARY SUITE &amp; COLOR ENGINES (SELECT ALL APPLICABLE)
+                    EDITING SOFTWARE YOU USE (SELECT ALL THAT APPLY)
                   </label>
                   <div className="flex flex-wrap gap-2 pt-1">
                     {[
@@ -568,7 +629,7 @@ export default function FreelancerProfilePage() {
                       'AFTER EFFECTS',
                       'FINAL CUT PRO',
                       'BLENDER (3D/VFX)',
-                      'CAPCUT PRO (FAST-TURNAROUND SOCIAL)',
+                      'CAPCUT PRO (FAST SOCIAL)',
                       'AVID MEDIA COMPOSER',
                     ].map((item) => (
                       <button
@@ -590,7 +651,7 @@ export default function FreelancerProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      COMMERCIAL POST EXPERIENCE
+                      YEARS OF EXPERIENCE
                     </label>
                     <select
                       value={experience}
@@ -606,7 +667,7 @@ export default function FreelancerProfilePage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      WEEKLY RESERVED SLATE CAPACITY
+                      WEEKLY AVAILABILITY
                     </label>
                     <select
                       value={capacity}
@@ -622,7 +683,7 @@ export default function FreelancerProfilePage() {
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-[#1D1D1F]">
-                    SPOKEN / DIALOGUE CUT LANGUAGES
+                    LANGUAGES YOU CAN EDIT
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                     {[
@@ -663,15 +724,15 @@ export default function FreelancerProfilePage() {
                     <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                       3
                     </span>
-                    Hardware &amp; Workstation Rig Specifications
+                    Computer &amp; Hardware Setup
                   </span>
-                  <span className="text-xs text-[#86868B] uppercase font-semibold">Render Pipeline</span>
+                  <span className="text-xs text-[#86868B] uppercase font-semibold">Editing Setup</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      PRIMARY WORKSTATION RIG
+                      PRIMARY COMPUTER / LAPTOP
                     </label>
                     <input
                       type="text"
@@ -684,7 +745,7 @@ export default function FreelancerProfilePage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      COLOR-CALIBRATED MONITORING
+                      MONITOR / DISPLAY
                     </label>
                     <input
                       type="text"
@@ -697,7 +758,7 @@ export default function FreelancerProfilePage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      HIGH-SPEED SCRATCH &amp; STORAGE
+                      STORAGE / HARD DRIVES
                     </label>
                     <input
                       type="text"
@@ -710,7 +771,7 @@ export default function FreelancerProfilePage() {
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      AUDIO MONITORING SYSTEM
+                      HEADPHONES / SPEAKERS
                     </label>
                     <input
                       type="text"
@@ -730,9 +791,9 @@ export default function FreelancerProfilePage() {
                     <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                       4
                     </span>
-                    Categorical Cut Samples
+                    Sample Video Links
                   </span>
-                  <span className="text-xs text-[#86868B] uppercase font-semibold">Min 2 • Max 4 Reels</span>
+                  <span className="text-xs text-[#86868B] uppercase font-semibold">Min 2 • Max 4 Videos</span>
                 </div>
 
                 <div className="space-y-3">
@@ -742,7 +803,7 @@ export default function FreelancerProfilePage() {
                       className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] flex flex-col md:flex-row gap-3 items-center"
                     >
                       <span className="text-xs font-bold text-[#1D1D1F] bg-white px-2.5 py-1 rounded-md border border-[#E5E5E7] shrink-0">
-                        REEL 0{idx + 1}
+                        VIDEO 0{idx + 1}
                       </span>
                       <div className="w-full md:w-1/3">
                         <select
@@ -785,7 +846,7 @@ export default function FreelancerProfilePage() {
                     <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                       5
                     </span>
-                    Compliance &amp; Direct Bank Settlement
+                    Bank Account for Payouts
                   </span>
                   <button
                     type="button"
@@ -800,12 +861,12 @@ export default function FreelancerProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]">
                   <div className="p-3 bg-white rounded-lg border border-[#E5E5E7]">
                     <span className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider block">
-                      Disbursement Bank
+                      Bank Name
                     </span>
                     <span className="text-sm font-bold text-[#1D1D1F] mt-1 block">
                       {bankName}
                     </span>
-                    <span className="text-[11px] text-emerald-600 font-medium">✓ Active NEFT Channel</span>
+                    <span className="text-[11px] text-emerald-600 font-medium">✓ Verified for Direct Payouts</span>
                   </div>
 
                   <div className="p-3 bg-white rounded-lg border border-[#E5E5E7]">
@@ -831,7 +892,7 @@ export default function FreelancerProfilePage() {
 
                   <div className="p-3 bg-white rounded-lg border border-[#E5E5E7]">
                     <span className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider block">
-                      PAN &amp; Beneficiary
+                      PAN &amp; Account Holder
                     </span>
                     <span className="text-sm font-bold text-[#1D1D1F] mt-1 block truncate">
                       {legalName}
@@ -845,7 +906,7 @@ export default function FreelancerProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        PERMANENT ACCOUNT NUMBER (PAN) *
+                        PAN NUMBER *
                       </label>
                       <input
                         type="text"
@@ -860,7 +921,7 @@ export default function FreelancerProfilePage() {
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        BENEFICIARY LEGAL NAME (AS PER PAN) *
+                        ACCOUNT HOLDER NAME (AS PER BANK) *
                       </label>
                       <input
                         type="text"
@@ -929,7 +990,7 @@ export default function FreelancerProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        NEFT BANK ACCOUNT NUMBER *
+                        BANK ACCOUNT NUMBER *
                       </label>
                       <input
                         type="text"
@@ -1056,6 +1117,56 @@ export default function FreelancerProfilePage() {
                 )}
               </div>
 
+              {/* Data Privacy & Statutory Rights (DPDP Act Compliance) */}
+              <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7] space-y-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-[#1D1D1F]">Data Privacy &amp; Statutory Rights</h3>
+                    <p className="text-xs text-[#86868B] mt-0.5">
+                      Compliant with India&apos;s Digital Personal Data Protection (DPDP) Act, 2023. You have the right to inspect, export, or permanently erase your creator data and portfolio.
+                    </p>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    DPDP Protected
+                  </span>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                  <button
+                    type="button"
+                    onClick={handleExportData}
+                    disabled={isExportingData}
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-[#E5E5E7] hover:bg-slate-50 text-xs font-semibold text-[#1D1D1F] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {isExportingData ? (
+                      'Preparing Export...'
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 text-[#86868B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Export Creator Portfolio &amp; PII (JSON)
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDeleteModal(true);
+                      setDeleteConfirmText('');
+                      setDeleteError(null);
+                    }}
+                    className="px-4 py-2.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-semibold text-red-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Account &amp; Erase Data
+                  </button>
+                </div>
+              </div>
+
               {/* Bottom Action Footer */}
               <div className="flex items-center justify-end pt-4">
                 <button
@@ -1072,6 +1183,79 @@ export default function FreelancerProfilePage() {
           </div>
         </main>
       </div>
+
+      {/* DPDP Account Deletion Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 border border-red-100 shadow-2xl space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-[#1D1D1F]">Permanently Erase Creator Data?</h3>
+              <p className="text-xs text-[#86868B] mt-1">
+                Under the DPDP Act, this will irrevocably anonymize your name, email, phone number, PAN, and bank accounts. Any active session will be terminated immediately.
+              </p>
+            </div>
+
+            {deleteError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="space-y-3 pt-2">
+              <div>
+                <label className="block text-xs font-semibold text-[#1D1D1F] mb-1">
+                  Reason for erasure (Optional):
+                </label>
+                <input
+                  type="text"
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  placeholder="e.g. Inactive creator, retiring portfolio"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-xs text-[#1D1D1F] focus:outline-none focus:border-red-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#1D1D1F] mb-1">
+                  Type <span className="text-red-600 font-bold">DELETE</span> to confirm:
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-xs font-mono text-[#1D1D1F] focus:outline-none focus:border-red-500"
+                />
+              </div>
+            </div>
+
+            <div className="pt-3 flex gap-3">
+              <button
+                type="button"
+                disabled={isDeletingAccount}
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-[#E5E5E7] text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingAccount || deleteConfirmText.trim().toUpperCase() !== 'DELETE'}
+                onClick={handleConfirmAccountDeletion}
+                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-40 cursor-pointer"
+              >
+                {isDeletingAccount ? 'Erasing Data...' : 'Confirm Erasure'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL: Change Mobile Number with OTP Verification */}
       {isChangingPhone && (

@@ -50,7 +50,7 @@ export async function GET(
     const auditLogId = `aud_rev_${Date.now()}`;
 
     // Security audit log entry
-    console.info(`[SECURITY AUDIT] PAN revealed by admin ${authUser.id} for creator ${creatorId}`);
+    console.info(`[SECURITY AUDIT] PAN revealed by admin ${authUser.id.slice(0, 8)} for creator [REDACTED]`);
 
     return NextResponse.json({
       success: true,

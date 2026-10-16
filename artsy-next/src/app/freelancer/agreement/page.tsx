@@ -20,7 +20,7 @@ export default function FreelancerAgreementPage() {
     }
     recordAgreementAcceptance('both', '1.0');
     setSigned(true);
-    setToastMessage('✓ Master Creator Agreement (MSA) & NDA v1.0 successfully signed and recorded in audit ledger.');
+    setToastMessage('✓ Creator Agreement & NDA signed successfully.');
     setTimeout(() => setToastMessage(null), 5000);
   };
 
@@ -45,11 +45,11 @@ export default function FreelancerAgreementPage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">
-                Legal Contract
+                Creator Agreement
               </span>
             </div>
             <h1 className="text-2xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
-              Master Creator Agreement &amp; Non-Disclosure Pact
+              Creator Agreement &amp; Non-Disclosure Agreement (NDA)
             </h1>
             <p className="text-xs text-[#86868B] mt-1">
               Party: <span className="font-bold text-[#1D1D1F]">{creatorName}</span> • Artsy Creative Services Private Limited
@@ -60,7 +60,7 @@ export default function FreelancerAgreementPage() {
             {signed ? (
               <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 shadow-2xs">
                 <span>✓</span>
-                <span>Fully Executed &amp; Locked</span>
+                <span>Signed &amp; Active</span>
               </span>
             ) : (
               <span className="px-4 py-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold flex items-center gap-1.5 shadow-2xs">
@@ -74,30 +74,30 @@ export default function FreelancerAgreementPage() {
         {/* Agreement Clauses Text */}
         <div className="bg-white rounded-3xl p-6 sm:p-10 border border-[#E5E5E7] shadow-xs space-y-6 text-xs text-[#1D1D1F] leading-relaxed">
           <section className="space-y-2">
-            <h2 className="text-sm font-bold text-[#1D1D1F]">1. Scope of Independent Creative Services</h2>
+            <h2 className="text-sm font-bold text-[#1D1D1F]">1. Video Editing Services</h2>
             <p className="text-[#86868B]">
-              The Creator agrees to provide professional video post-production services, including but not limited to 4K color conform, timeline editing, audio stem mixing, and visual delivery per project specifications provided via Artsy Studio Station.
+              You agree to provide professional video editing, color grading, and audio mixing according to the project requirements provided by the client.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-bold text-[#1D1D1F]">2. Non-Disclosure &amp; Raw Footage Confidentiality</h2>
+            <h2 className="text-sm font-bold text-[#1D1D1F]">2. Privacy &amp; Confidentiality</h2>
             <p className="text-[#86868B]">
-              All client footage, camera logs, audio recordings, script outlines, and project proxies transferred via Backblaze B2 or private storage gateways are strictly confidential. The Creator covenants never to leak, publish, share, or broadcast any material prior to explicit commercial release by the client.
+              All client footage, raw videos, audio, and project files are strictly confidential. You agree never to share, leak, or post any client footage without explicit permission.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-bold text-[#1D1D1F]">3. Intellectual Property Assignment &amp; Work-For-Hire</h2>
+            <h2 className="text-sm font-bold text-[#1D1D1F]">3. Work Ownership &amp; Delivery</h2>
             <p className="text-[#86868B]">
-              All deliverables produced under an active Artsy dispatch order are deemed work made for hire. Upon disbursement of the agreed creator compensation, all worldwide copyrights, master project timelines, and derivatives vest irrevocably in Artsy and its commissioning client.
+              Completed video projects and assets are transferred to the client upon completion and payout.
             </p>
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-bold text-[#1D1D1F]">4. 70/30 Financial Waterfall &amp; Statutory Deductions</h2>
+            <h2 className="text-sm font-bold text-[#1D1D1F]">4. Payouts &amp; Compensation</h2>
             <p className="text-[#86868B]">
-              Creator compensation is guaranteed at 70% of the platform base value (exclusive of forward-charge 18% GST). Payment is secured in the Artsy Production Vault and cleared via direct NEFT bank transfer upon client frame sign-off, less applicable Section 194C TDS.
+              You receive 70% of the project value for every completed project. Payments are transferred directly to your bank account upon client sign-off and approval.
             </p>
           </section>
 
@@ -106,7 +106,7 @@ export default function FreelancerAgreementPage() {
             {signed ? (
               <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="font-bold">Digitally Signed &amp; Recorded</div>
+                  <div className="font-bold">Signed &amp; Verified</div>
                   <div className="text-[11px] text-emerald-700 mt-0.5 font-mono">
                     Signatory: {creatorName} • Agreement Version: 1.0 • Timestamp Verified
                   </div>
@@ -115,7 +115,7 @@ export default function FreelancerAgreementPage() {
                   onClick={() => alert('Printing / Downloading official agreement copy...')}
                   className="px-3.5 py-1.5 rounded-xl bg-white border border-emerald-300 text-emerald-800 font-bold hover:bg-emerald-100 transition-colors shadow-2xs text-center"
                 >
-                  Download Signed Copy ↓
+                  Download Agreement ↓
                 </button>
               </div>
             ) : (
@@ -128,7 +128,7 @@ export default function FreelancerAgreementPage() {
                     className="mt-0.5 h-4 w-4 accent-[#3B82F6] rounded cursor-pointer"
                   />
                   <span className="text-xs text-[#86868B] leading-snug">
-                    I, <strong>{creatorName}</strong>, hereby confirm that I have reviewed, understand, and agree to be bound by the terms of the Master Creator Agreement (MSA v1.0) and Non-Disclosure Pact.
+                    I, <strong>{creatorName}</strong>, confirm that I have read and agree to the Creator Agreement and Non-Disclosure terms.
                   </span>
                 </label>
 
@@ -138,7 +138,7 @@ export default function FreelancerAgreementPage() {
                   disabled={!ndaChecked}
                   className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
                 >
-                  Execute Digital Agreement →
+                  Sign Agreement →
                 </button>
               </div>
             )}

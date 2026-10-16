@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { createErrorResponse } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database client unavailable' }, { status: 500 });
+    return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);
   }
 
   try {
@@ -100,8 +101,7 @@ export async function GET(request: Request) {
       disputes: enrichedDisputes,
     });
   } catch (err: any) {
-    console.error('Error fetching disputes:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to fetch customer disputes', 500);
   }
 }
 
@@ -113,7 +113,7 @@ export async function PATCH(request: Request) {
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database client unavailable' }, { status: 500 });
+    return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);
   }
 
   try {
@@ -158,7 +158,6 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true, disputeId: id, action, status: newStatus });
   } catch (err: any) {
-    console.error('Error updating dispute:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to update dispute status', 500);
   }
 }

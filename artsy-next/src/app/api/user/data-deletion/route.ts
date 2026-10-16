@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
-import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { getAuthenticatedUser, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 
 /**
  * DPDP Act (v2.0) Data Erasure / Deletion Request Route (§4.4, §10.2, §10.3)
  * Right to Erasure:
  * 1. Inserts request into data_deletion_requests
- * 2. Anonymizes PII (phone, email, full_name)
- * 3. Anonymizes creator profile (PAN, bank details)
+ * 2. Anonymizes PII (phone, email, full_name, avatar_url)
+ * 3. Anonymizes creator profile (PAN, bank details, bio, portfolio)
  * 4. Invalidates active sessions and deletes OTP sessions
- * 5. Preserves statutory financial ledger records with anonymized identifier
+ * 5. Clears authentication cookie
+ * 6. Preserves statutory financial ledger records with anonymized identifier
  */
 export async function POST(request: NextRequest) {
   // M9: Safe JSON parsing
@@ -23,8 +24,13 @@ export async function POST(request: NextRequest) {
   try {
     const { userId, reason } = body;
 
-    if (!userId) {
+    if (!userId || typeof userId !== 'string') {
       return NextResponse.json({ error: 'Missing userId parameter' }, { status: 400 });
+    }
+
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId);
+    if (!isUUID) {
+      return NextResponse.json({ error: 'Invalid userId format' }, { status: 400 });
     }
 
     // 1. Authenticate caller identity
@@ -45,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (isAdmin && !isOwner) {
-      console.log(`[DPDP AUDIT] Admin ${authUser.id} initiated data deletion for user ${userId}. Reason: ${reason || 'Admin action'}`);
+      console.log(`[DPDP AUDIT] Admin ${authUser.id} initiated data deletion for user [REDACTED]. Reason: [REDACTED]`);
     }
 
     if (supabase) {
@@ -76,13 +82,13 @@ export async function POST(request: NextRequest) {
       const { data: activeProjects } = await supabase
         .from('projects')
         .select('id, status')
-        .eq('client_id', userId)
+        .or(`client_id.eq.${userId},assigned_creator_id.eq.${userId}`)
         .not('status', 'in', '("completed","cancelled","refunded","archived")');
 
       if (activeProjects && activeProjects.length > 0) {
         return NextResponse.json(
           {
-            error: 'Cannot erase data while projects are currently active/in-progress. Please cancel or complete them first.'
+            error: 'Cannot erase data while projects are currently active or in-progress. Please complete or cancel them first.'
           },
           { status: 409 }
         );
@@ -99,7 +105,7 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      // 4. Fix I: Anonymize user PII in public.users with UNIQUE phone & email
+      // 4. Anonymize user PII in public.users with UNIQUE phone & email
       const anonymizedTag = `deleted_${userId.slice(0, 8)}_${Date.now().toString().slice(-4)}`;
       const uniqueAnonymizedPhone = `+9100${Math.floor(10000000 + Math.random() * 90000000)}`;
 
@@ -109,23 +115,31 @@ export async function POST(request: NextRequest) {
           full_name: 'Anonymized User (DPDP)',
           email: `${anonymizedTag}@deleted.artsyproduction.in`,
           phone: uniqueAnonymizedPhone,
+          avatar_url: null,
           token_version: 999999, // Invalidate all active tokens
+          deleted_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);
 
-      // 5. Cascade anonymization to creator_profiles (wipe PAN, bank details)
+      // 5. Cascade anonymization to creator_profiles (wipe PAN, bank details, bio)
       await supabase
         .from('creator_profiles')
         .update({
           pan_number: null,
+          bank_account_name: null,
+          bank_account_number: null,
+          bank_ifsc_code: null,
           bank_account: null,
           ifsc: null,
           upi_id: null,
+          bio: 'Anonymized Creator Profile',
+          portfolio_url: null,
+          sample_links: [],
           is_active: false,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', userId);
+        .or(`id.eq.${userId},user_id.eq.${userId}`);
 
       // 6. Delete OTP sessions
       if (user.phone) {
@@ -135,20 +149,45 @@ export async function POST(request: NextRequest) {
           .eq('phone', user.phone);
       }
 
-      return NextResponse.json({
+      // 7. Anonymize lead inquiries if any exist
+      if (user.email) {
+        await supabase
+          .from('leads')
+          .update({
+            name: 'Anonymized User',
+            email: 'deleted@deleted.artsyproduction.in',
+            phone: '0000000000',
+            message: '[REDACTED]'
+          })
+          .eq('email', user.email);
+      }
+
+      const response = NextResponse.json({
         success: true,
-        message: 'DPDP Data Erasure request processed. PII has been securely anonymized.',
+        message: 'DPDP Data Erasure request processed. Personal data has been securely anonymized.',
         requestId: deletionRequest?.id || 'req_completed'
       });
+
+      if (isOwner) {
+        response.cookies.delete(AUTH_COOKIE_NAME);
+      }
+
+      return response;
     }
 
     // Mock Mode Execution
-    console.log(`[DPDP DELETION] Simulated PII anonymization for userId: ${userId}`);
-    return NextResponse.json({
+    console.log('[DPDP DELETION] Simulated PII anonymization completed: [REDACTED]');
+    const mockResponse = NextResponse.json({
       success: true,
       message: 'DPDP Data Erasure simulated in offline mock mode. PII masked.',
-      mockUserId: userId
+      mockUserId: 'anonymized'
     });
+
+    if (isOwner) {
+      mockResponse.cookies.delete(AUTH_COOKIE_NAME);
+    }
+
+    return mockResponse;
   } catch (err: unknown) {
     console.error('[INTERNAL] [DPDP DELETION ERROR]:', err);
     return NextResponse.json(

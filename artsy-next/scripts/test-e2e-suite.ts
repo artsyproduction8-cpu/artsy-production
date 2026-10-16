@@ -259,7 +259,7 @@ async function runSuite() {
     assert(false, 'Step 5: File Record Registration', `Error: ${err.message}`);
   }
 
-  // STEP 6: Authentication OTP Dispatch (Resend Email & OpenWA)
+  // STEP 6: Authentication OTP Dispatch (Resend Email & WhatsApp Meta Cloud API)
   try {
     const otpRes = await fetch(`${BASE_URL}/api/auth/otp`, {
       method: 'POST',

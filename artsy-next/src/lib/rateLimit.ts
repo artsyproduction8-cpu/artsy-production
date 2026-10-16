@@ -8,6 +8,8 @@
  * Supports Upstash Redis with automated in-memory fallback for local dev/demo.
  */
 
+import crypto from 'crypto';
+
 interface RateLimitRecord {
   count: number;
   resetAt: number;
@@ -37,7 +39,9 @@ export async function checkRateLimit(
   maxAllowed: number = 5,
   windowSeconds: number = 600 // 10 minutes
 ): Promise<RateLimitResult> {
-  const key = `ratelimit:${prefix}:${identifier}`;
+  // PII Protection: hash identifier with sha256 to ensure no phone or email is sent to external Redis
+  const hashedId = crypto.createHash('sha256').update(identifier).digest('hex').slice(0, 24);
+  const key = `ratelimit:${prefix}:${hashedId}`;
   const now = Date.now();
 
   let upstashUrl = process.env.UPSTASH_REDIS_REST_URL?.trim();

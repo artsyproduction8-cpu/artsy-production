@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth, getRoleHomePath } from '@/lib/auth';
@@ -10,6 +10,175 @@ interface NavbarProps {
   searchTerm?: string;
 }
 
+interface SearchEntry {
+  id: string;
+  title: string;
+  category: string;
+  href: string;
+  keywords: string[];
+}
+
+const SEARCH_DIRECTORY: SearchEntry[] = [
+  {
+    id: 'svc-wedding',
+    title: 'Wedding Cinema Master Cut',
+    category: 'Services',
+    href: '/services',
+    keywords: ['wedding', 'film', 'trailer', 'teaser', 'marriage', 'cinema', 'edit'],
+  },
+  {
+    id: 'svc-commercial',
+    title: 'Commercial & Brand Films',
+    category: 'Services',
+    href: '/services',
+    keywords: ['commercial', 'brand', 'ad', 'corporate', 'product', 'promo'],
+  },
+  {
+    id: 'svc-reels',
+    title: 'Short-Form UGC & 9:16 Reels',
+    category: 'Services',
+    href: '/services',
+    keywords: ['ugc', 'reel', 'vertical', '9:16', 'short', 'tiktok', 'instagram', 'shorts'],
+  },
+  {
+    id: 'svc-color',
+    title: 'Cinematic Color Grading (Rec.709)',
+    category: 'Services',
+    href: '/services',
+    keywords: ['color', 'grading', 'lut', 'rec709', 'hdr', 'davinci'],
+  },
+  {
+    id: 'creators-dir',
+    title: 'Verified Editors & Colorists',
+    category: 'Creators',
+    href: '/creators',
+    keywords: ['creator', 'editor', 'freelancer', 'talent', 'hire', 'portfolio'],
+  },
+  {
+    id: 'creators-join',
+    title: 'Join Artsy Creator Network',
+    category: 'Creators',
+    href: '/auth/login?intent=freelancer',
+    keywords: ['apply', 'freelance', 'join', 'editor', 'job', 'work'],
+  },
+  {
+    id: 'port-reels',
+    title: 'Featured Video Reels (4K)',
+    category: 'Portfolio',
+    href: '/#featured-reels',
+    keywords: ['portfolio', 'reel', 'showcase', 'sample', 'demo', 'video'],
+  },
+  {
+    id: 'port-archive',
+    title: 'Verified Production Archive',
+    category: 'Portfolio',
+    href: '/#verified-production-archive',
+    keywords: ['archive', 'benchmark', 'deliverable', 'specs', 'case study', 'prores'],
+  },
+  {
+    id: 'portal-dash',
+    title: 'Client Dashboard',
+    category: 'Client Portal',
+    href: '/client',
+    keywords: ['client', 'dashboard', 'portal', 'orders', 'active'],
+  },
+  {
+    id: 'portal-projects',
+    title: 'My Projects',
+    category: 'Client Portal',
+    href: '/client/projects',
+    keywords: ['projects', 'orders', 'tracking', 'timeline'],
+  },
+  {
+    id: 'portal-review',
+    title: 'Review Drafts Room',
+    category: 'Client Portal',
+    href: '/client/review',
+    keywords: ['review', 'draft', 'feedback', 'revision', 'cut', 'approve'],
+  },
+  {
+    id: 'portal-masters',
+    title: 'Final Downloads & Masters',
+    category: 'Client Portal',
+    href: '/client/masters',
+    keywords: ['master', 'final', 'download', '4k', 'export'],
+  },
+  {
+    id: 'portal-invoices',
+    title: 'Invoices & Receipts',
+    category: 'Client Portal',
+    href: '/client/invoices',
+    keywords: ['invoice', 'receipt', 'tax', 'gst', 'bill', 'payment'],
+  },
+  {
+    id: 'portal-files',
+    title: 'Files & Footage Storage',
+    category: 'Client Portal',
+    href: '/client/files',
+    keywords: ['files', 'footage', 'storage', 'raw', 'b2', 'drive'],
+  },
+  {
+    id: 'portal-profile',
+    title: 'Profile & Studio Workspace',
+    category: 'Client Portal',
+    href: '/client/profile',
+    keywords: ['profile', 'studio', 'logo', 'otp', 'whatsapp', 'email'],
+  },
+  {
+    id: 'portal-support',
+    title: 'Help & Support',
+    category: 'Client Portal',
+    href: '/client/support',
+    keywords: ['help', 'support', 'contact', 'faq'],
+  },
+  {
+    id: 'price-book',
+    title: 'Instant Booking & Price Estimator',
+    category: 'Pricing',
+    href: '/book',
+    keywords: ['book', 'price', 'quote', 'cost', 'estimate', 'order'],
+  },
+  {
+    id: 'faq-sla',
+    title: 'SLA Guarantees & FAQs',
+    category: 'FAQ',
+    href: '/#faq-section',
+    keywords: ['faq', 'question', 'sla', 'turnaround', 'refund', 'policy'],
+  },
+];
+
+const CLIENT_PAGES = [
+  { label: 'Dashboard', href: '/client' },
+  { label: 'My Projects', href: '/client/projects' },
+  { label: 'Review Drafts', href: '/client/review' },
+  { label: 'Final Downloads', href: '/client/masters' },
+  { label: 'Invoices & Receipts', href: '/client/invoices' },
+  { label: 'Files & Footage', href: '/client/files' },
+  { label: 'Profile & Studio', href: '/client/profile' },
+  { label: 'Help & Support', href: '/client/support' },
+];
+
+const CREATOR_PAGES = [
+  { label: 'Active Projects', href: '/freelancer' },
+  { label: 'Portfolio Showcase', href: '/freelancer/portfolio' },
+  { label: 'Earnings & Payouts', href: '/freelancer/payouts' },
+  { label: 'Profile & Skills', href: '/freelancer/profile' },
+  { label: 'Agreement & NDA', href: '/freelancer/agreement' },
+];
+
+const ADMIN_PAGES = [
+  { label: 'Admin Dashboard', href: '/admin' },
+  { label: 'Clients & Projects', href: '/admin/clients' },
+  { label: 'Creator Network', href: '/admin/freelancers' },
+  { label: 'Creator Requests', href: '/admin/creator-requests' },
+  { label: 'Submissions Queue', href: '/admin/submissions' },
+  { label: 'Official Portfolio', href: '/admin/portfolio' },
+  { label: 'Payments & Payouts', href: '/admin/payments' },
+  { label: 'Pricing & Plans', href: '/admin/pricing' },
+  { label: 'User Accounts', href: '/admin/users' },
+  { label: 'Audit Logs', href: '/admin/audit-log' },
+];
+
 export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
   const router = useRouter();
   const { user, role, isAuthenticated, logout } = useAuth();
@@ -17,53 +186,104 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
   const [searchVal, setSearchVal] = useState(searchTerm);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Sync avatar url
+  useEffect(() => {
+    if (user?.avatar_url) {
+      setAvatarUrl(user.avatar_url);
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const storedProfile = localStorage.getItem('artsy_client_profile');
+        if (storedProfile) {
+          const p = JSON.parse(storedProfile);
+          if (p.logoUrl) {
+            setAvatarUrl(p.logoUrl);
+            return;
+          }
+        }
+      } catch {}
+    }
+    setAvatarUrl('');
+  }, [user]);
+
+  // Focus search input when opened
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
   }, [isSearchOpen]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setIsSearchOpen(false);
-    }
-    if (e.key === 'Enter') {
-      if (onSearch) {
-        onSearch(searchVal);
-      } else {
-        const query = searchVal.trim().toLowerCase();
+  // Close menus on outside click or Escape key
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (searchContainerRef.current && !searchContainerRef.current.contains(target)) {
         setIsSearchOpen(false);
-        if (query.includes('wedding') || query.includes('ugc') || query.includes('service') || query.includes('product') || query.includes('corporate') || query.includes('price')) {
-          if (window.location.pathname !== '/') {
-            router.push('/services');
-          } else {
-            const el = document.getElementById('services-catalog');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }
-        } else if (query.includes('reel') || query.includes('work') || query.includes('portfolio') || query.includes('cut')) {
-          if (window.location.pathname !== '/') {
-            router.push('/#featured-reels');
-          } else {
-            const el = document.getElementById('featured-reels');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }
-        } else if (query.includes('archive') || query.includes('case') || query.includes('benchmark') || query.includes('deliverable')) {
-          if (window.location.pathname !== '/') {
-            router.push('/#verified-production-archive');
-          } else {
-            const el = document.getElementById('verified-production-archive');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }
-        } else if (query.includes('faq') || query.includes('question') || query.includes('refund') || query.includes('sla')) {
-          if (window.location.pathname !== '/') {
-            router.push('/#faq-section');
-          } else {
-            const el = document.getElementById('faq-section');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }
-        }
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Filter search directory
+  const filteredResults = useMemo(() => {
+    const q = searchVal.trim().toLowerCase();
+    if (!q) return [];
+    return SEARCH_DIRECTORY.filter((item) => {
+      const titleMatch = item.title.toLowerCase().includes(q);
+      const catMatch = item.category.toLowerCase().includes(q);
+      const kwMatch = item.keywords.some((k) => k.toLowerCase().includes(q));
+      return titleMatch || catMatch || kwMatch;
+    });
+  }, [searchVal]);
+
+  const handleSelectResult = (entry: SearchEntry) => {
+    setIsSearchOpen(false);
+    setSearchVal('');
+    if (onSearch) onSearch(entry.title);
+
+    if (entry.href.startsWith('/#')) {
+      const targetId = entry.href.replace('/#', '');
+      if (window.location.pathname === '/') {
+        const el = document.getElementById(targetId);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        router.push(entry.href);
+      }
+    } else {
+      router.push(entry.href);
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      if (filteredResults.length > 0) {
+        handleSelectResult(filteredResults[0]);
+      } else if (onSearch) {
+        onSearch(searchVal);
+        setIsSearchOpen(false);
       }
     }
   };
@@ -78,50 +298,19 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
   };
 
   const roleLabel = role === 'super_admin' ? 'Super Admin' : role === 'admin' ? 'Studio Admin' : role === 'freelancer' ? 'Creator' : 'Client';
-  const roleHome = role ? getRoleHomePath(role) : '/client/review';
+  const roleHome = role ? getRoleHomePath(role) : '/client';
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/10 transition-all">
-      <div className="h-16 max-w-[1200px] mx-auto px-6 sm:px-8 flex items-center justify-between relative">
+      <div className="h-16 max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between relative">
         
-        {/* Full-width Search Overlay */}
-        {isSearchOpen && (
-          <div className="absolute inset-0 bg-[#0A0A0A] z-50 flex items-center px-6 sm:px-8 justify-between">
-            <div className="flex items-center gap-3 flex-1 max-w-2xl">
-              <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-[20px] text-white/70 select-none">
-                  search
-                </span>
-              </div>
-              <input
-                ref={searchInputRef}
-                value={searchVal}
-                onChange={(e) => {
-                  setSearchVal(e.target.value);
-                  if (onSearch) onSearch(e.target.value);
-                }}
-                onKeyDown={handleKeyDown}
-                placeholder="SEARCH REELS, SERVICES, ARCHIVE SPECS..."
-                type="text"
-                className="w-full bg-transparent border-0 p-0 text-sm uppercase tracking-wider text-white placeholder-white/40 focus:ring-0 focus:outline-none"
-              />
-            </div>
-            <button
-              type="button"
-              aria-label="Close search"
-              onClick={() => setIsSearchOpen(false)}
-              className="text-white/70 hover:text-white flex items-center justify-center p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <div className="w-5 h-5 flex items-center justify-center">
-                <span className="material-symbols-outlined text-xl leading-none">close</span>
-              </div>
-            </button>
-          </div>
-        )}
-
-        {/* Brand Lockup */}
-        <Link href="/" className="flex flex-col items-center justify-center leading-none select-none group">
-          <span className="text-[20px] sm:text-[22px] font-extrabold uppercase tracking-[-0.03em] text-white leading-none group-hover:text-white/80 transition-colors">
+        {/* Top-Left Brand Logo -> Direct link to Landing Page */}
+        <Link
+          href="/"
+          className="flex flex-col items-center justify-center leading-none select-none group text-left cursor-pointer"
+          title="Artsy — Place for Perspective"
+        >
+          <span className="text-[20px] sm:text-[22px] font-extrabold uppercase tracking-[-0.03em] text-white leading-none group-hover:text-blue-400 transition-colors">
             ARTSY
           </span>
           <span className="font-mono text-[7.5px] sm:text-[8px] font-semibold tracking-[1.6px] uppercase text-[#DCDFE3]/80 mt-1.5 leading-none text-center">
@@ -130,7 +319,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
         </Link>
 
         {/* Center Nav Links */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-7 lg:gap-8">
           <Link
             href="/book"
             className="text-[12.5px] font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
@@ -158,19 +347,87 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
         </nav>
 
         {/* Right Action Group */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           
-          {/* Search Toggle Button */}
-          <button
-            type="button"
-            aria-label="Search"
-            onClick={() => setIsSearchOpen(true)}
-            className="flex items-center justify-center w-8 h-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
-          >
-            <div className="w-5 h-5 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[19px] leading-none text-white">search</span>
-            </div>
-          </button>
+          {/* Reworked Search Button: Icon Symbol with Small Expanding Input Toggle */}
+          <div className="relative flex items-center" ref={searchContainerRef}>
+            {isSearchOpen ? (
+              <div className="flex items-center bg-[#18181B] border border-white/20 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400/30 rounded-full h-8 px-2.5 transition-all duration-200 w-40 sm:w-52 shadow-lg animate-fade-in">
+                <svg className="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchVal}
+                  onChange={(e) => setSearchVal(e.target.value)}
+                  onKeyDown={handleSearchKeyDown}
+                  placeholder="Search..."
+                  className="w-full bg-transparent border-0 p-0 pl-2 text-xs text-white placeholder-white/40 focus:ring-0 focus:outline-none"
+                />
+                {searchVal && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchVal('')}
+                    className="text-white/40 hover:text-white text-[10px] px-1"
+                    title="Clear"
+                  >
+                    ✕
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSearchOpen(false);
+                    setSearchVal('');
+                  }}
+                  className="text-white/40 hover:text-white text-xs px-1 hover:bg-white/10 rounded-full ml-0.5"
+                  title="Close search"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                aria-label="Search"
+                title="Search"
+                onClick={() => setIsSearchOpen(true)}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            )}
+
+            {/* Small live matching suggestions dropdown under the input */}
+            {isSearchOpen && searchVal.trim() && (
+              <div className="absolute top-10 right-0 w-60 sm:w-64 bg-[#18181B] border border-white/15 rounded-xl shadow-2xl p-1.5 z-50 text-white animate-fade-in">
+                <div className="text-[9px] font-bold font-mono text-white/50 px-2 py-1 uppercase tracking-wider">Results</div>
+                <div className="max-h-52 overflow-y-auto space-y-0.5">
+                  {filteredResults.length === 0 ? (
+                    <div className="px-2 py-3 text-center text-xs text-[#86868B]">No matches found</div>
+                  ) : (
+                    filteredResults.slice(0, 5).map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSelectResult(item)}
+                        className="w-full text-left p-1.5 px-2 rounded-lg hover:bg-white/10 text-xs transition-colors flex items-center justify-between group cursor-pointer"
+                      >
+                        <div className="truncate pr-2">
+                          <div className="font-semibold text-white truncate text-xs">{item.title}</div>
+                          <div className="text-[10px] text-[#86868B] truncate">{item.category}</div>
+                        </div>
+                        <span className="text-[10px] text-blue-400 group-hover:translate-x-0.5 transition-transform">→</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {!isAuthenticated ? (
             <>
@@ -191,175 +448,159 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
               </Link>
             </>
           ) : (
-            <div className="relative flex items-center gap-2">
-              {/* Direct Role Dashboard Link */}
-              <Link
-                href={roleHome}
-                className="hidden sm:inline-flex items-center justify-center px-3.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all"
-              >
-                {role === 'admin' ? 'ADMIN CONSOLE' : role === 'freelancer' ? 'CREATOR HUB' : 'CLIENT DASHBOARD'}
-              </Link>
-
+            <div className="relative flex items-center gap-2" ref={userMenuRef}>
               {/* User Avatar & Dropdown Trigger */}
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer select-none"
                 title={`${user?.full_name} (${roleLabel})`}
               >
-                <div className="w-8 h-8 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  {getInitials(user?.full_name)}
-                </div>
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="User Logo"
+                    className="w-8 h-8 rounded-full object-cover border border-white/20 bg-white shadow-xs"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    {getInitials(user?.full_name)}
+                  </div>
+                )}
                 <span className="hidden lg:inline text-xs font-medium text-white max-w-[100px] truncate">
                   {user?.full_name?.split(' ')[0]}
                 </span>
-                <span className="material-symbols-outlined text-sm text-white/70">
-                  arrow_drop_down
-                </span>
               </button>
 
-              {/* User Menu Dropdown */}
+              {/* User Menu Dropdown: Compact Client Pages Menu on Top Right User Logo */}
               {isUserMenuOpen && (
-                <div className="absolute right-0 top-12 w-56 bg-[#1D1D1F] border border-white/15 rounded-xl p-2 shadow-2xl z-50 text-white animate-in fade-in slide-in-from-top-2 duration-150">
-                  <div className="px-3 py-2 border-b border-white/10 mb-1">
+                <div className="absolute right-0 top-full mt-2 w-56 sm:w-60 bg-[#18181B] border border-white/15 rounded-xl p-2 shadow-2xl z-50 text-white animate-in fade-in slide-in-from-top-2 duration-150">
+                  {/* User Profile Info Header */}
+                  <div className="px-3 py-2 border-b border-white/10 mb-1.5">
                     <div className="text-xs font-bold text-white truncate">{user?.full_name}</div>
-                    <div className="text-[10px] text-white/60 font-mono mt-0.5">{roleLabel} • {user?.email}</div>
+                    <div className="text-[10px] text-white/60 font-mono mt-0.5 truncate">{roleLabel} • {user?.email}</div>
                   </div>
 
-                  <Link
-                    href={roleHome}
-                    onClick={() => setIsUserMenuOpen(false)}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors"
-                  >
-                    <span>Dashboard</span>
-                    <span className="text-[10px] text-[#3B82F6] font-semibold">Open →</span>
-                  </Link>
+                  {/* Role-Specific Portal Pages Header */}
+                  <div className="px-2.5 py-1 flex items-center justify-between">
+                    <span className="text-[9px] font-bold font-mono text-white/50 uppercase tracking-wider">
+                      {role === 'admin' || role === 'super_admin' ? 'Admin Control' : role === 'freelancer' ? 'Creator Studio' : 'Client Portal'}
+                    </span>
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                        role === 'admin' || role === 'super_admin'
+                          ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
+                          : role === 'freelancer'
+                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                          : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                      }`}
+                    >
+                      {role === 'admin' || role === 'super_admin' ? 'Admin' : role === 'freelancer' ? 'Creator' : 'Client'}
+                    </span>
+                  </div>
 
+                  {/* Role-Specific Pages Links */}
+                  <div className="space-y-0.5 mt-0.5 max-h-60 overflow-y-auto">
+                    {(role === 'admin' || role === 'super_admin'
+                      ? ADMIN_PAGES
+                      : role === 'freelancer'
+                      ? CREATOR_PAGES
+                      : CLIENT_PAGES
+                    ).map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#E4E4E7] hover:text-white hover:bg-white/10 transition-colors"
+                      >
+                        <span>{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Start New Project Link */}
                   {role === 'client' && (
-                    <Link
-                      href="/book"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors"
-                    >
-                      <span>Book New Cut</span>
-                    </Link>
+                    <>
+                      <div className="border-t border-white/10 my-1.5"></div>
+                      <Link
+                        href="/book"
+                        onClick={() => setIsUserMenuOpen(false)}
+                        className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                      >
+                        <span>Start New Project</span>
+                        <span className="text-[10px] font-semibold">+ New</span>
+                      </Link>
+                    </>
                   )}
 
-                  {role === 'freelancer' && (
-                    <Link
-                      href="/freelancer/onboarding"
-                      onClick={() => setIsUserMenuOpen(false)}
-                      className="flex items-center justify-between px-3 py-2 rounded-lg text-xs hover:bg-white/10 transition-colors"
-                    >
-                      <span>Update Portfolio</span>
-                    </Link>
-                  )}
+                  <div className="border-t border-white/10 my-1.5"></div>
 
-                  <div className="border-t border-white/10 my-1 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsUserMenuOpen(false);
-                        logout();
-                      }}
-                      className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
+                  {/* Sign Out */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors flex items-center justify-between cursor-pointer"
+                  >
+                    <span>Sign Out</span>
+                    <span className="text-[10px] font-mono">⌘Q</span>
+                  </button>
                 </div>
               )}
             </div>
           )}
 
-          {/* Mobile Menu Hamburger */}
+          {/* Mobile Menu Toggle Button */}
           <button
             type="button"
-            className="md:hidden p-1.5 text-white rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="Toggle mobile menu"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle navigation"
+            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
-            <span className="material-symbols-outlined text-xl leading-none">
-              {isMobileMenuOpen ? 'close' : 'menu'}
-            </span>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {isMobileMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Dropdown Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#0A0A0A] border-b border-white/15 px-6 py-5 flex flex-col gap-3 shadow-2xl">
+        <div className="md:hidden bg-[#0A0A0A] border-b border-white/10 px-6 py-4 space-y-3">
           <Link
             href="/book"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="text-sm font-semibold uppercase tracking-wider text-white hover:text-[#3B82F6] py-1 transition-colors"
+            className="block text-sm font-semibold text-white hover:text-blue-400"
           >
             BOOK NOW
           </Link>
           <Link
             href="/creators"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="text-sm font-semibold uppercase tracking-wider text-white hover:text-[#3B82F6] py-1 transition-colors"
+            className="block text-sm font-semibold text-white hover:text-blue-400"
           >
             CREATORS
           </Link>
           <Link
             href="/services"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="text-sm font-semibold uppercase tracking-wider text-white hover:text-[#3B82F6] py-1 transition-colors"
+            className="block text-sm font-semibold text-white hover:text-blue-400"
           >
             SERVICES
           </Link>
           <Link
             href="/work"
             onClick={() => setIsMobileMenuOpen(false)}
-            className="text-sm font-semibold uppercase tracking-wider text-white hover:text-[#3B82F6] py-1 transition-colors"
+            className="block text-sm font-semibold text-white hover:text-blue-400"
           >
             PORTFOLIO
           </Link>
-          <div className="pt-3 border-t border-white/15 flex flex-col gap-2">
-            {!isAuthenticated ? (
-              <div className="flex gap-3">
-                <Link
-                  href="/auth/login?intent=freelancer"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex-1 text-center py-2 border border-white/30 rounded-lg text-xs font-semibold uppercase tracking-wider text-white hover:bg-white hover:text-black transition-all"
-                >
-                  FIND JOB
-                </Link>
-                <Link
-                  href="/auth/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex-1 text-center py-2 bg-[#3B82F6] text-white rounded-lg text-xs font-semibold uppercase tracking-wider hover:bg-[#2563EB] transition-all"
-                >
-                  LOGIN
-                </Link>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between py-1 text-xs text-white/70">
-                  <span>Logged in as <strong>{user?.full_name}</strong> ({roleLabel})</span>
-                </div>
-                <Link
-                  href={roleHome}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="w-full text-center py-2.5 bg-[#3B82F6] text-white rounded-lg text-xs font-semibold uppercase tracking-wider"
-                >
-                  Go to {roleLabel} Dashboard →
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    logout();
-                  }}
-                  className="w-full text-center py-2 border border-red-500/40 text-red-400 rounded-lg text-xs font-semibold uppercase tracking-wider"
-                >
-                  Sign Out
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       )}
     </header>

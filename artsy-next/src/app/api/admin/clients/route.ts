@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { createErrorResponse } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database client unavailable' }, { status: 500 });
+    return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);
   }
 
   const { searchParams } = new URL(request.url);
@@ -38,12 +39,12 @@ export async function GET(request: Request) {
 
       const orderIds = (orders || []).map((o: any) => o.id);
 
-      // Fetch client payments
+      // Fetch client payments (filtered to exclude gateway_signature and raw gateway_response)
       let payments: any[] = [];
       if (orderIds.length > 0) {
         const { data: payData } = await dbClient
           .from('payments')
-          .select('*')
+          .select('id, order_id, amount, currency, gateway, payment_method, status, captured_at, created_at')
           .in('order_id', orderIds)
           .order('created_at', { ascending: false });
         payments = payData || [];
@@ -104,7 +105,7 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false });
 
     if (usersErr) {
-      return NextResponse.json({ error: usersErr.message }, { status: 500 });
+      return createErrorResponse(usersErr, 'Failed to fetch clients', 500);
     }
 
     // Fetch all orders to compute total_orders and lifetime_value per client
@@ -139,7 +140,6 @@ export async function GET(request: Request) {
       clients: enrichedClients,
     });
   } catch (err: any) {
-    console.error('Error fetching clients:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to fetch studio client directory', 500);
   }
 }

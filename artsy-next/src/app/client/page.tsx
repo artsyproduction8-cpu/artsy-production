@@ -90,27 +90,31 @@ export default function ClientDashboardPage() {
     <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
       <ClientHeader />
 
-      <div className="flex pt-28 lg:pt-16 w-full max-w-full overflow-x-hidden">
+      <div className="flex w-full max-w-full overflow-x-hidden">
         {/* Desktop Sidebar */}
         <ClientSidebar />
 
         {/* Main Content Dashboard */}
-        <main className="flex-1 w-full lg:pl-72 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
 
-          {/* Top Banner: Welcome & Active Studio Context */}
+          {/* Top Banner: Welcome */}
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2">
+            <div className="space-y-1">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
                 Welcome, {profile.displayName}
               </h1>
+              <p className="text-xs sm:text-sm text-[#86868B]">
+                Track your active video edits, review draft cuts, and download completed videos.
+              </p>
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
               <Link
                 href="/book"
-                className="px-5 py-2.5 rounded-xl bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                className="px-5 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
               >
-                <span>+ Book New Cut</span>
+                <span>+ Start New Project</span>
                 <span>→</span>
               </Link>
             </div>
@@ -121,26 +125,26 @@ export default function ClientDashboardPage() {
             <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between animate-fadeIn">
               <div className="flex items-center gap-2">
                 <span className="text-base font-bold">✓</span>
-                <span>Cut approved! Production Vault clearance authorized and 4K Master unwatermarked archive decrypting.</span>
+                <span>Video approved! Your unwatermarked final 4K video is ready in Final Downloads.</span>
               </div>
-              <span className="font-mono text-[10px] text-emerald-600">DISPATCHED</span>
+              <span className="font-mono text-[10px] text-emerald-600 font-bold">COMPLETED</span>
             </div>
           )}
           {retakeNotice && (
             <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center justify-between animate-fadeIn">
               <div className="flex items-center gap-2">
-                <span className="text-base font-bold">⚠️</span>
-                <span>Retake pass initiated. Editorial team notified via dispatch queue; 48h turnaround clock ticking.</span>
+                <span className="text-base font-bold">✓</span>
+                <span>Changes requested. Your editor has been notified and will deliver your revised cut within 48 hours.</span>
               </div>
-              <span className="font-mono text-[10px] text-amber-600">QUEUED</span>
+              <span className="font-mono text-[10px] text-amber-600 font-bold">IN PROGRESS</span>
             </div>
           )}
 
-          {/* Executive KPI Bento Matrix */}
+          {/* KPI Bento Matrix */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
               <span className="text-[10px] uppercase font-bold text-[#86868B] block tracking-wider">
-                ACTIVE
+                ACTIVE PROJECTS
               </span>
               <div className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] mt-1.5">
                 {projects.length} {projects.length === 1 ? 'Project' : 'Projects'}
@@ -149,34 +153,34 @@ export default function ClientDashboardPage() {
 
             <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
               <span className="text-[10px] uppercase font-bold text-[#86868B] block tracking-wider">
-                REVIEW SPOTLIGHT
+                DRAFTS TO REVIEW
               </span>
               <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1.5">
-                {projects.filter((p) => p.status === 'review_ready' || p.status === 'in_review').length} Drafts Pending
+                {projects.filter((p) => p.status === 'review_ready' || p.status === 'in_review').length} Pending
               </div>
             </div>
 
             <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
               <span className="text-[10px] uppercase font-bold text-[#86868B] block tracking-wider">
-                READY IN VAULT
+                COMPLETED VIDEOS
               </span>
               <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-1.5">
-                {projects.filter((p) => p.status === 'completed' || p.status === 'approved').length} Archives
+                {projects.filter((p) => p.status === 'completed' || p.status === 'approved').length} Delivered
               </div>
             </div>
           </div>
 
           {/* ================================================================ */}
-          {/* MODULE 1: ACTIVE PRODUCTION PIPELINE ("MY PROJECTS")             */}
+          {/* MODULE 1: ACTIVE PROJECTS                                        */}
           {/* ================================================================ */}
           <section className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-[#F5F5F7]">
               <div>
                 <h2 className="text-lg font-bold text-[#1D1D1F]">
-                  Active Pipeline
+                  Active Projects
                 </h2>
                 <p className="text-xs text-[#86868B] mt-0.5">
-                  Real-time SLA status, assigned senior creators, and editorial milestones
+                  Track ongoing edits, assigned editors, and expected delivery dates
                 </p>
               </div>
               <Link
@@ -196,13 +200,13 @@ export default function ClientDashboardPage() {
                 <div className="text-4xl mb-3">🎬</div>
                 <h3 className="text-lg font-semibold mb-2">No active projects yet</h3>
                 <p className="text-sm text-gray-500 mb-6">
-                  Start your first cinematic edit — book a cut and we&apos;ll match you with an editor.
+                  Start your first video project — upload your footage and our team will get to work.
                 </p>
                 <Link
                   href="/book"
                   className="inline-block px-6 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-all shadow-sm"
                 >
-                  Book New Project →
+                  Start New Project →
                 </Link>
               </div>
             ) : (
@@ -261,7 +265,7 @@ export default function ClientDashboardPage() {
                   href="/client/review"
                   className="text-xs font-bold text-[#3B82F6] hover:underline self-start sm:self-auto"
                 >
-                  Launch Full Review Suite (Timeline &amp; Canvas) →
+                  Open Full Video Review →
                 </Link>
               )}
             </div>
@@ -269,9 +273,9 @@ export default function ClientDashboardPage() {
             {projects.length === 0 ? (
               <div className="text-center py-12 border-2 border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-6 space-y-2">
                 <div className="text-3xl">🎞️</div>
-                <h3 className="text-sm font-bold text-[#1D1D1F]">No cuts pending review</h3>
+                <h3 className="text-sm font-bold text-[#1D1D1F]">No drafts pending review</h3>
                 <p className="text-xs text-[#86868B] max-w-sm mx-auto">
-                  When your senior editor submits a rough cut or fine cut, interactive timestamp annotations and signoff gates will activate here.
+                  When your lead editor finishes a cut, you can watch it here and add notes at exact seconds.
                 </p>
               </div>
             ) : (
@@ -290,7 +294,7 @@ export default function ClientDashboardPage() {
                     {/* Top Canvas Bar */}
                     <div className="absolute top-3 left-3 right-3 flex items-center justify-between text-[11px] font-mono text-white/90 z-10">
                       <span className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded border border-white/10 font-bold">
-                        DRAFT v1.0 • PROXY 4K
+                        PREVIEW DRAFT v1.0
                       </span>
                     </div>
 
@@ -308,7 +312,7 @@ export default function ClientDashboardPage() {
                     {/* Bottom Timecode Scrubber Bar */}
                     <div className="absolute bottom-3 left-3 right-3 z-10 space-y-1.5">
                       <div className="flex items-center justify-between text-xs font-mono font-bold text-white">
-                        <span>TC @ {activeTimecode}</span>
+                        <span>Time @ {activeTimecode}</span>
                         <span className="text-[#86868B]">00:00:00</span>
                       </div>
                       <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden relative">
@@ -322,13 +326,13 @@ export default function ClientDashboardPage() {
                 <div className="lg:col-span-5 space-y-4">
                   <div className="bg-[#1D1D1F] text-white rounded-xl p-5 space-y-3">
                     <span className="text-[10px] font-bold tracking-widest text-[#3B82F6] uppercase">
-                      FINAL ACCEPTANCE GATE
+                      APPROVAL &amp; SIGN OFF
                     </span>
                     <h4 className="text-sm font-bold text-white mt-0.5">
-                      Ready to sign off on this cut?
+                      Happy with this video?
                     </h4>
                     <p className="text-[11px] text-[#86868B] leading-relaxed mt-1">
-                      Approving releases the Production Vault payout to the creator and decrypts your unwatermarked 4K DCI master package.
+                      Approving unlocks your unwatermarked 4K video download and completes the edit milestone.
                     </p>
                     <div className="flex items-center gap-2 pt-1">
                       <button
@@ -336,14 +340,14 @@ export default function ClientDashboardPage() {
                         onClick={handleRequestRetake}
                         className="flex-1 py-2.5 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-all text-center cursor-pointer"
                       >
-                        Request Retake
+                        Request Changes
                       </button>
                       <button
                         type="button"
                         onClick={handleApproveCut}
                         className="flex-1 py-2.5 px-3 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-lg transition-all text-center cursor-pointer shadow-sm"
                       >
-                        Approve Cut ✓
+                        Approve Video ✓
                       </button>
                     </div>
                   </div>
@@ -353,14 +357,17 @@ export default function ClientDashboardPage() {
           </section>
 
           {/* ================================================================ */}
-          {/* MODULE 3: COMPLETED MASTERS & CLOUD VAULT ("COMPLETED MASTERS")  */}
+          {/* MODULE 3: FINAL DOWNLOADS                                        */}
           {/* ================================================================ */}
           <section className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F5F5F7] gap-3">
               <div>
                 <h2 className="text-lg font-bold text-[#1D1D1F]">
-                  Completed Deliverables &amp; Master Vault
+                  Final Downloads
                 </h2>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Clean 4K masters, social media cuts, and audio tracks
+                </p>
               </div>
 
               {projects.length > 0 && (
@@ -368,29 +375,32 @@ export default function ClientDashboardPage() {
                   href="/client/masters"
                   className="text-xs font-bold text-[#3B82F6] hover:underline self-start sm:self-auto"
                 >
-                  Access Full Master Vault →
+                  View All Downloads →
                 </Link>
               )}
             </div>
 
             <div className="text-center py-12 border-2 border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-6 space-y-2">
               <div className="text-3xl">📦</div>
-              <h3 className="text-sm font-bold text-[#1D1D1F]">Vault is empty</h3>
+              <h3 className="text-sm font-bold text-[#1D1D1F]">No completed videos yet</h3>
               <p className="text-xs text-[#86868B] max-w-sm mx-auto">
-                Your uncompressed 4K master archives, social cutdowns, and isolated audio stems will appear here once cuts are approved.
+                Once you approve a draft, your final clean videos and social cuts will appear here for download.
               </p>
             </div>
           </section>
 
           {/* ================================================================ */}
-          {/* MODULE 4: GST TAX INVOICES & FINANCIAL LEDGER ("TAX INVOICES")    */}
+          {/* MODULE 4: INVOICES & RECEIPTS                                    */}
           {/* ================================================================ */}
           <section className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F5F5F7] gap-3">
               <div>
                 <h2 className="text-lg font-bold text-[#1D1D1F]">
-                  GST Tax Invoices &amp; Production Vault Ledger
+                  Invoices &amp; Receipts
                 </h2>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Official GST tax invoices and payment receipts
+                </p>
               </div>
 
               {projects.length > 0 && (
@@ -398,20 +408,20 @@ export default function ClientDashboardPage() {
                   href="/client/invoices"
                   className="text-xs font-bold text-[#3B82F6] hover:underline self-start sm:self-auto"
                 >
-                  View Full Invoices Ledger →
+                  View All Invoices →
                 </Link>
               )}
             </div>
 
             <div className="text-center py-12 border-2 border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-6 space-y-2">
               <div className="text-3xl">🧾</div>
-              <h3 className="text-sm font-bold text-[#1D1D1F]">No tax invoices generated yet</h3>
+              <h3 className="text-sm font-bold text-[#1D1D1F]">No invoices yet</h3>
               <p className="text-xs text-[#86868B] max-w-sm mx-auto">
-                Statutory 18% GST invoices and production escrow ledger receipts will appear here automatically upon order placement.
+                Official GST invoices and payment receipts will appear here automatically when you book a project.
               </p>
             </div>
           </section>
-
+          </div>
         </main>
       </div>
     </div>

@@ -47,10 +47,10 @@ export default function ClientProjectsPage() {
               p.status === 'review_ready'
                 ? 'bg-blue-500/10 text-blue-600 border-blue-200'
                 : 'bg-amber-500/10 text-amber-700 border-amber-200',
-            deliveryDate: '48h SLA Guarantee',
+            deliveryDate: 'Fast 48h Delivery',
             priceFormatted: '₹8,000 INR',
             aspectRatios: '16:9 Master + 9:16 Reel',
-            cameraAngles: 'Multi-Cam Sync',
+            cameraAngles: 'Multi-Camera Editing',
           }));
           setProjects(mapped);
         }
@@ -62,6 +62,22 @@ export default function ClientProjectsPage() {
     }
     loadProjects();
   }, []);
+
+  const [avatarUrl, setAvatarUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (user?.avatar_url) {
+      setAvatarUrl(user.avatar_url);
+    } else if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('artsy_client_profile');
+        if (stored) {
+          const p = JSON.parse(stored);
+          if (p.logoUrl) setAvatarUrl(p.logoUrl);
+        }
+      } catch {}
+    }
+  }, [user]);
 
   const clientName = user?.full_name || '';
   const clientInitials = clientName.trim()
@@ -84,15 +100,23 @@ export default function ClientProjectsPage() {
             {/* User Identity Greeting */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-[#E5E5E7]">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-sm tracking-wider shadow-sm">
-                  {clientInitials}
-                </div>
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Client Logo"
+                    className="w-12 h-12 rounded-2xl object-cover border-2 border-white shadow-sm bg-white"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-2xl bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-sm tracking-wider shadow-sm">
+                    {clientInitials}
+                  </div>
+                )}
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
-                    Active Orders
+                    My Projects
                   </h1>
                   <p className="text-xs text-[#86868B] mt-0.5">
-                    Real-time SLA milestones &amp; master deliveries
+                    Track your ongoing video edits and review drafts
                   </p>
                 </div>
               </div>
@@ -100,9 +124,9 @@ export default function ClientProjectsPage() {
               <div className="flex items-center gap-2">
                 <Link
                   href="/book"
-                  className="px-4 py-2 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-xl transition-all shadow-xs"
+                  className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-semibold rounded-xl transition-all shadow-xs"
                 >
-                  + Book New Cut
+                  + Start New Project
                 </Link>
               </div>
             </div>
@@ -110,20 +134,20 @@ export default function ClientProjectsPage() {
             {/* Project Cards List or Empty State */}
             {loading ? (
               <div className="text-center py-12 text-xs text-[#86868B]">
-                Loading orders...
+                Loading projects...
               </div>
             ) : projects.length === 0 ? (
               <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8">
                 <div className="text-4xl mb-3">🎬</div>
                 <h3 className="text-lg font-semibold mb-2">No active projects yet</h3>
                 <p className="text-sm text-gray-500 mb-6">
-                  Start your first cinematic edit — book a cut and we&apos;ll match you with an editor.
+                  Start your first video project — upload your footage and our team will get to work.
                 </p>
                 <Link
                   href="/book"
                   className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm"
                 >
-                  Book New Project →
+                  Start New Project →
                 </Link>
               </div>
             ) : (
@@ -177,7 +201,7 @@ export default function ClientProjectsPage() {
                             href={`/client/projects/${proj.id}`}
                             className="w-full sm:w-auto px-4 py-2 bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-semibold rounded-xl text-center transition-all shadow-xs"
                           >
-                            Enter Review Suite →
+                            Watch &amp; Review Video →
                           </Link>
                         </div>
                       </div>

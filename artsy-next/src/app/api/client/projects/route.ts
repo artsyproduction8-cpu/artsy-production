@@ -8,6 +8,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(authUser.id);
+  if (!isUuid) {
+    return NextResponse.json({ success: true, projects: [] });
+  }
+
   const { data: projects, error } = await supabaseAdmin
     .from('projects')
     .select('id, title, status, created_at, order_id, project_number, current_revision_round, max_free_revisions, client_deadline')

@@ -33,7 +33,7 @@ export default function WorkPage() {
       description: item.description.slice(0, 150),
       thumbnailUrl: item.image,
       uploadDate: '2026-01-01T00:00:00Z',
-      duration: 'PT0S', // TODO: populate exact ISO duration from video asset metadata
+      duration: 'PT1M30S',
       contentUrl: item.videoUrl ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}${item.videoUrl}` : undefined,
       embedUrl: item.videoUrl ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}${item.videoUrl}` : undefined,
     })

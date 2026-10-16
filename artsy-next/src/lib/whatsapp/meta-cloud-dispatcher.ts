@@ -37,7 +37,7 @@ export async function sendMetaTemplate(
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('[META_CAPI] Send failed:', data);
+      console.error('[META_CAPI] Send failed with status:', response.status, data.error?.message || '');
       return { success: false, error: data.error?.message || 'Unknown error' };
     }
 
@@ -46,7 +46,7 @@ export async function sendMetaTemplate(
       messageId: data.messages?.[0]?.id,
     };
   } catch (err: any) {
-    console.error('[META_CAPI] Exception:', err);
+    console.error('[META_CAPI] Exception:', err?.message || 'Unknown');
     return { success: false, error: err.message };
   }
 }
@@ -106,7 +106,7 @@ export async function sendMetaOTP(
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('[META_OTP] Send failed:', data);
+      console.error('[META_OTP] Send failed with status:', response.status, data.error?.message || '');
       return { success: false, error: data.error?.message || 'Send failed' };
     }
 

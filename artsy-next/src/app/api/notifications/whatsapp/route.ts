@@ -1,26 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  sendWhatsAppNotification,
-  checkOpenWAGatewayHealth,
-} from '@/lib/whatsapp/openwa-dispatcher';
+import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  try {
-    const health = await checkOpenWAGatewayHealth();
-    return NextResponse.json({
-      status: 'ok',
-      health,
-    });
-  } catch (err: unknown) {
-    const error = err instanceof Error ? err.message : String(err);
-    return NextResponse.json(
-      { status: 'error', error },
-      { status: 500 }
-    );
-  }
+  const isConfigured = Boolean(
+    process.env.WHATSAPP_ACCESS_TOKEN &&
+    process.env.WHATSAPP_PHONE_NUMBER_ID &&
+    !process.env.WHATSAPP_ACCESS_TOKEN.includes('WILL_BE_PROVIDED') &&
+    !process.env.WHATSAPP_ACCESS_TOKEN.includes('your-')
+  );
+
+  return NextResponse.json({
+    status: 'ok',
+    health: {
+      provider: 'Meta Cloud API (Official)',
+      configured: isConfigured,
+      phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID ? '[CONFIGURED]' : '[UNCONFIGURED]',
+      status: isConfigured ? 'connected' : 'unconfigured',
+    },
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -61,7 +61,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const result = await sendWhatsAppNotification(phone, messageText);
+    const templateName = process.env.WHATSAPP_PROJECT_TEMPLATE_NAME || 'artsy_project_status';
+    const result = await sendMetaTemplate(phone, templateName, [messageText]);
+
     return NextResponse.json({
       success: result.success,
       messageId: result.messageId,

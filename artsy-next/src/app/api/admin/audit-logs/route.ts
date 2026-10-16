@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { createErrorResponse } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database client unavailable' }, { status: 500 });
+    return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);
   }
 
   const { searchParams } = new URL(request.url);
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
     const { data: logs, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return createErrorResponse(error, 'Failed to fetch audit records', 500);
     }
 
     let filtered = logs || [];
@@ -77,7 +78,6 @@ export async function GET(request: Request) {
       logs: filtered,
     });
   } catch (err: any) {
-    console.error('Error fetching audit logs:', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to retrieve administrative audit logs', 500);
   }
 }

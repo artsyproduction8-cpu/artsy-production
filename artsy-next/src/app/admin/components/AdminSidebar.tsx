@@ -25,23 +25,23 @@ export default function AdminSidebar() {
       group: 'Overview',
       items: [
         { label: 'Dashboard', href: '/admin', exact: true },
-        { label: 'Infra Costs', href: '/admin/infra-costs' },
+        { label: 'Server Costs', href: '/admin/infra-costs' },
       ],
     },
     {
-      group: 'Accounts & People',
+      group: 'People & Network',
       items: [
         { label: 'Clients', href: '/admin/clients' },
         { label: 'Creators', href: '/admin/freelancers' },
         { label: 'Creator Requests', href: '/admin/creator-requests' },
-        { label: 'Submissions Queue', href: '/admin/submissions' },
-        { label: 'Portfolio Catalog', href: '/admin/portfolio' },
+        { label: 'Submissions', href: '/admin/submissions' },
+        { label: 'Portfolio', href: '/admin/portfolio' },
         { label: 'Vetting', href: '/admin/vetting' },
         { label: 'Users & Roles', href: '/admin/users' },
       ],
     },
     {
-      group: 'Financial Ledger',
+      group: 'Finances',
       items: [
         { label: 'Payments', href: '/admin/payments' },
         { label: 'Payouts', href: '/admin/payouts' },
@@ -50,14 +50,14 @@ export default function AdminSidebar() {
       ],
     },
     {
-      group: 'Platform & Logs',
+      group: 'Settings & Logs',
       items: [
         { label: 'Notifications', href: '/admin/notifications' },
         { label: 'Audit Log', href: '/admin/audit-log' },
-        { label: 'Pricing & SLAs', href: '/admin/pricing' },
+        { label: 'Pricing & Plans', href: '/admin/pricing' },
         { label: 'Catalog', href: '/admin/catalog' },
-        { label: 'Vault', href: '/admin/vault' },
-        { label: 'Telemetry', href: '/admin/telemetry' },
+        { label: 'Vault Storage', href: '/admin/vault' },
+        { label: 'System Health', href: '/admin/telemetry' },
       ],
     },
   ];
@@ -70,31 +70,38 @@ export default function AdminSidebar() {
         <div className="space-y-6">
           <div>
             <div className="text-sm font-bold text-[#1D1D1F]">{adminName}</div>
-            <span className="inline-block mt-1 text-[10px] font-bold text-[#3B82F6] bg-[#3B82F6]/10 px-2 py-0.5 rounded">
-              Executive Access
+            <span className="inline-block mt-1 text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+              Verified Admin
             </span>
           </div>
 
-          <nav className="flex flex-col space-y-1">
-            {flatNavItems.map((item) => {
-              const isActive = item.exact
-                ? pathname === item.href
-                : pathname === item.href || pathname.startsWith(item.href + '/');
+          <nav className="flex flex-col space-y-4">
+            {navItems.map((group) => (
+              <div key={group.group} className="space-y-1">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#A1A1A6] px-3 pb-0.5">
+                  {group.group}
+                </div>
+                {group.items.map((item) => {
+                  const isActive = item.exact
+                    ? pathname === item.href
+                    : pathname === item.href || pathname.startsWith(item.href + '/');
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`block px-3 py-2 text-xs font-semibold rounded-xl transition-all ${
-                    isActive
-                      ? 'bg-[#3B82F6]/10 text-[#3B82F6]'
-                      : 'text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7]'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`block px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
+                        isActive
+                          ? 'bg-[#3B82F6]/10 text-[#3B82F6]'
+                          : 'text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7]'
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
         </div>
 

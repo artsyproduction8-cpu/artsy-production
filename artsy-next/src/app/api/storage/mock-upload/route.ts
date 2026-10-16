@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function PUT(request: NextRequest) {
+  // Reject mock uploads in production
+  if (process.env.NODE_ENV === 'production') {
+    return new NextResponse(null, { status: 404 });
+  }
+
   try {
     const key = request.nextUrl.searchParams.get('key') || 'unspecified';
     const blob = await request.arrayBuffer();
-
-    console.log(`[Storage Mock Ingest] Received direct PUT upload for key: ${key} (${blob.byteLength} bytes)`);
 
     return new NextResponse(null, {
       status: 200,

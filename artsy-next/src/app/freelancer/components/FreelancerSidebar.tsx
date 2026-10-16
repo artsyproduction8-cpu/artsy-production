@@ -19,12 +19,11 @@ export default function FreelancerSidebar() {
     : 'CP';
 
   const navItems = [
-    { label: 'Active Job Slate', href: '/freelancer' },
-    { label: 'Project Workroom', href: '/freelancer' },
-    { label: 'My Work', href: '/freelancer/portfolio' },
-    { label: 'Earnings Ledger & Payouts', href: '/freelancer/payouts' },
-    { label: 'Software & Gear Profile', href: '/freelancer/profile' },
-    { label: 'Master Agreement & NDA', href: '/freelancer/agreement' },
+    { label: 'Active Projects', href: '/freelancer' },
+    { label: 'Portfolio Showcase', href: '/freelancer/portfolio' },
+    { label: 'Earnings & Payouts', href: '/freelancer/payouts' },
+    { label: 'Profile & Skills', href: '/freelancer/profile' },
+    { label: 'Agreement & NDA', href: '/freelancer/agreement' },
   ];
 
   return (
@@ -34,9 +33,15 @@ export default function FreelancerSidebar() {
         <div className="space-y-6">
           <div>
             <div className="text-sm font-bold text-[#1D1D1F]">{creatorName}</div>
-            <span className="inline-block mt-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              Senior Cutter • Vetted
-            </span>
+            {user?.role === 'admin' || user?.role === 'super_admin' ? (
+              <span className="inline-block mt-1 text-[10px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
+                Admin Preview
+              </span>
+            ) : (
+              <span className="inline-block mt-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                Verified Creator
+              </span>
+            )}
           </div>
 
           <nav className="flex flex-col space-y-1">

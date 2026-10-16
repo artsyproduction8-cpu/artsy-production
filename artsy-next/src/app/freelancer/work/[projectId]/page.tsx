@@ -271,7 +271,7 @@ export default function FreelancerWorkView() {
               onClick={() => setShowAgreementModal(true)}
               className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl whitespace-nowrap shadow-sm transition-all"
             >
-              Sign Pact (1-Click)
+              Sign Agreement (1-Click)
             </button>
           </div>
         )}
@@ -283,7 +283,7 @@ export default function FreelancerWorkView() {
             <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h2 className="text-base font-bold text-[#1D1D1F]">Editorial Brief &amp; Specs</h2>
+                  <h2 className="text-base font-bold text-[#1D1D1F]">Project Brief &amp; Details</h2>
                   <p className="text-xs text-[#86868B] mt-1">{service?.description || project.scopeSummary}</p>
                 </div>
                 <span className="text-xs font-mono font-bold bg-[#F5F5F7] px-2.5 py-1 rounded-lg border border-[#E5E5E7]">
@@ -298,9 +298,9 @@ export default function FreelancerWorkView() {
                     📁
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold text-[#1D1D1F]">Encrypted Raw Footage Vault</h3>
+                    <h3 className="text-xs font-bold text-[#1D1D1F]">Project Files &amp; Raw Footage</h3>
                     <p className="text-[11px] text-[#86868B]">
-                      {footageDownloaded ? '✓ Access logged on immutable platform audit trail' : 'Clicking will record footage download on immutable refund ledger'}
+                      {footageDownloaded ? '✓ Download recorded for this project' : 'Clicking will open the secure footage folder for this project'}
                     </p>
                   </div>
                 </div>
@@ -398,11 +398,11 @@ export default function FreelancerWorkView() {
               )}
             </div>
 
-            {/* Immutable Activity Audit Trail */}
+            {/* Activity History */}
             <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm">
-              <h2 className="text-base font-bold text-[#1D1D1F] mb-1">Project Activity Trail</h2>
+              <h2 className="text-base font-bold text-[#1D1D1F] mb-1">Project Activity History</h2>
               <p className="text-xs text-[#86868B] mb-4">
-                Cryptographically verifiable, append-only log used for dispute arbitration and refund evidence.
+                Timeline of file downloads, daily check-ins, and draft submissions for this project.
               </p>
               {activityLogs.length === 0 ? (
                 <p className="text-xs text-[#86868B] italic">No activity recorded yet.</p>

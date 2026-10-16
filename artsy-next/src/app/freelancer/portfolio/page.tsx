@@ -135,18 +135,20 @@ export default function FreelancerPortfolioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]">
+    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans">
       <FreelancerHeader />
-      <FreelancerSidebar />
 
-      <main className="lg:pl-72 pt-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="flex w-full max-w-full overflow-x-hidden">
+        <FreelancerSidebar />
+
+        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E5E5E7] pb-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <Link href="/freelancer" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
-                  Workroom
+                  Dashboard
                 </Link>
                 <span className="text-xs text-[#86868B]">/</span>
                 <span className="text-xs text-[#1D1D1F] font-medium">My Work</span>
@@ -179,7 +181,7 @@ export default function FreelancerPortfolioPage() {
             <ol className="list-decimal list-inside space-y-1 text-blue-800 ml-1">
               <li>Upload your project reel or cut to your <strong>own YouTube channel</strong> (Public or Unlisted).</li>
               <li>Paste the link below and provide a concise title and description.</li>
-              <li>Our Studio Director reviews it. If approved, we re-upload the master to Artsy&apos;s official channel and feature it directly on your public creator profile.</li>
+              <li>Our team reviews it. Once approved, it will appear directly on your public creator profile.</li>
             </ol>
           </div>
 
@@ -203,7 +205,7 @@ export default function FreelancerPortfolioPage() {
             <div>
               <h2 className="text-base font-bold text-[#1D1D1F]">Submit Your Work</h2>
               <p className="text-xs text-[#86868B] mt-1">
-                Submissions are immutable once sent for QA review. Please double-check details before submitting.
+                Please double-check your video link and title before submitting for review.
               </p>
             </div>
 
@@ -281,7 +283,7 @@ export default function FreelancerPortfolioPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[#1D1D1F] text-white hover:bg-black transition-all disabled:opacity-50 shadow-xs cursor-pointer"
+                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-[#3B82F6] hover:bg-[#2563EB] text-white transition-all disabled:opacity-50 shadow-xs cursor-pointer"
                 >
                   {submitting ? 'Verifying & Submitting...' : 'Submit for Review'}
                 </button>
@@ -441,5 +443,6 @@ export default function FreelancerPortfolioPage() {
         </div>
       </main>
     </div>
+  </div>
   );
 }

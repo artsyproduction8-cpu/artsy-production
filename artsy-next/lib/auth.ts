@@ -97,12 +97,21 @@ export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
 // Auth storage key
 const AUTH_STORAGE_KEY = 'artsy_auth_user';
 
-// Get current user from localStorage
+// Get current user from sessionStorage (preferred for active tab) or localStorage (fallback)
 export const getCurrentUser = (): ArtsyUser | null => {
   if (typeof window === 'undefined') return null;
 
+  // Multi-tab logout sync: if persistent state is cleared, destroy local tab session
   const userStr = localStorage.getItem(AUTH_STORAGE_KEY);
-  if (!userStr) return null;
+  if (!userStr) {
+    try { sessionStorage.removeItem(AUTH_STORAGE_KEY); } catch {}
+    return null;
+  }
+
+  try {
+    const sessionStr = sessionStorage.getItem(AUTH_STORAGE_KEY);
+    if (sessionStr) return JSON.parse(sessionStr);
+  } catch {}
 
   try {
     return JSON.parse(userStr);
@@ -111,17 +120,40 @@ export const getCurrentUser = (): ArtsyUser | null => {
   }
 };
 
-// Set current user in localStorage and server cookie via session endpoint
+// Set current user in sessionStorage / localStorage and server cookie via session endpoint
 export const setCurrentUser = (user: ArtsyUser | null) => {
   if (typeof window === 'undefined') return;
 
   if (user) {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-    // Immediate fallback cookie for synchronous browser transitions
     try {
-      document.cookie = `artsy_auth_token=${encodeURIComponent(JSON.stringify(user))}; path=/; max-age=604800; SameSite=Lax`;
+      // Store full active user profile in sessionStorage (isolated to current tab session, cleared on tab close)
+      sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+
+      // Store only non-PII operational fields in persistent localStorage to minimize XSS exposure of PII
+      const sanitizedUser: ArtsyUser = {
+        id: user.id,
+        email: '', // Never store email in persistent localStorage
+        phone: '', // Never store phone in persistent localStorage
+        full_name: user.full_name || '',
+        display_name: user.display_name || '',
+        role: user.role,
+        status: user.status,
+        avatar_url: user.avatar_url || '',
+        onboarded: user.onboarded,
+        agreement_accepted: user.agreement_accepted,
+        agreement_accepted_at: user.agreement_accepted_at,
+        agreement_version: user.agreement_version,
+        onboarding_status: user.onboarding_status,
+        tracking_id: user.tracking_id,
+        rejection_reason: user.rejection_reason,
+        rejected_at: user.rejected_at,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+      };
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitizedUser));
     } catch {}
-    // Sync with server HttpOnly signed cookie
+
+    // Sync with server HttpOnly signed cookie (prevents client-side unsigned cookie tampering)
     fetch('/api/auth/session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -233,8 +265,53 @@ export const useAuth = () => {
 
     syncUser();
 
+    // Verify session with backend HttpOnly signed cookie
+    fetch('/api/auth/session')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.authenticated && data.user) {
+          setUser(data.user);
+          try {
+            sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data.user));
+            const sanitizedUser: ArtsyUser = {
+              id: data.user.id,
+              email: '',
+              phone: '',
+              full_name: data.user.full_name || '',
+              display_name: data.user.display_name || '',
+              role: data.user.role,
+              status: data.user.status,
+              avatar_url: data.user.avatar_url || '',
+              onboarded: data.user.onboarded,
+              agreement_accepted: data.user.agreement_accepted,
+              agreement_accepted_at: data.user.agreement_accepted_at,
+              agreement_version: data.user.agreement_version,
+              onboarding_status: data.user.onboarding_status,
+              tracking_id: data.user.tracking_id,
+              rejection_reason: data.user.rejection_reason,
+              rejected_at: data.user.rejected_at,
+              created_at: data.user.created_at,
+              updated_at: data.user.updated_at,
+            };
+            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitizedUser));
+          } catch {}
+        } else if (data && !data.authenticated) {
+          // Cookie expired or invalidated
+          setUser(null);
+          try {
+            sessionStorage.removeItem(AUTH_STORAGE_KEY);
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+          } catch {}
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === AUTH_STORAGE_KEY) {
+        if (!e.newValue) {
+          try { sessionStorage.removeItem(AUTH_STORAGE_KEY); } catch {}
+        }
         syncUser();
       }
     };

@@ -22,7 +22,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { name, email, phone, category, message, project_budget } = body;
+    const { name, email, phone, category, message, project_budget, website, honeypot } = body;
+
+    // Anti-spam Honeypot: Drop bot submissions silently without alerting attacker
+    if (website || honeypot) {
+      console.warn('[LEADS HONEYPOT] Bot submission trapped and dropped silently.');
+      return NextResponse.json({
+        success: true,
+        message: 'Inquiry received. Our dispatch desk will contact you within 2 business hours.',
+      });
+    }
 
     if (!name || !email || !phone) {
       return NextResponse.json(
@@ -31,11 +40,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // L4: Enforce max field lengths
+    // L4: Enforce max field lengths and format validation
     const trimmedName = String(name).trim();
     const trimmedEmail = String(email).trim().toLowerCase();
     const trimmedPhone = String(phone).trim();
     const trimmedMessage = message ? String(message).trim() : null;
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      return NextResponse.json({ error: 'Please provide a valid email address.' }, { status: 400 });
+    }
+
+    const cleanDigits = trimmedPhone.replace(/\D/g, '');
+    if (cleanDigits.length < 8 || cleanDigits.length > 15) {
+      return NextResponse.json({ error: 'Please provide a valid phone number.' }, { status: 400 });
+    }
 
     if (trimmedName.length > 100) {
       return NextResponse.json({ error: 'Name must not exceed 100 characters.' }, { status: 400 });
@@ -64,26 +82,23 @@ export async function POST(request: NextRequest) {
     };
 
     if (supabase && typeof supabase.from === 'function') {
-      const { data, error } = await supabase.from('leads').insert([leadData]).select();
+      const { error } = await supabase.from('leads').insert([leadData]);
       if (error) {
-        console.error('Error inserting lead to Supabase:', error);
+        console.error('Error inserting lead to Supabase:', error?.message || 'DB Error');
         return NextResponse.json({
           success: true,
-          message: 'Inquiry received successfully (dev mode).',
-          lead: leadData,
+          message: 'Inquiry received successfully.',
         });
       }
       return NextResponse.json({
         success: true,
         message: 'Inquiry received. Our dispatch desk will contact you within 2 business hours.',
-        lead: data?.[0] || leadData,
       });
     }
 
     return NextResponse.json({
       success: true,
       message: 'Inquiry recorded.',
-      lead: leadData,
     });
   } catch (err: unknown) {
     console.error('Lead submission exception:', err);

@@ -141,15 +141,17 @@ export default function FreelancerDashboard() {
               >
                 Start Creator Onboarding →
               </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentUser(PRESET_USERS.freelancer);
-                }}
-                className="px-6 py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl border border-blue-200 transition-all cursor-pointer"
-              >
-                Access Vetted Station (Demo) →
-              </button>
+              {process.env.NODE_ENV !== 'production' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentUser(PRESET_USERS.freelancer);
+                  }}
+                  className="px-6 py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl border border-blue-200 transition-all cursor-pointer"
+                >
+                  Access Vetted Station (Demo) →
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => logout()}
@@ -360,7 +362,7 @@ export default function FreelancerDashboard() {
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-[10px] uppercase tracking-widest text-[#3B82F6] font-bold">
-                          ROSTER IDENTITY
+                          CREATOR PROFILE
                         </span>
                       </div>
                       <h1 className="text-3xl font-extrabold tracking-tight text-white">
@@ -371,9 +373,9 @@ export default function FreelancerDashboard() {
                       </p>
                     </div>
                     <div className="mt-8 pt-4 border-t border-white/10 space-y-1">
-                      <div className="text-[10px] uppercase text-[#86868B] font-semibold">ROSTER SPECIALIZATION</div>
+                      <div className="text-[10px] uppercase text-[#86868B] font-semibold">PRIMARY SKILLS</div>
                       <div className="text-xs uppercase text-white font-bold bg-white/10 px-3 py-1 rounded-lg inline-block">
-                        Senior Colorist &amp; Assembly
+                        Video Editor &amp; Colorist
                       </div>
                     </div>
                   </div>
@@ -386,30 +388,30 @@ export default function FreelancerDashboard() {
                           <span className="text-[11px] uppercase text-[#86868B] font-semibold">
                             TOTAL EARNINGS
                           </span>
-                          <span className="text-emerald-600 text-xs font-bold">Disbursed</span>
+                          <span className="text-emerald-600 text-xs font-bold">Paid Out</span>
                         </div>
                         <div className="text-3xl sm:text-4xl font-extrabold text-[#1D1D1F] leading-none">₹48,500</div>
-                        <div className="text-xs text-[#86868B] mt-2">Direct NEFT Settlements</div>
+                        <div className="text-xs text-[#86868B] mt-2">Bank Transfers</div>
                       </div>
 
                       <div className="rounded-2xl p-5 bg-[#F5F5F7] border border-[#E5E5E7]">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[11px] uppercase text-[#86868B] font-semibold">
-                            ACTIVE LOAD
+                            ACTIVE PROJECTS
                           </span>
                           <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
                         </div>
                         <div className="text-3xl sm:text-4xl font-extrabold text-[#3B82F6] leading-none">02</div>
-                        <div className="text-xs text-[#86868B] mt-2">Projects In Flight</div>
+                        <div className="text-xs text-[#86868B] mt-2">In Progress</div>
                       </div>
 
                       <div className="rounded-2xl p-5 bg-[#F5F5F7] border border-[#E5E5E7]">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] uppercase text-[#86868B] font-semibold">HEALTH SCORE</span>
-                          <span className="text-emerald-600 text-xs font-bold">Optimal</span>
+                          <span className="text-[11px] uppercase text-[#86868B] font-semibold">PERFORMANCE RATING</span>
+                          <span className="text-emerald-600 text-xs font-bold">Excellent</span>
                         </div>
                         <div className="text-3xl sm:text-4xl font-extrabold text-emerald-600 leading-none">99.4</div>
-                        <div className="text-xs text-[#86868B] mt-2">0 Flagged Milestones</div>
+                        <div className="text-xs text-[#86868B] mt-2">100% On-Time Delivery</div>
                       </div>
                     </div>
                   </div>
@@ -420,7 +422,7 @@ export default function FreelancerDashboard() {
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-[-0.03em]">
-                    Active Pipeline &amp; Progress Protocol
+                    Active Projects &amp; Daily Updates
                   </h2>
                 </div>
 
@@ -430,34 +432,34 @@ export default function FreelancerDashboard() {
                     <div>
                       <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-3">
                         <span className="text-xs font-bold bg-[#3B82F6]/10 text-[#3B82F6] px-2.5 py-0.5 rounded-full">
-                          Current Commitment
+                          Current Project
                         </span>
-                        <span className="text-xs font-bold text-amber-600">Buffer: 48h Left</span>
+                        <span className="text-xs font-bold text-amber-600">48 Hours Remaining</span>
                       </div>
                       <div className="mt-4">
                         <div className="text-[11px] uppercase text-[#86868B] font-semibold">
-                          Project Code // Brief
+                          Project Details
                         </div>
                         <h3 className="text-base font-bold text-[#1D1D1F] mt-1 leading-snug">
-                          Job #AP-8910 // DTC 60s Brand Cut
+                          Project #AP-8910: 60s Brand Video
                         </h3>
                         <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                          Grading Arri LogC3 plates, clean skin pass, dual aspect ratio export (16:9 &amp; 9:16). Complete conforming required.
+                          Color grading, sound sync, and export in 16:9 and 9:16 formats.
                         </p>
                       </div>
 
                       {/* Workspace Asset Ingest specs */}
                       <div className="mt-5 rounded-xl p-4 bg-[#F5F5F7] border border-[#E5E5E7] space-y-2">
                         <div className="text-xs font-bold text-[#1D1D1F] flex justify-between">
-                          <span>Ingest Vault Status</span>
+                          <span>Project Files</span>
                           <span className="text-[#3B82F6]">Ready (124 GB)</span>
                         </div>
                         <div className="w-full bg-white h-2 rounded-full overflow-hidden">
                           <div className="bg-[#3B82F6] h-full w-full rounded-full"></div>
                         </div>
                         <div className="flex justify-between text-[11px] text-[#86868B]">
-                          <span>DaVinci Project Archive</span>
-                          <span>Studio Master Archive</span>
+                          <span>Raw Footage &amp; Assets</span>
+                          <span>Export Folder</span>
                         </div>
                       </div>
                     </div>
@@ -470,11 +472,11 @@ export default function FreelancerDashboard() {
                         rel="noopener noreferrer"
                         className="w-full flex items-center justify-center gap-2 text-xs font-semibold py-3 px-4 bg-[#1D1D1F] hover:bg-black text-white rounded-xl transition-all"
                       >
-                        <span>Open Scoped Drive Folder (Expires in 5 Days)</span>
+                        <span>Open Project Files in Google Drive</span>
                         <span>↗</span>
                       </a>
                       <p className="text-[11px] text-center text-[#86868B]">
-                        Scoped drive access active for project duration.
+                        Google Drive access is available for the duration of this project.
                       </p>
                     </div>
                   </div>
@@ -484,23 +486,23 @@ export default function FreelancerDashboard() {
                     <div>
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#F5F5F7] pb-3 gap-2">
                         <span className="text-sm font-bold text-[#1D1D1F]">
-                          Daily Milestone Check-In Panel
+                          Daily Progress Update
                         </span>
                         <span className="text-xs font-semibold bg-[#F5F5F7] text-[#86868B] px-2.5 py-0.5 rounded-full border border-[#E5E5E7]">
-                          Window Closes: 23:59 IST
+                          Due by 11:59 PM IST
                         </span>
                       </div>
 
                       {/* Status Stage Selectors */}
                       <div className="mt-5">
                         <label className="text-xs font-semibold text-[#1D1D1F] block mb-2">
-                          CURRENT CADENCE STAGE
+                          SELECT CURRENT STAGE
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           {[
                             { id: 1, label: 'STARTED' },
-                            { id: 2, label: 'ROUGH CUT SYNC' },
-                            { id: 3, label: 'COLOR PASS' }
+                            { id: 2, label: 'ROUGH CUT' },
+                            { id: 3, label: 'COLOR & AUDIO' }
                           ].map((stage) => (
                             <button
                               key={stage.id}
@@ -522,7 +524,7 @@ export default function FreelancerDashboard() {
                       <div className="mt-5 space-y-1.5">
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-semibold text-[#1D1D1F]">
-                            MILESTONE COMPLETION PERCENTAGE
+                            PROJECT PROGRESS
                           </label>
                           <span className="text-sm font-extrabold text-[#3B82F6]">
                             {progressPercent}%
@@ -537,22 +539,22 @@ export default function FreelancerDashboard() {
                           className="w-full h-2 bg-[#F5F5F7] rounded-full accent-[#3B82F6] cursor-pointer"
                         />
                         <div className="flex justify-between text-[11px] text-[#86868B]">
-                          <span>0% Ingest</span>
-                          <span>50% First Pass</span>
-                          <span>100% Export Master</span>
+                          <span>0% Not Started</span>
+                          <span>50% Halfway Done</span>
+                          <span>100% Ready for Export</span>
                         </div>
                       </div>
 
                       {/* Notes Field */}
                       <div className="mt-5">
                         <label className="text-xs font-semibold text-[#1D1D1F] block mb-1.5">
-                          DISPATCH PROGRESS MEMO / TECHNICAL BLOCKERS
+                          DAILY PROGRESS NOTES / QUESTIONS
                         </label>
                         <textarea
                           rows={2}
                           value={dailyNotes}
                           onChange={(e) => setDailyNotes(e.target.value)}
-                          placeholder="State current conform status, node tree structure, or dependencies..."
+                          placeholder="Write a quick update on today's progress or any questions..."
                           className="w-full bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] p-3 text-xs text-[#1D1D1F] focus:outline-none focus:bg-white focus:border-[#3B82F6] transition-all resize-none"
                         ></textarea>
                       </div>
@@ -561,7 +563,7 @@ export default function FreelancerDashboard() {
                     <div className="mt-5 pt-4 border-t border-[#F5F5F7] flex items-center justify-between">
                       {pulseSubmitted && (
                         <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                          ✓ Progress logged to studio ledger.
+                          ✓ Progress update submitted successfully.
                         </span>
                       )}
                       <button
@@ -569,7 +571,7 @@ export default function FreelancerDashboard() {
                         onClick={handleSubmitPulse}
                         className="ml-auto w-full sm:w-auto text-xs font-semibold py-2.5 px-5 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl transition-all cursor-pointer shadow-sm"
                       >
-                        Submit Daily Pulse
+                        Submit Progress Update
                       </button>
                     </div>
                   </div>
@@ -580,10 +582,10 @@ export default function FreelancerDashboard() {
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-[-0.03em]">
-                    Available Job Dispatch Slate
+                    Available Projects
                   </h2>
                   <span className="text-xs font-semibold text-[#86868B]">
-                    {2 - acceptedJobs.length - declinedJobs.length} Offers Pending
+                    {2 - acceptedJobs.length - declinedJobs.length} Available Projects
                   </span>
                 </div>
 
@@ -591,9 +593,9 @@ export default function FreelancerDashboard() {
                   {2 - acceptedJobs.length - declinedJobs.length <= 0 ? (
                     <div className="col-span-full bg-white rounded-2xl border border-dashed border-[#E5E5E7] p-12 text-center space-y-3">
                       <div className="text-3xl">📥</div>
-                      <h3 className="text-base font-bold text-[#1D1D1F]">No dispatch offers pending</h3>
+                      <h3 className="text-base font-bold text-[#1D1D1F]">No new projects right now</h3>
                       <p className="text-xs text-[#86868B] max-w-sm mx-auto">
-                        New client ingest slates matching your editorial specialization will appear here as orders enter production.
+                        New projects matching your skills will appear here as soon as they are posted.
                       </p>
                     </div>
                   ) : (
@@ -606,10 +608,10 @@ export default function FreelancerDashboard() {
                         <div className="bg-[#1D1D1F] text-white p-5 flex items-center justify-between">
                           <div>
                             <span className="text-[10px] text-[#3B82F6] font-bold tracking-wider block uppercase">
-                              CLIENT IDENTITY BLINDED
+                              DIRECT FROM CLIENT
                             </span>
                             <h3 className="text-sm font-bold tracking-tight mt-0.5 text-white">
-                              Job #AP-9042 // 3–5 Min Luxury Wedding Highlight
+                              Project #AP-9042: 3–5 Min Wedding Highlight
                             </h3>
                           </div>
                           <span className="px-2.5 py-0.5 bg-amber-500/20 text-amber-300 text-[10px] font-bold rounded-full">
@@ -622,13 +624,13 @@ export default function FreelancerDashboard() {
                           <div className="grid grid-cols-2 gap-3 rounded-xl p-3 bg-[#F5F5F7] border border-[#E5E5E7]">
                             <div>
                               <div className="text-[10px] uppercase text-[#86868B] font-semibold">
-                                INTERNAL DEADLINE
+                                YOUR DEADLINE
                               </div>
-                              <div className="text-xs font-bold text-amber-600">4 Days Buffer</div>
+                              <div className="text-xs font-bold text-amber-600">4 Days Left</div>
                             </div>
                             <div>
                               <div className="text-[10px] uppercase text-[#86868B] font-semibold">
-                                CLIENT SLA DEADLINE
+                                CLIENT DUE DATE
                               </div>
                               <div className="text-xs font-bold text-[#1D1D1F]">8 Days Total</div>
                             </div>
@@ -636,24 +638,24 @@ export default function FreelancerDashboard() {
 
                           <div className="space-y-1.5">
                             <div className="text-[11px] uppercase text-[#86868B] font-semibold">
-                              Deliverable Blueprint
+                              Project Requirements
                             </div>
                             <ul className="space-y-1 text-xs text-[#1D1D1F]">
                               <li className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Source Codec:</strong> 4K DCI Master (Sony FX6 S-Cinetone)</span>
+                                <span><strong>Source:</strong> 4K Multi-cam Footage</span>
                               </li>
                               <li className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Deliverable:</strong> DaVinci Resolve Project Archive (.dra) + Masters</span>
+                                <span><strong>Deliverable:</strong> Edited Video + Project File</span>
                               </li>
                               <li className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Coverage:</strong> 3 Camera Angles (Gimbal, Tele, Aerial Drone)</span>
+                                <span><strong>Angles:</strong> 3 Cameras (Gimbal, Close-up, Drone)</span>
                               </li>
                               <li className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Sound:</strong> Licensed Instrumental Stem Pack included</span>
+                                <span><strong>Audio:</strong> Music track and audio sync included</span>
                               </li>
                             </ul>
                           </div>
@@ -661,12 +663,12 @@ export default function FreelancerDashboard() {
                           {/* Creator Project Payout Box */}
                           <div className="rounded-xl p-4 bg-[#F5F5F7] border border-[#E5E5E7] flex items-center justify-between text-[#1D1D1F]">
                             <div>
-                              <div className="text-[10px] uppercase font-bold text-[#86868B]">PROJECT PAYOUT</div>
+                              <div className="text-[10px] uppercase font-bold text-[#86868B]">PAYMENT FOR THIS PROJECT</div>
                               <div className="text-2xl font-extrabold text-[#1D1D1F] mt-0.5">₹4,533</div>
                             </div>
                             <div className="text-right text-[11px]">
-                              <div className="text-[#86868B]">Direct NEFT Transfer</div>
-                              <div className="text-emerald-600 font-bold">Net Settlement: ₹4,488</div>
+                              <div className="text-[#86868B]">Bank Transfer</div>
+                              <div className="text-emerald-600 font-bold">You Receive: ₹4,488</div>
                             </div>
                           </div>
                         </div>
@@ -676,7 +678,7 @@ export default function FreelancerDashboard() {
                       <div className="p-6 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {acceptedJobs.includes('AP-9042') ? (
                           <div className="col-span-2 p-3 bg-emerald-50 text-emerald-700 text-center text-xs font-bold rounded-xl border border-emerald-200">
-                            Claimed ✓ Ingest Assets Active
+                            Claimed ✓ Project Files Ready
                           </div>
                         ) : (
                           <>
@@ -685,14 +687,14 @@ export default function FreelancerDashboard() {
                               onClick={() => handleAcceptJob('AP-9042')}
                               className="w-full text-xs font-semibold py-3 px-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl transition-all cursor-pointer shadow-sm"
                             >
-                              Accept &amp; Access Drive
+                              Accept Project &amp; Open Files
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDeclineJob('AP-9042')}
                               className="w-full text-xs font-semibold py-3 px-4 bg-[#F5F5F7] hover:bg-[#E5E2E1] text-[#1D1D1F] rounded-xl border border-[#E5E5E7] transition-all cursor-pointer"
                             >
-                              Decline Slate
+                              Decline Project
                             </button>
                           </>
                         )}
@@ -708,10 +710,10 @@ export default function FreelancerDashboard() {
                         <div className="bg-[#1D1D1F] text-white p-5 flex items-center justify-between">
                           <div>
                             <span className="text-[10px] text-[#3B82F6] font-bold tracking-wider block uppercase">
-                              CLIENT IDENTITY BLINDED
+                              DIRECT FROM CLIENT
                             </span>
                             <h3 className="text-sm font-bold tracking-tight mt-0.5 text-white">
-                              Job #AP-9048 // 30s UGC Hooks (x3 Variations)
+                              Project #AP-9048: 30s Social Media Reels (3 Hooks)
                             </h3>
                           </div>
                           <span className="px-2.5 py-0.5 bg-[#3B82F6]/20 text-[#3B82F6] text-[10px] font-bold rounded-full">
@@ -724,13 +726,13 @@ export default function FreelancerDashboard() {
                           <div className="grid grid-cols-2 gap-3 rounded-xl p-3 bg-[#F5F5F7] border border-[#E5E5E7]">
                             <div>
                               <div className="text-[10px] uppercase text-[#86868B] font-semibold">
-                                INTERNAL DEADLINE
+                                YOUR DEADLINE
                               </div>
-                              <div className="text-xs font-bold text-[#3B82F6]">2 Days Buffer</div>
+                              <div className="text-xs font-bold text-[#3B82F6]">2 Days Left</div>
                             </div>
                             <div>
                               <div className="text-[10px] uppercase text-[#86868B] font-semibold">
-                                CLIENT SLA DEADLINE
+                                CLIENT DUE DATE
                               </div>
                               <div className="text-xs font-bold text-[#1D1D1F]">5 Days Total</div>
                             </div>
@@ -738,24 +740,24 @@ export default function FreelancerDashboard() {
 
                           <div className="space-y-1.5">
                             <div className="text-[11px] uppercase text-[#86868B] font-semibold">
-                              Deliverable Blueprint
+                              Project Requirements
                             </div>
                             <ul className="space-y-1 text-xs text-[#1D1D1F]">
                               <li className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Source Codec:</strong> 4K H.265 / High-Bitrate 60fps Vertical (9:16)</span>
+                                <span><strong>Source:</strong> 4K 60fps Vertical Video (9:16)</span>
                               </li>
                               <li className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Deliverable:</strong> Premiere Pro / FCP XML + 3 Clean Masters</span>
+                                <span><strong>Deliverable:</strong> 3 Final Videos + Project Files</span>
                               </li>
                               <li className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Coverage:</strong> Talking Head + B-Roll Overlays + Sound FX</span>
+                                <span><strong>Style:</strong> Talking head with B-roll overlays &amp; sound effects</span>
                               </li>
                               <li className="flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Typography:</strong> Dynamic kinetic subtitles baked in (Clean Style)</span>
+                                <span><strong>Captions:</strong> Clean animated subtitles included</span>
                               </li>
                             </ul>
                           </div>
@@ -763,12 +765,12 @@ export default function FreelancerDashboard() {
                           {/* Creator Project Payout Box */}
                           <div className="rounded-xl p-4 bg-[#F5F5F7] border border-[#E5E5E7] flex items-center justify-between text-[#1D1D1F]">
                             <div>
-                              <div className="text-[10px] uppercase font-bold text-[#86868B]">PROJECT PAYOUT</div>
+                              <div className="text-[10px] uppercase font-bold text-[#86868B]">PAYMENT FOR THIS PROJECT</div>
                               <div className="text-2xl font-extrabold text-[#1D1D1F] mt-0.5">₹3,380</div>
                             </div>
                             <div className="text-right text-[11px]">
-                              <div className="text-[#86868B]">Direct NEFT Transfer</div>
-                              <div className="text-emerald-600 font-bold">Net Settlement: ₹3,346</div>
+                              <div className="text-[#86868B]">Bank Transfer</div>
+                              <div className="text-emerald-600 font-bold">You Receive: ₹3,346</div>
                             </div>
                           </div>
                         </div>
@@ -778,7 +780,7 @@ export default function FreelancerDashboard() {
                       <div className="p-6 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {acceptedJobs.includes('AP-9048') ? (
                           <div className="col-span-2 p-3 bg-emerald-50 text-emerald-700 text-center text-xs font-bold rounded-xl border border-emerald-200">
-                            Claimed ✓ Ingest Assets Active
+                            Claimed ✓ Project Files Ready
                           </div>
                         ) : (
                           <>
@@ -787,14 +789,14 @@ export default function FreelancerDashboard() {
                               onClick={() => handleAcceptJob('AP-9048')}
                               className="w-full text-xs font-semibold py-3 px-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl transition-all cursor-pointer shadow-sm"
                             >
-                              Accept &amp; Access Drive
+                              Accept Project &amp; Open Files
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDeclineJob('AP-9048')}
                               className="w-full text-xs font-semibold py-3 px-4 bg-[#F5F5F7] hover:bg-[#E5E2E1] text-[#1D1D1F] rounded-xl border border-[#E5E5E7] transition-all cursor-pointer"
                             >
-                              Decline Slate
+                              Decline Project
                             </button>
                           </>
                         )}
@@ -818,10 +820,10 @@ export default function FreelancerDashboard() {
             <div className="flex items-center justify-between border-b border-[#E5E5E7] pb-4">
               <div>
                 <span className="text-[10px] font-bold tracking-widest text-[#3B82F6] uppercase">
-                  LEGAL COMPLIANCE GATEWAY
+                  CREATOR AGREEMENT
                 </span>
                 <h3 className="text-lg font-extrabold text-[#1D1D1F] mt-0.5">
-                  Master Services Agreement &amp; NDA (v1.0)
+                  Creator Agreement &amp; Non-Disclosure
                 </h3>
               </div>
               <button
@@ -835,16 +837,16 @@ export default function FreelancerDashboard() {
 
             <div className="max-h-60 overflow-y-auto text-xs text-[#86868B] space-y-3 p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] leading-relaxed">
               <p>
-                <strong className="text-[#1D1D1F]">1. Non-Disclosure &amp; Footage Confidentiality:</strong> All raw media proxies, camera rushes, color grade look-up tables (LUTs), audio stems, and project files accessed through Artsy Production ingest drives are confidential client property. Any unauthorized download mirror, public showcase, or circulation before official public release is strictly prohibited.
+                <strong className="text-[#1D1D1F]">1. Client Privacy &amp; Footage Protection:</strong> All project files, raw videos, and assets are private and confidential. You agree not to share, leak, or post any client files without permission.
               </p>
               <p>
-                <strong className="text-[#1D1D1F]">2. Independent Contractor &amp; IP Assignment:</strong> Editors operate as vetted independent creative contractors. All final approved cut deliverables and timeline project archives are assigned in full to Artsy Production for release to the designated client.
+                <strong className="text-[#1D1D1F]">2. Creator Work Delivery:</strong> Completed and approved video edits are delivered to Artsy Production for final delivery to the client.
               </p>
               <p>
-                <strong className="text-[#1D1D1F]">3. Timely Direct Payouts:</strong> Payouts are credited directly to your verified bank account via direct NEFT upon client milestone completion and signoff, subject to applicable statutory withholding.
+                <strong className="text-[#1D1D1F]">3. Guaranteed Payouts:</strong> Earnings are transferred directly to your bank account upon project completion and client signoff.
               </p>
               <p>
-                <strong className="text-[#1D1D1F]">4. Non-Compete:</strong> Creator agrees not to solicit, contact, or engage with Artsy clients outside the platform for 90 days following project completion. Violation may result in account suspension, forfeiture of pending payouts, and legal action.
+                <strong className="text-[#1D1D1F]">4. Non-Compete:</strong> You agree not to privately solicit or contact Artsy clients directly outside our platform.
               </p>
             </div>
 
@@ -856,7 +858,7 @@ export default function FreelancerDashboard() {
                 className="w-4 h-4 mt-0.5 accent-[#3B82F6] cursor-pointer shrink-0"
               />
               <span className="text-xs text-[#1D1D1F] font-medium leading-normal">
-                I have read and agree to the <strong>Master Services Agreement, IP Assignment, and Non-Disclosure Terms (v1.0)</strong> on behalf of my studio.
+                I have read and agree to the <strong>Creator Agreement and Non-Disclosure Terms</strong>.
               </span>
             </label>
 
@@ -867,7 +869,7 @@ export default function FreelancerDashboard() {
                 disabled={!ndaChecked}
                 className="flex-1 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white text-xs font-semibold py-3 px-4 rounded-xl transition-all cursor-pointer shadow-sm text-center"
               >
-                Sign Agreement &amp; Unlock Slates
+                Sign Agreement &amp; Continue
               </button>
               <button
                 type="button"

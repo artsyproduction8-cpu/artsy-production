@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { calculateFinancialWaterfall } from '@/lib/financial/engine';
+import { createErrorResponse } from '@/lib/api-response';
 
 /**
  * Payment Reconciliation Cron (§3.9)
@@ -187,10 +188,6 @@ export async function GET(request: NextRequest) {
       mode: supabaseAdmin ? 'live_supabase' : 'mock_offline',
     });
   } catch (err: any) {
-    console.error('[RECONCILIATION CRON ERROR]:', err);
-    return NextResponse.json(
-      { success: false, error: err.message || 'Internal cron error' },
-      { status: 500 }
-    );
+    return createErrorResponse(err, 'Automated payment reconciliation encountered an error', 500);
   }
 }

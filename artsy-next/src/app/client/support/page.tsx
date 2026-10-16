@@ -7,28 +7,16 @@ import ClientSidebar from '../components/ClientSidebar';
 
 const FAQ_ITEMS = [
   {
-    q: 'What is the turnaround time for wedding film and commercial edits?',
-    a: 'Standard wedding highlights and commercial cuts are delivered within 5 to 7 business days from ingest completion. Rush orders (48-hour turnarounds) are expedited through dedicated lead editors with priority ingest pipeline allocation.'
+    q: 'What is the delivery time for wedding and commercial video edits?',
+    a: 'Standard video edits are typically delivered within 5 to 7 business days after we receive your footage. If you need urgent turnaround, 48-hour rush delivery is also available.'
   },
   {
-    q: 'How does the 2-round revision policy work?',
-    a: 'Every project includes 2 complimentary revision cycles within 7 days of master preview. Clients provide frame-accurate, timestamped feedback directly via our timestamped player. Once submitted, revisions are addressed and turned around within 48 hours.'
+    q: 'How do revision rounds work?',
+    a: 'Every project includes free revision rounds. You can watch your video draft in the Review section, pause at any second, and leave a note. Your editor will make the changes and share an updated version within 48 hours.'
   },
   {
-    q: 'How are raw footage and master files retained on Artsy servers?',
-    a: 'Under Artsy statutory retention policy, raw footage is retained for 15 days post-approval to allow quick pickups or alternative exports. Delivered master exports are archived for 30 days before automated WORM lifecycle purging. Permanent cold storage is available upon request.'
-  },
-  {
-    q: 'Can I request an NDA or customized usage license for enterprise assets?',
-    a: 'Yes. All creators and studio editors are bound by strict bilateral non-disclosure agreements before being provisioned workspace access. Custom enterprise NDAs and bespoke IP assignment deeds can be countersigned by our legal desk prior to media ingest.'
-  },
-  {
-    q: 'How does payment and GST invoicing work?',
-    a: 'Payments are secured via Razorpay escrow-style vault upon booking. We issue GST Rule 46 compliant tax invoices under SAC 999613 (Audio-Visual Post-Production Services) with 18% GST (CGST/SGST for intra-state or IGST for inter-state) accessible in your Tax Invoices dashboard.'
-  },
-  {
-    q: 'What happens if I am not satisfied with the delivered creative cut?',
-    a: 'If a project does not meet verified brief requirements after 2 revisions, our Creative Director steps in for an executive review. If resolution is not reached, our 100% Milestone Quality Guarantee enables reassignment to a senior editor or statutory escrow refund.'
+    q: 'How long are my video files stored?',
+    a: 'Your raw video footage is kept safely for 15 days after you approve the final video, and your finished master videos are stored for 30 days. You can easily download your files anytime during this period.'
   }
 ];
 
@@ -48,18 +36,11 @@ export default function ClientSupportPage() {
           <div className="p-6 md:p-8 space-y-8 max-w-6xl mx-auto">
             {/* Header */}
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Link href="/client" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
-                  Dashboard
-                </Link>
-                <span className="text-xs text-[#86868B]">/</span>
-                <span className="text-xs font-bold text-[#1D1D1F]">Support</span>
-              </div>
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
                 We&apos;re here to help
               </h1>
               <p className="text-sm text-[#86868B] mt-1">
-                Direct producer assistance, statutory grievance redressal, and frequently asked production questions.
+                Need help with your project, revisions, or video downloads? Reach out to us anytime.
               </p>
             </div>
 
@@ -76,12 +57,12 @@ export default function ClientSupportPage() {
                     <div>
                       <h2 className="text-sm font-bold text-[#1D1D1F]">WhatsApp Live Support</h2>
                       <span className="inline-block text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                        Active • Instant Response
+                        Active • Fast Response
                       </span>
                     </div>
                   </div>
                   <p className="text-xs text-[#86868B] mb-4">
-                    Direct communication with your designated studio production supervisor for urgent cuts, ingest queries, and revision requests.
+                    Chat directly with our team on WhatsApp for quick project updates, questions, or change requests.
                   </p>
                   <a
                     href={`https://wa.me/${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || '').replace(/\D/g, '')}`}
@@ -107,7 +88,7 @@ export default function ClientSupportPage() {
                     </div>
                   </div>
                   <p className="text-xs text-[#86868B] mb-3">
-                    For contractual inquiries, large-scale drive shipments, and custom multi-project enterprise invoicing.
+                    Email us for questions about your billing, tax invoices, contracts, or custom video requests.
                   </p>
                   <a
                     href="mailto:artsyproduction8@gmail.com"
@@ -117,29 +98,22 @@ export default function ClientSupportPage() {
                   </a>
                 </div>
 
-                {/* Grievance Officer Card (Statutory IT Rules 2021 / DPDP Act) */}
+                {/* Grievance Card */}
                 <div className="bg-white border border-[#E5E5E7] rounded-2xl p-6 shadow-xs space-y-3">
                   <div className="border-b border-[#F5F5F7] pb-2">
                     <h2 className="text-xs font-bold uppercase tracking-wider text-[#86868B]">
-                      Statutory Grievance Redressal
+                      Office Address
                     </h2>
-                    <span className="text-[11px] text-[#86868B]">Rule 3(2) IT Rules 2021 & DPDP Act §10</span>
                   </div>
                   <div className="text-xs space-y-1.5 text-[#1D1D1F]">
                     <div>
-                      <span className="text-[#86868B]">Grievance Officer:</span> <strong>Rohan Singhania</strong>
-                    </div>
-                    <div>
-                      <span className="text-[#86868B]">Designation:</span> <span>Head of Legal & Compliance</span>
-                    </div>
-                    <div>
-                      <span className="text-[#86868B]">Statutory Email:</span>{' '}
+                      <span className="text-[#86868B]">Email:</span>{' '}
                       <a href="mailto:artsyproduction8@gmail.com" className="text-[#3B82F6] font-semibold hover:underline">
                         artsyproduction8@gmail.com
                       </a>
                     </div>
                     <div>
-                      <span className="text-[#86868B]">Registered Office:</span>{' '}
+                      <span className="text-[#86868B]">Address:</span>{' '}
                       <span className="text-[#1D1D1F]">Artsy Production, Juinagar Railway Station, Navi Mumbai, Maharashtra 400705, India</span>
                     </div>
                   </div>
@@ -152,7 +126,7 @@ export default function ClientSupportPage() {
                   <div className="border-b border-[#F5F5F7] pb-3">
                     <h2 className="text-base font-bold text-[#1D1D1F]">Frequently Asked Questions</h2>
                     <p className="text-xs text-[#86868B] mt-0.5">
-                      Everything you need to know about our post-production workflows
+                      Answers to common questions about our editing process
                     </p>
                   </div>
 

@@ -204,7 +204,7 @@ export default function FreelancerPendingApprovalPage() {
                   3
                 </span>
                 <span className="leading-snug">
-                  On approval, you get access to the Creator Station and start receiving job offers
+                  On approval, you get access to the Creator Portal and start receiving job offers
                 </span>
               </li>
             </ol>

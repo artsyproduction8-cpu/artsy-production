@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { createErrorResponse } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,7 @@ export async function GET(
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+    return createErrorResponse('Database unavailable', 'Database service is currently unavailable', 503);
   }
 
   try {
@@ -67,8 +68,7 @@ export async function GET(
         samples: samples || [],
       },
     });
-  } catch (err: any) {
-    console.error('Error fetching creator profile:', err);
-    return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
+  } catch (err: unknown) {
+    return createErrorResponse(err, 'Failed to fetch creator profile', 500);
   }
 }

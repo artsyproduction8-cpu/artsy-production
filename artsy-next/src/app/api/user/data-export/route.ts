@@ -15,6 +15,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing userId parameter' }, { status: 400 });
     }
 
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId);
+    if (!isUUID) {
+      return NextResponse.json({ error: 'Invalid userId format' }, { status: 400 });
+    }
+
     // 1. Authenticate caller identity
     const authUser = await getAuthenticatedUser(request);
     if (!authUser) {
@@ -33,7 +38,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (isAdmin && !isOwner) {
-      console.log(`[DPDP AUDIT] Admin ${authUser.id} exported data portfolio for user ${userId}`);
+      console.log(`[DPDP AUDIT] Admin ${authUser.id} exported data portfolio for user [REDACTED]`);
     }
 
     if (supabase) {

@@ -6,9 +6,11 @@ import { useEffect, useState, Suspense } from 'react';
 import { generateQuoteSnapshot } from '@/lib/pricing/engine';
 import { generateLedgerEntries, calculateFinancialWaterfall } from '@/lib/financial/engine';
 import { logProjectStart, logStatusChange } from '@/lib/activity/logger';
+import { useAuth } from '@/lib/auth';
 
 function CheckoutContent() {
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
 
   const [bookingData, setBookingData] = useState<any>(null);
   const [clientName, setClientName] = useState('');
@@ -36,6 +38,14 @@ function CheckoutContent() {
     }
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      if (!clientName && user.full_name) setClientName(user.full_name);
+      if (!clientEmail && user.email) setClientEmail(user.email);
+      if (!clientPhone && user.phone) setClientPhone(user.phone);
+    }
+  }, [user]);
+
   const handlePayAndConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
@@ -51,9 +61,10 @@ function CheckoutContent() {
           serviceId: bookingData?.serviceKey || 'wedding_highlight',
           amount: amountPaise,
           requirements: bookingData?.requirements || {},
-          clientPhone,
-          clientName,
-          clientEmail,
+          clientPhone: clientPhone || user?.phone || '',
+          clientName: clientName || user?.full_name || 'Client',
+          clientEmail: clientEmail || user?.email || '',
+          client_id: user?.id || null,
           preferred_creator_id: bookingData?.preferredCreatorId || bookingData?.preferred_creator_id || null,
         }),
       });
@@ -252,9 +263,15 @@ function CheckoutContent() {
               <h3 className="text-lg font-bold text-[#0F172A]">
                 1. Project Owner & WhatsApp Alerts
               </h3>
-              <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                OTP Verified
-              </span>
+              {isAuthenticated ? (
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                  ✓ Verified Account
+                </span>
+              ) : (
+                <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                  OTP Verified
+                </span>
+              )}
             </div>
 
             <form onSubmit={handlePayAndConfirm} className="space-y-5">
@@ -274,11 +291,11 @@ function CheckoutContent() {
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                  WhatsApp Phone Number (For Status Alerts & OTP)
+                  WhatsApp Phone Number {isAuthenticated ? '(Optional if on file)' : '(For Status Alerts & OTP)'}
                 </label>
                 <input
                   type="tel"
-                  required
+                  required={!isAuthenticated}
                   value={clientPhone}
                   onChange={(e) => setClientPhone(e.target.value)}
                   placeholder="+91 98765 43210"

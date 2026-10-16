@@ -13,16 +13,16 @@ export default function FreelancerOnboarding() {
   const [showreelUrl, setShowreelUrl] = useState('');
   const [philosophy, setPhilosophy] = useState('');
   const [software, setSoftware] = useState<string[]>([
-    'DAVINCI RESOLVE STUDIO',
-    'ADOBE PREMIERE PRO'
+    'DaVinci Resolve Studio',
+    'Adobe Premiere Pro'
   ]);
-  const [experience, setExperience] = useState('2 - 4 Years (Mid-Level Independent)');
-  const [capacity, setCapacity] = useState('20 - 30 Hours / Week (2 Commercial Projects)');
-  const [languages, setLanguages] = useState<string[]>(['HINDI', 'ENGLISH']);
+  const [experience, setExperience] = useState('2 - 4 Years (Intermediate)');
+  const [capacity, setCapacity] = useState('20 - 30 Hours / Week (Part-Time, ~2 projects)');
+  const [languages, setLanguages] = useState<string[]>(['Hindi', 'English']);
   const [reels, setReels] = useState([
-    { type: 'COMMERCIAL / BRAND UGC', url: '' },
-    { type: 'LUXURY WEDDING FILM', url: '' },
-    { type: 'PRODUCT MACRO CINEMATIC', url: '' }
+    { type: 'Commercial & Brand Ads', url: '' },
+    { type: 'Wedding Films & Teasers', url: '' },
+    { type: 'Product Videos & Reels', url: '' }
   ]);
   const [pan, setPan] = useState('');
   const [bankName, setBankName] = useState('HDFC Bank');
@@ -50,7 +50,7 @@ export default function FreelancerOnboarding() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ndaAccepted) {
-      alert('Please accept the Non-Disclosure & Footage Retention Pact');
+      alert('Please accept the Creator Agreement & Confidentiality NDA');
       return;
     }
     setSubmitting(true);
@@ -98,6 +98,7 @@ export default function FreelancerOnboarding() {
       console.warn('Onboarding dispatch non-fatal fallback:', err);
     }
 
+    // Safe display payload without sensitive financial PII for client-side state
     const creatorPayload = {
       alias,
       showreelUrl,
@@ -107,9 +108,6 @@ export default function FreelancerOnboarding() {
       capacity,
       languages,
       reels,
-      pan,
-      bankName,
-      legalName,
       agreementAccepted: true,
       agreementVersion: '1.0',
       status: 'approved',
@@ -155,10 +153,10 @@ export default function FreelancerOnboarding() {
         <div className="max-w-[1200px] mx-auto px-6 mb-8">
           <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.03em] text-[#1D1D1F]">
-              Creator Profile &amp; Sample Cuts
+              Apply as a Creator
             </h1>
             <p className="text-sm text-[#86868B] mt-1">
-              Join our curated post-production roster. Verified jobs with automated payouts.
+              Join Artsy to get regular video editing work with fast, guaranteed bank payments.
             </p>
           </div>
         </div>
@@ -177,56 +175,56 @@ export default function FreelancerOnboarding() {
                       <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                         1
                       </span>
-                      Identity &amp; Artistic Philosophy
+                      About You &amp; Your Editing Style
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        CREATOR ALIAS *
+                        YOUR NAME OR EDITING ALIAS *
                       </label>
                       <input
                         type="text"
                         required
                         value={alias}
                         onChange={(e) => setAlias(e.target.value)}
-                        placeholder="e.g. Creator Alias / Full Name"
+                        placeholder="e.g. Rahul Sharma or Rahul Edits"
                         className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
                       />
-                      <span className="text-[11px] text-[#86868B]">Shown on internal production cue sheets</span>
+                      <span className="text-[11px] text-[#86868B]">This name will appear on your creator profile and projects.</span>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        SHOWREEL / MASTER PORTFOLIO URL *
+                        SHOWREEL OR PORTFOLIO LINK *
                       </label>
                       <input
                         type="url"
                         required
                         value={showreelUrl}
                         onChange={(e) => setShowreelUrl(e.target.value)}
-                        placeholder="https://vimeo.com/... or Behance / YouTube"
+                        placeholder="https://youtube.com/... or Vimeo / Google Drive"
                         className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
                       />
-                      <span className="text-[11px] text-[#86868B]">Direct link to your strongest 60–90s composite reel</span>
+                      <span className="text-[11px] text-[#86868B]">Link to your showreel or portfolio video (60 to 90 seconds is best).</span>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      EDITING PHILOSOPHY &amp; SIGNATURE PACING *
+                      TELL US ABOUT YOUR EDITING STYLE *
                     </label>
                     <textarea
                       required
                       rows={3}
                       value={philosophy}
                       onChange={(e) => setPhilosophy(e.target.value)}
-                      placeholder="Detail your approach to micro-pacing, sound design integration, narrative arc retention, and color palette discipline..."
+                      placeholder="How do you edit videos? Tell us about your storytelling, rhythm, music choice, sound effects, or color grading style..."
                       className="bg-[#F5F5F7] p-3.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all resize-none"
                     ></textarea>
                     <div className="flex justify-between text-[11px] text-[#86868B]">
-                      <span>Describe your aesthetic approach and rhythm</span>
+                      <span>Tell us what makes your edits unique</span>
                       <span>[{philosophy.length}/300]</span>
                     </div>
                   </div>
@@ -239,22 +237,22 @@ export default function FreelancerOnboarding() {
                       <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                         2
                       </span>
-                      Toolchain &amp; Production Capacity
+                      Software &amp; Weekly Availability
                     </span>
                   </div>
 
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      PRIMARY SUITE &amp; COLOR ENGINES (SELECT ALL APPLICABLE)
+                      EDITING SOFTWARE YOU USE (CHOOSE ALL THAT APPLY)
                     </label>
                     <div className="flex flex-wrap gap-2 pt-1">
                       {[
-                        'DAVINCI RESOLVE STUDIO',
-                        'ADOBE PREMIERE PRO',
-                        'AFTER EFFECTS',
-                        'FINAL CUT PRO',
-                        'BLENDER (3D/VFX)',
-                        'CAPCUT PRO (FAST-TURNAROUND SOCIAL)'
+                        'DaVinci Resolve Studio',
+                        'Adobe Premiere Pro',
+                        'Adobe After Effects',
+                        'Final Cut Pro',
+                        'Blender (3D / VFX)',
+                        'CapCut Pro'
                       ].map((tool) => (
                         <button
                           key={tool}
@@ -275,42 +273,42 @@ export default function FreelancerOnboarding() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        COMMERCIAL POST EXPERIENCE
+                        YEARS OF EDITING EXPERIENCE
                       </label>
                       <select
                         value={experience}
                         onChange={(e) => setExperience(e.target.value)}
                         className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none cursor-pointer focus:bg-white focus:border-[#3B82F6]"
                       >
-                        <option>2 - 4 Years (Mid-Level Independent)</option>
-                        <option>5 - 8 Years (Senior Commercial Lead)</option>
-                        <option>8+ Years (Creative Director / Post Supervisor)</option>
-                        <option>1 - 2 Years (High Velocity Junior)</option>
+                        <option>2 - 4 Years (Intermediate)</option>
+                        <option>5 - 8 Years (Experienced Senior)</option>
+                        <option>8+ Years (Lead / Director)</option>
+                        <option>1 - 2 Years (Junior / Fast Learner)</option>
                       </select>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        WEEKLY RESERVED SLATE CAPACITY
+                        HOW MANY HOURS CAN YOU WORK PER WEEK?
                       </label>
                       <select
                         value={capacity}
                         onChange={(e) => setCapacity(e.target.value)}
                         className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none cursor-pointer focus:bg-white focus:border-[#3B82F6]"
                       >
-                        <option>20 - 30 Hours / Week (2 Commercial Projects)</option>
-                        <option>35 - 45 Hours / Week (Full-Time Roster)</option>
-                        <option>10 - 15 Hours / Week (Weekend Sprint Only)</option>
+                        <option>20 - 30 Hours / Week (Part-Time, ~2 projects)</option>
+                        <option>35 - 45 Hours / Week (Full-Time)</option>
+                        <option>10 - 15 Hours / Week (Weekends only)</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-semibold text-[#1D1D1F]">
-                      SPOKEN / DIALOGUE CUT LANGUAGES
+                      LANGUAGES YOU CAN EDIT IN
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                      {['HINDI', 'ENGLISH', 'PUNJABI', 'TAMIL', 'BENGALI', 'TELUGU', 'MARATHI', 'MALAYALAM'].map(
+                      {['Hindi', 'English', 'Punjabi', 'Tamil', 'Bengali', 'Telugu', 'Marathi', 'Malayalam'].map(
                         (lang) => (
                           <label
                             key={lang}
@@ -341,9 +339,9 @@ export default function FreelancerOnboarding() {
                       <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                         3
                       </span>
-                      Categorical Cut Samples
+                      Sample Videos You Have Edited
                     </span>
-                    <span className="text-xs text-[#86868B] uppercase font-semibold">Min 2 • Max 4 Reels</span>
+                    <span className="text-xs text-[#86868B] uppercase font-semibold">Min 2 • Max 4 Videos</span>
                   </div>
 
                   <div className="space-y-3">
@@ -353,7 +351,7 @@ export default function FreelancerOnboarding() {
                         className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] flex flex-col md:flex-row gap-3 items-center"
                       >
                         <span className="text-xs font-bold text-[#1D1D1F] bg-white px-2.5 py-1 rounded-md border border-[#E5E5E7] shrink-0">
-                          REEL 0{idx + 1}
+                          VIDEO 0{idx + 1}
                         </span>
                         <div className="w-full md:w-1/3">
                           <select
@@ -365,10 +363,10 @@ export default function FreelancerOnboarding() {
                             }}
                             className="w-full bg-white px-3 py-2 text-xs font-semibold rounded-lg border border-[#E5E5E7] outline-none"
                           >
-                            <option>COMMERCIAL / BRAND UGC</option>
-                            <option>LUXURY WEDDING FILM</option>
-                            <option>PRODUCT MACRO CINEMATIC</option>
-                            <option>CORPORATE NARRATIVE / TECH</option>
+                            <option>Commercial &amp; Brand Ads</option>
+                            <option>Wedding Films &amp; Teasers</option>
+                            <option>Product Videos &amp; Reels</option>
+                            <option>Documentary &amp; Corporate</option>
                           </select>
                         </div>
                         <div className="w-full md:w-2/3">
@@ -383,8 +381,8 @@ export default function FreelancerOnboarding() {
                             }}
                             placeholder={
                               idx < 2
-                                ? 'https://vimeo.com/... or Google Drive public link'
-                                : 'Optional 3rd category verification reel'
+                                ? 'https://youtube.com/... or Google Drive link'
+                                : 'Optional 3rd video link (YouTube, Drive, etc.)'
                             }
                             className="w-full bg-white px-3.5 py-2 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] outline-none"
                           />
@@ -401,15 +399,15 @@ export default function FreelancerOnboarding() {
                       <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                         4
                       </span>
-                      Compliance &amp; Direct Payouts
+                      Bank Details for Direct Payouts
                     </span>
-                    <span className="text-xs text-[#86868B] uppercase font-semibold">256-Bit Encrypted</span>
+                    <span className="text-xs text-[#86868B] uppercase font-semibold">Safe &amp; Encrypted</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        PERMANENT ACCOUNT NUMBER (PAN) *
+                        PAN CARD NUMBER *
                       </label>
                       <input
                         type="text"
@@ -420,22 +418,23 @@ export default function FreelancerOnboarding() {
                         placeholder="ABCDE1234F"
                         className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
                       />
+                      <span className="text-[11px] text-[#86868B]">Required for tax deduction (TDS) as per government rules.</span>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        BENEFICIARY LEGAL NAME (AS PER PAN) *
+                        FULL NAME (AS PRINTED ON PAN CARD) *
                       </label>
                       <input
                         type="text"
                         required
                         value={legalName}
                         onChange={(e) => setLegalName(e.target.value)}
-                        placeholder="Full Name Matching Bank Account"
+                        placeholder="Name as per PAN and bank account"
                         className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
                       />
                       <span className="text-[11px] text-[#86868B]">
-                        Primary name registered on pan record
+                        Must match the name on your PAN card and bank account.
                       </span>
                     </div>
                   </div>
@@ -444,7 +443,7 @@ export default function FreelancerOnboarding() {
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        BANK NAME *
+                        YOUR BANK NAME *
                       </label>
                     </div>
 
@@ -496,14 +495,14 @@ export default function FreelancerOnboarding() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        NEFT BANK ACCOUNT NUMBER *
+                        BANK ACCOUNT NUMBER *
                       </label>
                       <input
                         type="password"
                         required
                         value={bankAccount}
                         onChange={(e) => setBankAccount(e.target.value)}
-                        placeholder="••••••••••••"
+                        placeholder="Enter your bank account number"
                         className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
                       />
                     </div>
@@ -516,7 +515,7 @@ export default function FreelancerOnboarding() {
                         maxLength={11}
                         value={ifsc}
                         onChange={(e) => setIfsc(e.target.value.toUpperCase())}
-                        placeholder="HDFC0001234"
+                        placeholder="e.g. HDFC0001234"
                         className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
                       />
                     </div>
@@ -532,12 +531,11 @@ export default function FreelancerOnboarding() {
                         className="w-4 h-4 mt-0.5 accent-[#3B82F6] cursor-pointer shrink-0"
                       />
                       <span className="text-xs text-[#1D1D1F] leading-relaxed">
-                        <strong>NON-DISCLOSURE &amp; FOOTAGE RETENTION PACT:</strong> I understand that all uncut camera
-                        raw proxies, audio stems, and project files provided by Artsy Production remain strictly
-                        proprietary to client accounts. I shall not mirror, publicly broadcast, or circulate
-                        unreleased footage without written approval from Artsy Studio Administration.
+                        <strong>CREATOR AGREEMENT &amp; CONFIDENTIALITY:</strong>
+                        <br />
+                        • <strong>Keep Footage Private:</strong> All raw videos, audio tracks, and client project files are strictly confidential. You agree not to upload, publicly share, or distribute client footage without written permission from Artsy.
                         <br /><br />
-                        <strong>NON-COMPETE &amp; DIRECT ENGAGEMENT PROHIBITION:</strong> Creator agrees not to solicit, contact, or engage with Artsy clients outside the platform for 90 days following project completion. Violation may result in account suspension, forfeiture of pending payouts, and legal action.
+                        • <strong>Work Through Artsy:</strong> You agree not to contact or take direct payments from Artsy clients outside the platform for 90 days after finishing a project.
                       </span>
                     </label>
                   </div>
@@ -549,7 +547,7 @@ export default function FreelancerOnboarding() {
                   disabled={submitting}
                   className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 shadow-sm"
                 >
-                  <span>{submitting ? 'DISPATCHING CREDENTIALS...' : 'SUBMIT APPLICATION FOR REVIEW'}</span>
+                  <span>{submitting ? 'Submitting Application...' : 'Submit Application for Review'}</span>
                   <span>→</span>
                 </button>
               </form>
@@ -562,58 +560,55 @@ export default function FreelancerOnboarding() {
                 <div className="flex flex-col gap-3 relative z-10">
                   <div className="flex items-center justify-between">
                     <span className="bg-[#3B82F6] text-white px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase rounded-full">
-                      TIMELY SETTLEMENTS
+                      FAST PAYMENTS
                     </span>
                   </div>
-                  <span className="text-3xl font-extrabold tracking-tight text-white">DIRECT NEFT</span>
+                  <span className="text-3xl font-extrabold tracking-tight text-white">DIRECT BANK TRANSFER</span>
                   <h2 className="text-base font-bold uppercase leading-tight text-white">
-                    Automated Payouts to Roster Editors
+                    Get Paid Straight to Your Bank
                   </h2>
                   <p className="text-xs text-[#86868B] leading-relaxed">
-                    Direct bank payment dispatch via NEFT upon creative delivery sign-off. Zero payment delays, clawbacks,
-                    or deferred freelancer compensation.
+                    Payment is transferred directly to your bank account via NEFT as soon as the client approves your video edit. No delays or hidden deductions.
                   </p>
                 </div>
                 <div className="pt-4 flex items-center gap-2 text-[11px] font-medium text-emerald-400 border-t border-white/10 mt-6">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-                  GUARANTEED BY PRODUCTION VAULT
+                  SECURE BANK TRANSFERS
                 </div>
               </div>
 
               {/* Anonymized Job Cards Card */}
               <div className="bg-white p-6 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-                <h3 className="text-sm font-bold text-[#1D1D1F] uppercase mb-2">Anonymized Job Cards</h3>
+                <h3 className="text-sm font-bold text-[#1D1D1F] uppercase mb-2">Clear Project Instructions</h3>
                 <p className="text-xs text-[#86868B] leading-relaxed">
-                  Zero awkward fee haggling or client ghosting. You receive verified production tickets with
-                  pre-structured timecodes, style moodboards, and dedicated high-speed server links.
+                  No awkward price bargaining and no chasing clients for money. You get clear instructions, style references, organized footage links, and fixed payout rates upfront.
                 </p>
                 <div className="mt-4 bg-[#F5F5F7] p-3 rounded-lg border border-[#E5E5E7] flex items-center justify-between text-xs font-semibold text-[#1D1D1F]">
-                  <span>Client Comm Buffer</span>
-                  <span className="text-[#3B82F6]">100% Studio Handled</span>
+                  <span>Client Communication</span>
+                  <span className="text-[#3B82F6]">100% Handled by Artsy</span>
                 </div>
               </div>
 
               {/* Quality Buffer Card */}
               <div className="bg-white p-6 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-2">
-                <h3 className="text-sm font-bold text-[#1D1D1F] uppercase mb-1">In-House QA Buffer</h3>
+                <h3 className="text-sm font-bold text-[#1D1D1F] uppercase mb-1">Helpful Team Review</h3>
                 <p className="text-xs text-[#86868B] leading-relaxed">
-                  Every task comes with our built-in internal review window. Our staff supervisors
-                  inspect draft assemblies before clients see them, actively filtering out scope-creep.
+                  Our in-house post-production leads check your rough cut first to give constructive tips before sending it to the client. This saves you from repeated revisions.
                 </p>
                 <div className="w-full bg-[#F5F5F7] h-2 rounded-full overflow-hidden mt-3">
                   <div className="bg-[#3B82F6] h-full w-3/4 rounded-full"></div>
                 </div>
                 <div className="flex justify-between text-[11px] font-medium text-[#86868B] mt-1">
-                  <span>Current Roster Capacity</span>
-                  <span>76% Claimed</span>
+                  <span>Creator Applications</span>
+                  <span>Currently Open</span>
                 </div>
               </div>
 
               {/* Vetting Protocol Box */}
               <div className="bg-[#F5F5F7] p-5 rounded-2xl border border-[#E5E5E7] flex flex-col gap-1.5">
-                <span className="text-xs font-bold text-[#1D1D1F] uppercase">Vetting Protocol</span>
+                <span className="text-xs font-bold text-[#1D1D1F] uppercase">No Free Test Edits</span>
                 <p className="text-xs text-[#86868B] leading-relaxed">
-                  Artsy strictly opposes uncompensated &apos;test edits&apos;. We evaluate your real-world portfolio and submitted link references, followed by a 20-minute video call interview with our post supervisor. Decisions are communicated within 24 hours.
+                  We respect your time. We never ask editors to do free test cuts. We review your portfolio and sample video links, followed by a friendly 20-minute video chat. You will hear our decision within 24 to 48 hours.
                 </p>
               </div>
 
@@ -621,12 +616,12 @@ export default function FreelancerOnboarding() {
               <div className="bg-white p-5 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-[#1D1D1F] text-white flex flex-col items-center justify-center font-extrabold shrink-0">
                   <span className="text-base leading-none">142</span>
-                  <span className="text-[8px] uppercase tracking-wider text-[#86868B]">ROSTER</span>
+                  <span className="text-[8px] uppercase tracking-wider text-[#86868B]">EDITORS</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[11px] text-[#86868B] uppercase font-semibold">Active Roster</span>
-                  <span className="text-xs uppercase font-bold text-[#1D1D1F]">Delhi • Bengaluru • Mumbai</span>
-                  <span className="text-[11px] text-[#3B82F6] font-medium mt-0.5">Accepting New Portfolios</span>
+                  <span className="text-[11px] text-[#86868B] uppercase font-semibold">Active Community</span>
+                  <span className="text-xs uppercase font-bold text-[#1D1D1F]">Delhi • Bengaluru • Mumbai &amp; Pan-India</span>
+                  <span className="text-[11px] text-[#3B82F6] font-medium mt-0.5">Currently accepting new applications</span>
                 </div>
               </div>
             </div>
@@ -639,7 +634,7 @@ export default function FreelancerOnboarding() {
             <div className="bg-white max-w-md w-full p-6 sm:p-8 rounded-2xl border border-[#E5E5E7] shadow-xl flex flex-col gap-5">
               <div className="flex items-center justify-between">
                 <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs px-2.5 py-0.5 rounded-full font-bold">
-                  ✓ APPLICATION APPROVED &amp; VERIFIED
+                  ✓ APPLICATION SUBMITTED
                 </span>
                 <button
                   type="button"
@@ -650,13 +645,13 @@ export default function FreelancerOnboarding() {
                 </button>
               </div>
               <div className="flex flex-col gap-1.5">
-                <h4 className="text-xl font-bold text-[#1D1D1F] tracking-tight">Creator Application Submitted</h4>
+                <h4 className="text-xl font-bold text-[#1D1D1F] tracking-tight">Your Application is in Review</h4>
                 <p className="text-xs text-[#86868B] leading-relaxed">
-                  Your creator profile, toolchain verification, and showreel have been submitted for Studio Curation review. We will evaluate your portfolio within 24 to 48 hours.
+                  Thank you for applying to Artsy! Our team is reviewing your video portfolio and editing background. We will reach out to you within 24 to 48 hours.
                 </p>
               </div>
               <div className="bg-[#F5F5F7] p-3.5 rounded-xl border border-[#E5E5E7] text-xs flex justify-between items-center">
-                <span className="text-[#86868B] font-medium">CREATOR TRACKING ID</span>
+                <span className="text-[#86868B] font-medium">APPLICATION REFERENCE ID</span>
                 <span className="font-mono font-bold text-[#1D1D1F]">{trackingId}</span>
               </div>
               <div className="flex gap-3">

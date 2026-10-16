@@ -2,27 +2,69 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, setCurrentUser, PRESET_USERS } from '@/lib/auth';
 
 export default function FreelancerLayoutClient({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
-    const user = getCurrentUser();
-    if (!user) {
-      router.push('/auth/login');
-      return;
+    async function checkAuth() {
+      let user = getCurrentUser();
+
+      // In local dev mode, immediately fallback so there is zero spinner delay (excluded from production)
+      const isLocalhost = process.env.NODE_ENV !== 'production' && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      if (!user && isLocalhost) {
+        const fallback = PRESET_USERS.freelancer;
+        setCurrentUser(fallback);
+        user = fallback;
+      }
+
+      if (!user) {
+        try {
+          const res = await fetch('/api/auth/session');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.authenticated && data.user) {
+              const u = {
+                id: data.user.id || 'usr-editor-002',
+                email: data.user.email || 'creator@artsyproduction.com',
+                full_name: data.user.full_name || 'Creator Partner',
+                role: data.user.role || 'freelancer',
+                status: 'active' as const,
+                agreement_accepted: true,
+                onboarding_status: 'approved' as const,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              };
+              setCurrentUser(u);
+              user = u;
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!user) {
+        router.push('/auth/login');
+        return;
+      }
+
+      if (user.role === 'client') {
+        router.push('/client');
+        return;
+      }
+
+      if (user.role !== 'freelancer' && user.role !== 'admin' && user.role !== 'super_admin') {
+        router.push('/auth/login');
+        return;
+      }
+
+      setAuthorized(true);
     }
-    if (user.role === 'client') {
-      router.push('/client');
-      return;
-    }
-    if (user.role !== 'freelancer' && user.role !== 'admin' && user.role !== 'super_admin') {
-      router.push('/auth/login');
-      return;
-    }
-    setAuthorized(true);
+
+    checkAuth();
   }, [router]);
 
   if (!authorized) {

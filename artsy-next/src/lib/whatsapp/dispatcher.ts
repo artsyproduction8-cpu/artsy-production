@@ -141,7 +141,7 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
             recipientEmail: emailToUse,
             actionUrl: payload.actionUrl,
           });
-          console.log(`[Email Fallback] Sent notification email for Event #${payload.eventNumber} to ${emailToUse} (Reason: ${reason})`);
+          console.log(`[Email Fallback] Sent notification email for Event #${payload.eventNumber} to [REDACTED] (Reason: ${reason})`);
         } catch (emailErr) {
           console.error(`Email dispatch error for notification event #${payload.eventNumber}:`, emailErr);
         }
@@ -212,8 +212,8 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
           await sendEmailFallback(`Meta Cloud API exception: ${metaErr.message}`);
         }
       } else {
-        // Fallback: OpenWA gateway or email
-        console.log(`[WhatsApp Meta Cloud API Unconfigured] Event #${payload.eventNumber} recipient: ${cleanPhone}. Triggering fallback.`);
+        // Fallback: Email notification
+        console.log(`[WhatsApp Meta Cloud API Unconfigured] Event #${payload.eventNumber} recipient: [REDACTED]. Triggering fallback.`);
         await sendEmailFallback('Meta Cloud API unconfigured');
       }
     } else {
@@ -225,7 +225,7 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
 
     // 4. SMS Fallback (Critical alerts)
     if (template.isCritical && payload.recipientPhone && !metaSendSuccess) {
-      console.log(`[SMS MOCK (Skipped)] Event #${payload.eventNumber} to ${payload.recipientPhone}: "${formattedMessage}"`);
+      console.log(`[SMS MOCK (Skipped)] Event #${payload.eventNumber} to [REDACTED]: "[REDACTED]"`);
     }
 
     return { success: true };

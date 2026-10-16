@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
-import AdminHeader from '../components/AdminHeader';
-import AdminSidebar from '../components/AdminSidebar';
 import { extractYouTubeId, youtubeThumbnail } from '@/lib/youtube';
 
 interface SubmissionItem {
@@ -190,12 +188,8 @@ export default function AdminSubmissionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]">
-      <AdminHeader />
-      <AdminSidebar />
-
-      <main className="lg:pl-72 pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E5E5E7] pb-6">
             <div>
@@ -399,7 +393,6 @@ export default function AdminSubmissionsPage() {
             )}
           </div>
         </div>
-      </main>
 
       {/* Convert Modal */}
       {convertModalItem && (
@@ -566,6 +559,6 @@ export default function AdminSubmissionsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

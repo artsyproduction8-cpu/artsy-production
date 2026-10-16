@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
+import { createErrorResponse } from '@/lib/api-response';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
 
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database client unavailable' }, { status: 500 });
+    return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);
   }
 
   try {
@@ -24,8 +25,7 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false });
 
     if (ordersError) {
-      console.error('[Admin Creator Requests GET Error]', ordersError);
-      return NextResponse.json({ error: ordersError.message }, { status: 500 });
+      return createErrorResponse(ordersError, 'Failed to fetch preferred creator requests', 500);
     }
 
     // 2. Fetch all approved creators for display & alternate assignment dropdown
@@ -54,8 +54,7 @@ export async function GET(request: Request) {
       availableCreators: approvedCreators || [],
     });
   } catch (err: any) {
-    console.error('[Admin Creator Requests Error]', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to retrieve preferred creator requests', 500);
   }
 }
 
@@ -235,7 +234,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (err: any) {
-    console.error('[Admin Creator Request Action Error]', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return createErrorResponse(err, 'Failed to process creator assignment action', 500);
   }
 }

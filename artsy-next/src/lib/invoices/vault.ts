@@ -70,21 +70,7 @@ export async function archiveInvoiceToVault(invoice: InvoiceData): Promise<Vault
       return { success: true, vaultId: data?.id };
     }
 
-    // Mock storage fallback for dev/demo
-    if (typeof window !== 'undefined') {
-      try {
-        const existing = JSON.parse(localStorage.getItem('artsy_invoice_vault') || '[]');
-        existing.push({
-          ...invoice,
-          vaultArchivedAt: new Date().toISOString(),
-          statutoryRetention72M: true,
-        });
-        localStorage.setItem('artsy_invoice_vault', JSON.stringify(existing));
-      } catch {
-        // ignore
-      }
-    }
-
+    // Dev/demo fallback - do not persist sensitive financial & client PII in browser localStorage
     return { success: true, vaultId: `vlt_mock_${Date.now()}` };
   } catch (err: unknown) {
     console.error('Failed to archive invoice to WORM vault:', err);

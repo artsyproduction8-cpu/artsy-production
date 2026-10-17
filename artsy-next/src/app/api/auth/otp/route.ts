@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { checkRateLimit } from '@/lib/rateLimit';
@@ -525,8 +525,8 @@ export async function POST(request: NextRequest) {
       shouldSendEmail ? sendOtpEmail(cleanEmail!, otpCode) : Promise.resolve(null),
     ]);
 
-    // Fire-and-forget: Asynchronous audit logging (zero latency penalty)
-    void (async () => {
+    // Non-blocking asynchronous audit logging via Next.js after() (zero latency penalty)
+    after(async () => {
       const dbClient = (supabase && typeof supabase.from === 'function') ? supabase : anonClient;
       if (!dbClient || typeof dbClient.from !== 'function') return;
 
@@ -559,7 +559,7 @@ export async function POST(request: NextRequest) {
           console.warn('[OTP Route] notification_delivery_log background insert warning:', err);
         });
       }
-    })();
+    });
 
     const waOk = waResult?.success;
     const emailOk = emailResult?.success;

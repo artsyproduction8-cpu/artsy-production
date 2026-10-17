@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import LiteYouTubeEmbed from '@/components/LiteYouTubeEmbed';
 import { extractYouTubeId } from '@/lib/youtube';
 
 export interface PortfolioVideo {
@@ -51,6 +50,25 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
     fetchFreshVideos();
   }, []);
 
+  // Lock body scroll and support Escape key when lightbox is open
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedVideo(null);
+      }
+    };
+
+    if (selectedVideo) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [selectedVideo]);
+
   // Filter logic
   const filteredVideos = filter === 'all'
     ? videos
@@ -63,6 +81,10 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
         if (filter === 'music') return cat.includes('music') || cat.includes('event');
         return cat.includes(filter);
       });
+
+  const selectedYtId = selectedVideo
+    ? selectedVideo.youtube_id || extractYouTubeId(selectedVideo.video_url)
+    : null;
 
   return (
     <>
@@ -109,58 +131,71 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredVideos.map((video) => {
               const ytid = video.youtube_id || extractYouTubeId(video.video_url) || '';
+              const thumbUrl = video.thumbnail_url || (ytid ? `https://img.youtube.com/vi/${ytid}/hqdefault.jpg` : '');
 
               return (
                 <div
                   key={video.id}
-                  className="group bg-white rounded-2xl border border-[#E5E5E7] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.08)] hover:border-[#3B82F6]/50 transition-all duration-300 flex flex-col justify-between"
+                  onClick={() => setSelectedVideo(video)}
+                  className="group bg-white rounded-3xl border border-[#E5E5E7] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)] hover:border-[#3B82F6]/50 transition-all duration-300 flex flex-col justify-between cursor-pointer"
                 >
-                  {/* Top media container */}
+                  {/* Movie Poster Thumbnail Container (16:9 aspect-video with object-cover) */}
                   <div>
-                    <div className="relative aspect-video w-full bg-black overflow-hidden">
-                      {ytid ? (
-                        <LiteYouTubeEmbed
-                          id={ytid}
-                          title={video.title}
-                          thumbnailUrl={video.thumbnail_url}
-                        />
-                      ) : (
-                        <div
-                          className="relative w-full h-full cursor-pointer group"
-                          onClick={() => setSelectedVideo(video)}
-                        >
-                          <img
-                            src={video.thumbnail_url}
-                            alt={video.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors flex items-center justify-center">
-                            <div className="w-12 h-12 rounded-full bg-white/90 text-[#1D1D1F] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                              <span className="text-xl ml-0.5 leading-none">▶</span>
-                            </div>
-                          </div>
+                    <div className="relative aspect-video w-full bg-[#0A0A0A] overflow-hidden">
+                      <img
+                        src={thumbUrl}
+                        alt={video.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        onError={(e) => {
+                          if (ytid) {
+                            e.currentTarget.src = `https://img.youtube.com/vi/${ytid}/hqdefault.jpg`;
+                          }
+                        }}
+                      />
+
+                      {/* Vignette Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+
+                      {/* Category Badge on Top-Left */}
+                      <div className="absolute top-3.5 left-3.5 z-10">
+                        <span className="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white border border-white/10 uppercase tracking-wider text-[10px] font-bold">
+                          {video.category || 'Wedding Cinema'}
+                        </span>
+                      </div>
+
+                      {/* Movie Poster Play Button Overlay on Hover */}
+                      <div className="absolute inset-0 flex items-center justify-center z-10">
+                        <div className="w-14 h-14 rounded-full bg-white/90 group-hover:bg-[#3B82F6] text-[#1D1D1F] group-hover:text-white flex items-center justify-center shadow-xl transition-all duration-300 group-hover:scale-110">
+                          <svg className="w-6 h-6 fill-current translate-x-0.5" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
                         </div>
-                      )}
+                      </div>
+
+                      {/* Bottom Tag */}
+                      <div className="absolute bottom-3 right-3 z-10">
+                        <span className="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-white/90 text-[10px] font-mono font-medium">
+                          4K Cinema
+                        </span>
+                      </div>
                     </div>
 
                     {/* Card Content */}
-                    <div className="p-6 space-y-3">
+                    <div className="p-6 space-y-2.5">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="px-2.5 py-1 rounded-md bg-[#1D1D1F] text-white uppercase tracking-wider text-[10px] font-bold">
-                          {video.category || 'Wedding Cinema'}
-                        </span>
                         <span className="text-[11px] font-mono text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                           Official Film
                         </span>
                       </div>
 
-                      <h3 className="text-lg font-bold text-[#1D1D1F] leading-snug group-hover:text-[#3B82F6] transition-colors">
+                      <h3 className="text-base sm:text-lg font-bold text-[#1D1D1F] leading-snug group-hover:text-[#3B82F6] transition-colors line-clamp-2">
                         {video.title}
                       </h3>
 
                       {/* Description rendered in muted text color under title; hidden gracefully if absent */}
                       {video.description && (
-                        <p className="text-sm text-gray-400 leading-relaxed mt-2 line-clamp-3">
+                        <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">
                           {video.description}
                         </p>
                       )}
@@ -168,18 +203,15 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                   </div>
 
                   {/* Card Actions */}
-                  <div className="p-6 pt-0 border-t border-[#F5F5F7] mt-4 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedVideo(video)}
-                      className="text-xs font-bold text-[#3B82F6] hover:underline cursor-pointer flex items-center gap-1"
-                    >
-                      <span>Preview Reel</span>
-                      <span>↗</span>
-                    </button>
+                  <div className="p-6 pt-0 border-t border-[#F5F5F7] mt-3 flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#3B82F6] group-hover:underline flex items-center gap-1.5">
+                      <span>Watch Film</span>
+                      <span className="text-sm">▶</span>
+                    </span>
 
                     <Link
                       href={`/book?category=${encodeURIComponent((video.category || '').toLowerCase().includes('wedding') ? 'wedding' : 'brand')}`}
+                      onClick={(e) => e.stopPropagation()}
                       className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs"
                     >
                       Order Cut →
@@ -211,73 +243,73 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
         )}
       </section>
 
-      {/* Video Preview Lightbox Modal */}
+      {/* Video Lightbox Modal */}
       {selectedVideo && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 md:p-8 animate-in fade-in duration-200"
           onClick={() => setSelectedVideo(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={selectedVideo.title}
         >
           <div
-            className="relative w-full max-w-4xl bg-[#141414] border border-[#262626] rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+            className="relative w-full max-w-5xl bg-[#141414] border border-[#262626] rounded-3xl overflow-hidden shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-[#262626] flex items-center justify-between text-white">
-              <div>
+            <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between text-white">
+              <div className="space-y-0.5 max-w-[85%]">
                 <span className="text-[10px] font-mono text-[#3B82F6] uppercase font-bold tracking-wider">
-                  {selectedVideo.category} • Artsy Production
+                  {selectedVideo.category} • Artsy Production Official
                 </span>
-                <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
+                <h2 className="text-base sm:text-lg font-bold text-white truncate">
                   {selectedVideo.title}
-                </h3>
+                </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedVideo(null)}
-                className="w-9 h-9 rounded-full bg-[#262626] hover:bg-[#333] text-white flex items-center justify-center transition-colors cursor-pointer text-lg font-bold"
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer text-xl font-bold ml-4 shrink-0"
+                aria-label="Close modal"
               >
                 ✕
               </button>
             </div>
 
-            {/* Video Player */}
+            {/* Video Player (16:9 Aspect Ratio with autoplay=1&rel=0) */}
             <div className="relative aspect-video w-full bg-black">
-              {(() => {
-                const ytid = selectedVideo.youtube_id || extractYouTubeId(selectedVideo.video_url);
-
-                if (ytid) {
-                  return (
-                    <iframe
-                      src={`https://www.youtube-nocookie.com/embed/${ytid}?autoplay=1&rel=0&modestbranding=1`}
-                      title={selectedVideo.title}
-                      className="w-full h-full border-0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  );
-                }
-
-                return (
-                  <div className="w-full h-full flex items-center justify-center text-white text-xs">
-                    No preview video available
-                  </div>
-                );
-              })()}
+              {selectedYtId ? (
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${selectedYtId}?autoplay=1&rel=0&modestbranding=1`}
+                  title={selectedVideo.title}
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white text-xs">
+                  Video preview unavailable
+                </div>
+              )}
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 sm:p-6 bg-[#1A1A1A] border-t border-[#262626] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1 text-xs">
+            <div className="p-4 sm:p-6 bg-[#18181B] border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1 text-xs max-w-xl">
                 <div className="text-white font-semibold">Cinematic Post-Production Master</div>
-                <div className="text-gray-400">Artsy Studio Official Film</div>
+                {selectedVideo.description && (
+                  <p className="text-gray-400 line-clamp-2 leading-relaxed">
+                    {selectedVideo.description}
+                  </p>
+                )}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 shrink-0">
                 {selectedVideo.video_url && (
                   <a
                     href={selectedVideo.video_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2.5 rounded-xl border border-[#333] hover:border-white text-white text-xs font-semibold uppercase tracking-wider transition-colors"
+                    className="px-4 py-2.5 rounded-xl border border-white/20 hover:border-white text-white text-xs font-semibold uppercase tracking-wider transition-colors"
                   >
                     YouTube ↗
                   </a>

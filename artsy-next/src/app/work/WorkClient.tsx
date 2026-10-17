@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { extractYouTubeId } from '@/lib/youtube';
+import YouTubePlayerModal from '@/components/YouTubePlayerModal';
 
 export interface PortfolioVideo {
   id: string;
@@ -145,7 +146,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                       {ytid ? (
                         <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
                           <iframe
-                            src={`https://www.youtube-nocookie.com/embed/${ytid}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${ytid}&playsinline=1&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0`}
+                            src={`https://www.youtube-nocookie.com/embed/${ytid}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${ytid}&playsinline=1&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&vq=highres&hd=1`}
                             title={video.title}
                             className="absolute w-[300%] h-[300%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none"
                             loading="lazy"
@@ -285,18 +286,10 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
               </button>
             </div>
 
-            {/* Video Player (16:9 Aspect Ratio with autoplay=1, audio enabled, and clean UI parameters) */}
+            {/* Video Player (16:9 Aspect Ratio with YouTube Iframe API for 1080p/4K highres quality) */}
             <div className="relative aspect-video w-full bg-black">
               {selectedYtId ? (
-                <div className="absolute inset-0 w-full h-full overflow-hidden">
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${selectedYtId}?autoplay=1&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1`}
-                    title={selectedVideo.title}
-                    className="absolute w-[150%] h-[150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
+                <YouTubePlayerModal videoId={selectedYtId} title={selectedVideo.title} />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white text-xs">
                   Video preview unavailable

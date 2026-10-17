@@ -272,14 +272,9 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
           >
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between text-white">
-              <div className="space-y-0.5 max-w-[85%]">
-                <span className="text-[10px] font-mono text-[#3B82F6] uppercase font-bold tracking-wider">
-                  {selectedVideo.category} • Artsy Production Official
-                </span>
-                <h2 className="text-base sm:text-lg font-bold text-white truncate">
-                  {selectedVideo.title}
-                </h2>
-              </div>
+              <h2 className="text-base sm:text-lg font-bold text-white truncate max-w-[85%]">
+                {selectedVideo.title}
+              </h2>
               <button
                 type="button"
                 onClick={() => setSelectedVideo(null)}
@@ -290,11 +285,11 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
               </button>
             </div>
 
-            {/* Video Player (16:9 Aspect Ratio with autoplay=1&rel=0) */}
+            {/* Video Player (16:9 Aspect Ratio with autoplay=1, audio enabled, and clean UI parameters) */}
             <div className="relative aspect-video w-full bg-black">
               {selectedYtId ? (
                 <iframe
-                  src={`https://www.youtube-nocookie.com/embed/${selectedYtId}?autoplay=1&rel=0&modestbranding=1`}
+                  src={`https://www.youtube-nocookie.com/embed/${selectedYtId}?autoplay=1&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1`}
                   title={selectedVideo.title}
                   className="w-full h-full border-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

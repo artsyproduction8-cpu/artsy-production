@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       phone: user.phone,
       full_name: user.full_name,
       onboarded: user.onboarded !== false,
-      token_version: 1,
+      token_version: Number(user.token_version) >= 2 ? Number(user.token_version) : 2,
     });
 
     const response = NextResponse.json({ success: true, user });

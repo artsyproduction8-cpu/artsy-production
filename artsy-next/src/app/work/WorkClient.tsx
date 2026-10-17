@@ -148,7 +148,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                           <iframe
                             src={`https://www.youtube-nocookie.com/embed/${ytid}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${ytid}&playsinline=1&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&vq=highres&hd=1`}
                             title={video.title}
-                            className="absolute w-[300%] h-[300%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none"
+                            className="absolute w-[400%] h-[400%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none"
                             loading="lazy"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             tabIndex={-1}
@@ -169,41 +169,12 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                         onClick={() => setSelectedVideo(video)}
                       />
 
-                      {/* Vignette Gradient Overlay */}
-                      <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity pointer-events-none" />
-
-                      {/* Category Badge on Top-Left */}
-                      <div className="absolute top-3.5 left-3.5 z-20 pointer-events-none">
-                        <span className="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white border border-white/10 uppercase tracking-wider text-[10px] font-bold">
-                          {video.category || 'Wedding Cinema'}
-                        </span>
-                      </div>
-
-                      {/* Movie Poster Play Button Overlay on Hover */}
-                      <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                        <div className="w-14 h-14 rounded-full bg-white/90 group-hover:bg-[#3B82F6] text-[#1D1D1F] group-hover:text-white flex items-center justify-center shadow-xl transition-all duration-300 group-hover:scale-110">
-                          <svg className="w-6 h-6 fill-current translate-x-0.5" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Bottom Tag */}
-                      <div className="absolute bottom-3 right-3 z-20 pointer-events-none">
-                        <span className="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-white/90 text-[10px] font-mono font-medium">
-                          4K Cinema
-                        </span>
-                      </div>
+                      {/* Subtle dark tint overlay */}
+                      <div className="absolute inset-0 bg-black/10 pointer-events-none" />
                     </div>
 
                     {/* Card Content */}
                     <div className="p-6 space-y-2.5">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-mono text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          Official Film
-                        </span>
-                      </div>
-
                       <h3 className="text-base sm:text-lg font-bold text-[#1D1D1F] leading-snug group-hover:text-[#3B82F6] transition-colors line-clamp-2">
                         {video.title}
                       </h3>

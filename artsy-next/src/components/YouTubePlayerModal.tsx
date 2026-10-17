@@ -12,9 +12,14 @@ declare global {
 interface YouTubePlayerModalProps {
   videoId: string;
   title: string;
+  zoomScale?: string;
 }
 
-export default function YouTubePlayerModal({ videoId, title }: YouTubePlayerModalProps) {
+export default function YouTubePlayerModal({
+  videoId,
+  title,
+  zoomScale = 'w-[125%] h-[125%]',
+}: YouTubePlayerModalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
 
@@ -38,12 +43,13 @@ export default function YouTubePlayerModal({ videoId, title }: YouTubePlayerModa
 
       try {
         playerRef.current = new window.YT.Player(containerRef.current, {
+          host: 'https://www.youtube.com',
           videoId,
           playerVars: {
             autoplay: 1,
             rel: 0,
             modestbranding: 1,
-            vq: 'highres', // Request highest resolution (1080p/4K)
+            vq: 'hd1080', // Force 1080p high definition
             hd: 1,
             playsinline: 1,
             showinfo: 0,
@@ -52,21 +58,21 @@ export default function YouTubePlayerModal({ videoId, title }: YouTubePlayerModa
           },
           events: {
             onReady: (event: any) => {
-              // Ensure the created iframe maintains the 150% oversized centered cropping styles
+              // Ensure the created iframe maintains the 125% oversized centered cropping styles
               const iframe = event.target.getIframe();
               if (iframe) {
-                iframe.className = 'absolute w-[150%] h-[150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0';
+                iframe.className = `absolute ${zoomScale} top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0`;
                 iframe.title = title;
                 iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
               }
 
               // Force the highest available playback quality
               try {
-                if (typeof event.target.setPlaybackQualityRange === 'function') {
-                  event.target.setPlaybackQualityRange('highres', 'highres');
-                }
                 if (typeof event.target.setPlaybackQuality === 'function') {
-                  event.target.setPlaybackQuality('highres');
+                  event.target.setPlaybackQuality('hd1080');
+                }
+                if (typeof event.target.setPlaybackQualityRange === 'function') {
+                  event.target.setPlaybackQualityRange('hd1080', 'hd1080');
                 }
               } catch (err) {
                 console.warn('Could not set playback quality onReady:', err);
@@ -75,14 +81,14 @@ export default function YouTubePlayerModal({ videoId, title }: YouTubePlayerModa
               event.target.playVideo();
             },
             onStateChange: (event: any) => {
-              // When playback starts (state 1 = PLAYING), reinforce the highest quality setting
+              // When playback starts (state 1 = PLAYING), reinforce the 1080p quality setting
               if (event.data === 1) {
                 try {
-                  if (typeof event.target.setPlaybackQualityRange === 'function') {
-                    event.target.setPlaybackQualityRange('highres', 'highres');
-                  }
                   if (typeof event.target.setPlaybackQuality === 'function') {
-                    event.target.setPlaybackQuality('highres');
+                    event.target.setPlaybackQuality('hd1080');
+                  }
+                  if (typeof event.target.setPlaybackQualityRange === 'function') {
+                    event.target.setPlaybackQualityRange('hd1080', 'hd1080');
                   }
                 } catch (err) {
                   // ignore
@@ -101,7 +107,6 @@ export default function YouTubePlayerModal({ videoId, title }: YouTubePlayerModa
       if (window.YT && window.YT.Player) {
         initPlayer();
       } else {
-        // Check if the script tag is already in DOM
         const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
         if (!existingScript) {
           const tag = document.createElement('script');
@@ -110,7 +115,6 @@ export default function YouTubePlayerModal({ videoId, title }: YouTubePlayerModa
           firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
         }
 
-        // Chain or attach to window.onYouTubeIframeAPIReady
         const prevCallback = window.onYouTubeIframeAPIReady;
         window.onYouTubeIframeAPIReady = () => {
           if (typeof prevCallback === 'function') {
@@ -119,7 +123,6 @@ export default function YouTubePlayerModal({ videoId, title }: YouTubePlayerModa
           initPlayer();
         };
 
-        // Fallback polling in case the script finishes loading without triggering event
         const interval = setInterval(() => {
           if (window.YT && window.YT.Player) {
             clearInterval(interval);
@@ -153,14 +156,14 @@ export default function YouTubePlayerModal({ videoId, title }: YouTubePlayerModa
         playerRef.current = null;
       }
     };
-  }, [videoId, title]);
+  }, [videoId, title, zoomScale]);
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden">
       <div
         ref={containerRef}
         id="yt-player"
-        className="absolute w-[150%] h-[150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0"
+        className={`absolute ${zoomScale} top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0`}
       />
     </div>
   );

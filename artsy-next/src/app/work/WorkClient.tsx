@@ -260,7 +260,11 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
             {/* Video Player (16:9 Aspect Ratio with YouTube Iframe API for 1080p/4K highres quality) */}
             <div className="relative aspect-video w-full bg-black">
               {selectedYtId ? (
-                <YouTubePlayerModal videoId={selectedYtId} title={selectedVideo.title} />
+                <YouTubePlayerModal
+                  videoId={selectedYtId}
+                  title={selectedVideo.title}
+                  zoomScale="w-[125%] h-[125%]"
+                />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white text-xs">
                   Video preview unavailable

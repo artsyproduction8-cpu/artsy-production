@@ -476,16 +476,17 @@ export async function POST(request: NextRequest) {
 
     // 3. Prepare Database Session Storage Promise
     const insertDbSessionPromise = (async () => {
-      if (isSupabaseConfigured && supabase) {
+      const dbClient = (supabase && typeof supabase.from === 'function') ? supabase : anonClient;
+      if (isSupabaseConfigured && dbClient && typeof dbClient.from === 'function') {
         try {
           const updateQuery = cleanPhone
-            ? supabase.from('otp_sessions').update({ verified: true }).eq('phone', cleanPhone).eq('verified', false)
-            : supabase.from('otp_sessions').update({ verified: true }).eq('email', cleanEmail!).eq('verified', false);
+            ? dbClient.from('otp_sessions').update({ verified: true }).eq('phone', cleanPhone).eq('verified', false)
+            : dbClient.from('otp_sessions').update({ verified: true }).eq('email', cleanEmail!).eq('verified', false);
           await updateQuery;
 
-          await supabase.from('otp_sessions').insert([
+          await dbClient.from('otp_sessions').insert([
             {
-              phone: cleanPhone || identifier,
+              phone: cleanPhone || null,
               email: cleanEmail || null,
               otp_hash: otpHash,
               expires_at: expiresAtIso,
@@ -543,7 +544,7 @@ export async function POST(request: NextRequest) {
       }
       if (emailResult) {
         logRows.push({
-          channel: 'email_otp',
+          channel: 'email',
           recipient: cleanEmail,
           event_number: 1,
           provider_message_id: emailResult.id || null,

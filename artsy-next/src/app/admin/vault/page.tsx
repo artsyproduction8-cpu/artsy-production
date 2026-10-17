@@ -15,41 +15,7 @@ interface PayoutRecord {
   status: 'pending' | 'dispatched' | 'reconciled';
 }
 
-const INITIAL_PAYOUTS: PayoutRecord[] = [
-  {
-    id: 'PAY-8841-AS',
-    creatorName: 'Creator Partner',
-    projectRef: 'AP-8841 (Udaipur Royal Wedding)',
-    grossAmount: 4794,
-    tdsDeduction: 48,
-    netPayout: 4746,
-    bankAccount: '••••••••4892',
-    ifsc: 'HDFC0001234',
-    status: 'pending',
-  },
-  {
-    id: 'PAY-8839-SM',
-    creatorName: 'Sneha Mukherjee',
-    projectRef: 'AP-8839 (Verve Streetwear Reel)',
-    grossAmount: 2696,
-    tdsDeduction: 27,
-    netPayout: 2669,
-    bankAccount: '••••••••1120',
-    ifsc: 'ICIC0009821',
-    status: 'pending',
-  },
-  {
-    id: 'PAY-8837-KV',
-    creatorName: 'Kabir Verma',
-    projectRef: 'AP-8837 (Macro Horology 4K)',
-    grossAmount: 7190,
-    tdsDeduction: 72,
-    netPayout: 7118,
-    bankAccount: '••••••••9014',
-    ifsc: 'SBIN0004312',
-    status: 'pending',
-  },
-];
+const INITIAL_PAYOUTS: PayoutRecord[] = [];
 
 export default function AdminVaultPage() {
   const [payouts, setPayouts] = useState<PayoutRecord[]>(INITIAL_PAYOUTS);
@@ -182,20 +148,20 @@ export default function AdminVaultPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-xs">
           <div className="text-[10px] uppercase font-bold text-[#86868B]">Total Exposure in Transit</div>
-          <div className="text-3xl font-extrabold text-[#1D1D1F] mt-2">₹1,42,000</div>
-          <div className="text-xs text-[#86868B] mt-1">Across 8 active client projects</div>
+          <div className="text-3xl font-extrabold text-[#1D1D1F] mt-2">₹0</div>
+          <div className="text-xs text-[#86868B] mt-1">Across 0 active client projects</div>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-xs">
           <div className="text-[10px] uppercase font-bold text-[#86868B]">Locked In Production Vault</div>
-          <div className="text-3xl font-extrabold text-blue-600 mt-2">₹84,000</div>
+          <div className="text-3xl font-extrabold text-blue-600 mt-2">₹0</div>
           <div className="text-xs text-[#86868B] mt-1">Awaiting client frame approval</div>
         </div>
 
         <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-xs">
           <div className="text-[10px] uppercase font-bold text-[#86868B]">Approved &amp; Ready for Release</div>
-          <div className="text-3xl font-extrabold text-emerald-600 mt-2">₹58,000</div>
-          <div className="text-xs text-[#86868B] mt-1">3 batch NEFT payouts pending</div>
+          <div className="text-3xl font-extrabold text-emerald-600 mt-2">₹0</div>
+          <div className="text-xs text-[#86868B] mt-1">{payouts.length} batch NEFT payouts pending</div>
         </div>
       </div>
 
@@ -226,37 +192,45 @@ export default function AdminVaultPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F5F5F7]">
-              {payouts.map((p) => (
-                <tr key={p.id} className="hover:bg-[#F5F5F7]/50">
-                  <td className="py-3 px-3">
-                    <div className="font-bold text-[#1D1D1F]">{p.creatorName}</div>
-                    <div className="text-[11px] text-[#86868B]">{p.projectRef}</div>
-                  </td>
-                  <td className="py-3 px-3 font-mono font-semibold">
-                    ₹{p.grossAmount.toLocaleString('en-IN')}
-                  </td>
-                  <td className="py-3 px-3 font-mono text-rose-600">
-                    -₹{p.tdsDeduction.toLocaleString('en-IN')}
-                  </td>
-                  <td className="py-3 px-3 font-mono font-bold text-emerald-600 text-sm">
-                    ₹{p.netPayout.toLocaleString('en-IN')}
-                  </td>
-                  <td className="py-3 px-3 font-mono text-[#86868B]">
-                    {p.ifsc} ({p.bankAccount})
-                  </td>
-                  <td className="py-3 px-3">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
-                        p.status === 'dispatched'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
-                      }`}
-                    >
-                      {p.status}
-                    </span>
+              {payouts.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-[#86868B]">
+                    No pending creator payouts in vault. All cleared.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                payouts.map((p) => (
+                  <tr key={p.id} className="hover:bg-[#F5F5F7]/50">
+                    <td className="py-3 px-3">
+                      <div className="font-bold text-[#1D1D1F]">{p.creatorName}</div>
+                      <div className="text-[11px] text-[#86868B]">{p.projectRef}</div>
+                    </td>
+                    <td className="py-3 px-3 font-mono font-semibold">
+                      ₹{p.grossAmount.toLocaleString('en-IN')}
+                    </td>
+                    <td className="py-3 px-3 font-mono text-rose-600">
+                      -₹{p.tdsDeduction.toLocaleString('en-IN')}
+                    </td>
+                    <td className="py-3 px-3 font-mono font-bold text-emerald-600 text-sm">
+                      ₹{p.netPayout.toLocaleString('en-IN')}
+                    </td>
+                    <td className="py-3 px-3 font-mono text-[#86868B]">
+                      {p.ifsc} ({p.bankAccount})
+                    </td>
+                    <td className="py-3 px-3">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                          p.status === 'dispatched'
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                        }`}
+                      >
+                        {p.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -277,21 +251,9 @@ export default function AdminVaultPage() {
           </p>
 
           <div className="space-y-3">
-            <div className="p-3 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] flex items-center justify-between">
-              <div>
-                <div className="text-xs font-bold text-[#1D1D1F]">Order AP-8841 (Udaipur Royal Wedding)</div>
-                <div className="text-[11px] text-[#86868B]">Auto-release timer: 4 Days Remaining</div>
-              </div>
-              <button
-                onClick={() => toggleBlockAutoApprove('AP-8841')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
-                  blockedProjects.includes('AP-8841')
-                    ? 'bg-red-50 text-red-700 border border-red-200'
-                    : 'bg-white border border-[#E5E5E7] text-[#1D1D1F] hover:bg-slate-100'
-                }`}
-              >
-                {blockedProjects.includes('AP-8841') ? '🔒 Release Blocked' : 'Block Auto-Release'}
-              </button>
+            <div className="p-6 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-center">
+              <div className="text-xs font-semibold text-[#1D1D1F]">No Active Arbitration Disputes</div>
+              <div className="text-[11px] text-[#86868B] mt-0.5">All escrow timers are running normally without holds.</div>
             </div>
           </div>
         </div>
@@ -310,13 +272,10 @@ export default function AdminVaultPage() {
 
           <div className="space-y-2 font-mono text-[11px]">
             <div className="p-2.5 rounded-lg bg-[#F5F5F7] border border-[#E5E5E7] text-[#1D1D1F]">
-              <span className="text-[#86868B]">[2026-09-30 06:14:02]</span> VAULT_LOCK #pay_8924: ₹8,000 INR
+              <span className="text-[#86868B]">[SYSTEM]</span> WORM audit verification active. Tamper-evident ledger online.
             </div>
             <div className="p-2.5 rounded-lg bg-[#F5F5F7] border border-[#E5E5E7] text-[#1D1D1F]">
-              <span className="text-[#86868B]">[2026-09-30 05:40:11]</span> TAX_INVOICE #ART-INV-2026-004 Generated
-            </div>
-            <div className="p-2.5 rounded-lg bg-[#F5F5F7] border border-[#E5E5E7] text-[#1D1D1F]">
-              <span className="text-[#86868B]">[2026-09-30 04:12:55]</span> BATCH_NEFT #BN-1088 Completed
+              <span className="text-[#86868B]">[VAULT]</span> Zero pending dispute locks. Production clearing gateway operational.
             </div>
           </div>
         </div>

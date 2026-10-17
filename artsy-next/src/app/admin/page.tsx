@@ -60,88 +60,9 @@ interface TelemetryNode {
 
 const INITIAL_ORDERS: OrderItem[] = [];
 
-const INITIAL_CANDIDATES: VettingCandidate[] = [
-  {
-    ref: 'ART-RC-8841',
-    name: 'Karanveer V.',
-    location: 'New Delhi',
-    exp: '5.5 Yrs • Luxury Wedding & Cinema',
-    score: 96,
-    type: 'colorist',
-    software: ['DaVinci Resolve Studio 19', 'Premiere Pro', 'ACES Workflow'],
-    reels: ['Vimeo: Udaipur 4K Highlight', 'ACES Color Breakdown'],
-    status: 'pending',
-  },
-  {
-    ref: 'ART-RC-9012',
-    name: 'Ananya S.',
-    location: 'Bengaluru',
-    exp: '4.2 Yrs • High-Retention DTC Hooks',
-    score: 91,
-    type: 'editor',
-    software: ['Premiere Pro', 'After Effects', 'CapCut Pro', 'Sound Design'],
-    reels: ['DTC Viral 9:16 Hooks', 'Fintech Motion Reel'],
-    status: 'pending',
-  },
-  {
-    ref: 'ART-RC-9154',
-    name: 'Rohan Mehra',
-    location: 'Mumbai',
-    exp: '4.0 Yrs • 3D Macro Commercials',
-    score: 93,
-    type: 'colorist',
-    software: ['Premiere Pro', 'After Effects', 'Blender 3D', 'Resolve'],
-    reels: ['Horology Macro 4K', 'Studio Lighting Reel'],
-    status: 'pending',
-  },
-  {
-    ref: 'ART-RC-9208',
-    name: 'Vikram Joshi',
-    location: 'Pune',
-    exp: '6.0 Yrs • Corporate Multi-Cam Keynotes',
-    score: 95,
-    type: 'editor',
-    software: ['Premiere Pro', 'DaVinci Resolve', 'iZotope RX', 'Multi-Cam Sync'],
-    reels: ['3-Cam Keynote Summit', 'Clean Audio Conform'],
-    status: 'pending',
-  },
-];
+const INITIAL_CANDIDATES: VettingCandidate[] = [];
 
-const INITIAL_PAYOUTS: VaultPayout[] = [
-  {
-    id: 'PAY-8841-AS',
-    creatorName: 'Creator Partner',
-    projectRef: 'AP-8841 (Udaipur Royal Wedding)',
-    grossAmount: 4794,
-    tdsDeduction: 48,
-    netPayout: 4746,
-    bankAccount: '••••••••4892',
-    ifsc: 'HDFC0001234',
-    status: 'pending',
-  },
-  {
-    id: 'PAY-8839-SM',
-    creatorName: 'Sneha Mukherjee',
-    projectRef: 'AP-8839 (Verve Streetwear Reel)',
-    grossAmount: 2696,
-    tdsDeduction: 27,
-    netPayout: 2669,
-    bankAccount: '••••••••1120',
-    ifsc: 'ICIC0009821',
-    status: 'pending',
-  },
-  {
-    id: 'PAY-8837-KV',
-    creatorName: 'Kabir Verma',
-    projectRef: 'AP-8837 (Fintech App Trailer)',
-    grossAmount: 7190,
-    tdsDeduction: 72,
-    netPayout: 7118,
-    bankAccount: '••••••••9014',
-    ifsc: 'SBIN0004312',
-    status: 'pending',
-  },
-];
+const INITIAL_PAYOUTS: VaultPayout[] = [];
 
 const INITIAL_NODES: TelemetryNode[] = [
   {
@@ -222,7 +143,7 @@ export default function UnifiedAdminDashboard() {
 
   // Assign editor modal / selector state
   const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);
-  const [selectedEditorForAssign, setSelectedEditorForAssign] = useState<string>('Kabir Verma');
+  const [selectedEditorForAssign, setSelectedEditorForAssign] = useState<string>('Vikram R.');
 
   // Realtime Database Overview state (Task 1 & Task 11)
   const [realtime, setRealtime] = useState<any>(null);
@@ -1047,14 +968,14 @@ export default function UnifiedAdminDashboard() {
                 </div>
                 <div className="space-y-3">
                   <div className="text-xs p-3 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7]">
-                    <div className="text-[10px] text-[#86868B]">12 mins ago</div>
-                    <div className="font-semibold text-[#1D1D1F] mt-0.5">Candidate Approved</div>
-                    <div className="text-[#86868B] text-[11px]">Karanveer V. (Resolve Colorist) added to active roster.</div>
+                    <div className="text-[10px] text-[#86868B]">Active</div>
+                    <div className="font-semibold text-[#1D1D1F] mt-0.5">WORM Ledger Monitored</div>
+                    <div className="text-[#86868B] text-[11px]">System operating in production mode. Zero tampering detected.</div>
                   </div>
                   <div className="text-xs p-3 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7]">
-                    <div className="text-[10px] text-[#86868B]">35 mins ago</div>
+                    <div className="text-[10px] text-[#86868B]">Live</div>
                     <div className="font-semibold text-[#1D1D1F] mt-0.5">Vault Inflow Secured</div>
-                    <div className="text-[#86868B] text-[11px]">Razorpay Payment #pay_8924 locked in transit vault.</div>
+                    <div className="text-[#86868B] text-[11px]">Webhook gateways active and listening for payment events.</div>
                   </div>
                   <div className="text-xs p-3 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7]">
                     <div className="text-[10px] text-[#86868B]">1 hr ago</div>
@@ -1168,10 +1089,9 @@ export default function UnifiedAdminDashboard() {
                           onChange={(e) => setSelectedEditorForAssign(e.target.value)}
                           className="bg-white text-xs font-medium px-2 py-1 rounded-lg border border-[#E5E5E7] text-[#1D1D1F]"
                         >
-                          <option value="Kabir Verma">Kabir Verma (Senior Colorist)</option>
-                          <option value="Aanya Sen">Aanya Sen (UGC Editor)</option>
-                          <option value="Rohan Mehra">Rohan Mehra (3D Commercial)</option>
-                          <option value="Vikram Joshi">Vikram Joshi (Corporate Lead)</option>
+                          <option value="Vikram R.">Vikram R. (Wedding Cinema &amp; Film Colorist)</option>
+                          <option value="Ananya D.">Ananya D. (Commercial &amp; Brand Lead)</option>
+                          <option value="Karan P.">Karan P. (Social &amp; YouTube Pacing Specialist)</option>
                         </select>
                         <button
                           onClick={() => handleAssignEditor(order.id, selectedEditorForAssign)}
@@ -1821,11 +1741,11 @@ export default function UnifiedAdminDashboard() {
 
             <div className="space-y-2 text-[#A1A1AA] max-h-64 overflow-y-auto">
               <div>[SYSTEM] WhatsApp Meta Cloud API session heartbeat ACK (200 OK)</div>
-              <div>[INGEST] Backblaze B2 multipart upload token issued for Order #AP-8841</div>
-              <div>[STREAM] BunnyCDN proxy encoding complete: AP-8841_Rec709_Proxy.m3u8</div>
+              <div>[INGEST] Storage bucket multipart upload gateway operational</div>
+              <div>[STREAM] Proxy encoding engine ready for incoming footage</div>
               <div>[SECURITY] Middleware Edge Route Guard verified admin session signature</div>
-              <div>[VAULT] Razorpay webhook verified signature for payment #pay_892410</div>
-              <div>[WORM] Immutability hash verified for ledger entry #77819</div>
+              <div>[VAULT] Payment webhooks verified and synchronized</div>
+              <div>[WORM] Immutability hash verified for ledger stream</div>
               <div className="text-emerald-400">
                 [HEARTBEAT] Telemetry node checks passing — 0 packet drops detected across Mumbai &amp; Delhi PoPs.
               </div>

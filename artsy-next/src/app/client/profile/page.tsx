@@ -614,16 +614,13 @@ export default function ClientProfilePage() {
             <form onSubmit={handleSaveProfile} className="space-y-6">
               {/* Section 1: Studio & Brand Identity (with Logo Upload) */}
               <div className="bg-white border border-[#E5E5E7] rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
-                <div className="border-b border-[#F5F5F7] pb-3 flex items-center justify-between">
+                <div className="border-b border-[#F5F5F7] pb-3">
                   <div>
                     <h2 className="text-base font-bold text-[#1D1D1F]">Studio Identity &amp; Logo</h2>
                     <p className="text-xs text-[#86868B] mt-0.5">
                       Your studio name and logo appear on video review rooms and in the top-right navigation bar
                     </p>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#3B82F6] bg-blue-50 px-2 py-0.5 rounded">
-                    Brand Core
-                  </span>
                 </div>
 
                 {/* Logo Upload Component */}
@@ -1057,16 +1054,13 @@ export default function ClientProfilePage() {
 
               {/* Section 4: Cloud Ingest & Workspace Setup */}
               <div className="bg-white border border-[#E5E5E7] rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
-                <div className="border-b border-[#F5F5F7] pb-3 flex items-center justify-between">
+                <div className="border-b border-[#F5F5F7] pb-3">
                   <div>
                     <h2 className="text-base font-bold text-[#1D1D1F]">Cloud Storage &amp; Video Preferences</h2>
                     <p className="text-xs text-[#86868B] mt-0.5">
                       Default cloud storage links and video editing preferences
                     </p>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                    Workflow
-                  </span>
                 </div>
 
                 <div className="space-y-5">
@@ -1192,16 +1186,11 @@ export default function ClientProfilePage() {
 
               {/* Data Privacy & Statutory Rights (DPDP Act Compliance) */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E5E7] shadow-[0_4px_24px_rgba(0,0,0,0.02)] space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="text-base font-bold text-[#1D1D1F]">Data Privacy &amp; Statutory Rights</h2>
-                    <p className="text-xs text-[#86868B] mt-0.5">
-                      Compliant with India&apos;s Digital Personal Data Protection (DPDP) Act, 2023. You have the right to access, export, or permanently erase your personal data.
-                    </p>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    DPDP Protected
-                  </span>
+                <div>
+                  <h2 className="text-base font-bold text-[#1D1D1F]">Data Privacy &amp; Statutory Rights</h2>
+                  <p className="text-xs text-[#86868B] mt-0.5">
+                    Compliant with India&apos;s Digital Personal Data Protection (DPDP) Act, 2023. You have the right to access, export, or permanently erase your personal data.
+                  </p>
                 </div>
 
                 <div className="pt-2 flex flex-col sm:flex-row gap-3">
@@ -1241,13 +1230,7 @@ export default function ClientProfilePage() {
               </div>
 
               {/* Bottom Sticky Action Bar */}
-              <div className="pt-4 flex items-center justify-between">
-                <Link
-                  href="/client"
-                  className="text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] transition-colors"
-                >
-                  &larr; Back to Dashboard
-                </Link>
+              <div className="pt-4 flex items-center justify-end">
 
                 <button
                   type="submit"

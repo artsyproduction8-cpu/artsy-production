@@ -56,9 +56,6 @@ export default function ClientSupportPage() {
                     </div>
                     <div>
                       <h2 className="text-sm font-bold text-[#1D1D1F]">WhatsApp Live Support</h2>
-                      <span className="inline-block text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                        Active • Fast Response
-                      </span>
                     </div>
                   </div>
                   <p className="text-xs text-[#86868B] mb-4">

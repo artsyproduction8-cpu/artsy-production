@@ -66,11 +66,11 @@ export default function AdminTelemetryPage() {
   const [isPinging, setIsPinging] = useState(false);
   const [logs, setLogs] = useState<string[]>([
     '[SYSTEM] WhatsApp Meta Cloud API session heartbeat ACK (200 OK)',
-    '[INGEST] Backblaze B2 multipart upload token issued for Order #AP-8841',
-    '[STREAM] BunnyCDN proxy encoding complete: AP-8841_Rec709_Proxy.m3u8',
+    '[INGEST] Storage bucket multipart upload gateway operational',
+    '[STREAM] Proxy encoding engine ready for incoming footage',
     '[SECURITY] Middleware Edge Route Guard verified admin session signature',
-    '[VAULT] Razorpay webhook verified signature for payment #pay_892410',
-    '[WORM] Immutability hash verified for ledger entry #77819',
+    '[VAULT] Payment webhooks verified and synchronized',
+    '[WORM] Immutability hash verified for ledger stream',
   ]);
 
   const handlePingAll = async () => {

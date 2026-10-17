@@ -15,62 +15,7 @@ interface Candidate {
   reelUrl?: string;
 }
 
-const INITIAL_CANDIDATES: Candidate[] = [
-  {
-    ref: 'ART-RC-8841',
-    name: 'Karanveer V.',
-    location: 'New Delhi',
-    exp: '5.5 Years • Commercial & Wedding Cinema',
-    score: 96,
-    type: 'colorist',
-    software: ['DaVinci Studio 19', 'Premiere Pro', 'Blender 3D', 'ACES Workflow'],
-    sampleReels: [
-      { title: 'Wedding / 4K', type: 'Wedding Cinema' },
-      { title: 'Hypercar / Reel', type: 'Commercial' },
-      { title: 'Frequency/Color', type: 'ACES Conform' },
-    ],
-  },
-  {
-    ref: 'ART-RC-9012',
-    name: 'Ananya S.',
-    location: 'Bengaluru',
-    exp: '4.2 Years • Short UGC & Performance Cuts',
-    score: 88,
-    type: 'editor',
-    software: ['Premiere Pro', 'After Effects', 'CapCut Pro', 'Sound Design'],
-    sampleReels: [
-      { title: 'DTC Viral Hook', type: 'Social 9:16' },
-      { title: 'Fintech Reel', type: 'Kinetic Cuts' },
-    ],
-    reelUrl: 'vimeo.com/ananya-edits/commercial-reel-2026',
-  },
-  {
-    ref: 'ART-RC-9154',
-    name: 'Rohan Mehra',
-    location: 'Mumbai',
-    exp: '4.0 Years • 3D Product & Commercials',
-    score: 92,
-    type: 'colorist',
-    software: ['Premiere Pro', 'After Effects', 'Blender 3D', 'Resolve'],
-    sampleReels: [
-      { title: 'Horology Macro', type: 'Product 4K' },
-      { title: 'Studio Showcase', type: 'Lighting Grade' },
-    ],
-  },
-  {
-    ref: 'ART-RC-9208',
-    name: 'Vikram Joshi',
-    location: 'Pune',
-    exp: '6.0 Years • Corporate Multi-Cam Keynotes',
-    score: 94,
-    type: 'editor',
-    software: ['Premiere Pro', 'DaVinci Resolve', 'iZotope RX', 'Multi-Cam'],
-    sampleReels: [
-      { title: 'Keynote Summit', type: '3-Cam Multi' },
-      { title: 'Keynote Speech', type: 'Audio Cleaned' },
-    ],
-  },
-];
+const INITIAL_CANDIDATES: Candidate[] = [];
 
 export default function AdminVettingPage() {
   const [filter, setFilter] = useState<'all' | 'colorists' | 'editors'>('all');
@@ -148,7 +93,7 @@ export default function AdminVettingPage() {
                 : 'text-[#86868B] hover:text-[#1D1D1F]'
             }`}
           >
-            All (14)
+            All ({INITIAL_CANDIDATES.length})
           </button>
           <button
             onClick={() => setFilter('colorists')}
@@ -158,7 +103,7 @@ export default function AdminVettingPage() {
                 : 'text-[#86868B] hover:text-[#1D1D1F]'
             }`}
           >
-            Colorists (6)
+            Colorists ({INITIAL_CANDIDATES.filter(c => c.type === 'colorist').length})
           </button>
           <button
             onClick={() => setFilter('editors')}
@@ -168,7 +113,7 @@ export default function AdminVettingPage() {
                 : 'text-[#86868B] hover:text-[#1D1D1F]'
             }`}
           >
-            Editors (8)
+            Editors ({INITIAL_CANDIDATES.filter(c => c.type === 'editor').length})
           </button>
         </div>
       </div>
@@ -176,7 +121,18 @@ export default function AdminVettingPage() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Candidate List (2 cols) */}
         <div className="xl:col-span-2 space-y-4">
-          {filteredCandidates.map((candidate) => {
+          {filteredCandidates.length === 0 ? (
+            <div className="bg-white rounded-2xl p-10 border border-[#E5E5E7] text-center space-y-2">
+              <div className="w-10 h-10 mx-auto rounded-full bg-[#F5F5F7] flex items-center justify-center text-[#86868B]">
+                ✓
+              </div>
+              <h3 className="text-sm font-bold text-[#1D1D1F]">No Pending Candidates</h3>
+              <p className="text-xs text-[#86868B]">
+                All applicant submissions have been reviewed and vetted. New applications will appear here.
+              </p>
+            </div>
+          ) : (
+            filteredCandidates.map((candidate) => {
             const isApproved = approvedCandidates.includes(candidate.ref);
 
             return (
@@ -277,7 +233,7 @@ export default function AdminVettingPage() {
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
 
         {/* Project Dispatch Station (1 col) */}
@@ -293,38 +249,11 @@ export default function AdminVettingPage() {
               Lock unassigned client orders to verified roster members based on camera profile and timeline NLE.
             </p>
 
-            <div className="p-4 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-mono font-bold text-blue-600">ORDER #AP-8841</span>
-                <span className="font-bold text-[#1D1D1F]">₹8,000 INR</span>
-              </div>
-              <div className="text-xs font-bold text-[#1D1D1F]">
-                Udaipur Palace Royal Wedding 4K Multi-Cam
-              </div>
-              <div className="text-[11px] text-[#86868B]">
-                Customer: Oberoi &amp; Singhania Media • 3 Cams (Sony FX6 / FX3)
-              </div>
-
-              <div className="p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-[11px] text-blue-900 leading-snug">
-                <strong>Director Assessment:</strong> Candidate Karanveer V. has verified S-Log3 color science and holds 0 active project load.
-              </div>
-
-              <div className="pt-2 flex flex-col gap-2">
-                <button
-                  onClick={() => handleAssign('AP-8841', 'Karanveer V.')}
-                  className="w-full py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-colors shadow-xs"
-                >
-                  {assignedOrders['AP-8841']
-                    ? `✓ Dispatched to ${assignedOrders['AP-8841']}`
-                    : 'Dispatch Job Offer (24h Window)'}
-                </button>
-                <button
-                  onClick={() => showToast('In-house edit override activated for Order #AP-8841.')}
-                  className="w-full py-2 rounded-xl bg-white border border-[#E5E5E7] text-[#1D1D1F] hover:bg-slate-50 text-xs font-bold transition-colors"
-                >
-                  In-House Edit Override
-                </button>
-              </div>
+            <div className="p-6 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-center space-y-1">
+              <div className="text-xs font-bold text-[#1D1D1F]">No Unassigned Orders</div>
+              <p className="text-[11px] text-[#86868B]">
+                All client orders are currently assigned to active creators or completed.
+              </p>
             </div>
           </div>
 

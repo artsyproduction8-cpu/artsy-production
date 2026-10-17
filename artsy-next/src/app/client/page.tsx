@@ -250,12 +250,7 @@ export default function ClientDashboardPage() {
           <section className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F5F5F7] gap-3">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold tracking-wider text-[#3B82F6] uppercase bg-[#3B82F6]/10 px-2 py-0.5 rounded">
-                    QUICK REVIEW STATION
-                  </span>
-                </div>
-                <h2 className="text-lg font-bold text-[#1D1D1F] mt-1">
+                <h2 className="text-lg font-bold text-[#1D1D1F]">
                   Review Spotlight
                 </h2>
               </div>

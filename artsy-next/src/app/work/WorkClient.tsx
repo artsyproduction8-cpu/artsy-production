@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import LiteYouTubeEmbed from '@/components/LiteYouTubeEmbed';
 import { extractYouTubeId } from '@/lib/youtube';
-import { PORTFOLIO_ITEMS, WorkItem } from './portfolio-data';
 
 export interface PortfolioVideo {
   id: string;
@@ -27,9 +26,16 @@ type CategoryFilter = 'all' | 'wedding' | 'brand' | 'product' | 'corporate' | 'm
 export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
   const [videos, setVideos] = useState<PortfolioVideo[]>(initialVideos);
   const [filter, setFilter] = useState<CategoryFilter>('all');
-  const [selectedVideo, setSelectedVideo] = useState<PortfolioVideo | WorkItem | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<PortfolioVideo | null>(null);
 
-  // Re-fetch on mount so client reflects newly added videos in real-time
+  // Sync state if initialVideos changes
+  useEffect(() => {
+    if (initialVideos.length > 0) {
+      setVideos(initialVideos);
+    }
+  }, [initialVideos]);
+
+  // Re-fetch on mount so client always reflects live database portfolio
   useEffect(() => {
     async function fetchFreshVideos() {
       try {
@@ -45,10 +51,8 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
     fetchFreshVideos();
   }, []);
 
-  const hasDbVideos = videos.length > 0;
-
   // Filter logic
-  const filteredDbVideos = filter === 'all'
+  const filteredVideos = filter === 'all'
     ? videos
     : videos.filter((item) => {
         const cat = (item.category || '').toLowerCase();
@@ -59,10 +63,6 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
         if (filter === 'music') return cat.includes('music') || cat.includes('event');
         return cat.includes(filter);
       });
-
-  const filteredStaticItems = filter === 'all'
-    ? PORTFOLIO_ITEMS
-    : PORTFOLIO_ITEMS.filter((item) => item.category === filter);
 
   return (
     <>
@@ -105,9 +105,9 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
 
       {/* Portfolio Showcase Grid */}
       <section className="w-full max-w-[1200px] mx-auto px-6 sm:px-8">
-        {hasDbVideos ? (
+        {filteredVideos.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredDbVideos.map((video) => {
+            {filteredVideos.map((video) => {
               const ytid = video.youtube_id || extractYouTubeId(video.video_url) || '';
 
               return (
@@ -190,67 +190,23 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
             })}
           </div>
         ) : (
-          /* Fallback static showcase if database is temporarily unavailable */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredStaticItems.map((item) => (
-              <div
-                key={item.id}
-                className="group bg-white rounded-2xl border border-[#E5E5E7] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.08)] hover:border-[#3B82F6]/50 transition-all duration-300 flex flex-col justify-between"
+          /* Clean empty state when no videos match */
+          <div className="p-16 text-center bg-white rounded-3xl border border-[#E5E5E7] shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-[#F5F5F7] text-[#86868B] flex items-center justify-center mx-auto mb-4 text-2xl">
+              🎬
+            </div>
+            <h3 className="text-lg font-bold text-[#1D1D1F]">Portfolio Coming Soon</h3>
+            <p className="text-sm text-[#86868B] mt-1.5 max-w-md mx-auto">
+              Official company portfolio reels are currently being curated. Please check back shortly or order a custom edit cut directly.
+            </p>
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <Link
+                href="/book"
+                className="px-5 py-2.5 rounded-xl bg-[#1D1D1F] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#3B82F6] transition-colors"
               >
-                <div>
-                  <div
-                    className="relative aspect-video w-full bg-[#141414] overflow-hidden cursor-pointer"
-                    onClick={() => setSelectedVideo(item)}
-                  >
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between text-[11px] font-bold text-white z-10">
-                      <span className="px-2.5 py-1 rounded-md bg-[#0A0A0A]/80 backdrop-blur-md border border-white/10 uppercase tracking-wider text-[10px]">
-                        {item.categoryLabel}
-                      </span>
-                    </div>
-                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                      <div className="w-12 h-12 rounded-full bg-white/90 group-hover:bg-[#3B82F6] text-[#1D1D1F] group-hover:text-white flex items-center justify-center shadow-lg transition-all group-hover:scale-110">
-                        <span className="text-xl ml-0.5 leading-none">▶</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-6 space-y-3">
-                    <h3 className="text-lg font-bold text-[#1D1D1F] leading-snug group-hover:text-[#3B82F6] transition-colors">
-                      {item.title}
-                    </h3>
-                    {item.description && (
-                      <p className="text-sm text-gray-400 leading-relaxed mt-2 line-clamp-3">
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-6 pt-0 border-t border-[#F5F5F7] mt-4 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedVideo(item)}
-                    className="text-xs font-bold text-[#3B82F6] hover:underline cursor-pointer flex items-center gap-1"
-                  >
-                    <span>Preview Reel</span>
-                    <span>↗</span>
-                  </button>
-
-                  <Link
-                    href={`/book?category=${item.bookCategory}`}
-                    className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs"
-                  >
-                    Order Cut →
-                  </Link>
-                </div>
-              </div>
-            ))}
+                Book a Project →
+              </Link>
+            </div>
           </div>
         )}
       </section>
@@ -269,7 +225,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
             <div className="p-4 sm:p-5 border-b border-[#262626] flex items-center justify-between text-white">
               <div>
                 <span className="text-[10px] font-mono text-[#3B82F6] uppercase font-bold tracking-wider">
-                  {'category' in selectedVideo ? selectedVideo.category : 'Film'} • Artsy Production
+                  {selectedVideo.category} • Artsy Production
                 </span>
                 <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
                   {selectedVideo.title}
@@ -287,12 +243,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
             {/* Video Player */}
             <div className="relative aspect-video w-full bg-black">
               {(() => {
-                const ytid =
-                  ('youtube_id' in selectedVideo && selectedVideo.youtube_id)
-                    ? selectedVideo.youtube_id
-                    : ('video_url' in selectedVideo && selectedVideo.video_url)
-                    ? extractYouTubeId(selectedVideo.video_url)
-                    : null;
+                const ytid = selectedVideo.youtube_id || extractYouTubeId(selectedVideo.video_url);
 
                 if (ytid) {
                   return (
@@ -302,18 +253,6 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                       className="w-full h-full border-0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
-                    />
-                  );
-                }
-
-                if ('videoUrl' in selectedVideo && selectedVideo.videoUrl) {
-                  return (
-                    <video
-                      src={selectedVideo.videoUrl}
-                      controls
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-contain"
                     />
                   );
                 }
@@ -333,7 +272,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                 <div className="text-gray-400">Artsy Studio Official Film</div>
               </div>
               <div className="flex items-center gap-3">
-                {'video_url' in selectedVideo && selectedVideo.video_url && (
+                {selectedVideo.video_url && (
                   <a
                     href={selectedVideo.video_url}
                     target="_blank"
@@ -344,7 +283,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                   </a>
                 )}
                 <Link
-                  href={`/book?category=${encodeURIComponent(('category' in selectedVideo && (selectedVideo.category || '').toLowerCase().includes('wedding')) ? 'wedding' : 'brand')}`}
+                  href={`/book?category=${encodeURIComponent((selectedVideo.category || '').toLowerCase().includes('wedding') ? 'wedding' : 'brand')}`}
                   className="px-5 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
                 >
                   Book This Cut →

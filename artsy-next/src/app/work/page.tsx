@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Navbar from '../components/marketing/Navbar';
 import Footer from '../components/marketing/Footer';
 import WorkClient, { PortfolioVideo } from './WorkClient';
-import { PORTFOLIO_ITEMS } from './portfolio-data';
 import { breadcrumbSchema, videoObjectSchema } from '@/lib/seo/schemas';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 
@@ -69,15 +68,14 @@ export default async function WorkPage() {
     url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/work`,
   };
 
-  const itemsForSchema = dbVideos.length > 0 ? dbVideos : PORTFOLIO_ITEMS;
-  const videoSchemas = itemsForSchema.map((item: any) =>
+  const videoSchemas = dbVideos.map((item: any) =>
     videoObjectSchema({
       name: item.title,
       description: (item.description || item.title).slice(0, 150),
-      thumbnailUrl: item.thumbnail_url || item.image || (item.youtube_id ? `https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg` : ''),
+      thumbnailUrl: item.thumbnail_url || (item.youtube_id ? `https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg` : ''),
       uploadDate: item.created_at || '2026-01-01T00:00:00Z',
       duration: 'PT3M30S',
-      contentUrl: item.video_url || (item.videoUrl ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}${item.videoUrl}` : undefined),
+      contentUrl: item.video_url || undefined,
       embedUrl: item.youtube_id ? `https://www.youtube-nocookie.com/embed/${item.youtube_id}` : undefined,
     })
   );

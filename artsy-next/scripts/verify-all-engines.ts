@@ -352,15 +352,15 @@ console.log('\n[6/8] Testing Mock Data Alignment with 70/30 Post-Deduction Model
   );
 
   assert(
-    payout1.taxDeducted === 103,
-    'Order 1 (₹18,000): Section 194J TDS (1%) is ₹103 (NOT 18%)',
-    `Expected 103, got ${payout1.taxDeducted}`
+    payout1.taxDeducted === 206,
+    'Order 1 (₹18,000): Section 194J TDS (2%) is ₹206 (NOT 18%)',
+    `Expected 206, got ${payout1.taxDeducted}`
   );
 
   assert(
-    payout1.netAmount === 10197,
-    'Order 1 (₹18,000): Net payout is ₹10,197',
-    `Expected 10197, got ${payout1.netAmount}`
+    payout1.netAmount === 10094,
+    'Order 1 (₹18,000): Net payout is ₹10,094',
+    `Expected 10094, got ${payout1.netAmount}`
   );
 
   assert(

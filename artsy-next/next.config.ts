@@ -61,10 +61,10 @@ const nextConfig: NextConfig = {
               `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ''} https://checkout.razorpay.com`.trim(),
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com data:",
-              "img-src 'self' data: blob: https://images.unsplash.com https://*.b2.backblazeb2.com https://*.bunnycdn.com",
+              "img-src 'self' data: blob: https://images.unsplash.com https://*.b2.backblazeb2.com https://*.bunnycdn.com https://img.youtube.com https://i.ytimg.com",
               "media-src 'self' blob: https://*.b-cdn.net https://video.bunnycdn.com https://commondatastorage.googleapis.com",
               `connect-src 'self' ${isDev ? 'http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:*' : ''} https://api.razorpay.com https://*.supabase.co https://*.backblazeb2.com`.trim(),
-              "frame-src 'self' https://api.razorpay.com",
+              "frame-src 'self' https://api.razorpay.com https://www.youtube.com https://www.youtube-nocookie.com",
               "frame-ancestors 'none'",
               "object-src 'none'",
               "base-uri 'self'"
@@ -73,6 +73,18 @@ const nextConfig: NextConfig = {
         ]
       }
     ];
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'img.youtube.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ytimg.com',
+      },
+    ],
   },
 };
 

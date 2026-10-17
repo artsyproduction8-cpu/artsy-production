@@ -143,14 +143,16 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                   <div>
                     <div className="relative aspect-video w-full bg-[#0A0A0A] overflow-hidden">
                       {ytid ? (
-                        <iframe
-                          src={`https://www.youtube-nocookie.com/embed/${ytid}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytid}&playsinline=1&rel=0&modestbranding=1`}
-                          title={video.title}
-                          className="w-full h-full object-cover scale-[1.01] pointer-events-none border-0"
-                          loading="lazy"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          tabIndex={-1}
-                        />
+                        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+                          <iframe
+                            src={`https://www.youtube-nocookie.com/embed/${ytid}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${ytid}&playsinline=1&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0`}
+                            title={video.title}
+                            className="w-full h-full object-cover scale-[1.35] origin-center border-0 pointer-events-none"
+                            loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            tabIndex={-1}
+                          />
+                        </div>
                       ) : (
                         <img
                           src={thumbUrl}
@@ -160,18 +162,24 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                         />
                       )}
 
+                      {/* Transparent click shield overlay so mouse never touches YouTube player */}
+                      <div
+                        className="absolute inset-0 z-10 cursor-pointer"
+                        onClick={() => setSelectedVideo(video)}
+                      />
+
                       {/* Vignette Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
+                      <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity pointer-events-none" />
 
                       {/* Category Badge on Top-Left */}
-                      <div className="absolute top-3.5 left-3.5 z-10">
+                      <div className="absolute top-3.5 left-3.5 z-20 pointer-events-none">
                         <span className="px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white border border-white/10 uppercase tracking-wider text-[10px] font-bold">
                           {video.category || 'Wedding Cinema'}
                         </span>
                       </div>
 
                       {/* Movie Poster Play Button Overlay on Hover */}
-                      <div className="absolute inset-0 flex items-center justify-center z-10">
+                      <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
                         <div className="w-14 h-14 rounded-full bg-white/90 group-hover:bg-[#3B82F6] text-[#1D1D1F] group-hover:text-white flex items-center justify-center shadow-xl transition-all duration-300 group-hover:scale-110">
                           <svg className="w-6 h-6 fill-current translate-x-0.5" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z" />
@@ -180,7 +188,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                       </div>
 
                       {/* Bottom Tag */}
-                      <div className="absolute bottom-3 right-3 z-10">
+                      <div className="absolute bottom-3 right-3 z-20 pointer-events-none">
                         <span className="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-white/90 text-[10px] font-mono font-medium">
                           4K Cinema
                         </span>

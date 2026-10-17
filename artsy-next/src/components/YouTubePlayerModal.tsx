@@ -58,10 +58,15 @@ export default function YouTubePlayerModal({
           },
           events: {
             onReady: (event: any) => {
-              // Ensure the created iframe maintains the 125% oversized centered cropping styles
+              const isFull = zoomScale === 'w-full h-full';
+              const playerClass = isFull
+                ? 'w-full h-full border-0'
+                : `absolute ${zoomScale} top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0`;
+
+              // Ensure the created iframe maintains the appropriate styles
               const iframe = event.target.getIframe();
               if (iframe) {
-                iframe.className = `absolute ${zoomScale} top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0`;
+                iframe.className = playerClass;
                 iframe.title = title;
                 iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
               }
@@ -158,12 +163,17 @@ export default function YouTubePlayerModal({
     };
   }, [videoId, title, zoomScale]);
 
+  const isFull = zoomScale === 'w-full h-full';
+  const playerClass = isFull
+    ? 'w-full h-full border-0'
+    : `absolute ${zoomScale} top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0`;
+
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden">
       <div
         ref={containerRef}
         id="yt-player"
-        className={`absolute ${zoomScale} top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0`}
+        className={playerClass}
       />
     </div>
   );

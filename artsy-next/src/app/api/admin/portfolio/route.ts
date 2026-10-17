@@ -136,17 +136,29 @@ export async function POST(request: Request) {
 
     const thumbnailUrl = youtubeThumbnail(youtubeId);
 
+    // Explicitly normalize creator_id: if null, empty string, or "None", assign null (Company Portfolio)
+    const sanitizedCreatorId =
+      creator_id && typeof creator_id === 'string' && creator_id.trim() !== ''
+        ? creator_id.trim()
+        : null;
+
+    // Explicitly normalize description
+    const sanitizedDescription =
+      typeof description === 'string' && description.trim().length > 0
+        ? description.trim()
+        : null;
+
     // Insert new portfolio sample
     const { data: newSample, error: insertError } = await dbClient
       .from('portfolio_samples')
       .insert([
         {
-          creator_id: creator_id || null,
+          creator_id: sanitizedCreatorId,
           youtube_id: youtubeId,
           video_url: `https://www.youtube.com/watch?v=${youtubeId}`,
           thumbnail_url: thumbnailUrl,
           title: title.trim(),
-          description: description?.trim() || null,
+          description: sanitizedDescription,
           category: category || 'Commercial',
           approval_status: 'approved',
           is_visible: true,

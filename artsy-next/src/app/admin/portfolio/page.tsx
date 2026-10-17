@@ -473,7 +473,7 @@ export default function AdminPortfolioPage() {
                     onChange={(e) => setAddCreatorId(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E5E7] bg-[#F9F9FB] text-xs text-[#1D1D1F] focus:outline-hidden focus:border-[#3B82F6] focus:bg-white transition-all"
                   >
-                    <option value="">None (Company / Artsy Official Studio Video)</option>
+                    <option value="">None (Company Portfolio)</option>
                     {creators.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.display_name} ({c.id.slice(0, 8)})
@@ -556,7 +556,7 @@ export default function AdminPortfolioPage() {
                   onChange={(e) => setEditCreatorId(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#E5E5E7] bg-[#F9F9FB] text-xs text-[#1D1D1F] focus:outline-hidden focus:border-[#3B82F6] focus:bg-white transition-all"
                 >
-                  <option value="">None (Company / Artsy Official)</option>
+                  <option value="">None (Company Portfolio)</option>
                   {creators.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.display_name}

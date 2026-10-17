@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import Navbar from '../components/marketing/Navbar';
 import Footer from '../components/marketing/Footer';
-import WorkClient from './WorkClient';
+import WorkClient, { PortfolioVideo } from './WorkClient';
 import { PORTFOLIO_ITEMS } from './portfolio-data';
 import { breadcrumbSchema, videoObjectSchema } from '@/lib/seo/schemas';
+import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Portfolio — Cinematic Reels | Artsy Production',
@@ -13,7 +16,46 @@ export const metadata: Metadata = {
   },
 };
 
-export default function WorkPage() {
+async function getCompanyPortfolio(): Promise<PortfolioVideo[]> {
+  const dbClient = supabaseAdmin || anonSupabase;
+  if (!dbClient || typeof dbClient.from !== 'function') {
+    return [];
+  }
+
+  try {
+    const { data: samples, error } = await dbClient
+      .from('portfolio_samples')
+      .select('id, title, description, category, video_url, thumbnail_url, youtube_id, display_order, created_at')
+      .is('creator_id', null)
+      .eq('is_visible', true)
+      .order('display_order', { ascending: true })
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('[Public /work GET Error]', error);
+      return [];
+    }
+
+    return (samples || []).map((s: any) => ({
+      id: s.id,
+      title: s.title,
+      description: s.description || null,
+      category: s.category || 'Wedding Cinema',
+      video_url: s.video_url,
+      thumbnail_url: s.thumbnail_url || (s.youtube_id ? `https://img.youtube.com/vi/${s.youtube_id}/hqdefault.jpg` : ''),
+      youtube_id: s.youtube_id || '',
+      display_order: s.display_order ?? 0,
+      created_at: s.created_at,
+    }));
+  } catch (err) {
+    console.error('[Public /work GET Error]', err);
+    return [];
+  }
+}
+
+export default async function WorkPage() {
+  const dbVideos = await getCompanyPortfolio();
+
   const breadcrumbJsonLd = breadcrumbSchema([
     { name: 'Home', url: '/' },
     { name: 'Portfolio', url: '/work' },
@@ -27,15 +69,16 @@ export default function WorkPage() {
     url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/work`,
   };
 
-  const videoSchemas = PORTFOLIO_ITEMS.map((item) =>
+  const itemsForSchema = dbVideos.length > 0 ? dbVideos : PORTFOLIO_ITEMS;
+  const videoSchemas = itemsForSchema.map((item: any) =>
     videoObjectSchema({
       name: item.title,
-      description: item.description.slice(0, 150),
-      thumbnailUrl: item.image,
-      uploadDate: '2026-01-01T00:00:00Z',
-      duration: 'PT1M30S',
-      contentUrl: item.videoUrl ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}${item.videoUrl}` : undefined,
-      embedUrl: item.videoUrl ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}${item.videoUrl}` : undefined,
+      description: (item.description || item.title).slice(0, 150),
+      thumbnailUrl: item.thumbnail_url || item.image || (item.youtube_id ? `https://img.youtube.com/vi/${item.youtube_id}/hqdefault.jpg` : ''),
+      uploadDate: item.created_at || '2026-01-01T00:00:00Z',
+      duration: 'PT3M30S',
+      contentUrl: item.video_url || (item.videoUrl ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}${item.videoUrl}` : undefined),
+      embedUrl: item.youtube_id ? `https://www.youtube-nocookie.com/embed/${item.youtube_id}` : undefined,
     })
   );
 
@@ -62,7 +105,7 @@ export default function WorkPage() {
       <Navbar />
 
       <main className="w-full pt-28 pb-20 max-w-full overflow-x-clip flex-1">
-        <WorkClient />
+        <WorkClient initialVideos={dbVideos} />
       </main>
 
       {/* 06. Studio Footer */}

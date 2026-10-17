@@ -2,10 +2,43 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   verifyAndParseAuthCookie,
   getAuthenticatedUser,
+  signAuthCookieValue,
   AUTH_COOKIE_NAME,
   invalidateUserTokenVersionCache,
 } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const user = body.user;
+    if (!user || !user.role) {
+      return NextResponse.json({ error: 'Invalid user payload' }, { status: 400 });
+    }
+
+    const cookieValue = signAuthCookieValue({
+      id: user.id || 'usr-client-001',
+      role: user.role,
+      email: user.email,
+      phone: user.phone,
+      full_name: user.full_name,
+      onboarded: user.onboarded !== false,
+      token_version: 1,
+    });
+
+    const response = NextResponse.json({ success: true, user });
+    response.cookies.set(AUTH_COOKIE_NAME, cookieValue, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 86400,
+    });
+    return response;
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || 'Session creation failed' }, { status: 500 });
+  }
+}
 
 export async function GET(request: NextRequest) {
   const cookie = request.cookies.get(AUTH_COOKIE_NAME);

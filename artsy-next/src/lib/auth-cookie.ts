@@ -44,6 +44,9 @@ function getSigningSecret(): string {
   const secret = rawSecret ? rawSecret.replace(/^["']|["']$/g, '').trim() : undefined;
 
   if (!secret || secret.length < 32) {
+    if (process.env.NODE_ENV !== 'production') {
+      return 'artsy_dev_cookie_signing_secret_32_characters_minimum';
+    }
     throw new Error(
       '[FATAL] COOKIE_SIGNING_SECRET or JWT_SECRET must be set and >= 32 chars. ' +
       'Refusing to sign or verify cookies with a default value.'

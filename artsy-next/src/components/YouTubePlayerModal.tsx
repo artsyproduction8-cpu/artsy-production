@@ -18,7 +18,7 @@ interface YouTubePlayerModalProps {
 export default function YouTubePlayerModal({
   videoId,
   title,
-  zoomScale = 'w-[125%] h-[125%]',
+  zoomScale = 'w-[150%] h-[150%]',
 }: YouTubePlayerModalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
@@ -49,7 +49,7 @@ export default function YouTubePlayerModal({
             autoplay: 1,
             rel: 0,
             modestbranding: 1,
-            vq: 'hd1080', // Force 1080p high definition
+            vq: 'hd2160', // Force 4K resolution (2160p)
             hd: 1,
             playsinline: 1,
             showinfo: 0,
@@ -71,13 +71,13 @@ export default function YouTubePlayerModal({
                 iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
               }
 
-              // Force the highest available playback quality
+              // Force the 4K playback quality
               try {
                 if (typeof event.target.setPlaybackQuality === 'function') {
-                  event.target.setPlaybackQuality('hd1080');
+                  event.target.setPlaybackQuality('hd2160');
                 }
                 if (typeof event.target.setPlaybackQualityRange === 'function') {
-                  event.target.setPlaybackQualityRange('hd1080', 'hd1080');
+                  event.target.setPlaybackQualityRange('hd2160', 'hd2160');
                 }
               } catch (err) {
                 console.warn('Could not set playback quality onReady:', err);
@@ -86,14 +86,14 @@ export default function YouTubePlayerModal({
               event.target.playVideo();
             },
             onStateChange: (event: any) => {
-              // When playback starts (state 1 = PLAYING), reinforce the 1080p quality setting
+              // When playback starts (state 1 = PLAYING), reinforce the 4K quality setting
               if (event.data === 1) {
                 try {
                   if (typeof event.target.setPlaybackQuality === 'function') {
-                    event.target.setPlaybackQuality('hd1080');
+                    event.target.setPlaybackQuality('hd2160');
                   }
                   if (typeof event.target.setPlaybackQualityRange === 'function') {
-                    event.target.setPlaybackQualityRange('hd1080', 'hd1080');
+                    event.target.setPlaybackQualityRange('hd2160', 'hd2160');
                   }
                 } catch (err) {
                   // ignore

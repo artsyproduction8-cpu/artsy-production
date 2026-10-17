@@ -148,7 +148,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                           <iframe
                             src={`https://www.youtube-nocookie.com/embed/${ytid}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${ytid}&playsinline=1&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&vq=highres&hd=1`}
                             title={video.title}
-                            className="absolute w-[115%] h-[115%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none"
+                            className="absolute w-[150%] h-[150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none"
                             loading="lazy"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             tabIndex={-1}
@@ -263,7 +263,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                 <YouTubePlayerModal
                   videoId={selectedYtId}
                   title={selectedVideo.title}
-                  zoomScale="w-[105%] h-[105%]"
+                  zoomScale="w-[150%] h-[150%]"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white text-xs">

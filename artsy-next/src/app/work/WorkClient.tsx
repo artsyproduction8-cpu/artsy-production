@@ -142,17 +142,23 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                   {/* Movie Poster Thumbnail Container (16:9 aspect-video with object-cover) */}
                   <div>
                     <div className="relative aspect-video w-full bg-[#0A0A0A] overflow-hidden">
-                      <img
-                        src={thumbUrl}
-                        alt={video.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                        onError={(e) => {
-                          if (ytid) {
-                            e.currentTarget.src = `https://img.youtube.com/vi/${ytid}/hqdefault.jpg`;
-                          }
-                        }}
-                      />
+                      {ytid ? (
+                        <iframe
+                          src={`https://www.youtube-nocookie.com/embed/${ytid}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytid}&playsinline=1&rel=0&modestbranding=1`}
+                          title={video.title}
+                          className="w-full h-full object-cover scale-[1.01] pointer-events-none border-0"
+                          loading="lazy"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          tabIndex={-1}
+                        />
+                      ) : (
+                        <img
+                          src={thumbUrl}
+                          alt={video.title}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      )}
 
                       {/* Vignette Gradient Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />

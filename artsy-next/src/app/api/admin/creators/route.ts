@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }
 
+
   const dbClient = supabaseAdmin || anonSupabase;
   if (!dbClient || typeof dbClient.from !== 'function') {
     return createErrorResponse('Database client unavailable', 'Database service is currently unavailable', 503);

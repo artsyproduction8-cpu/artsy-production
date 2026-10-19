@@ -114,7 +114,7 @@ export async function middleware(request: NextRequest) {
       maxRequests = 3; // 3 per hour on password reset
     } else if (isAuthRoute) {
       windowMs = 60 * 1000; // 1 minute
-      maxRequests = 5; // 5 attempts per minute per IP on login/OTP/auth
+      maxRequests = process.env.NODE_ENV !== 'production' ? 200 : 15; // Safe threshold allowing normal login/verify without blocking
     }
 
     // Key calculation: For auth routes, track strictly per IP to prevent brute-force attacks

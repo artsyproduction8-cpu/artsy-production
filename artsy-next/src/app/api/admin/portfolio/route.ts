@@ -96,9 +96,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const { youtube_url, title, category, creator_id, description } = body || {};
+    const { youtube_url, video_url, title, category, creator_id, description } = body || {};
+    const finalUrl = youtube_url || video_url;
 
-    if (!youtube_url || typeof youtube_url !== 'string') {
+    if (!finalUrl || typeof finalUrl !== 'string') {
       return NextResponse.json({ error: 'YouTube URL is required' }, { status: 400 });
     }
 
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Title must be between 2 and 200 characters' }, { status: 400 });
     }
 
-    const youtubeId = extractYouTubeId(youtube_url);
+    const youtubeId = extractYouTubeId(finalUrl);
     if (!youtubeId) {
       return NextResponse.json({ error: 'Invalid YouTube video URL' }, { status: 400 });
     }

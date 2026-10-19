@@ -589,9 +589,11 @@ export async function POST(request: NextRequest) {
       }
 
       if (logRows.length > 0) {
-        await dbClient.from('notification_delivery_log').insert(logRows).catch((err: any) => {
+        try {
+          await dbClient.from('notification_delivery_log').insert(logRows);
+        } catch (err: any) {
           console.warn('[OTP Route] notification_delivery_log background insert warning:', err);
-        });
+        }
       }
     });
 

@@ -12,35 +12,38 @@ export default function ClientLayoutClient({ children }: { children: React.React
     async function checkAuth() {
       let user = getCurrentUser();
 
+      try {
+        const res = await fetch('/api/auth/session');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user) {
+            const u = {
+              ...user,
+              ...data.user,
+              id: data.user.id || user?.id,
+              email: data.user.email || user?.email,
+              phone: data.user.phone || user?.phone,
+              full_name: data.user.full_name || user?.full_name || 'Client Partner',
+              display_name: data.user.display_name || user?.display_name,
+              avatar_url: data.user.avatar_url || user?.avatar_url,
+              studio_details: data.user.studio_details || user?.studio_details,
+              role: data.user.role || user?.role || 'client',
+              status: data.user.status || user?.status || 'active',
+              onboarded: data.user.onboarded !== undefined ? data.user.onboarded : (user?.onboarded !== false),
+            };
+            setCurrentUser(u);
+            user = u;
+          }
+        }
+      } catch {
+        // ignore
+      }
+
       // In local dev mode, immediately fallback so there is zero spinner delay (excluded from production)
       const isLocalhost = process.env.NODE_ENV !== 'production' && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       if (!user && isLocalhost) {
         user = PRESET_USERS.client;
         setCurrentUser(user);
-      }
-
-      if (!user) {
-        try {
-          const res = await fetch('/api/auth/session');
-          if (res.ok) {
-            const data = await res.json();
-            if (data.authenticated && data.user) {
-              const u = {
-                id: data.user.id || 'usr-client-001',
-                email: data.user.email || 'client@artsyproduction.com',
-                full_name: data.user.full_name || 'Client Partner',
-                role: data.user.role || 'client',
-                status: 'active' as const,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              };
-              setCurrentUser(u);
-              user = u;
-            }
-          }
-        } catch {
-          // ignore
-        }
       }
 
       if (!user) {

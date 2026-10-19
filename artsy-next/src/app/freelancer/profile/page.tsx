@@ -167,9 +167,11 @@ export default function FreelancerProfilePage() {
     }
   };
 
-  // Load from local storage or user on mount
+  // Load from local storage and server on mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    async function loadCreatorData() {
+      if (typeof window === 'undefined') return;
+
       const stored = localStorage.getItem('artsy_creator_profile');
       if (stored) {
         try {
@@ -199,8 +201,48 @@ export default function FreelancerProfilePage() {
       if (currentUser?.phone) setPhone(currentUser.phone);
       if (currentUser?.full_name && !stored) setAlias(currentUser.full_name);
 
+      // Fetch server data for guaranteed persistence across devices and sessions
+      try {
+        const res = await fetch('/api/user/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user) {
+            const u = data.user;
+            if (u.full_name) {
+              setAlias(u.display_name || u.full_name);
+              setLegalName(u.full_name);
+            }
+            if (u.email) setEmail(u.email);
+            if (u.phone) setPhone(u.phone);
+
+            const sd = u.studio_details || {};
+            if (sd.alias) setAlias(sd.alias);
+            if (sd.showreelUrl) setShowreelUrl(sd.showreelUrl);
+            if (sd.philosophy || u.bio) setPhilosophy(sd.philosophy || u.bio);
+            if (Array.isArray(sd.software) || Array.isArray(u.software)) setSoftware(sd.software || u.software);
+            if (sd.experience) setExperience(sd.experience);
+            if (sd.capacity) setCapacity(sd.capacity);
+            if (Array.isArray(sd.languages) || Array.isArray(u.languages)) setLanguages(sd.languages || u.languages);
+            if (Array.isArray(sd.reels)) setReels(sd.reels);
+            if (sd.bankName) setBankName(sd.bankName);
+            if (sd.bankAccount || u.creator_profile?.bank_account_number) setBankAccount(sd.bankAccount || u.creator_profile?.bank_account_number);
+            if (sd.ifsc || u.creator_profile?.bank_ifsc_code) setIfsc(sd.ifsc || u.creator_profile?.bank_ifsc_code);
+            if (sd.pan || u.creator_profile?.pan_number) setPan(sd.pan || u.creator_profile?.pan_number);
+            if (sd.legalName || u.creator_profile?.bank_account_name) setLegalName(sd.legalName || u.creator_profile?.bank_account_name);
+            if (sd.workstationRig) setWorkstationRig(sd.workstationRig);
+            if (sd.monitoringSpec) setMonitoringSpec(sd.monitoringSpec);
+            if (sd.storageSpec) setStorageSpec(sd.storageSpec);
+            if (sd.audioSpec) setAudioSpec(sd.audioSpec);
+          }
+        }
+      } catch (meErr) {
+        console.warn('Failed to fetch /api/user/me:', meErr);
+      }
+
       fetchPortfolio();
     }
+
+    loadCreatorData();
   }, []);
 
   const handleAddSampleSubmit = async (e: React.FormEvent) => {
@@ -255,7 +297,7 @@ export default function FreelancerProfilePage() {
     );
   };
 
-  const handleSaveAll = () => {
+  const handleSaveAll = async () => {
     setIsSaving(true);
 
     const payload = {
@@ -271,28 +313,59 @@ export default function FreelancerProfilePage() {
       storageSpec,
       audioSpec,
       reels,
+      bankName,
+      bankAccount,
+      ifsc,
+      pan,
+      legalName,
       updatedAt: new Date().toISOString(),
     };
 
     if (typeof window !== 'undefined') {
-      // Exclude sensitive financial PII (bank, PAN, IFSC) from localStorage
       localStorage.setItem('artsy_creator_profile', JSON.stringify(payload));
 
       const currentUser = getCurrentUser() || PRESET_USERS.freelancer;
       const updatedUser = {
         ...currentUser,
-        full_name: alias || currentUser.full_name,
+        full_name: legalName || alias || currentUser.full_name,
+        display_name: alias || currentUser.display_name,
         email: email || currentUser.email,
         phone: phone || currentUser.phone,
+        studio_details: payload,
       };
       setCurrentUser(updatedUser);
+      window.dispatchEvent(new Event('artsy_auth_change'));
     }
 
-    setTimeout(() => {
-      setIsSaving(false);
-      setToastMessage('✓ Software & Gear Profile, contact information, and bank details updated successfully.');
-      setTimeout(() => setToastMessage(null), 4000);
-    }, 400);
+    try {
+      await fetch('/api/user/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: legalName.trim() || alias.trim(),
+          display_name: alias.trim(),
+          studio_details: payload,
+          creator_profile: {
+            bio: philosophy,
+            public_bio: philosophy,
+            public_display_name: alias,
+            software,
+            languages,
+            bank_account_name: legalName,
+            bank_account_number: bankAccount,
+            bank_ifsc_code: ifsc,
+            pan_number: pan,
+          },
+          onboarded: true,
+        }),
+      });
+    } catch (saveErr) {
+      console.warn('Failed to sync creator profile to server:', saveErr);
+    }
+
+    setIsSaving(false);
+    setToastMessage('✓ Software & Gear Profile, contact information, and bank details updated successfully.');
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
   // Change phone flow

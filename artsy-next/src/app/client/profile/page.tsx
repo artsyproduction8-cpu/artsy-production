@@ -534,15 +534,26 @@ export default function ClientProfilePage() {
       fullName: fullName.trim(),
       studioName: studioName.trim(),
       logoUrl,
+      whatsapp: whatsapp.trim(),
+      whatsappVerified,
+      email: email.trim(),
+      emailVerified,
+      billingName: billingName.trim(),
+      gstin: gstin.trim(),
+      address: address.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      pincode: pincode.trim(),
       ingestProvider,
+      ingestLink: ingestLink.trim(),
       brandLuts: brandLuts.trim(),
       aspectRatioPreset,
+      collaborators: collaborators.trim(),
       notifyWhatsApp,
       notifyEmail,
       notifyMilestones,
     };
 
-    // Save non-sensitive presentation preferences to local storage (excludes GSTIN, billing address, and financial PII)
     if (typeof window !== 'undefined') {
       localStorage.setItem('artsy_client_profile', JSON.stringify(updatedProfile));
     }
@@ -556,6 +567,7 @@ export default function ClientProfilePage() {
         phone: whatsapp.trim() || user.phone,
         email: email.trim() || user.email,
         avatar_url: logoUrl || user.avatar_url,
+        studio_details: updatedProfile,
       };
       setCurrentUser(updatedUser);
     }

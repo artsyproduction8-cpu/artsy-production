@@ -161,8 +161,13 @@ export default function AdminPortfolioPage() {
   };
 
   const handleToggleVisibility = async (sample: PortfolioSample) => {
+    const newVisibility = !sample.is_visible;
+    // Optimistic UI update
+    setSamples((prev) =>
+      prev.map((s) => (s.id === sample.id ? { ...s, is_visible: newVisibility } : s))
+    );
+
     try {
-      const newVisibility = !sample.is_visible;
       const res = await fetch(`/api/admin/portfolio/${sample.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -172,12 +177,19 @@ export default function AdminPortfolioPage() {
 
       if (res.ok) {
         setNotice(`Visibility updated for "${sample.title}" (${newVisibility ? 'Visible' : 'Hidden'}).`);
-        fetchSamples();
       } else {
-        const data = await res.json();
+        // Revert on error
+        setSamples((prev) =>
+          prev.map((s) => (s.id === sample.id ? { ...s, is_visible: sample.is_visible } : s))
+        );
+        const data = await res.json().catch(() => ({}));
         alert(data.error || 'Failed to update visibility.');
       }
     } catch (err: any) {
+      // Revert on error
+      setSamples((prev) =>
+        prev.map((s) => (s.id === sample.id ? { ...s, is_visible: sample.is_visible } : s))
+      );
       alert(err.message || 'Error updating visibility.');
     }
   };

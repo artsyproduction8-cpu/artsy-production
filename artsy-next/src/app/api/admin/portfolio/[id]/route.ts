@@ -48,23 +48,18 @@ export async function PATCH(
     if (display_order !== undefined) updatePayload.display_order = Number(display_order);
     if (creator_id !== undefined) updatePayload.creator_id = creator_id || null;
 
-    let { data: updated, error: updateError } = await dbClient
+    let { error: updateError } = await dbClient
       .from('portfolio_samples')
       .update(updatePayload)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
 
     if (updateError && dbClient !== anonSupabase && anonSupabase) {
       console.warn('[Admin Portfolio PATCH Warning] Primary dbClient failed, trying anon client:', updateError.message);
       const fb = await anonSupabase
         .from('portfolio_samples')
         .update(updatePayload)
-        .eq('id', id)
-        .select()
-        .single();
-      if (!fb.error && fb.data) {
-        updated = fb.data;
+        .eq('id', id);
+      if (!fb.error) {
         updateError = null;
       }
     }
@@ -74,7 +69,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Failed to update sample' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, sample: updated });
+    return NextResponse.json({ success: true, sample: { id, ...updatePayload } });
   } catch (err: unknown) {
     console.error('[Admin Portfolio PATCH Error]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

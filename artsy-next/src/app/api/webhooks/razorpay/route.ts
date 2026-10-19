@@ -127,6 +127,64 @@ export async function POST(request: NextRequest) {
                 })
                 .eq('id', order.id);
 
+              // Automatically spawn active project if not already created
+              try {
+                let finalClientId = order.client_id;
+                if (!finalClientId && order.client_phone) {
+                  const rawDigits = order.client_phone.replace(/\D/g, '').slice(-10);
+                  const { data: matchedUser } = await supabaseAdmin
+                    .from('users')
+                    .select('id')
+                    .ilike('phone', `%${rawDigits}%`)
+                    .maybeSingle();
+                  if (matchedUser?.id) finalClientId = matchedUser.id;
+                }
+                if (!finalClientId && order.client_email) {
+                  const { data: matchedUser } = await supabaseAdmin
+                    .from('users')
+                    .select('id')
+                    .eq('email', order.client_email.toLowerCase().trim())
+                    .maybeSingle();
+                  if (matchedUser?.id) finalClientId = matchedUser.id;
+                }
+
+                if (finalClientId) {
+                  if (!order.client_id) {
+                    await supabaseAdmin.from('orders').update({ client_id: finalClientId }).eq('id', order.id);
+                  }
+
+                  const { data: existingProject } = await supabaseAdmin
+                    .from('projects')
+                    .select('id')
+                    .eq('order_id', order.id)
+                    .maybeSingle();
+
+                  if (!existingProject) {
+                    const serviceLabel = order.service_key
+                      ? order.service_key.charAt(0).toUpperCase() + order.service_key.slice(1).replace(/_/g, ' ')
+                      : 'Cinematic';
+
+                    const projectNumber = `PRJ-${order.order_number || Date.now().toString(36).toUpperCase()}`;
+
+                    await supabaseAdmin.from('projects').insert([
+                      {
+                        project_number: projectNumber,
+                        order_id: order.id,
+                        client_id: finalClientId,
+                        assigned_creator_id: order.preferred_creator_id || null,
+                        title: `${serviceLabel} Master Edit`,
+                        status: 'awaiting_upload',
+                        priority: 1,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString(),
+                      },
+                    ]);
+                  }
+                }
+              } catch (prjErr) {
+                console.warn('[Webhook Razorpay] Project spawn warning:', prjErr);
+              }
+
               await supabaseAdmin.from('payments').insert([
                 {
                   order_id: order.id,

@@ -51,8 +51,9 @@ async function getCompanyPortfolio(): Promise<PortfolioVideo[]> {
       return [];
     }
 
+    const BLOCKED_YOUTUBE_IDS = ['dQw4w9WgXcQ', 'test087694'];
     return (samples || [])
-      .filter((s: any) => s.youtube_id !== 'dQw4w9WgXcQ')
+      .filter((s: any) => s.youtube_id && !BLOCKED_YOUTUBE_IDS.includes(s.youtube_id) && (s.approval_status === undefined || s.approval_status === 'approved'))
       .map((s: any) => ({
       id: s.id,
       title: s.title,

@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Clean up test video dQw4w9WgXcQ (Rickroll test video)
+    // Clean up test videos dQw4w9WgXcQ and test087694
     try {
-      await dbClient.from('portfolio_samples').delete().eq('youtube_id', 'dQw4w9WgXcQ');
+      await dbClient.from('portfolio_samples').delete().in('youtube_id', ['dQw4w9WgXcQ', 'test087694']);
     } catch (cleanErr) {
       console.warn('[Admin Portfolio] Clean test video warning:', cleanErr);
     }
@@ -75,8 +75,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch portfolio samples' }, { status: 500 });
     }
 
-    // Filter out test video if present
-    const cleanSamples = (samples || []).filter((s: any) => s.youtube_id !== 'dQw4w9WgXcQ');
+    // Filter out test videos if present
+    const BLOCKED_YOUTUBE_IDS = ['dQw4w9WgXcQ', 'test087694'];
+    const cleanSamples = (samples || []).filter((s: any) => !BLOCKED_YOUTUBE_IDS.includes(s.youtube_id));
 
     // Enrich with creator names
     const creatorIds = Array.from(new Set(cleanSamples.map((s: any) => s.creator_id).filter(Boolean)));

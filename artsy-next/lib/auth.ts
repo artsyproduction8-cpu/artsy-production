@@ -40,6 +40,8 @@ export interface ArtsyUser {
   rejected_at?: string | null;
   created_at: string;
   updated_at: string;
+  studio_details?: any;
+  creator_profile?: any;
 }
 
 // Preset standard test accounts for instant role demo & testing
@@ -129,11 +131,11 @@ export const setCurrentUser = (user: ArtsyUser | null) => {
       // Store full active user profile in sessionStorage (isolated to current tab session, cleared on tab close)
       sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
 
-      // Store only non-PII operational fields in persistent localStorage to minimize XSS exposure of PII
-      const sanitizedUser: ArtsyUser = {
+      // Store active user profile in persistent localStorage and sessionStorage
+      const persistentUser: ArtsyUser = {
         id: user.id,
-        email: '', // Never store email in persistent localStorage
-        phone: '', // Never store phone in persistent localStorage
+        email: user.email || '',
+        phone: user.phone || '',
         full_name: user.full_name || '',
         display_name: user.display_name || '',
         role: user.role,
@@ -147,10 +149,12 @@ export const setCurrentUser = (user: ArtsyUser | null) => {
         tracking_id: user.tracking_id,
         rejection_reason: user.rejection_reason,
         rejected_at: user.rejected_at,
+        studio_details: user.studio_details || null,
+        creator_profile: user.creator_profile || null,
         created_at: user.created_at,
         updated_at: user.updated_at,
       };
-      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitizedUser));
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(persistentUser));
     } catch {}
 
     // Sync with server HttpOnly signed cookie (prevents client-side unsigned cookie tampering)

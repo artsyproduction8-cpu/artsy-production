@@ -133,13 +133,20 @@ async function computeWebHmac(secret: string, data: string): Promise<string> {
  * Strictly contains ONLY: id, role, token_version, exp (profile data is fetched from DB via /api/user/me).
  */
 export function signAuthCookieValue(payload: AuthUserPayload): string {
-  const minimalPayload: AuthUserPayload = {
+  const cookiePayload: AuthUserPayload = {
     id: String(payload.id),
     role: payload.role,
     token_version: Number(payload.token_version) >= 2 ? Number(payload.token_version) : 2,
     exp: payload.exp || Date.now() + SESSION_DURATION_MS,
+    email: payload.email || '',
+    phone: payload.phone || '',
+    full_name: payload.full_name || '',
+    display_name: payload.display_name || '',
+    onboarded: payload.onboarded !== false,
+    studio_details: payload.studio_details || null,
+    creator_profile: payload.creator_profile || null,
   };
-  const jsonStr = JSON.stringify(minimalPayload);
+  const jsonStr = JSON.stringify(cookiePayload);
   const payloadBase64 = Buffer.from(jsonStr, 'utf-8').toString('base64');
   const secret = getSigningSecret();
   const signature = createHmac('sha256', secret).update(payloadBase64).digest('hex');

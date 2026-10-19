@@ -69,6 +69,9 @@ export async function POST(request: NextRequest) {
       email: user.email,
       phone: user.phone,
       full_name: user.full_name,
+      display_name: user.display_name,
+      studio_details: user.studio_details || null,
+      creator_profile: user.creator_profile || null,
       onboarded: user.onboarded !== false,
       token_version: effectiveTokenVersion,
     });

@@ -25,11 +25,22 @@ export async function GET(request: NextRequest) {
 
     if (isSupabaseConfigured && dbClient && typeof dbClient.from === 'function') {
       try {
-        const { data, error } = await dbClient
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(authUser.id);
+        let userQuery = dbClient
           .from('users')
-          .select('id, email, phone, full_name, display_name, role, status, avatar_url, onboarded, studio_details, created_at, updated_at, token_version')
-          .eq('id', authUser.id)
-          .maybeSingle();
+          .select('id, email, phone, full_name, display_name, role, status, avatar_url, onboarded, studio_details, created_at, updated_at, token_version');
+
+        if (isUuid) {
+          userQuery = userQuery.eq('id', authUser.id);
+        } else if (authUser.email) {
+          userQuery = userQuery.eq('email', authUser.email);
+        } else if (authUser.phone) {
+          userQuery = userQuery.eq('phone', authUser.phone);
+        } else {
+          userQuery = userQuery.eq('id', authUser.id);
+        }
+
+        const { data, error } = await userQuery.maybeSingle();
 
         if (!error && data) {
           dbUser = data;
@@ -52,7 +63,8 @@ export async function GET(request: NextRequest) {
       avatar_url: dbUser?.avatar_url || authUser.avatar_url || '',
       status: dbUser?.status || 'active',
       onboarded: dbUser?.onboarded !== undefined ? Boolean(dbUser.onboarded) : Boolean(authUser.onboarded),
-      studio_details: dbUser?.studio_details || null,
+      studio_details: dbUser?.studio_details || authUser.studio_details || null,
+      creator_profile: authUser.creator_profile || null,
       created_at: dbUser?.created_at || new Date().toISOString(),
       updated_at: dbUser?.updated_at || new Date().toISOString(),
     };

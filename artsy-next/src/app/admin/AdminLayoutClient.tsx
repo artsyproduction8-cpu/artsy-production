@@ -63,6 +63,12 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           if (syncData.user) {
             setCurrentUser(syncData.user);
             user = syncData.user;
+          } else {
+            console.warn('[AdminLayoutClient] Session sync succeeded but no user data returned');
+            logout();
+            localStorage.removeItem('artsy_auth_user');
+            router.push('/admin/login?error=no_user_data');
+            return;
           }
         } catch (syncErr) {
           console.error('[AdminLayoutClient] Failed to sync session cookie:', syncErr);

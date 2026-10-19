@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       try {
         const { data: ord } = await supabaseAdmin
           .from('orders')
-          .select('id, gross_amount, status')
+          .select('id, gross_amount, status, order_number, client_id, client_phone, client_email, service_key, preferred_creator_id')
           .eq('razorpay_order_id', order_id)
           .maybeSingle();
         orderRecord = ord;
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Mark as paid in database if matching order exists
+    // Mark as paid in database if matching order exists and spawn active project
     if (isSupabaseConfigured && supabaseAdmin && typeof supabaseAdmin.from === 'function') {
       try {
         await supabaseAdmin
@@ -125,9 +125,68 @@ export async function POST(request: NextRequest) {
           .update({
             status: 'paid',
             razorpay_payment_id: payment_id,
+            paid_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
           .eq('razorpay_order_id', order_id);
+
+        if (orderRecord && orderRecord.id) {
+          // Resolve client_id if missing from order
+          let finalClientId = orderRecord.client_id;
+          if (!finalClientId && orderRecord.client_phone) {
+            const rawDigits = orderRecord.client_phone.replace(/\D/g, '').slice(-10);
+            const { data: matchedUser } = await supabaseAdmin
+              .from('users')
+              .select('id')
+              .ilike('phone', `%${rawDigits}%`)
+              .maybeSingle();
+            if (matchedUser?.id) finalClientId = matchedUser.id;
+          }
+          if (!finalClientId && orderRecord.client_email) {
+            const { data: matchedUser } = await supabaseAdmin
+              .from('users')
+              .select('id')
+              .eq('email', orderRecord.client_email.toLowerCase().trim())
+              .maybeSingle();
+            if (matchedUser?.id) finalClientId = matchedUser.id;
+          }
+
+          if (finalClientId) {
+            // Update client_id on order if it was previously unset
+            if (!orderRecord.client_id) {
+              await supabaseAdmin.from('orders').update({ client_id: finalClientId }).eq('id', orderRecord.id);
+            }
+
+            // Check if project already created
+            const { data: existingProject } = await supabaseAdmin
+              .from('projects')
+              .select('id')
+              .eq('order_id', orderRecord.id)
+              .maybeSingle();
+
+            if (!existingProject) {
+              const serviceLabel = orderRecord.service_key
+                ? orderRecord.service_key.charAt(0).toUpperCase() + orderRecord.service_key.slice(1).replace(/_/g, ' ')
+                : 'Cinematic';
+
+              const projectNumber = `PRJ-${orderRecord.order_number || Date.now().toString(36).toUpperCase()}`;
+
+              await supabaseAdmin.from('projects').insert([
+                {
+                  project_number: projectNumber,
+                  order_id: orderRecord.id,
+                  client_id: finalClientId,
+                  assigned_creator_id: orderRecord.preferred_creator_id || null,
+                  title: `${serviceLabel} Master Edit`,
+                  status: 'awaiting_upload',
+                  priority: 1,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                },
+              ]);
+            }
+          }
+        }
       } catch (dbErr) {
         console.warn('[Verify Payment DB update warning]:', dbErr);
       }

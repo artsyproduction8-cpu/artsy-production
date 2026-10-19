@@ -12,38 +12,42 @@ export default function FreelancerLayoutClient({ children }: { children: React.R
     async function checkAuth() {
       let user = getCurrentUser();
 
+      try {
+        const res = await fetch('/api/auth/session');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user) {
+            const u = {
+              ...user,
+              ...data.user,
+              id: data.user.id || user?.id,
+              email: data.user.email || user?.email,
+              phone: data.user.phone || user?.phone,
+              full_name: data.user.full_name || user?.full_name || 'Creator Partner',
+              display_name: data.user.display_name || user?.display_name,
+              avatar_url: data.user.avatar_url || user?.avatar_url,
+              studio_details: data.user.studio_details || user?.studio_details,
+              creator_profile: data.user.creator_profile || user?.creator_profile,
+              role: data.user.role || user?.role || 'freelancer',
+              status: data.user.status || user?.status || 'active',
+              onboarding_status: data.user.onboarding_status || user?.onboarding_status || 'approved',
+              agreement_accepted: data.user.agreement_accepted !== undefined ? data.user.agreement_accepted : (user?.agreement_accepted !== false),
+              onboarded: data.user.onboarded !== undefined ? data.user.onboarded : (user?.onboarded !== false),
+            };
+            setCurrentUser(u);
+            user = u;
+          }
+        }
+      } catch {
+        // ignore
+      }
+
       // In local dev mode, immediately fallback so there is zero spinner delay (excluded from production)
       const isLocalhost = process.env.NODE_ENV !== 'production' && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       if (!user && isLocalhost) {
         const fallback = PRESET_USERS.freelancer;
         setCurrentUser(fallback);
         user = fallback;
-      }
-
-      if (!user) {
-        try {
-          const res = await fetch('/api/auth/session');
-          if (res.ok) {
-            const data = await res.json();
-            if (data.authenticated && data.user) {
-              const u = {
-                id: data.user.id || 'usr-editor-002',
-                email: data.user.email || 'creator@artsyproduction.com',
-                full_name: data.user.full_name || 'Creator Partner',
-                role: data.user.role || 'freelancer',
-                status: 'active' as const,
-                agreement_accepted: true,
-                onboarding_status: 'approved' as const,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              };
-              setCurrentUser(u);
-              user = u;
-            }
-          }
-        } catch {
-          // ignore
-        }
       }
 
       if (!user) {

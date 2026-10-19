@@ -39,9 +39,18 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch portfolio' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, samples: samples || [] });
+    const BLOCKED_YOUTUBE_IDS = ['dQw4w9WgXcQ', 'test087694'];
+    const cleanSamples = (samples || []).filter(
+      (s: any) =>
+        s.youtube_id &&
+        !BLOCKED_YOUTUBE_IDS.includes(s.youtube_id) &&
+        (s.approval_status === undefined || s.approval_status === 'approved')
+    );
+
+    return NextResponse.json({ success: true, samples: cleanSamples });
   } catch (err) {
     console.error('[Public Portfolio GET Error]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+

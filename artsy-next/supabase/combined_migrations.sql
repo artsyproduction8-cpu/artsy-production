@@ -1,7 +1,7 @@
 -- =============================================================================
 -- ARTSY PRODUCTION — CONSOLIDATED MASTER MIGRATION SCRIPT
 -- Generated for Supabase Project: cldewthefsteotdvftlj
--- Generated at: 2026-09-27T10:39:59.596Z
+-- Generated at: 2026-10-19T19:04:03.622Z
 -- =============================================================================
 
 
@@ -369,7 +369,7 @@ CREATE TABLE IF NOT EXISTS public.creator_payouts (
     project_id          UUID REFERENCES public.projects(id) NOT NULL,
     creator_id          UUID REFERENCES public.users(id) NOT NULL,
     gross_amount        INTEGER NOT NULL, -- in paise (70% share)
-    tds_rate            DECIMAL(5,4) DEFAULT 0.0200, -- 2% under Section 194J-Tech
+    tds_rate            DECIMAL(5,4) DEFAULT 0.0100, -- 1% under Section 194C
     tds_amount          INTEGER NOT NULL, -- in paise
     net_payout          INTEGER NOT NULL, -- in paise
     status              TEXT NOT NULL DEFAULT 'pending' CHECK (status IN (
@@ -586,7 +586,7 @@ INSERT INTO public.platform_config (key, value, description) VALUES
     ('creator_share_pct', '70', 'Creator share percentage of available-for-split amount'),
     ('artsy_share_pct', '30', 'Artsy share percentage of available-for-split amount'),
     ('gst_rate', '0.18', 'GST rate (18% SAC 999613)'),
-    ('tds_rate', '0.02', 'TDS rate under Section 194J-Tech (2%)'),
+    ('tds_rate', '0.01', 'TDS rate under Section 194C (1%)'),
     ('quote_validity_days', '7', 'Quote expiration validity in days'),
     ('client_auto_approve_days', '7', 'Client preview review auto-approval timeout'),
     ('creator_accept_timeout_hours', '24', 'Hours creator has to accept or decline job offer'),
@@ -1828,4 +1828,288 @@ ALTER TABLE public.otp_sessions ENABLE ROW LEVEL SECURITY;
 -- Only server-side (service role) should access this table
 CREATE POLICY "Server only access" ON public.otp_sessions
   FOR ALL USING (false);
+
+
+-- -----------------------------------------------------------------------------
+-- FILE: 005_tds_rate_fix.sql
+-- -----------------------------------------------------------------------------
+
+-- =============================================================================
+-- Migration: 005_tds_rate_fix.sql
+-- Fix: TDS Rate Default in Schema (194J-Tech 2%)
+-- =============================================================================
+
+ALTER TABLE creator_payouts ALTER COLUMN tds_rate SET DEFAULT 0.0200;
+UPDATE platform_config SET value = '0.02' WHERE key = 'tds_rate';
+
+
+-- -----------------------------------------------------------------------------
+-- FILE: 006_sequential_invoice_numbering.sql
+-- -----------------------------------------------------------------------------
+
+-- =============================================================================
+-- Migration: 006_sequential_invoice_numbering.sql
+-- Description: CBIC-compliant sequential invoice numbering (AP/{FY}/{seq})
+-- =============================================================================
+
+CREATE SEQUENCE IF NOT EXISTS invoice_number_seq START 1;
+
+CREATE OR REPLACE FUNCTION next_invoice_number()
+RETURNS TEXT AS $$
+DECLARE
+  seq_num BIGINT;
+  today DATE := CURRENT_DATE;
+  fy_start_year INT;
+  fy_end_year INT;
+  fy_string TEXT;
+BEGIN
+  IF EXTRACT(MONTH FROM today) >= 4 THEN
+    fy_start_year := EXTRACT(YEAR FROM today)::INT;
+    fy_end_year := (fy_start_year + 1) % 100;
+    fy_string := LPAD((fy_start_year % 100)::TEXT, 2, '0') || '-' || LPAD(fy_end_year::TEXT, 2, '0');
+  ELSE
+    fy_start_year := EXTRACT(YEAR FROM today)::INT - 1;
+    fy_end_year := (fy_start_year + 1) % 100;
+    fy_string := LPAD((fy_start_year % 100)::TEXT, 2, '0') || '-' || LPAD(fy_end_year::TEXT, 2, '0');
+  END IF;
+
+  seq_num := nextval('invoice_number_seq');
+  RETURN 'AP/' || fy_string || '/' || LPAD(seq_num::TEXT, 5, '0');
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- -----------------------------------------------------------------------------
+-- FILE: 007_lock_down_rls.sql
+-- -----------------------------------------------------------------------------
+
+-- Migration: 007_lock_down_rls.sql
+-- Description: Locks down Row Level Security and revokes public/anon access to all sensitive tables.
+
+-- Step 1: Enable RLS on all tables (idempotent)
+ALTER TABLE IF EXISTS public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.creator_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.projects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.file_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.creator_payouts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.financial_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.webhook_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.notification_delivery_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.revisions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.change_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.quotes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.consent_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.invoice_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.credit_notes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.platform_config ENABLE ROW LEVEL SECURITY;
+
+-- Step 2: DROP all existing permissive policies on sensitive tables that allow anon access
+DROP POLICY IF EXISTS "Allow public read" ON public.users;
+DROP POLICY IF EXISTS "Enable read access for all users" ON public.users;
+DROP POLICY IF EXISTS "Enable insert for authentication" ON public.users;
+DROP POLICY IF EXISTS "Allow anonymous read" ON public.orders;
+DROP POLICY IF EXISTS "Allow public read" ON public.orders;
+DROP POLICY IF EXISTS "Allow public read" ON public.projects;
+DROP POLICY IF EXISTS "Allow public read" ON public.creator_profiles;
+DROP POLICY IF EXISTS "Allow public read" ON public.file_records;
+DROP POLICY IF EXISTS "Allow public read" ON public.creator_payouts;
+DROP POLICY IF EXISTS "Allow public read" ON public.financial_events;
+
+-- Step 3: Revoke anon and authenticated direct access to public schema tables
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM anon;
+
+-- Step 4: Ensure service_role retains full access for server-side Next.js operations
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL FUNCTIONS IN SCHEMA public TO service_role;
+
+
+-- -----------------------------------------------------------------------------
+-- FILE: 008_creator_public_profiles.sql
+-- -----------------------------------------------------------------------------
+
+-- Migration: 008_creator_public_profiles.sql
+-- Description: Extend creator_profiles with public fields, create portfolio_samples table, extend orders, and create public view.
+
+-- 1.1 Extend creator_profiles table
+ALTER TABLE public.creator_profiles
+  ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS public_specialty TEXT,
+  ADD COLUMN IF NOT EXISTS public_bio TEXT,
+  ADD COLUMN IF NOT EXISTS public_display_name TEXT,
+  ADD COLUMN IF NOT EXISTS years_of_experience INTEGER,
+  ADD COLUMN IF NOT EXISTS avg_rating DECIMAL(3, 2) DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS total_projects_completed INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS is_accepting_work BOOLEAN DEFAULT TRUE,
+  ADD COLUMN IF NOT EXISTS creator_tier TEXT CHECK (creator_tier IN ('rising_talent', 'standard', 'senior')) DEFAULT 'rising_talent';
+
+-- 1.2 Create portfolio_samples table
+CREATE TABLE IF NOT EXISTS public.portfolio_samples (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  creator_id UUID NOT NULL REFERENCES public.creator_profiles(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  category TEXT NOT NULL,
+  video_url TEXT NOT NULL,
+  thumbnail_url TEXT NOT NULL,
+  display_order INTEGER DEFAULT 0,
+  approval_status TEXT CHECK (approval_status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
+  rejection_reason TEXT,
+  approved_by UUID REFERENCES public.users(id),
+  approved_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_portfolio_creator ON public.portfolio_samples(creator_id, approval_status);
+
+-- 1.3 Extend orders table
+ALTER TABLE public.orders
+  ADD COLUMN IF NOT EXISTS preferred_creator_id UUID REFERENCES public.creator_profiles(id),
+  ADD COLUMN IF NOT EXISTS preferred_creator_assigned BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS preferred_creator_rejection_reason TEXT;
+
+-- 1.4 Create public view for creator listing
+CREATE OR REPLACE VIEW public.creators_public_view AS
+SELECT
+  id,
+  public_display_name,
+  public_specialty,
+  public_bio,
+  years_of_experience,
+  avg_rating,
+  total_projects_completed,
+  is_accepting_work,
+  creator_tier
+FROM public.creator_profiles
+WHERE is_public = TRUE
+  AND approval_status = 'approved'
+  AND is_suspended = FALSE;
+
+-- 1.5 RLS policies
+ALTER TABLE public.portfolio_samples ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view approved portfolio samples" ON public.portfolio_samples;
+CREATE POLICY "Anyone can view approved portfolio samples"
+  ON public.portfolio_samples
+  FOR SELECT
+  USING (approval_status = 'approved');
+
+DROP POLICY IF EXISTS "Creators can insert their own samples" ON public.portfolio_samples;
+CREATE POLICY "Creators can insert their own samples"
+  ON public.portfolio_samples
+  FOR INSERT
+  WITH CHECK (creator_id IN (SELECT id FROM creator_profiles WHERE id = auth.uid()));
+
+DROP POLICY IF EXISTS "Admins full manage portfolio samples" ON public.portfolio_samples;
+CREATE POLICY "Admins full manage portfolio samples"
+  ON public.portfolio_samples
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
+
+-- Step 1.6: Grant permissions to access table and view
+GRANT ALL ON public.portfolio_samples TO anon, authenticated, service_role;
+GRANT SELECT ON public.creators_public_view TO anon, authenticated, service_role;
+
+
+-- -----------------------------------------------------------------------------
+-- FILE: 009_user_display_name_and_studio_details.sql
+-- -----------------------------------------------------------------------------
+
+-- Migration: 009_user_display_name_and_studio_details.sql
+-- Description: Add display_name, studio_details to public.users and tracking_id to public.creator_profiles
+
+ALTER TABLE public.users 
+  ADD COLUMN IF NOT EXISTS display_name TEXT,
+  ADD COLUMN IF NOT EXISTS studio_details JSONB DEFAULT '{}'::jsonb;
+
+ALTER TABLE public.creator_profiles 
+  ADD COLUMN IF NOT EXISTS tracking_id TEXT;
+
+
+-- -----------------------------------------------------------------------------
+-- FILE: 010_scale_and_performance_indexes.sql
+-- -----------------------------------------------------------------------------
+
+-- =============================================================================
+-- ARTSY PRODUCTION — MIGRATION 010: SCALE & PERFORMANCE INDEXES (100K+ USERS)
+-- =============================================================================
+-- Solves sequential scans and unindexed foreign keys identified in the 
+-- Ultimate Scalability & Performance Audit.
+
+-- 1. CRITICAL QUERY PERFORMANCE INDEXES
+-- 1.1 Orders Client Dashboard & History (Eliminates Sort / Seq Scan)
+CREATE INDEX IF NOT EXISTS idx_orders_client_created_at 
+  ON public.orders(client_id, created_at DESC);
+
+-- 1.2 Public Portfolio Samples (Eliminates Seq Scan on is_visible & creator_id IS NULL)
+CREATE INDEX IF NOT EXISTS idx_portfolio_samples_visible_company 
+  ON public.portfolio_samples(is_visible, display_order ASC) 
+  WHERE creator_id IS NULL;
+
+-- 1.3 Admin Vetting Submissions (Eliminates Seq Scan on status = 'pending')
+CREATE INDEX IF NOT EXISTS idx_creator_submissions_status_submitted 
+  ON public.creator_submissions(status, submitted_at DESC);
+
+-- 1.4 General Creator Submissions Lookup by Creator
+CREATE INDEX IF NOT EXISTS idx_creator_submissions_creator_id 
+  ON public.creator_submissions(creator_id);
+
+
+-- 2. MISSING FOREIGN KEY INDEXES (100K+ Multi-Table Join & Cascade Scalability)
+-- 2.1 Payments -> Orders
+CREATE INDEX IF NOT EXISTS idx_payments_order_id 
+  ON public.payments(order_id);
+
+-- 2.2 Projects -> Orders
+CREATE INDEX IF NOT EXISTS idx_projects_order_id 
+  ON public.projects(order_id);
+
+-- 2.3 Assignments -> Creator Profiles (as leading key)
+CREATE INDEX IF NOT EXISTS idx_assignments_creator_id 
+  ON public.assignments(creator_id, status);
+
+-- 2.4 Revisions -> Projects & Authors
+CREATE INDEX IF NOT EXISTS idx_revisions_project_id 
+  ON public.revisions(project_id);
+CREATE INDEX IF NOT EXISTS idx_revisions_author_id 
+  ON public.revisions(author_id);
+
+-- 2.5 Review Comments -> Revisions
+CREATE INDEX IF NOT EXISTS idx_review_comments_revision_id 
+  ON public.review_comments(revision_id);
+
+-- 2.6 File Records -> Projects & Uploaders
+CREATE INDEX IF NOT EXISTS idx_file_records_project_id 
+  ON public.file_records(project_id);
+CREATE INDEX IF NOT EXISTS idx_file_records_uploaded_by 
+  ON public.file_records(uploaded_by);
+
+-- 2.7 Creator Payouts -> Projects & Orders
+CREATE INDEX IF NOT EXISTS idx_creator_payouts_project_id 
+  ON public.creator_payouts(project_id);
+CREATE INDEX IF NOT EXISTS idx_creator_payouts_order_id 
+  ON public.creator_payouts(order_id);
+
+-- 2.8 Orders -> Preferred Creator & Quotes
+CREATE INDEX IF NOT EXISTS idx_orders_preferred_creator_id 
+  ON public.orders(preferred_creator_id);
+CREATE INDEX IF NOT EXISTS idx_orders_quote_id 
+  ON public.orders(quote_id);
+
+-- 2.9 Creator Profiles -> Approver
+CREATE INDEX IF NOT EXISTS idx_creator_profiles_approved_by 
+  ON public.creator_profiles(approved_by);
+
+-- 2.10 Portfolio Samples -> Approver
+CREATE INDEX IF NOT EXISTS idx_portfolio_samples_approved_by 
+  ON public.portfolio_samples(approved_by);
 

@@ -5,7 +5,7 @@ import WorkClient, { PortfolioVideo } from './WorkClient';
 import { breadcrumbSchema, videoObjectSchema } from '@/lib/seo/schemas';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'Portfolio — Cinematic Reels | Artsy Production',

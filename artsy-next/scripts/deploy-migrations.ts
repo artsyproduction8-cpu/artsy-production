@@ -21,6 +21,12 @@ const MIGRATION_FILES = [
   '003_pii_encryption.sql',
   '004_payments_worm.sql',
   '005_otp_sessions.sql',
+  '005_tds_rate_fix.sql',
+  '006_sequential_invoice_numbering.sql',
+  '007_lock_down_rls.sql',
+  '008_creator_public_profiles.sql',
+  '009_user_display_name_and_studio_details.sql',
+  '010_scale_and_performance_indexes.sql',
 ];
 
 export async function verifyAndBundleMigrations() {

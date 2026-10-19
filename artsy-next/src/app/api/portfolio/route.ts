@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export async function GET() {
   const dbClient = supabaseAdmin || anonSupabase;
@@ -47,7 +47,15 @@ export async function GET() {
         (s.approval_status === undefined || s.approval_status === 'approved')
     );
 
-    return NextResponse.json({ success: true, samples: cleanSamples });
+    return NextResponse.json(
+      { success: true, samples: cleanSamples },
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        },
+      }
+    );
   } catch (err) {
     console.error('[Public Portfolio GET Error]', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

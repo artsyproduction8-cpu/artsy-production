@@ -69,22 +69,53 @@ export async function POST(request: NextRequest) {
     const eventId = event.event_id || event.id || `evt_${Date.now()}`;
     const eventType = event.event;
 
-    // 3. Idempotency Check via webhook_events
+    // 3. Distributed Idempotency Lock via Upstash Redis + DB webhook_events
+    let acquiredLock = true;
+    const upstashUrl = process.env.UPSTASH_REDIS_REST_URL?.replace(/['"]+/g, '').trim();
+    const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN?.replace(/['"]+/g, '').trim();
+
+    if (upstashUrl && upstashToken && !upstashUrl.includes('your-upstash') && upstashUrl.startsWith('http')) {
+      try {
+        const lockRes = await fetch(upstashUrl, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${upstashToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(['SET', `webhook:razorpay:${eventId}`, 'locked', 'NX', 'EX', 86400]),
+          signal: AbortSignal.timeout(3000),
+        });
+        if (lockRes.ok) {
+          const lockData = await lockRes.json();
+          // If result is null, key already existed (duplicate concurrent webhook event)
+          if (lockData.result !== 'OK') {
+            acquiredLock = false;
+          }
+        }
+      } catch (redisErr) {
+        console.warn('[Razorpay Webhook] Redis lock warning:', redisErr);
+      }
+    }
+
+    if (!acquiredLock) {
+      console.log(`[Razorpay Webhook] Duplicate event ${eventId} blocked by distributed lock.`);
+      return NextResponse.json({ status: 'already_processed' }, { status: 200 });
+    }
+
+    // Secondary Idempotency Check via DB webhook_events
     if (supabaseAdmin && typeof supabaseAdmin.from === 'function') {
       try {
-        const { data: existingEvent } = await supabaseAdmin
+        const { data: existingEvent, error: selectErr } = await supabaseAdmin
           .from('webhook_events')
           .select('id, status')
           .match({ gateway: 'razorpay', event_id: eventId })
           .maybeSingle();
 
         if (existingEvent) {
-          // Already received and processed: return 200 OK immediately
           return NextResponse.json({ status: 'already_processed' }, { status: 200 });
         }
 
-        // Record incoming webhook event
-        await supabaseAdmin.from('webhook_events').insert([
+        const { error: insertErr } = await supabaseAdmin.from('webhook_events').insert([
           {
             gateway: 'razorpay',
             event_id: eventId,
@@ -94,8 +125,19 @@ export async function POST(request: NextRequest) {
             created_at: new Date().toISOString(),
           },
         ]);
+
+        if (insertErr) {
+          if (
+            insertErr.code === '23505' ||
+            insertErr.message?.includes('duplicate key') ||
+            insertErr.message?.includes('unique constraint')
+          ) {
+            return NextResponse.json({ status: 'already_processed' }, { status: 200 });
+          }
+          console.warn('[Razorpay Webhook] DB webhook_events insert note:', insertErr.message);
+        }
       } catch (dbErr) {
-        console.warn('Webhook idempotency DB insert warning (offline mode):', dbErr);
+        console.warn('[Razorpay Webhook DB Exception in webhook_events]:', dbErr);
       }
     }
 
@@ -108,16 +150,26 @@ export async function POST(request: NextRequest) {
         const razorpayPaymentId = paymentEntity?.id;
         const amountPaise = paymentEntity?.amount;
 
-        if (supabaseAdmin && typeof supabaseAdmin.from === 'function' && razorpayOrderId) {
+        if (razorpayOrderId) {
           try {
-            const { data: order } = await supabaseAdmin
+            const { data: order, error: orderFetchErr } = await supabaseAdmin
               .from('orders')
               .select('*')
               .eq('razorpay_order_id', razorpayOrderId)
               .maybeSingle();
 
-            if (order) {
-              await supabaseAdmin
+            if (orderFetchErr) {
+              console.error('[Razorpay Webhook DB Error fetching order]:', orderFetchErr);
+              return NextResponse.json({ error: 'Database error fetching order' }, { status: 500 });
+            }
+
+            if (!order) {
+              console.warn(`[Razorpay Webhook] Order not found for razorpay_order_id: ${razorpayOrderId}`);
+              return NextResponse.json({ status: 'order_not_found' }, { status: 200 });
+            }
+
+            if (order.status !== 'paid') {
+              const { error: orderUpdateErr } = await supabaseAdmin
                 .from('orders')
                 .update({
                   status: 'paid',
@@ -126,6 +178,11 @@ export async function POST(request: NextRequest) {
                   updated_at: new Date().toISOString(),
                 })
                 .eq('id', order.id);
+
+              if (orderUpdateErr) {
+                console.error('[Razorpay Webhook DB Error updating order]:', orderUpdateErr);
+                return NextResponse.json({ error: 'Database error updating order' }, { status: 500 });
+              }
 
               // Automatically spawn active project if not already created
               try {
@@ -258,7 +315,8 @@ export async function POST(request: NextRequest) {
               }
             }
           } catch (processErr) {
-            console.warn('Payment capture DB write warning:', processErr);
+            console.error('[Razorpay Webhook Payment Process Error]:', processErr);
+            return NextResponse.json({ error: 'Database error processing payment' }, { status: 500 });
           }
         }
         break;

@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       try {
         const { data: creatorProfile } = await dbClient
           .from('creator_profiles')
-          .select('*')
+          .select('id, approval_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name')
           .eq('id', resolvedUser.id)
           .maybeSingle();
 

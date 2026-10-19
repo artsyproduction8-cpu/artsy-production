@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/../lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
@@ -81,8 +81,9 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString(),
     };
 
-    if (supabase && typeof supabase.from === 'function') {
-      const { error } = await supabase.from('leads').insert([leadData]);
+    const db = supabaseAdmin || supabase;
+    if (db && typeof db.from === 'function') {
+      const { error } = await db.from('leads').insert([leadData]);
       if (error) {
         console.error('Error inserting lead to Supabase:', error?.message || 'DB Error');
         return NextResponse.json({

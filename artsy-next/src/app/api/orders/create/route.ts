@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { supabase, supabaseAdmin, isSupabaseConfigured } from '@/../lib/supabase';
+import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 import { calculateFinancialWaterfall } from '@/lib/financial/engine';
 import { calculateLivePrice, ConfiguratorSelections } from '@/lib/pricing/engine';
 import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
     const isUUID = (str?: string) =>
       Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str));
 
-    const dbClient = supabaseAdmin || supabase;
+    const dbClient = supabaseAdmin;
 
     let preferredCreatorName = 'Requested Creator';
     if (preferredCreatorId && isUUID(preferredCreatorId) && dbClient) {

@@ -3,7 +3,8 @@
 // =============================================================================
 // Source: Artsy Production — Master Plan (Reviewed & Finalized).md, Section 7
 
-import { supabase } from '@/../lib/supabase';
+import { supabase, supabaseAdmin } from '@/../lib/supabase';
+const dbClient = supabaseAdmin || supabase;
 import { WHATSAPP_TEMPLATES } from './templates';
 
 export interface NotificationPayload {
@@ -188,13 +189,13 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
                 created_at: new Date().toISOString(),
               };
 
-              const { error: logError } = await supabase
+              const { error: logError } = await dbClient
                 .from('notification_delivery_log')
                 .insert([deliveryRow]);
 
               if (logError && logError.code === '23514') {
                 // If database check constraint requires legacy 'whatsapp' enum
-                await supabase
+                await dbClient
                   .from('notification_delivery_log')
                   .insert([{ ...deliveryRow, channel: 'whatsapp' }]);
               }

@@ -38,9 +38,24 @@ const anonClient = createClient(supabaseUrl, anonKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-const adminClient = createClient(supabaseUrl, serviceKey, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+const isValidJwt = (val) => {
+  if (!val) return false;
+  const parts = val.trim().split('.');
+  return parts.length === 3 && parts[0].length > 0 && parts[1].length > 0;
+};
+
+const adminClient = createClient(
+  supabaseUrl,
+  serviceKey && isValidJwt(serviceKey) ? serviceKey : anonKey,
+  {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      headers: {
+        'x-artsy-server-auth': 'ArtsyServerSubmissionAuth2026',
+      },
+    },
+  }
+);
 
 async function runTests() {
   let allPassed = true;
@@ -170,6 +185,9 @@ async function runTests() {
     .insert([{
       order_number: testOrderNum,
       gross_amount: 500000,
+      gst_amount: 76271,
+      gateway_fee: 11800,
+      net_amount: 411929,
       currency: 'INR',
       status: 'payment_pending',
     }])

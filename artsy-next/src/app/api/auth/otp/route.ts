@@ -4,7 +4,8 @@ import bcrypt from 'bcryptjs';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { sendMetaOTP } from '@/lib/whatsapp/meta-cloud-dispatcher';
 import { sendOtpEmail } from '@/lib/email/dispatcher';
-import { supabaseAdmin as supabase, supabase as anonClient, isSupabaseConfigured } from '@/lib/supabase';
+import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
+const supabase = supabaseAdmin;
 import { signAuthCookieValue, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 import { createErrorResponse } from '@/lib/api-response';
 
@@ -195,7 +196,7 @@ export async function POST(request: NextRequest) {
 
       // Find or create user in public.users
       let existingUser: any = null;
-      const dbClient = (supabase && typeof supabase.from === 'function') ? supabase : anonClient;
+      const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : null;
       if (isSupabaseConfigured && dbClient) {
         try {
           let userQuery = dbClient.from('users').select('*');
@@ -510,7 +511,7 @@ export async function POST(request: NextRequest) {
 
     // 3. Prepare Database Session Storage Promise
     const insertDbSessionPromise = (async () => {
-      const dbClient = (supabase && typeof supabase.from === 'function') ? supabase : anonClient;
+      const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : null;
       if (isSupabaseConfigured && dbClient && typeof dbClient.from === 'function') {
         try {
           const updateQuery = cleanPhone
@@ -561,7 +562,7 @@ export async function POST(request: NextRequest) {
 
     // Non-blocking asynchronous audit logging via Next.js after() (zero latency penalty)
     after(async () => {
-      const dbClient = (supabase && typeof supabase.from === 'function') ? supabase : anonClient;
+      const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : null;
       if (!dbClient || typeof dbClient.from !== 'function') return;
 
       const logRows: any[] = [];

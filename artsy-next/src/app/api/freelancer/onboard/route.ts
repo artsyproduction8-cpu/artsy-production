@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/../lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { encryptPII } from '@/lib/crypto/pii';
@@ -49,8 +49,7 @@ export async function POST(req: NextRequest) {
     const encryptedPan = cleanPan ? encryptPII(cleanPan) : null;
 
     // 1. Ensure user and creator profile exist in Supabase with status = 'pending'
-    const { supabaseAdmin } = await import('@/lib/supabase');
-    const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : supabase;
+    const dbClient = supabaseAdmin;
 
     if (dbClient && typeof dbClient.from === 'function') {
       try {

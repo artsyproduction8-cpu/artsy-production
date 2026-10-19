@@ -7,7 +7,8 @@
 // - GST Statutory Invoices (SAC 999613)
 // =============================================================================
 
-import { supabase } from '@/../lib/supabase';
+import { supabase, supabaseAdmin } from '@/../lib/supabase';
+const dbClient = supabaseAdmin || supabase;
 import { InvoiceData } from '@/lib/invoices/generator';
 
 export interface EmailOptions {
@@ -381,9 +382,9 @@ export async function sendNotificationEmail(params: {
   });
 
   // Record in Supabase notification_delivery_log if available
-  if (supabase && typeof supabase.from === 'function') {
+  if (dbClient && typeof dbClient.from === 'function') {
     try {
-      await supabase.from('notification_delivery_log').insert([
+      await dbClient.from('notification_delivery_log').insert([
         {
           channel: 'email',
           recipient: params.recipientEmail,

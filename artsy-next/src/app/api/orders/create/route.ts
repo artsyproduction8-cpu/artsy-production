@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { supabase, supabaseAdmin, isSupabaseConfigured } from '@/../lib/supabase';
 import { calculateFinancialWaterfall } from '@/lib/financial/engine';
 import { calculateLivePrice, ConfiguratorSelections } from '@/lib/pricing/engine';
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
     const waterfall = calculateFinancialWaterfall(canonicalAmount);
 
     // 6. Store order in database
-    const internalOrderNumber = `ARTSY-${Math.floor(100000 + Math.random() * 900000)}`;
+    const internalOrderNumber = `ARTSY-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 
     const isUUID = (str?: string) =>
       Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str));

@@ -29,6 +29,16 @@ export async function POST(req: NextRequest) {
       pan,
     } = body;
 
+    if (philosophy && typeof philosophy === 'string' && philosophy.length > 2000) {
+      return NextResponse.json({ error: 'Bio/Philosophy cannot exceed 2,000 characters.' }, { status: 400 });
+    }
+    if (legalName && typeof legalName === 'string' && legalName.length > 150) {
+      return NextResponse.json({ error: 'Legal name cannot exceed 150 characters.' }, { status: 400 });
+    }
+    if (alias && typeof alias === 'string' && alias.length > 100) {
+      return NextResponse.json({ error: 'Display alias cannot exceed 100 characters.' }, { status: 400 });
+    }
+
     const trackingId = `ART-${new Date().getFullYear()}-VET-${Math.floor(1000 + Math.random() * 9000)}`;
     const candidateUserId = authUser.id;
     const candidateEmail = authUser.email || '';

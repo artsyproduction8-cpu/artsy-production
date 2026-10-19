@@ -55,10 +55,12 @@ export async function POST(request: NextRequest) {
     if (eventTimestamp) {
       const nowSec = Math.floor(Date.now() / 1000);
       const diffSec = Math.abs(nowSec - Number(eventTimestamp));
-      if (diffSec > 300) {
-        console.warn(`[Razorpay Replay Alert] Dropping event: ${diffSec}s difference exceeds 5-minute replay window.`);
+      // Enforce 24-hour replay window matching Razorpay's official retry schedule
+      const MAX_WEBHOOK_AGE_SEC = 24 * 60 * 60;
+      if (diffSec > MAX_WEBHOOK_AGE_SEC) {
+        console.warn(`[Razorpay Replay Alert] Dropping event: ${diffSec}s difference exceeds 24-hour window.`);
         return NextResponse.json(
-          { error: 'Webhook timestamp outside 5-minute window' },
+          { error: 'Webhook timestamp outside 24-hour retry window' },
           { status: 400 }
         );
       }

@@ -14,8 +14,11 @@ export async function PATCH(
   }
 
   const authUser = await getAuthenticatedUser(request);
-  if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
-    return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized: Session required' }, { status: 401 });
+  }
+  if (!['admin', 'super_admin'].includes(authUser.role)) {
+    return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
   }
 
   const dbClient = supabaseAdmin || anonSupabase;
@@ -73,8 +76,11 @@ export async function DELETE(
   }
 
   const authUser = await getAuthenticatedUser(request);
-  if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
-    return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized: Session required' }, { status: 401 });
+  }
+  if (!['admin', 'super_admin'].includes(authUser.role)) {
+    return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
   }
 
   const dbClient = supabaseAdmin || anonSupabase;

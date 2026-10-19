@@ -54,6 +54,18 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
         return;
       }
 
+      // Sync active HTTP-only admin session cookie to ensure all subsequent admin API requests are authorized
+      try {
+        await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user }),
+          credentials: 'include',
+        });
+      } catch {
+        // Non-fatal background sync
+      }
+
       setAuthorized(true);
     }
 

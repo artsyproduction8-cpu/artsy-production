@@ -58,15 +58,24 @@ export default function AdminPortfolioPage() {
   const addPreviewId = extractYouTubeId(addYoutubeUrl);
   const addPreviewThumb = addPreviewId ? youtubeThumbnail(addPreviewId) : null;
 
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   const fetchSamples = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/admin/portfolio');
-      const data = await res.json();
+      setFetchError(null);
+      const res = await fetch('/api/admin/portfolio', { credentials: 'include' });
+      const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
         setSamples(data.samples || []);
+      } else {
+        const errorMsg = data.error || `HTTP ${res.status}: Failed to load portfolio samples`;
+        setFetchError(errorMsg);
+        console.error('[Admin Portfolio Fetch Error]', errorMsg);
       }
-    } catch (err) {
+    } catch (err: any) {
+      const errorMsg = err.message || 'Error fetching portfolio samples';
+      setFetchError(errorMsg);
       console.error('Error fetching samples:', err);
     } finally {
       setLoading(false);
@@ -320,6 +329,20 @@ export default function AdminPortfolioPage() {
 
               {loading ? (
                 <div className="p-16 text-center text-xs text-[#86868B]">Loading company videos...</div>
+              ) : fetchError ? (
+                <div className="p-16 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3 text-xl">
+                    ⚠️
+                  </div>
+                  <h3 className="text-sm font-semibold text-rose-900">Failed to load company catalog</h3>
+                  <p className="text-xs text-rose-600 mt-1 max-w-sm mx-auto">{fetchError}</p>
+                  <button
+                    onClick={fetchSamples}
+                    className="mt-4 px-4 py-2 bg-[#1D1D1F] text-white text-xs font-semibold rounded-xl hover:bg-black transition-all cursor-pointer"
+                  >
+                    ↻ Retry Fetch
+                  </button>
+                </div>
               ) : companySamples.length === 0 ? (
                 <div className="p-16 text-center">
                   <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] text-[#86868B] flex items-center justify-center mx-auto mb-3 text-xl">
@@ -344,6 +367,20 @@ export default function AdminPortfolioPage() {
               {loading ? (
                 <div className="bg-white border border-[#E5E5E7] rounded-2xl p-16 text-center text-xs text-[#86868B]">
                   Loading catalog...
+                </div>
+              ) : fetchError ? (
+                <div className="bg-white border border-rose-200 rounded-2xl p-16 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3 text-xl">
+                    ⚠️
+                  </div>
+                  <h3 className="text-sm font-semibold text-rose-900">Failed to load official catalog</h3>
+                  <p className="text-xs text-rose-600 mt-1 max-w-sm mx-auto">{fetchError}</p>
+                  <button
+                    onClick={fetchSamples}
+                    className="mt-4 px-4 py-2 bg-[#1D1D1F] text-white text-xs font-semibold rounded-xl hover:bg-black transition-all cursor-pointer"
+                  >
+                    ↻ Retry Fetch
+                  </button>
                 </div>
               ) : samples.length === 0 ? (
                 <div className="bg-white border border-[#E5E5E7] rounded-2xl p-16 text-center">

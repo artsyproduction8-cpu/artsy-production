@@ -10,13 +10,29 @@ export async function GET() {
   }
 
   try {
-    const { data: samples, error } = await dbClient
+    let { data: samples, error } = await dbClient
       .from('portfolio_samples')
       .select('id, title, description, category, video_url, thumbnail_url, youtube_id, display_order, created_at')
       .is('creator_id', null)
       .eq('is_visible', true)
       .order('display_order', { ascending: true })
       .order('created_at', { ascending: false });
+
+    if (error && dbClient !== anonSupabase && anonSupabase) {
+      console.warn('[Public Portfolio GET Warning] Primary dbClient failed, falling back to anon client:', error.message);
+      const fb = await anonSupabase
+        .from('portfolio_samples')
+        .select('id, title, description, category, video_url, thumbnail_url, youtube_id, display_order, created_at')
+        .is('creator_id', null)
+        .eq('is_visible', true)
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: false });
+
+      if (!fb.error && fb.data) {
+        samples = fb.data;
+        error = null;
+      }
+    }
 
     if (error) {
       console.error('[Public Portfolio GET Error]', error);

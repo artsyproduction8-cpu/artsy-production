@@ -275,6 +275,13 @@ export async function getAuthenticatedUser(request: NextRequest | Request): Prom
       }
     }
 
+    if (!cookieVal) {
+      const authHeader = request.headers.get('authorization') || '';
+      if (authHeader.startsWith('Bearer ')) {
+        cookieVal = authHeader.slice(7).trim();
+      }
+    }
+
     const verified = await verifyAndParseAuthCookie(cookieVal);
     if (verified) return verified;
 

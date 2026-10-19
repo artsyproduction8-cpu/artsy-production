@@ -47,12 +47,26 @@ export async function PATCH(
     if (display_order !== undefined) updatePayload.display_order = Number(display_order);
     if (creator_id !== undefined) updatePayload.creator_id = creator_id || null;
 
-    const { data: updated, error: updateError } = await dbClient
+    let { data: updated, error: updateError } = await dbClient
       .from('portfolio_samples')
       .update(updatePayload)
       .eq('id', id)
       .select()
       .single();
+
+    if (updateError && dbClient !== anonSupabase && anonSupabase) {
+      console.warn('[Admin Portfolio PATCH Warning] Primary dbClient failed, trying anon client:', updateError.message);
+      const fb = await anonSupabase
+        .from('portfolio_samples')
+        .update(updatePayload)
+        .eq('id', id)
+        .select()
+        .single();
+      if (!fb.error && fb.data) {
+        updated = fb.data;
+        updateError = null;
+      }
+    }
 
     if (updateError) {
       console.error('[Admin Portfolio PATCH Error]', updateError);
@@ -89,10 +103,21 @@ export async function DELETE(
   }
 
   try {
-    const { error: deleteError } = await dbClient
+    let { error: deleteError } = await dbClient
       .from('portfolio_samples')
       .delete()
       .eq('id', id);
+
+    if (deleteError && dbClient !== anonSupabase && anonSupabase) {
+      console.warn('[Admin Portfolio DELETE Warning] Primary dbClient failed, trying anon client:', deleteError.message);
+      const fb = await anonSupabase
+        .from('portfolio_samples')
+        .delete()
+        .eq('id', id);
+      if (!fb.error) {
+        deleteError = null;
+      }
+    }
 
     if (deleteError) {
       console.error('[Admin Portfolio DELETE Error]', deleteError);

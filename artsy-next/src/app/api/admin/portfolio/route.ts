@@ -32,7 +32,28 @@ export async function GET(request: Request) {
       query = query.eq('creator_id', creatorId);
     }
 
-    const { data: samples, error } = await query;
+    let { data: samples, error } = await query;
+    if (error && dbClient !== anonSupabase && anonSupabase) {
+      console.warn('[Admin Portfolio GET Warning] Primary dbClient query failed, falling back to anon client:', error.message);
+      let fallbackQuery = anonSupabase
+        .from('portfolio_samples')
+        .select('id, creator_id, title, description, category, video_url, thumbnail_url, youtube_id, display_order, is_visible, approval_status, created_at, updated_at')
+        .order('display_order', { ascending: true })
+        .order('created_at', { ascending: false });
+
+      if (creatorId === 'company') {
+        fallbackQuery = fallbackQuery.is('creator_id', null);
+      } else if (creatorId) {
+        fallbackQuery = fallbackQuery.eq('creator_id', creatorId);
+      }
+
+      const fallbackResult = await fallbackQuery;
+      if (!fallbackResult.error && fallbackResult.data) {
+        samples = fallbackResult.data;
+        error = null;
+      }
+    }
+
     if (error) {
       console.error('[Admin Portfolio GET Error]', error);
       return NextResponse.json({ error: 'Failed to fetch portfolio samples' }, { status: 500 });
@@ -149,8 +170,7 @@ export async function POST(request: Request) {
         ? description.trim()
         : null;
 
-    // Insert new portfolio sample
-    const { data: newSample, error: insertError } = await dbClient
+    let { data: newSample, error: insertError } = await dbClient
       .from('portfolio_samples')
       .insert([
         {
@@ -171,6 +191,35 @@ export async function POST(request: Request) {
       ])
       .select()
       .single();
+
+    if (insertError && dbClient !== anonSupabase && anonSupabase) {
+      console.warn('[Admin Portfolio POST Warning] Primary dbClient insert failed, trying anon client:', insertError.message);
+      const fb = await anonSupabase
+        .from('portfolio_samples')
+        .insert([
+          {
+            creator_id: sanitizedCreatorId,
+            youtube_id: youtubeId,
+            video_url: `https://www.youtube.com/watch?v=${youtubeId}`,
+            thumbnail_url: thumbnailUrl,
+            title: title.trim(),
+            description: sanitizedDescription,
+            category: category || 'Commercial',
+            approval_status: 'approved',
+            is_visible: true,
+            approved_by: authUser.id,
+            approved_at: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        ])
+        .select()
+        .single();
+      if (!fb.error && fb.data) {
+        newSample = fb.data;
+        insertError = null;
+      }
+    }
 
     if (insertError) {
       console.error('[Admin Portfolio Insert Error]', insertError);

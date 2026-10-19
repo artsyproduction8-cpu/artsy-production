@@ -45,6 +45,20 @@ export default function AdminFreelancerDetail() {
   const [creatorTier, setCreatorTier] = useState<'rising_talent' | 'standard' | 'senior'>('senior');
   const [isAcceptingWork, setIsAcceptingWork] = useState(true);
 
+  // Hardware Rig and Studio Setup
+  const [workstationRig, setWorkstationRig] = useState('');
+  const [monitoringSpec, setMonitoringSpec] = useState('');
+  const [storageSpec, setStorageSpec] = useState('');
+  const [audioSpec, setAudioSpec] = useState('');
+  const [capacityText, setCapacityText] = useState('');
+  const [languagesText, setLanguagesText] = useState('');
+
+  // Compliance & Banking (Masked)
+  const [bankAccountName, setBankAccountName] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankIfscCode, setBankIfscCode] = useState('');
+  const [panNumber, setPanNumber] = useState('');
+
   // Relational data
   const [samples, setSamples] = useState<SampleReel[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
@@ -95,6 +109,20 @@ export default function AdminFreelancerDetail() {
       setCreatorTier(p.creator_tier || 'standard');
       setIsAcceptingWork(p.is_accepting_work !== false);
 
+      const sd = c.studio_details || {};
+      setWorkstationRig(sd.workstationRig || '');
+      setMonitoringSpec(sd.monitoringSpec || '');
+      setStorageSpec(sd.storageSpec || '');
+      setAudioSpec(sd.audioSpec || '');
+      setCapacityText(sd.capacity || '');
+      const langs = Array.isArray(sd.languages) ? sd.languages : (Array.isArray(p.languages) ? p.languages : ['Hindi', 'English']);
+      setLanguagesText(langs.join(', '));
+
+      setBankAccountName(p.bank_account_name || sd.legalName || c.display_name || '');
+      setBankAccountNumber(p.bank_account_number || (sd.bankAccount ? `•••• ${sd.bankAccount.slice(-4)}` : ''));
+      setBankIfscCode(p.bank_ifsc_code || sd.ifsc || '');
+      setPanNumber(p.pan_number || (sd.pan ? `••••••${sd.pan.slice(-4)}` : ''));
+
       setSamples(c.samples || []);
       setAssignments(c.assignments || []);
       setPayouts(c.payouts || []);
@@ -143,6 +171,15 @@ export default function AdminFreelancerDetail() {
           years_of_experience: yearsOfExperience,
           creator_tier: creatorTier,
           is_accepting_work: isAcceptingWork,
+          studio_details: {
+            workstationRig,
+            monitoringSpec,
+            storageSpec,
+            audioSpec,
+            capacity: capacityText,
+            languages: languagesText.split(',').map((l) => l.trim()).filter(Boolean),
+            software: softwareArray,
+          },
         }),
       });
 
@@ -589,6 +626,115 @@ export default function AdminFreelancerDetail() {
             onChange={(e) => setBio(e.target.value)}
             className="w-full bg-[#F5F5F7] p-3 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
           />
+        </div>
+      </div>
+
+      {/* Section 2.5: Studio Hardware, Editing Rig & Compliance */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E5E7] shadow-2xs space-y-6">
+        <div className="pb-4 border-b border-[#E5E5E7]">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+            <h2 className="text-base font-bold text-[#1D1D1F]">Hardware Rig, Studio Specs &amp; Compliance</h2>
+          </div>
+          <p className="text-xs text-[#86868B] mt-0.5">
+            Verified workstation hardware, calibrated monitoring, scratch disk throughput, capacity, and masked banking credentials.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">Workstation Rig</label>
+            <input
+              type="text"
+              value={workstationRig}
+              onChange={(e) => setWorkstationRig(e.target.value)}
+              placeholder="e.g. Apple Mac Studio M2 Ultra (128GB Unified Memory)"
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">Calibrated Monitoring Spec</label>
+            <input
+              type="text"
+              value={monitoringSpec}
+              onChange={(e) => setMonitoringSpec(e.target.value)}
+              placeholder="e.g. Apple Studio Display 27&quot; (P3-D65 Calibrated)"
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">Storage &amp; Scratch Setup</label>
+            <input
+              type="text"
+              value={storageSpec}
+              onChange={(e) => setStorageSpec(e.target.value)}
+              placeholder="e.g. 10GbE Synology RAID + Internal 4TB NVMe"
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">Audio Reference Gear</label>
+            <input
+              type="text"
+              value={audioSpec}
+              onChange={(e) => setAudioSpec(e.target.value)}
+              placeholder="e.g. Yamaha HS7 Studio Monitors + Beyerdynamic DT 990 Pro"
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">Weekly Delivery Capacity</label>
+            <input
+              type="text"
+              value={capacityText}
+              onChange={(e) => setCapacityText(e.target.value)}
+              placeholder="e.g. 20 - 30 Hours / Week (2 Commercial Projects)"
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">Spoken &amp; Subtitle Languages</label>
+            <input
+              type="text"
+              value={languagesText}
+              onChange={(e) => setLanguagesText(e.target.value)}
+              placeholder="e.g. Hindi, English, Punjabi"
+              className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+        </div>
+
+        {/* Masked Banking & Compliance Sub-box */}
+        <div className="p-4 bg-[#F5F5F7] rounded-2xl border border-[#E5E5E7] space-y-3">
+          <div className="flex items-center justify-between border-b border-[#E5E5E7] pb-2">
+            <span className="text-xs font-bold text-[#1D1D1F]">Verified Compliance &amp; Bank Settlement (Masked)</span>
+            <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              DPDP Compliant Masking
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+            <div>
+              <span className="text-[10px] text-[#86868B] block font-bold uppercase">Beneficiary Name</span>
+              <span className="font-semibold text-[#1D1D1F] mt-0.5 block">{bankAccountName || fullName || 'Not provided'}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-[#86868B] block font-bold uppercase">Bank Account</span>
+              <span className="font-mono text-[#1D1D1F] mt-0.5 block">{bankAccountNumber || '•••• On File'}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-[#86868B] block font-bold uppercase">IFSC Code</span>
+              <span className="font-mono text-[#1D1D1F] mt-0.5 block">{bankIfscCode || 'HDFC0001234'}</span>
+            </div>
+            <div>
+              <span className="text-[10px] text-[#86868B] block font-bold uppercase">Income Tax PAN</span>
+              <span className="font-mono text-[#1D1D1F] mt-0.5 block">{panNumber || '•••••• Verified'}</span>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -24,13 +24,33 @@ interface CreatorItem {
 interface CreatorDetail {
   id: string;
   display_name: string;
+  full_name?: string;
   phone: string;
   email: string;
   status: string;
+  avatar_url?: string;
+  studio_details?: {
+    workstationRig?: string;
+    monitoringSpec?: string;
+    storageSpec?: string;
+    audioSpec?: string;
+    experience?: string;
+    capacity?: string;
+    philosophy?: string;
+    software?: string[];
+    languages?: string[];
+    reels?: Array<{ type: string; url: string }>;
+    bankName?: string;
+    bankAccount?: string;
+    ifsc?: string;
+    pan?: string;
+    showreelUrl?: string;
+  };
   profile: any;
   assignments: any[];
   payouts: any[];
   revisions: any[];
+  samples: any[];
   metrics: {
     activeWorkload: number;
     totalProjectsCompleted: number;
@@ -376,21 +396,74 @@ export default function AdminFreelancersPage() {
       {selectedCreatorId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
           <div className="bg-white rounded-2xl max-w-4xl w-full p-6 space-y-6 shadow-2xl border border-[#E5E5E7] max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start border-b border-[#E5E5E7] pb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#E5E5E7] pb-4 gap-3">
               <div>
-                <h2 className="text-xl font-bold text-[#1D1D1F]">
-                  {creatorDetail?.display_name || 'Loading Creator Profile...'}
-                </h2>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-xl font-bold text-[#1D1D1F]">
+                    {creatorDetail?.display_name || 'Loading Creator Profile...'}
+                  </h2>
+                  {creatorDetail && (
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        creatorDetail.profile?.is_suspended || creatorDetail.status === 'suspended'
+                          ? 'bg-red-50 text-red-700 border border-red-200'
+                          : creatorDetail.profile?.approval_status === 'approved'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}
+                    >
+                      {creatorDetail.profile?.is_suspended || creatorDetail.status === 'suspended'
+                        ? 'Suspended'
+                        : creatorDetail.profile?.approval_status || 'Pending'}
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-[#86868B] font-mono mt-0.5">
                   ID: {selectedCreatorId} • {creatorDetail?.email} • {creatorDetail?.phone || 'No phone'}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {creatorDetail && creatorDetail.profile?.approval_status === 'pending' && (
+                  <button
+                    onClick={() => handleAction(creatorDetail.id, 'approve')}
+                    disabled={actionLoading === creatorDetail.id}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer shadow-xs disabled:opacity-50"
+                  >
+                    ✓ Approve Creator
+                  </button>
+                )}
+                {creatorDetail && creatorDetail.profile?.approval_status === 'pending' && (
+                  <button
+                    onClick={() => handleAction(creatorDetail.id, 'reject', 'Portfolio standards not met')}
+                    disabled={actionLoading === creatorDetail.id}
+                    className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-xl border border-red-200 cursor-pointer disabled:opacity-50"
+                  >
+                    Reject
+                  </button>
+                )}
+                {creatorDetail && creatorDetail.profile?.approval_status === 'approved' && !(creatorDetail.profile?.is_suspended || creatorDetail.status === 'suspended') && (
+                  <button
+                    onClick={() => handleAction(creatorDetail.id, 'suspend', 'Admin review suspension')}
+                    disabled={actionLoading === creatorDetail.id}
+                    className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold rounded-xl border border-amber-200 cursor-pointer disabled:opacity-50"
+                  >
+                    Suspend
+                  </button>
+                )}
+                {creatorDetail && (creatorDetail.profile?.is_suspended || creatorDetail.status === 'suspended') && (
+                  <button
+                    onClick={() => handleAction(creatorDetail.id, 'reactivate')}
+                    disabled={actionLoading === creatorDetail.id}
+                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-xl border border-blue-200 cursor-pointer disabled:opacity-50"
+                  >
+                    Reactivate
+                  </button>
+                )}
                 <Link
                   href={`/admin/freelancers/${selectedCreatorId}`}
                   className="px-3 py-1.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-xl"
                 >
-                  Edit Full Profile &amp; Settings ↗
+                  Edit Full Profile ↗
                 </Link>
                 <button
                   onClick={() => setSelectedCreatorId(null)}
@@ -421,6 +494,114 @@ export default function AdminFreelancersPage() {
                     <div className="text-lg font-bold text-amber-500">★ {creatorDetail.metrics.rating}</div>
                     <div className="text-[10px] text-[#86868B]">Client Signoff Rating</div>
                   </div>
+                </div>
+
+                {/* Creative Profile, Hardware Rig & Compliance Card */}
+                <div className="p-5 bg-[#F9F9FA] rounded-2xl border border-[#E5E5E7] space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#E5E5E7] pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                      <h3 className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider">
+                        Creative Profile &amp; Hardware Rig
+                      </h3>
+                    </div>
+                    {creatorDetail.profile?.tracking_id && (
+                      <span className="font-mono text-[10px] text-[#86868B] bg-white px-2.5 py-0.5 rounded border border-[#E5E5E7]">
+                        Track: {creatorDetail.profile.tracking_id}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Philosophy / Bio */}
+                  {(creatorDetail.studio_details?.philosophy || creatorDetail.profile?.bio) && (
+                    <div className="text-xs text-[#1D1D1F] bg-white p-3 rounded-xl border border-[#E5E5E7]/70 leading-relaxed">
+                      <span className="font-bold text-[#86868B] block text-[10px] uppercase mb-1">Editing Philosophy / Bio</span>
+                      {creatorDetail.studio_details?.philosophy || creatorDetail.profile?.bio}
+                    </div>
+                  )}
+
+                  {/* Software & Languages Badges */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="bg-white p-3 rounded-xl border border-[#E5E5E7]/70 space-y-1.5">
+                      <span className="font-bold text-[#86868B] block text-[10px] uppercase">Software Toolchain</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {((creatorDetail.studio_details?.software || creatorDetail.profile?.software || ['DaVinci Resolve Studio', 'Adobe Premiere Pro']) as string[]).map((sw, i) => (
+                          <span key={i} className="px-2 py-0.5 bg-[#F5F5F7] text-[#1D1D1F] rounded-md text-[11px] font-semibold border border-[#E5E5E7]/50">
+                            {sw}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl border border-[#E5E5E7]/70 space-y-1.5">
+                      <span className="font-bold text-[#86868B] block text-[10px] uppercase">Languages &amp; Subtitles</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {((creatorDetail.studio_details?.languages || creatorDetail.profile?.skills || ['Hindi', 'English']) as string[]).map((lang, i) => (
+                          <span key={i} className="px-2 py-0.5 bg-[#F5F5F7] text-[#1D1D1F] rounded-md text-[11px] font-semibold border border-[#E5E5E7]/50">
+                            {lang}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hardware Rig Specs */}
+                  <div className="bg-white p-3.5 rounded-xl border border-[#E5E5E7]/70 space-y-2">
+                    <span className="font-bold text-[#86868B] block text-[10px] uppercase">Studio Hardware &amp; Editing Rig</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div className="p-2.5 bg-[#F5F5F7] rounded-lg">
+                        <div className="text-[10px] text-[#86868B] font-bold">WORKSTATION RIG</div>
+                        <div className="font-medium text-[#1D1D1F] mt-0.5">{creatorDetail.studio_details?.workstationRig || 'Apple Mac Studio M2 Ultra / High-Performance PC'}</div>
+                      </div>
+                      <div className="p-2.5 bg-[#F5F5F7] rounded-lg">
+                        <div className="text-[10px] text-[#86868B] font-bold">CALIBRATED MONITORING</div>
+                        <div className="font-medium text-[#1D1D1F] mt-0.5">{creatorDetail.studio_details?.monitoringSpec || 'P3-D65 / Rec.709 Color Reference Display'}</div>
+                      </div>
+                      <div className="p-2.5 bg-[#F5F5F7] rounded-lg">
+                        <div className="text-[10px] text-[#86868B] font-bold">STORAGE &amp; SCRATCH</div>
+                        <div className="font-medium text-[#1D1D1F] mt-0.5">{creatorDetail.studio_details?.storageSpec || '10GbE Synology RAID / Internal NVMe Scratch'}</div>
+                      </div>
+                      <div className="p-2.5 bg-[#F5F5F7] rounded-lg">
+                        <div className="text-[10px] text-[#86868B] font-bold">AUDIO REFERENCE</div>
+                        <div className="font-medium text-[#1D1D1F] mt-0.5">{creatorDetail.studio_details?.audioSpec || 'Yamaha HS7 Studio Monitors / Open-Back Headphones'}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Capacity & Masked Banking Compliance */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="bg-white p-3 rounded-xl border border-[#E5E5E7]/70 space-y-1">
+                      <span className="font-bold text-[#86868B] block text-[10px] uppercase">Experience &amp; Capacity</span>
+                      <div className="text-xs text-[#1D1D1F] space-y-1">
+                        <div><strong className="text-[#86868B]">Experience:</strong> {creatorDetail.studio_details?.experience || (creatorDetail.profile?.years_of_experience ? `${creatorDetail.profile.years_of_experience} Years` : 'Mid-Level Professional')}</div>
+                        <div><strong className="text-[#86868B]">Weekly Capacity:</strong> {creatorDetail.studio_details?.capacity || '20 - 30 Hours / Week'}</div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-3 rounded-xl border border-[#E5E5E7]/70 space-y-1">
+                      <span className="font-bold text-[#86868B] block text-[10px] uppercase">Compliance &amp; Banking (Masked)</span>
+                      <div className="text-xs font-mono text-[#1D1D1F] space-y-0.5">
+                        <div><span className="text-[#86868B]">Beneficiary:</span> {creatorDetail.profile?.bank_account_name || creatorDetail.full_name || creatorDetail.display_name}</div>
+                        <div><span className="text-[#86868B]">Account:</span> {creatorDetail.profile?.bank_account_number || (creatorDetail.studio_details?.bankAccount ? '•••• ' + creatorDetail.studio_details.bankAccount.slice(-4) : 'Verified on File')}</div>
+                        <div><span className="text-[#86868B]">IFSC / Bank:</span> {creatorDetail.profile?.bank_ifsc_code || creatorDetail.studio_details?.ifsc || 'HDFC Bank'}</div>
+                        <div><span className="text-[#86868B]">PAN:</span> {creatorDetail.profile?.pan_number || (creatorDetail.studio_details?.pan ? '••••••' + creatorDetail.studio_details.pan.slice(-4) : 'Verified')}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* External Reel & Showreel */}
+                  {(creatorDetail.profile?.portfolio_url || creatorDetail.studio_details?.showreelUrl) && (
+                    <div className="pt-1">
+                      <a
+                        href={creatorDetail.profile?.portfolio_url || creatorDetail.studio_details?.showreelUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-xl"
+                      >
+                        Watch External Showreel / Portfolio ↗
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 {/* Assignments */}

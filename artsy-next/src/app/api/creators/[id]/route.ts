@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { createErrorResponse } from '@/lib/api-response';
+import { getCachedData, setCachedData } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +12,17 @@ export async function GET(
   const { id } = await params;
   if (!id) {
     return NextResponse.json({ error: 'Creator ID required' }, { status: 400 });
+  }
+
+  const cacheKey = `cache:public:creator:${id}`;
+  const cached = await getCachedData<any>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached, {
+      headers: {
+        'X-Cache': 'HIT',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
+    });
   }
 
   const dbClient = supabaseAdmin || anonSupabase;
@@ -60,12 +72,21 @@ export async function GET(
     // Calculate on-time delivery rate (computed from project benchmarks, defaulting to high standard)
     const onTimeDeliveryRate = 98;
 
-    return NextResponse.json({
+    const payload = {
       success: true,
       creator: {
         ...creator,
         onTimeDeliveryRate,
         samples: samples || [],
+      },
+    };
+
+    await setCachedData(cacheKey, payload, 60);
+
+    return NextResponse.json(payload, {
+      headers: {
+        'X-Cache': 'MISS',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       },
     });
   } catch (err: unknown) {

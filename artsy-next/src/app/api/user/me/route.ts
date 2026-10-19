@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { isSuperAdminAccount } from '@/lib/auth-utils';
 import { getCachedUser, setCachedUser } from '@/lib/cache';
+import { maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,12 +98,18 @@ export async function GET(request: NextRequest) {
       try {
         const { data: creatorProfile } = await dbClient
           .from('creator_profiles')
-          .select('id, approval_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name')
+          .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, bank_account_name, bank_account_number, bank_ifsc_code, pan_number')
           .eq('id', resolvedUser.id)
           .maybeSingle();
 
         if (creatorProfile) {
-          resolvedUser.creator_profile = creatorProfile;
+          const safeCreatorProfile = {
+            ...creatorProfile,
+            pan_number: creatorProfile.pan_number ? maskPAN(creatorProfile.pan_number) : null,
+            bank_account_number: creatorProfile.bank_account_number ? maskBankAccount(creatorProfile.bank_account_number) : null,
+            bank_ifsc_code: creatorProfile.bank_ifsc_code ? maskIFSC(creatorProfile.bank_ifsc_code) : null,
+          };
+          resolvedUser.creator_profile = safeCreatorProfile;
           resolvedUser.onboarding_status =
             creatorProfile.onboarding_status ||
             (creatorProfile.approval_status === 'approved'
@@ -112,7 +119,6 @@ export async function GET(request: NextRequest) {
               : 'pending_review');
           resolvedUser.tracking_id = creatorProfile.tracking_id || null;
           resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
-          resolvedUser.rejected_at = creatorProfile.rejected_at || null;
           resolvedUser.bio = creatorProfile.bio || null;
           resolvedUser.skills = creatorProfile.skills || [];
           resolvedUser.software = creatorProfile.software || [];

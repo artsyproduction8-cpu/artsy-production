@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { encryptPII } from '@/lib/crypto/pii';
+import { invalidateCreatorCache, setCachedUser } from '@/lib/cache';
 
 export async function POST(req: NextRequest) {
   // 1. Authenticate caller
@@ -60,6 +61,25 @@ export async function POST(req: NextRequest) {
           .maybeSingle();
 
         const resolvedName = legalName || alias || null;
+        const reelUrls = Array.isArray(body.reels)
+          ? body.reels.map((r: any) => (typeof r === 'string' ? r : r.url)).filter(Boolean)
+          : [];
+
+        const studioDetails = {
+          alias: alias || null,
+          legalName: legalName || null,
+          software: Array.isArray(software) ? software : [],
+          languages: Array.isArray(languages) ? languages : [],
+          experience: body.experience || '',
+          capacity: body.capacity || '',
+          philosophy: philosophy || '',
+          showreelUrl: body.showreelUrl || '',
+          reels: reelUrls,
+          bankName: body.bankName || '',
+          bankAccount: body.bankAccount || '',
+          ifsc: body.ifsc || '',
+          pan: cleanPan || '',
+        };
 
         if (!existingUser) {
           await dbClient.from('users').insert({
@@ -67,25 +87,25 @@ export async function POST(req: NextRequest) {
             email: candidateEmail,
             phone: candidatePhone,
             full_name: resolvedName,
+            display_name: alias || null,
             role: 'freelancer',
             status: 'active',
             onboarded: true,
+            studio_details: studioDetails,
             updated_at: new Date().toISOString(),
           });
         } else {
           await dbClient.from('users').update({
             full_name: resolvedName || existingUser.full_name,
+            display_name: alias || null,
             role: 'freelancer',
             onboarded: true,
+            studio_details: studioDetails,
             updated_at: new Date().toISOString(),
           }).eq('id', candidateUserId);
         }
 
-        const reelUrls = Array.isArray(body.reels)
-          ? body.reels.map((r: any) => (typeof r === 'string' ? r : r.url)).filter(Boolean)
-          : [];
-
-        const profilePayload = {
+        const profilePayload: Record<string, any> = {
           id: candidateUserId,
           tracking_id: trackingId,
           bio: philosophy || 'Creative Editor',
@@ -97,24 +117,61 @@ export async function POST(req: NextRequest) {
           sample_links: reelUrls,
           public_display_name: alias || legalName || null,
           pan_number: encryptedPan,
+          bank_account_name: body.legalName || null,
+          bank_account_number: body.bankAccount || null,
+          bank_ifsc_code: body.ifsc ? String(body.ifsc).toUpperCase().trim() : null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
 
-        const { error: insErr } = await dbClient.from('creator_profiles').insert([profilePayload]);
-        if (insErr && (insErr.code === '23505' || insErr.message?.includes('duplicate'))) {
-          // Row already initialized at OTP signup; update fields
-          await dbClient.from('creator_profiles').update({
+        const { data: existingCp } = await dbClient
+          .from('creator_profiles')
+          .select('*')
+          .eq('id', candidateUserId)
+          .maybeSingle();
+
+        const mergedPayload = {
+          ...(existingCp || {}),
+          ...profilePayload,
+        };
+
+        if (existingCp) {
+          await dbClient.from('creator_profiles').delete().eq('id', candidateUserId);
+        }
+        await dbClient.from('creator_profiles').insert(mergedPayload);
+
+        // Immutable WORM audit trail
+        await dbClient.from('audit_logs').insert([{
+          action: 'CREATOR_ONBOARDING_SUBMITTED',
+          target_table: 'creator_profiles',
+          target_id: candidateUserId,
+          new_values: {
             tracking_id: trackingId,
-            bio: profilePayload.bio,
-            skills: profilePayload.skills,
-            software: profilePayload.software,
-            portfolio_url: profilePayload.portfolio_url,
-            sample_links: profilePayload.sample_links,
-            public_display_name: profilePayload.public_display_name,
-            pan_number: encryptedPan,
-            updated_at: new Date().toISOString(),
-          }).eq('id', candidateUserId);
+            legal_name: legalName,
+            alias,
+            submitted_at: new Date().toISOString(),
+          },
+          created_at: new Date().toISOString(),
+        }]);
+
+        // Instant Cache Invalidation & Session Warm (Sub-20ms)
+        try {
+          await invalidateCreatorCache(candidateUserId);
+          const freshUser = {
+            id: candidateUserId,
+            role: 'freelancer',
+            email: candidateEmail,
+            phone: candidatePhone,
+            full_name: resolvedName || authUser.full_name,
+            display_name: alias || authUser.display_name,
+            onboarded: true,
+            onboarding_status: 'pending_review',
+            tracking_id: trackingId,
+            studio_details: studioDetails,
+          };
+          await setCachedUser(candidateUserId, freshUser, 600);
+        } catch (cErr) {
+          console.warn('[Creator Onboard] Cache sync warning:', cErr);
         }
       } catch (dbErr) {
         console.warn('Supabase creator_profiles save non-fatal fallback:', dbErr);

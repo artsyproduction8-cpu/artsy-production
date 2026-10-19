@@ -174,3 +174,17 @@ export async function invalidateUserCache(userId: string): Promise<void> {
     invalidateCache(`cache:admin:client:${userId}`),
   ]);
 }
+
+/**
+ * Invalidate creator caches across admin panels, public directory, and session
+ */
+export async function invalidateCreatorCache(creatorId: string): Promise<void> {
+  if (!creatorId) return;
+  await Promise.all([
+    invalidateCache(`user:session:${creatorId}`),
+    invalidateCache('cache:admin:creators:list'),
+    invalidateCache(`cache:admin:creator:${creatorId}`),
+    invalidateCache('cache:public:creators:list'),
+    invalidateCache(`cache:public:creator:${creatorId}`),
+  ]);
+}

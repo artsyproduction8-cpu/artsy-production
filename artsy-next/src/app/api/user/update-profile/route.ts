@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, signAuthCookieValue, AUTH_COOKIE_NAME, AuthUserPayload } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
-import { setCachedUser, invalidateUserCache, invalidateCache } from '@/lib/cache';
+import { setCachedUser, invalidateUserCache, invalidateCache, invalidateCreatorCache } from '@/lib/cache';
 
 export async function POST(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
   }
 
-  const { full_name, display_name, studio_details, avatar_url } = body;
+  const { full_name, display_name, studio_details, avatar_url, creator_profile: creatorPayload } = body;
 
   const updates: Record<string, any> = {
     updated_at: new Date().toISOString(),
@@ -88,8 +88,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // If freelancer, attempt updating creator_profiles fields as well
-    const creatorPayload = body.creator_profile;
+    // If freelancer, attempt upserting creator_profiles fields as well
     if (creatorPayload && typeof creatorPayload === 'object' && isUuid) {
       try {
         const cpUpdates: Record<string, any> = {
@@ -98,6 +97,9 @@ export async function POST(request: Request) {
         if (creatorPayload.bio) cpUpdates.bio = String(creatorPayload.bio).trim();
         if (creatorPayload.public_bio) cpUpdates.public_bio = String(creatorPayload.public_bio).trim();
         if (creatorPayload.public_display_name) cpUpdates.public_display_name = String(creatorPayload.public_display_name).trim();
+        if (creatorPayload.portfolio_url || creatorPayload.showreelUrl) {
+          cpUpdates.portfolio_url = String(creatorPayload.portfolio_url || creatorPayload.showreelUrl).trim();
+        }
         if (Array.isArray(creatorPayload.software)) cpUpdates.software = creatorPayload.software;
         if (Array.isArray(creatorPayload.languages)) cpUpdates.languages = creatorPayload.languages;
         if (Array.isArray(creatorPayload.skills)) cpUpdates.skills = creatorPayload.skills;
@@ -106,10 +108,25 @@ export async function POST(request: Request) {
         if (creatorPayload.bank_ifsc_code) cpUpdates.bank_ifsc_code = String(creatorPayload.bank_ifsc_code).trim().toUpperCase();
         if (creatorPayload.pan_number) cpUpdates.pan_number = String(creatorPayload.pan_number).trim().toUpperCase();
 
-        await dbClient
+        const { data: existingCp } = await dbClient
           .from('creator_profiles')
-          .update(cpUpdates)
-          .eq('id', authUser.id);
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        const mergedCp = {
+          ...(existingCp || {}),
+          id: authUser.id,
+          user_id: authUser.id,
+          ...cpUpdates,
+          approval_status: existingCp?.approval_status || 'pending',
+          onboarding_status: existingCp?.onboarding_status || 'pending_review',
+        };
+
+        if (existingCp) {
+          await dbClient.from('creator_profiles').delete().eq('id', authUser.id);
+        }
+        await dbClient.from('creator_profiles').insert(mergedCp);
       } catch (cpErr) {
         console.warn('[Update Profile] Non-fatal creator_profiles sync warning:', cpErr);
       }
@@ -125,11 +142,14 @@ export async function POST(request: Request) {
 
   // 1. Instant Cache Refresh & Cross-Panel Invalidation (Sub-20ms)
   try {
-    // Invalidate dependent admin panels so fresh data is visible immediately
-    await Promise.all([
+    const invalidations: Promise<any>[] = [
       invalidateCache('cache:admin:clients:list'),
       invalidateCache(`cache:admin:client:${resolvedUser.id}`),
-    ]);
+    ];
+    if (authUser.role === 'freelancer' || creatorPayload) {
+      invalidations.push(invalidateCreatorCache(resolvedUser.id));
+    }
+    await Promise.all(invalidations);
     // Atomically warm user session cache with the latest saved data
     await setCachedUser(resolvedUser.id, resolvedUser, 600);
   } catch (cErr) {

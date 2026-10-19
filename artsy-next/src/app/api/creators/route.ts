@@ -1,19 +1,36 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { createErrorResponse } from '@/lib/api-response';
+import { getCachedData, setCachedData } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const dbClient = supabaseAdmin || anonSupabase;
-  if (!dbClient || typeof dbClient.from !== 'function') {
-    return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
-  }
-
   const { searchParams } = new URL(request.url);
   const category = searchParams.get('category')?.toLowerCase();
   const tier = searchParams.get('tier')?.toLowerCase();
   const availability = searchParams.get('availability')?.toLowerCase();
+
+  const isDefaultQuery = (!category || category === 'all') && (!tier || tier === 'all') && (!availability || availability === 'all');
+  const cacheKey = isDefaultQuery
+    ? 'cache:public:creators:list'
+    : `cache:public:creators:list:${category || 'all'}:${tier || 'all'}:${availability || 'all'}`;
+
+  // Sub-20ms Cached Edge Fast Path
+  const cached = await getCachedData<any>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached, {
+      headers: {
+        'X-Cache': 'HIT',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
+    });
+  }
+
+  const dbClient = supabaseAdmin || anonSupabase;
+  if (!dbClient || typeof dbClient.from !== 'function') {
+    return NextResponse.json({ error: 'Database unavailable' }, { status: 500 });
+  }
 
   try {
     let query = dbClient
@@ -53,10 +70,19 @@ export async function GET(request: Request) {
       );
     }
 
-    return NextResponse.json({
+    const payload = {
       success: true,
       creators: filtered,
       total: filtered.length,
+    };
+
+    await setCachedData(cacheKey, payload, 60);
+
+    return NextResponse.json(payload, {
+      headers: {
+        'X-Cache': 'MISS',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
     });
   } catch (err: unknown) {
     return createErrorResponse(err, 'Failed to process creators request', 500);

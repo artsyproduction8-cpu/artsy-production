@@ -1,13 +1,22 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { extractYouTubeId, youtubeThumbnail, isEmbeddable } from '@/lib/youtube';
+import { isSuperAdminAccount } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const tokenCookie = request.cookies.get('artsy_auth_token');
+  console.log('[Admin Portfolio] request.cookies.get("artsy_auth_token"):', tokenCookie ? `present (len=${tokenCookie.value.length})` : 'missing');
+
   const authUser = await getAuthenticatedUser(request);
-  if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
+  const isAuthorized = Boolean(
+    authUser && (['admin', 'super_admin'].includes(authUser.role) || isSuperAdminAccount(authUser))
+  );
+
+  if (!isAuthorized) {
+    console.warn('[Admin Portfolio] Unauthorized request. authUser:', authUser);
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }
 
@@ -17,6 +26,13 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Clean up test video dQw4w9WgXcQ (Rickroll test video)
+    try {
+      await dbClient.from('portfolio_samples').delete().eq('youtube_id', 'dQw4w9WgXcQ');
+    } catch (cleanErr) {
+      console.warn('[Admin Portfolio] Clean test video warning:', cleanErr);
+    }
+
     const { searchParams } = new URL(request.url);
     const creatorId = searchParams.get('creator_id');
 
@@ -59,8 +75,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch portfolio samples' }, { status: 500 });
     }
 
+    // Filter out test video if present
+    const cleanSamples = (samples || []).filter((s: any) => s.youtube_id !== 'dQw4w9WgXcQ');
+
     // Enrich with creator names
-    const creatorIds = Array.from(new Set((samples || []).map((s: any) => s.creator_id).filter(Boolean)));
+    const creatorIds = Array.from(new Set(cleanSamples.map((s: any) => s.creator_id).filter(Boolean)));
     let creatorMap: Record<string, string> = {};
 
     if (creatorIds.length > 0) {
@@ -86,7 +105,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const enriched = (samples || []).map((s: any) => ({
+    const enriched = cleanSamples.map((s: any) => ({
       ...s,
       creatorName: s.creator_id ? (creatorMap[s.creator_id] || 'Creator') : 'Company (Artsy Official)',
     }));
@@ -98,9 +117,16 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const tokenCookie = request.cookies.get('artsy_auth_token');
+  console.log('[Admin Portfolio POST] request.cookies.get("artsy_auth_token"):', tokenCookie ? `present (len=${tokenCookie.value.length})` : 'missing');
+
   const authUser = await getAuthenticatedUser(request);
-  if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
+  const isAuthorized = Boolean(
+    authUser && (['admin', 'super_admin'].includes(authUser.role) || isSuperAdminAccount(authUser))
+  );
+
+  if (!isAuthorized || !authUser) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
   }
 

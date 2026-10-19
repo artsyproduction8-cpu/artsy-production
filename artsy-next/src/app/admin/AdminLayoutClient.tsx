@@ -14,9 +14,32 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     async function checkAuth() {
       let user = getCurrentUser();
 
+      // 1. If client already has a super_admin or admin in localStorage/sessionStorage,
+      // immediately fire request to mint/refresh the secure HTTP-only cookie on the server
+      if (user && (user.role === 'super_admin' || user.role === 'admin')) {
+        try {
+          const syncRes = await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user }),
+            credentials: 'include',
+          });
+          if (syncRes.ok) {
+            const syncData = await syncRes.json().catch(() => ({}));
+            if (syncData.user) {
+              setCurrentUser(syncData.user);
+              user = syncData.user;
+            }
+          }
+        } catch (syncErr) {
+          console.warn('[AdminLayoutClient] Failed to mint/sync admin session cookie:', syncErr);
+        }
+      }
+
+      // 2. If no user in local storage, check if active HTTP-only session cookie already exists on server
       if (!user) {
         try {
-          const res = await fetch('/api/auth/session');
+          const res = await fetch('/api/auth/session', { credentials: 'include' });
           if (res.ok) {
             const data = await res.json();
             if (data.authenticated && data.user) {
@@ -38,11 +61,20 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           // ignore
         }
       }
-      // In local dev fallback (strictly excluded from production builds)
+
+      // 3. In local dev preview fallback (strictly excluded from production builds)
       if (process.env.NODE_ENV !== 'production' && !user && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
         const fallback = PRESET_USERS.super_admin;
         setCurrentUser(fallback);
         user = fallback;
+        try {
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: fallback }),
+            credentials: 'include',
+          });
+        } catch {}
       }
 
       if (!user) {
@@ -53,18 +85,6 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       if (user.role !== 'admin' && user.role !== 'super_admin') {
         router.push('/auth/login?unauthorized=true');
         return;
-      }
-
-      // Sync active HTTP-only admin session cookie to ensure all subsequent admin API requests are authorized
-      try {
-        await fetch('/api/auth/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user }),
-          credentials: 'include',
-        });
-      } catch {
-        // Non-fatal background sync
       }
 
       setAuthorized(true);
@@ -82,11 +102,11 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
+    <div className="min-h-screen bg-[#F5F5F7]">
       <AdminHeader />
-      <div className="flex w-full max-w-full overflow-x-hidden">
+      <div className="flex pt-16">
         <AdminSidebar />
-        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen">
+        <main className="flex-1 lg:pl-72 min-h-[calc(100vh-4rem)] p-6 md:p-8 max-w-7xl mx-auto w-full">
           {children}
         </main>
       </div>

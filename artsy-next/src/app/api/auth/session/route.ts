@@ -7,6 +7,7 @@ import {
   invalidateUserTokenVersionCache,
 } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
+import { isSuperAdminAccount } from '@/lib/auth-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,9 +17,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid user payload' }, { status: 400 });
     }
 
+    const isSuper = isSuperAdminAccount(user);
+    const resolvedRole = isSuper ? 'super_admin' : user.role;
+
     const cookieValue = signAuthCookieValue({
-      id: user.id || 'usr-client-001',
-      role: user.role,
+      id: user.id || (isSuper ? 'usr-superadmin-000' : 'usr-client-001'),
+      role: resolvedRole,
       email: user.email,
       phone: user.phone,
       full_name: user.full_name,

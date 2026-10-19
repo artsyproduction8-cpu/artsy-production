@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth';
+import { useAuth, logout } from '@/lib/auth';
 import { extractYouTubeId, youtubeThumbnail } from '@/lib/youtube';
 
 interface PortfolioSample {
@@ -68,6 +68,13 @@ export default function AdminPortfolioPage() {
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.success) {
         setSamples(data.samples || []);
+      } else if (res.status === 401) {
+        const errorMsg = data.error || 'Unauthorized: Admin access required';
+        console.error('[Admin Portfolio Fetch Error 401]', errorMsg);
+        setFetchError(errorMsg);
+        logout();
+        window.location.href = '/admin/login?error=session_expired';
+        return;
       } else {
         const errorMsg = data.error || `HTTP ${res.status}: Failed to load portfolio samples`;
         setFetchError(errorMsg);
@@ -84,7 +91,7 @@ export default function AdminPortfolioPage() {
 
   const fetchCreators = async () => {
     try {
-      const res = await fetch('/api/admin/creators');
+      const res = await fetch('/api/admin/creators', { credentials: 'include' });
       const data = await res.json();
       if (res.ok && data.success) {
         setCreators(data.creators || []);
@@ -123,6 +130,7 @@ export default function AdminPortfolioPage() {
       const res = await fetch('/api/admin/portfolio', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           youtube_url: addYoutubeUrl.trim(),
           title: addTitle.trim(),
@@ -158,6 +166,7 @@ export default function AdminPortfolioPage() {
       const res = await fetch(`/api/admin/portfolio/${sample.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ is_visible: newVisibility }),
       });
 
@@ -181,6 +190,7 @@ export default function AdminPortfolioPage() {
     try {
       const res = await fetch(`/api/admin/portfolio/${sample.id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (res.ok || res.status === 204) {
@@ -212,6 +222,7 @@ export default function AdminPortfolioPage() {
       const res = await fetch(`/api/admin/portfolio/${editingSample.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           title: editTitle.trim(),
           category: editCategory,

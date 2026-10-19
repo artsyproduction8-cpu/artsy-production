@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { isSuperAdminAccount } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,10 +15,10 @@ export async function PATCH(
   }
 
   const authUser = await getAuthenticatedUser(request);
-  if (!authUser) {
-    return NextResponse.json({ error: 'Unauthorized: Session required' }, { status: 401 });
-  }
-  if (!['admin', 'super_admin'].includes(authUser.role)) {
+  const isAuthorized = Boolean(
+    authUser && (['admin', 'super_admin'].includes(authUser.role) || isSuperAdminAccount(authUser))
+  );
+  if (!isAuthorized) {
     return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
   }
 
@@ -90,10 +91,10 @@ export async function DELETE(
   }
 
   const authUser = await getAuthenticatedUser(request);
-  if (!authUser) {
-    return NextResponse.json({ error: 'Unauthorized: Session required' }, { status: 401 });
-  }
-  if (!['admin', 'super_admin'].includes(authUser.role)) {
+  const isAuthorized = Boolean(
+    authUser && (['admin', 'super_admin'].includes(authUser.role) || isSuperAdminAccount(authUser))
+  );
+  if (!isAuthorized) {
     return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
   }
 

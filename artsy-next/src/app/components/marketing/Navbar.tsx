@@ -313,10 +313,10 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
           className="flex flex-col items-center justify-center leading-none select-none group text-left cursor-pointer"
           title="Artsy — Place for Perspective"
         >
-          <span className="text-[20px] sm:text-[22px] font-extrabold uppercase tracking-[-0.03em] text-white leading-none group-hover:text-blue-400 transition-colors">
+          <span className="text-xl sm:text-2xl font-extrabold uppercase tracking-tight text-white leading-none group-hover:text-blue-400 transition-colors">
             ARTSY
           </span>
-          <span className="font-mono text-[7.5px] sm:text-[8px] font-semibold tracking-[1.6px] uppercase text-[#DCDFE3]/80 mt-1.5 leading-none text-center">
+          <span className="font-mono text-xs font-semibold tracking-[1.2px] uppercase text-[#DCDFE3]/80 mt-1 leading-none text-center">
             PLACE FOR PERSPECTIVE
           </span>
         </Link>
@@ -324,28 +324,22 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
         {/* Center Nav Links */}
         <nav className="hidden md:flex items-center gap-7 lg:gap-8">
           <Link
-            href="/book"
-            className="text-[12.5px] font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
-          >
-            BOOK NOW
-          </Link>
-          <Link
-            href="/creators"
-            className="text-[12.5px] font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
-          >
-            CREATORS
-          </Link>
-          <Link
             href="/services"
-            className="text-[12.5px] font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
+            className="text-xs font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
           >
             SERVICES
           </Link>
           <Link
             href="/work"
-            className="text-[12.5px] font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
+            className="text-xs font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
           >
             PORTFOLIO
+          </Link>
+          <Link
+            href="/creators"
+            className="text-xs font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
+          >
+            CREATORS
           </Link>
         </nav>
 
@@ -453,24 +447,39 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
 
           {!isAuthenticated ? (
             <>
-              {/* FIND JOB Button */}
+              {/* FIND JOB Secondary Link */}
               <Link
                 href="/auth/login?intent=freelancer"
-                className="hidden sm:inline-flex items-center justify-center min-w-[88px] h-8 px-3.5 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-white bg-transparent border border-white/30 hover:border-white hover:bg-white hover:text-[#0A0A0A] transition-all whitespace-nowrap"
+                className="hidden sm:inline-flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-white/70 hover:text-white px-2 py-1 transition-colors whitespace-nowrap"
               >
                 FIND JOB
               </Link>
 
-              {/* LOGIN / SIGNUP Button */}
+              {/* LOGIN Secondary Link */}
               <Link
                 href="/auth/login"
-                className="inline-flex items-center justify-center min-w-[72px] h-8 px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
+                className="inline-flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-white/80 hover:text-white px-2.5 py-1 transition-colors whitespace-nowrap"
               >
                 LOGIN
               </Link>
+
+              {/* BOOK NOW Primary CTA Button */}
+              <Link
+                href="/book"
+                className="inline-flex items-center justify-center h-8 px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
+              >
+                BOOK NOW
+              </Link>
             </>
           ) : (
-            <div className="relative flex items-center gap-2" ref={userMenuRef}>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/book"
+                className="hidden sm:inline-flex items-center justify-center h-8 px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
+              >
+                BOOK NOW
+              </Link>
+              <div className="relative flex items-center gap-2" ref={userMenuRef}>
               {/* User Avatar & Dropdown Trigger */}
               <button
                 type="button"
@@ -571,6 +580,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
                   </button>
                 </div>
               )}
+            </div>
             </div>
           )}
 

@@ -211,9 +211,9 @@ export default function CoverflowReels() {
             if (absDiff < 0.5) {
               // Centered active card
               const scale = 1.05 - absDiff * 0.1;
-              const rotateY = effectiveDiff * -20;
+              const rotateY = effectiveDiff * -15;
               const translateZ = 90 - absDiff * 80;
-              const translateX = effectiveDiff * 200;
+              const translateX = effectiveDiff * 220;
 
               transform = `translate(-50%, -50%) translate3d(${translateX}px, 0, ${translateZ}px) scale(${scale}) rotateY(${rotateY}deg)`;
               zIndex = 35;
@@ -221,16 +221,16 @@ export default function CoverflowReels() {
               filter = 'brightness(1)';
               pointerEvents = 'auto';
               isCenter = true;
-            } else if (absDiff <= 3.2) {
-              // Flanking visible cards
+            } else if (absDiff <= 1.8) {
+              // Flanking visible cards with reduced overlap & gentle perspective
               const sign = effectiveDiff > 0 ? 1 : -1;
               const normDist = absDiff;
-              const translateX = sign * (180 + (normDist - 1) * 160);
-              const rotateY = sign * -38;
-              const translateZ = -60 * normDist;
-              const scale = Math.max(0.7, 0.94 - normDist * 0.1);
-              const opacityVal = Math.max(0.2, 0.85 - normDist * 0.25);
-              const brightnessVal = Math.max(0.65, 0.9 - normDist * 0.12);
+              const translateX = sign * (250 + (normDist - 1) * 180);
+              const rotateY = sign * -16;
+              const translateZ = -40 * normDist;
+              const scale = Math.max(0.8, 0.94 - normDist * 0.08);
+              const opacityVal = Math.max(0.55, 0.9 - normDist * 0.2);
+              const brightnessVal = Math.max(0.78, 0.92 - normDist * 0.1);
 
               transform = `translate(-50%, -50%) translate3d(${translateX}px, 0, ${translateZ}px) scale(${scale}) rotateY(${rotateY}deg)`;
               zIndex = Math.round(25 - absDiff * 5);
@@ -238,7 +238,7 @@ export default function CoverflowReels() {
               filter = `brightness(${brightnessVal})`;
               pointerEvents = 'auto';
             } else {
-              // Hidden cards
+              // Culled distant cards to prevent visual clutter
               transform = `translate(-50%, -50%) translate3d(0, 0, -280px) scale(0.55)`;
               zIndex = 0;
               opacity = 0;
@@ -304,33 +304,39 @@ export default function CoverflowReels() {
           })}
         </div>
 
-        {/* Bottom Pagination Dots */}
-        <div className="flex items-center justify-center gap-2 mt-8" id="coverflow-dots">
+        {/* Bottom Pagination Dots with Accessible Hit Area & Uniform Geometry */}
+        <div className="flex items-center justify-center gap-1.5 mt-8" id="coverflow-dots">
           {REELS.map((_, idx) => (
             <button
               key={idx}
               type="button"
               aria-label={`Go to slide ${idx + 1}`}
+              aria-current={idx === currentIndex ? 'true' : undefined}
               onClick={(e) => {
                 e.stopPropagation();
                 setCurrentIndex(idx);
               }}
-              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                idx === currentIndex
-                  ? 'w-7 bg-[#3B82F6]'
-                  : 'w-2 bg-[#E5E5E7] hover:bg-[#86868B]'
-              }`}
-            />
+              className="w-8 h-8 flex items-center justify-center cursor-pointer rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]"
+            >
+              <span
+                className={`h-2.5 w-2.5 rounded-full transition-all duration-300 block pointer-events-none ${
+                  idx === currentIndex
+                    ? 'bg-[#3B82F6] ring-2 ring-[#3B82F6]/30'
+                    : 'bg-[#DCDFE3] hover:bg-[#86868B]'
+                }`}
+              />
+            </button>
           ))}
         </div>
 
-        {/* View All Work Link */}
-        <div className="mt-6 text-center">
+        {/* View All Work Prominent Secondary CTA */}
+        <div className="mt-10 text-center">
           <Link
             href="/work"
-            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#3B82F6] hover:text-[#2563EB] transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-sm font-bold uppercase tracking-wider text-[#1D1D1F] transition-all shadow-xs group"
           >
             <span>View All Showreel Cuts &amp; Technical Formats</span>
+            <span className="text-[#3B82F6] group-hover:translate-x-1 transition-transform">→</span>
           </Link>
         </div>
       </div>

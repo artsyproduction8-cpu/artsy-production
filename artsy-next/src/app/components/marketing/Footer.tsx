@@ -15,10 +15,10 @@ export default function Footer() {
           {/* Brand & Mission & Social Links */}
           <div className="lg:col-span-5 flex flex-col items-start gap-3">
             <Link href="/" className="flex flex-col items-start leading-none select-none group">
-              <span className="text-[22px] font-extrabold uppercase tracking-tight text-white leading-none group-hover:text-white/80 transition-colors">
+              <span className="text-2xl font-extrabold uppercase tracking-tight text-white leading-none group-hover:text-white/80 transition-colors">
                 ARTSY
               </span>
-              <span className="font-mono text-[9px] font-semibold tracking-[1.5px] uppercase text-[#DCDFE3]/80 mt-1 leading-none">
+              <span className="font-mono text-xs font-semibold tracking-[1.2px] uppercase text-[#DCDFE3]/80 mt-1 leading-none">
                 PLACE FOR PERSPECTIVE
               </span>
             </Link>
@@ -66,13 +66,13 @@ export default function Footer() {
 
           {/* Studio Navigation & Discovery */}
           <div className="lg:col-span-4 flex flex-col gap-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider !text-white text-white">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">
               Studio &amp; Suites
-            </h4>
+            </h3>
             <ul className="flex flex-col gap-2 text-xs font-medium text-[#DCDFE3]">
               <li>
-                <Link href="/work" className="text-[#3B82F6] hover:underline transition-colors font-semibold">
-                  Cinematic Portfolio Archive →
+                <Link href="/work" className="hover:text-white transition-colors">
+                  Cinematic Portfolio Archive
                 </Link>
               </li>
               <li>
@@ -105,14 +105,14 @@ export default function Footer() {
 
           {/* Customer Support */}
           <div className="lg:col-span-3 flex flex-col gap-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider !text-white text-white">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">
               Support
-            </h4>
+            </h3>
             <div className="flex flex-col gap-2 text-xs text-[#DCDFE3]">
               <p>
                 <span className="text-white font-semibold">Email:</span>{' '}
                 <a
-                  className="text-[#3B82F6] hover:underline"
+                  className="text-[#3B82F6] hover:text-blue-400 hover:underline transition-colors"
                   href="mailto:artsyproduction8@gmail.com"
                 >
                   artsyproduction8@gmail.com
@@ -121,14 +121,14 @@ export default function Footer() {
               <p>
                 <span className="text-white font-semibold">Phone:</span>{' '}
                 <a
-                  className="hover:text-white transition-colors"
+                  className="text-[#3B82F6] hover:text-blue-400 hover:underline transition-colors"
                   href={`tel:${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+917777078742').replace(/\s+/g, '')}`}
                 >
                   {process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+91 77770 78742'}
                 </a>
               </p>
-              <p className="text-xs text-[#DCDFE3]/80 mt-0.5">
-                Support Hours: Mon – Fri, 9:00 AM – 6:00 PM IST
+              <p className="text-xs text-[#DCDFE3]">
+                <span className="text-white font-semibold">Support Hours:</span> Mon – Fri, 9:00 AM – 6:00 PM IST
               </p>
             </div>
           </div>

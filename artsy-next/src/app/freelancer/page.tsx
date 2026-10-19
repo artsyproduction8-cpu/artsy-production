@@ -390,8 +390,8 @@ export default function FreelancerDashboard() {
                           </span>
                           <span className="text-emerald-600 text-xs font-bold">Paid Out</span>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-extrabold text-[#1D1D1F] leading-none">₹48,500</div>
-                        <div className="text-xs text-[#86868B] mt-2">Bank Transfers</div>
+                        <div className="text-3xl sm:text-4xl font-extrabold text-[#1D1D1F] leading-none">₹0</div>
+                        <div className="text-xs text-[#86868B] mt-2">0 Completed Orders</div>
                       </div>
 
                       <div className="rounded-2xl p-5 bg-[#F5F5F7] border border-[#E5E5E7]">
@@ -399,19 +399,19 @@ export default function FreelancerDashboard() {
                           <span className="text-[11px] uppercase text-[#86868B] font-semibold">
                             ACTIVE PROJECTS
                           </span>
-                          <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                          <span className="w-2 h-2 rounded-full bg-zinc-400"></span>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-extrabold text-[#3B82F6] leading-none">02</div>
-                        <div className="text-xs text-[#86868B] mt-2">In Progress</div>
+                        <div className="text-3xl sm:text-4xl font-extrabold text-[#1D1D1F] leading-none">00</div>
+                        <div className="text-xs text-[#86868B] mt-2">None In Progress</div>
                       </div>
 
                       <div className="rounded-2xl p-5 bg-[#F5F5F7] border border-[#E5E5E7]">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[11px] uppercase text-[#86868B] font-semibold">PERFORMANCE RATING</span>
-                          <span className="text-emerald-600 text-xs font-bold">Excellent</span>
+                          <span className="text-emerald-600 text-xs font-bold">New Partner</span>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-extrabold text-emerald-600 leading-none">99.4</div>
-                        <div className="text-xs text-[#86868B] mt-2">100% On-Time Delivery</div>
+                        <div className="text-3xl sm:text-4xl font-extrabold text-emerald-600 leading-none">100%</div>
+                        <div className="text-xs text-[#86868B] mt-2">On-Time Delivery Target</div>
                       </div>
                     </div>
                   </div>
@@ -426,155 +426,12 @@ export default function FreelancerDashboard() {
                   </h2>
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                  {/* Live Active Project Detail */}
-                  <div className="xl:col-span-5 bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-3">
-                        <span className="text-xs font-bold bg-[#3B82F6]/10 text-[#3B82F6] px-2.5 py-0.5 rounded-full">
-                          Current Project
-                        </span>
-                        <span className="text-xs font-bold text-amber-600">48 Hours Remaining</span>
-                      </div>
-                      <div className="mt-4">
-                        <div className="text-[11px] uppercase text-[#86868B] font-semibold">
-                          Project Details
-                        </div>
-                        <h3 className="text-base font-bold text-[#1D1D1F] mt-1 leading-snug">
-                          Project #AP-8910: 60s Brand Video
-                        </h3>
-                        <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                          Color grading, sound sync, and export in 16:9 and 9:16 formats.
-                        </p>
-                      </div>
-
-                      {/* Workspace Asset Ingest specs */}
-                      <div className="mt-5 rounded-xl p-4 bg-[#F5F5F7] border border-[#E5E5E7] space-y-2">
-                        <div className="text-xs font-bold text-[#1D1D1F] flex justify-between">
-                          <span>Project Files</span>
-                          <span className="text-[#3B82F6]">Ready (124 GB)</span>
-                        </div>
-                        <div className="w-full bg-white h-2 rounded-full overflow-hidden">
-                          <div className="bg-[#3B82F6] h-full w-full rounded-full"></div>
-                        </div>
-                        <div className="flex justify-between text-[11px] text-[#86868B]">
-                          <span>Raw Footage &amp; Assets</span>
-                          <span>Export Folder</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Secure Drive Ingest Link Button */}
-                    <div className="mt-6 pt-4 border-t border-[#F5F5F7] space-y-2">
-                      <a
-                        href="https://drive.google.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full flex items-center justify-center gap-2 text-xs font-semibold py-3 px-4 bg-[#1D1D1F] hover:bg-black text-white rounded-xl transition-all"
-                      >
-                        <span>Open Project Files in Google Drive</span>
-                        <span>↗</span>
-                      </a>
-                      <p className="text-[11px] text-center text-[#86868B]">
-                        Google Drive access is available for the duration of this project.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Interactive Daily Pulse Check-In Panel */}
-                  <div className="xl:col-span-7 bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between">
-                    <div>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#F5F5F7] pb-3 gap-2">
-                        <span className="text-sm font-bold text-[#1D1D1F]">
-                          Daily Progress Update
-                        </span>
-                        <span className="text-xs font-semibold bg-[#F5F5F7] text-[#86868B] px-2.5 py-0.5 rounded-full border border-[#E5E5E7]">
-                          Due by 11:59 PM IST
-                        </span>
-                      </div>
-
-                      {/* Status Stage Selectors */}
-                      <div className="mt-5">
-                        <label className="text-xs font-semibold text-[#1D1D1F] block mb-2">
-                          SELECT CURRENT STAGE
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                          {[
-                            { id: 1, label: 'STARTED' },
-                            { id: 2, label: 'ROUGH CUT' },
-                            { id: 3, label: 'COLOR & AUDIO' }
-                          ].map((stage) => (
-                            <button
-                              key={stage.id}
-                              type="button"
-                              onClick={() => setCurrentCadence(stage.id)}
-                              className={`text-xs font-semibold p-2.5 rounded-xl border transition-all cursor-pointer ${
-                                currentCadence === stage.id
-                                  ? 'bg-[#1D1D1F] text-white border-[#1D1D1F]'
-                                  : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white'
-                              }`}
-                            >
-                              {stage.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Progress Slider Meter */}
-                      <div className="mt-5 space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <label className="text-xs font-semibold text-[#1D1D1F]">
-                            PROJECT PROGRESS
-                          </label>
-                          <span className="text-sm font-extrabold text-[#3B82F6]">
-                            {progressPercent}%
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={progressPercent}
-                          onChange={(e) => setProgressPercent(Number(e.target.value))}
-                          className="w-full h-2 bg-[#F5F5F7] rounded-full accent-[#3B82F6] cursor-pointer"
-                        />
-                        <div className="flex justify-between text-[11px] text-[#86868B]">
-                          <span>0% Not Started</span>
-                          <span>50% Halfway Done</span>
-                          <span>100% Ready for Export</span>
-                        </div>
-                      </div>
-
-                      {/* Notes Field */}
-                      <div className="mt-5">
-                        <label className="text-xs font-semibold text-[#1D1D1F] block mb-1.5">
-                          DAILY PROGRESS NOTES / QUESTIONS
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={dailyNotes}
-                          onChange={(e) => setDailyNotes(e.target.value)}
-                          placeholder="Write a quick update on today's progress or any questions..."
-                          className="w-full bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] p-3 text-xs text-[#1D1D1F] focus:outline-none focus:bg-white focus:border-[#3B82F6] transition-all resize-none"
-                        ></textarea>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 pt-4 border-t border-[#F5F5F7] flex items-center justify-between">
-                      {pulseSubmitted && (
-                        <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                          ✓ Progress update submitted successfully.
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        onClick={handleSubmitPulse}
-                        className="ml-auto w-full sm:w-auto text-xs font-semibold py-2.5 px-5 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl transition-all cursor-pointer shadow-sm"
-                      >
-                        Submit Progress Update
-                      </button>
-                    </div>
-                  </div>
+                <div className="bg-white rounded-2xl border border-dashed border-[#E5E5E7] p-12 text-center space-y-3 shadow-xs">
+                  <div className="text-3xl">🎬</div>
+                  <h3 className="text-base font-bold text-[#1D1D1F]">No active project assigned yet</h3>
+                  <p className="text-xs text-[#86868B] max-w-md mx-auto leading-relaxed">
+                    When a client order is matched with your skills, our Studio Director will assign it to your queue. You will receive real-time alerts via WhatsApp and email with footage ingest links and turnaround milestones.
+                  </p>
                 </div>
               </section>
 
@@ -585,226 +442,16 @@ export default function FreelancerDashboard() {
                     Available Projects
                   </h2>
                   <span className="text-xs font-semibold text-[#86868B]">
-                    {2 - acceptedJobs.length - declinedJobs.length} Available Projects
+                    0 Available Projects
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {2 - acceptedJobs.length - declinedJobs.length <= 0 ? (
-                    <div className="col-span-full bg-white rounded-2xl border border-dashed border-[#E5E5E7] p-12 text-center space-y-3">
-                      <div className="text-3xl">📥</div>
-                      <h3 className="text-base font-bold text-[#1D1D1F]">No new projects right now</h3>
-                      <p className="text-xs text-[#86868B] max-w-sm mx-auto">
-                        New projects matching your skills will appear here as soon as they are posted.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                  {/* Job Card 01 */}
-                  {!declinedJobs.includes('AP-9042') && (
-                    <div className="bg-white rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col justify-between">
-                      <div>
-                        {/* Header Block */}
-                        <div className="bg-[#1D1D1F] text-white p-5 flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] text-[#3B82F6] font-bold tracking-wider block uppercase">
-                              DIRECT FROM CLIENT
-                            </span>
-                            <h3 className="text-sm font-bold tracking-tight mt-0.5 text-white">
-                              Project #AP-9042: 3–5 Min Wedding Highlight
-                            </h3>
-                          </div>
-                          <span className="px-2.5 py-0.5 bg-amber-500/20 text-amber-300 text-[10px] font-bold rounded-full">
-                            URGENT
-                          </span>
-                        </div>
-
-                        {/* Body Specs */}
-                        <div className="p-6 space-y-4">
-                          <div className="grid grid-cols-2 gap-3 rounded-xl p-3 bg-[#F5F5F7] border border-[#E5E5E7]">
-                            <div>
-                              <div className="text-[10px] uppercase text-[#86868B] font-semibold">
-                                YOUR DEADLINE
-                              </div>
-                              <div className="text-xs font-bold text-amber-600">4 Days Left</div>
-                            </div>
-                            <div>
-                              <div className="text-[10px] uppercase text-[#86868B] font-semibold">
-                                CLIENT DUE DATE
-                              </div>
-                              <div className="text-xs font-bold text-[#1D1D1F]">8 Days Total</div>
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <div className="text-[11px] uppercase text-[#86868B] font-semibold">
-                              Project Requirements
-                            </div>
-                            <ul className="space-y-1 text-xs text-[#1D1D1F]">
-                              <li className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Source:</strong> 4K Multi-cam Footage</span>
-                              </li>
-                              <li className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Deliverable:</strong> Edited Video + Project File</span>
-                              </li>
-                              <li className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Angles:</strong> 3 Cameras (Gimbal, Close-up, Drone)</span>
-                              </li>
-                              <li className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Audio:</strong> Music track and audio sync included</span>
-                              </li>
-                            </ul>
-                          </div>
-
-                          {/* Creator Project Payout Box */}
-                          <div className="rounded-xl p-4 bg-[#F5F5F7] border border-[#E5E5E7] flex items-center justify-between text-[#1D1D1F]">
-                            <div>
-                              <div className="text-[10px] uppercase font-bold text-[#86868B]">PAYMENT FOR THIS PROJECT</div>
-                              <div className="text-2xl font-extrabold text-[#1D1D1F] mt-0.5">₹4,533</div>
-                            </div>
-                            <div className="text-right text-[11px]">
-                              <div className="text-[#86868B]">Bank Transfer</div>
-                              <div className="text-emerald-600 font-bold">You Receive: ₹4,488</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="p-6 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {acceptedJobs.includes('AP-9042') ? (
-                          <div className="col-span-2 p-3 bg-emerald-50 text-emerald-700 text-center text-xs font-bold rounded-xl border border-emerald-200">
-                            Claimed ✓ Project Files Ready
-                          </div>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => handleAcceptJob('AP-9042')}
-                              className="w-full text-xs font-semibold py-3 px-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl transition-all cursor-pointer shadow-sm"
-                            >
-                              Accept Project &amp; Open Files
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeclineJob('AP-9042')}
-                              className="w-full text-xs font-semibold py-3 px-4 bg-[#F5F5F7] hover:bg-[#E5E2E1] text-[#1D1D1F] rounded-xl border border-[#E5E5E7] transition-all cursor-pointer"
-                            >
-                              Decline Project
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Job Card 02 */}
-                  {!declinedJobs.includes('AP-9048') && (
-                    <div className="bg-white rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col justify-between">
-                      <div>
-                        {/* Header Block */}
-                        <div className="bg-[#1D1D1F] text-white p-5 flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] text-[#3B82F6] font-bold tracking-wider block uppercase">
-                              DIRECT FROM CLIENT
-                            </span>
-                            <h3 className="text-sm font-bold tracking-tight mt-0.5 text-white">
-                              Project #AP-9048: 30s Social Media Reels (3 Hooks)
-                            </h3>
-                          </div>
-                          <span className="px-2.5 py-0.5 bg-[#3B82F6]/20 text-[#3B82F6] text-[10px] font-bold rounded-full">
-                            FAST-TRACK
-                          </span>
-                        </div>
-
-                        {/* Body Specs */}
-                        <div className="p-6 space-y-4">
-                          <div className="grid grid-cols-2 gap-3 rounded-xl p-3 bg-[#F5F5F7] border border-[#E5E5E7]">
-                            <div>
-                              <div className="text-[10px] uppercase text-[#86868B] font-semibold">
-                                YOUR DEADLINE
-                              </div>
-                              <div className="text-xs font-bold text-[#3B82F6]">2 Days Left</div>
-                            </div>
-                            <div>
-                              <div className="text-[10px] uppercase text-[#86868B] font-semibold">
-                                CLIENT DUE DATE
-                              </div>
-                              <div className="text-xs font-bold text-[#1D1D1F]">5 Days Total</div>
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <div className="text-[11px] uppercase text-[#86868B] font-semibold">
-                              Project Requirements
-                            </div>
-                            <ul className="space-y-1 text-xs text-[#1D1D1F]">
-                              <li className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Source:</strong> 4K 60fps Vertical Video (9:16)</span>
-                              </li>
-                              <li className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Deliverable:</strong> 3 Final Videos + Project Files</span>
-                              </li>
-                              <li className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Style:</strong> Talking head with B-roll overlays &amp; sound effects</span>
-                              </li>
-                              <li className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] inline-block"></span>
-                                <span><strong>Captions:</strong> Clean animated subtitles included</span>
-                              </li>
-                            </ul>
-                          </div>
-
-                          {/* Creator Project Payout Box */}
-                          <div className="rounded-xl p-4 bg-[#F5F5F7] border border-[#E5E5E7] flex items-center justify-between text-[#1D1D1F]">
-                            <div>
-                              <div className="text-[10px] uppercase font-bold text-[#86868B]">PAYMENT FOR THIS PROJECT</div>
-                              <div className="text-2xl font-extrabold text-[#1D1D1F] mt-0.5">₹3,380</div>
-                            </div>
-                            <div className="text-right text-[11px]">
-                              <div className="text-[#86868B]">Bank Transfer</div>
-                              <div className="text-emerald-600 font-bold">You Receive: ₹3,346</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="p-6 pt-0 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {acceptedJobs.includes('AP-9048') ? (
-                          <div className="col-span-2 p-3 bg-emerald-50 text-emerald-700 text-center text-xs font-bold rounded-xl border border-emerald-200">
-                            Claimed ✓ Project Files Ready
-                          </div>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => handleAcceptJob('AP-9048')}
-                              className="w-full text-xs font-semibold py-3 px-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl transition-all cursor-pointer shadow-sm"
-                            >
-                              Accept Project &amp; Open Files
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeclineJob('AP-9048')}
-                              className="w-full text-xs font-semibold py-3 px-4 bg-[#F5F5F7] hover:bg-[#E5E2E1] text-[#1D1D1F] rounded-xl border border-[#E5E5E7] transition-all cursor-pointer"
-                            >
-                              Decline Project
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                    </>
-                  )}
+                <div className="bg-white rounded-2xl border border-dashed border-[#E5E5E7] p-12 text-center space-y-3 shadow-xs">
+                  <div className="text-3xl">📥</div>
+                  <h3 className="text-base font-bold text-[#1D1D1F]">No open project broadcasts right now</h3>
+                  <p className="text-xs text-[#86868B] max-w-md mx-auto leading-relaxed">
+                    New incoming projects matching your editing suite and color specialties will broadcast here in real-time as soon as clients place orders.
+                  </p>
                 </div>
               </section>
 

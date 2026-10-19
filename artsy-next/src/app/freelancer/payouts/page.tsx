@@ -67,10 +67,10 @@ export default function FreelancerPayoutsPage() {
           <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
             <div className="text-xs uppercase font-bold text-[#86868B]">TOTAL PAID OUT</div>
             <div className="text-3xl font-extrabold text-[#1D1D1F] leading-none mt-2">
-              ₹48,500
+              ₹0
             </div>
             <div className="text-[11px] text-[#86868B] mt-2">
-              8 Projects Completed
+              0 Projects Completed
             </div>
           </div>
 
@@ -79,7 +79,7 @@ export default function FreelancerPayoutsPage() {
               PENDING (IN PROGRESS)
             </div>
             <div className="text-3xl font-extrabold text-[#1D1D1F] leading-none mt-2">
-              ₹12,000
+              ₹0
             </div>
             <div className="text-[11px] text-[#86868B] mt-2">
               Released when client approves cut
@@ -91,7 +91,7 @@ export default function FreelancerPayoutsPage() {
               READY FOR PAYOUT
             </div>
             <div className="text-3xl font-extrabold text-[#3B82F6] leading-none mt-2">
-              ₹15,500
+              ₹0
             </div>
             <div className="text-[11px] text-[#86868B] mt-2">
               Transfers every Thursday
@@ -121,68 +121,13 @@ export default function FreelancerPayoutsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F5F5F7]">
-                {/* Row 1 */}
-                <tr className="hover:bg-[#F5F5F7]/50 transition-colors">
-                  <td className="p-4 font-semibold text-[#1D1D1F]">
-                    <span className="text-[#3B82F6] font-bold mr-1.5">[AP-8840]</span> 90s TVC Master Grade
-                  </td>
-                  <td className="p-4 text-[#86868B]">14 Oct 2024</td>
-                  <td className="p-4 text-right font-mono font-bold text-[#1D1D1F]">
-                    ₹15,500
-                  </td>
-                  <td className="p-4">
-                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
-                      Ready to Transfer
-                    </span>
-                  </td>
-                </tr>
-
-                {/* Row 2 */}
-                <tr className="hover:bg-[#F5F5F7]/50 transition-colors">
-                  <td className="p-4 font-semibold text-[#1D1D1F]">
-                    <span className="text-[#3B82F6] font-bold mr-1.5">[AP-8799]</span> Fashion Lookbook 4K
-                  </td>
-                  <td className="p-4 text-[#86868B]">08 Oct 2024</td>
-                  <td className="p-4 text-right font-mono font-bold text-[#1D1D1F]">
-                    ₹24,000
-                  </td>
-                  <td className="p-4">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-                      ✓ Paid to Bank (HDFC ****1234)
-                    </span>
-                  </td>
-                </tr>
-
-                {/* Row 3 */}
-                <tr className="hover:bg-[#F5F5F7]/50 transition-colors">
-                  <td className="p-4 font-semibold text-[#1D1D1F]">
-                    <span className="text-[#3B82F6] font-bold mr-1.5">[AP-8721]</span> Music Video Color Sync
-                  </td>
-                  <td className="p-4 text-[#86868B]">28 Sep 2024</td>
-                  <td className="p-4 text-right font-mono font-bold text-[#1D1D1F]">
-                    ₹24,500
-                  </td>
-                  <td className="p-4">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">
-                      ✓ Paid to Bank (HDFC ****1234)
-                    </span>
-                  </td>
-                </tr>
-
-                {/* Row 4 */}
-                <tr className="hover:bg-[#F5F5F7]/50 transition-colors">
-                  <td className="p-4 font-semibold text-[#1D1D1F]">
-                    <span className="text-amber-600 font-bold mr-1.5">[AP-8910]</span> DTC 60s Brand Cut
-                  </td>
-                  <td className="p-4 text-amber-600 font-medium">In Progress</td>
-                  <td className="p-4 text-right font-mono font-bold text-[#1D1D1F]">
-                    ₹12,000
-                  </td>
-                  <td className="p-4">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full">
-                      Pending Completion
-                    </span>
+                <tr>
+                  <td colSpan={4} className="p-12 text-center text-xs text-[#86868B] bg-white">
+                    <div className="text-3xl mb-2">💳</div>
+                    <div className="font-semibold text-[#1D1D1F] text-sm">No payout history yet</div>
+                    <div className="text-xs text-[#86868B] mt-1 max-w-sm mx-auto">
+                      Completed project earnings and NEFT bank dispatches will appear here once delivered and approved.
+                    </div>
                   </td>
                 </tr>
               </tbody>

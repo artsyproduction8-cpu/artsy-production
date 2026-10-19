@@ -25,6 +25,7 @@ export default function AdminSidebar() {
       group: 'Overview',
       items: [
         { label: 'Dashboard', href: '/admin', exact: true },
+        { label: 'Client Orders', href: '/admin/orders' },
         { label: 'Server Costs', href: '/admin/infra-costs' },
       ],
     },

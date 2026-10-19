@@ -573,6 +573,7 @@ export default function ClientProfilePage() {
           display_name: studioName.trim(),
           studio_details: updatedProfile,
           avatar_url: logoUrl || undefined,
+          onboarded: true,
         }),
       });
     } catch {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface Candidate {
@@ -13,34 +13,91 @@ interface Candidate {
   software: string[];
   sampleReels: { title: string; type: string }[];
   reelUrl?: string;
+  approvalStatus?: string;
 }
 
-const INITIAL_CANDIDATES: Candidate[] = [];
-
 export default function AdminVettingPage() {
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'colorists' | 'editors'>('all');
   const [approvedCandidates, setApprovedCandidates] = useState<string[]>([]);
   const [rejectedCandidates, setRejectedCandidates] = useState<string[]>([]);
   const [assignedOrders, setAssignedOrders] = useState<Record<string, string>>({});
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const fetchCandidates = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/admin/creators');
+      if (res.ok) {
+        const data = await res.json();
+        const apiCreators = (data.creators || []).map((c: any) => ({
+          ref: c.id,
+          name: c.display_name || c.public_display_name || 'Creator Candidate',
+          location: 'Remote / India',
+          exp: c.creator_tier === 'senior' ? '5+ Years' : '3+ Years',
+          score: 92,
+          type: (c.skills || []).some((s: string) => s.toLowerCase().includes('color')) ? 'colorist' : 'editor',
+          software: c.skills?.length ? c.skills : ['DaVinci Resolve', 'Premiere Pro'],
+          sampleReels: [{ title: 'Master Production Portfolio', type: '4K Benchmark' }],
+          reelUrl: c.portfolio_url || 'https://youtube.com',
+          approvalStatus: c.approval_status || 'pending',
+        }));
+        setCandidates(apiCreators);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch candidates from API:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCandidates();
+  }, []);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleApprove = (name: string, ref: string) => {
-    setApprovedCandidates((prev) => [...prev, ref]);
-    showToast(`✓ DISPATCH GATEWAY: Candidate ${name} (${ref}) has been APPROVED. Contract & WhatsApp community link dispatched.`);
+  const handleApprove = async (name: string, ref: string) => {
+    try {
+      const res = await fetch('/api/admin/freelancers/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creatorId: ref, name, action: 'approve' }),
+      });
+      if (res.ok) {
+        setApprovedCandidates((prev) => [...prev, ref]);
+        showToast(`✓ DISPATCH GATEWAY: Candidate ${name} (${ref.slice(0, 8)}) has been APPROVED. Contract & WhatsApp community link dispatched.`);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(`Approval error: ${data.error || 'Failed to approve'}`);
+      }
+    } catch {
+      showToast('Network error during candidate approval');
+    }
   };
 
   const handleRequestReel = (name: string) => {
     showToast(`✉️ TRANSMISSION SENT: Automated WhatsApp notification dispatched to ${name} requesting timeline XML export.`);
   };
 
-  const handleReject = (name: string, ref: string) => {
-    setRejectedCandidates((prev) => [...prev, ref]);
-    showToast(`Candidate ${name} archived.`);
+  const handleReject = async (name: string, ref: string) => {
+    try {
+      const res = await fetch('/api/admin/freelancers/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creatorId: ref, name, action: 'reject' }),
+      });
+      if (res.ok) {
+        setRejectedCandidates((prev) => [...prev, ref]);
+        showToast(`Candidate ${name} archived.`);
+      }
+    } catch {
+      showToast('Network error during candidate rejection');
+    }
   };
 
   const handleAssign = (orderId: string, candidateName: string) => {
@@ -48,7 +105,7 @@ export default function AdminVettingPage() {
     showToast(`🎯 MATCH ENGINE: Order #${orderId} successfully locked and dispatched to ${candidateName}. Ingest credentials synced.`);
   };
 
-  const filteredCandidates = INITIAL_CANDIDATES.filter((c) => {
+  const filteredCandidates = candidates.filter((c) => {
     if (rejectedCandidates.includes(c.ref)) return false;
     if (filter === 'colorists') return c.type === 'colorist';
     if (filter === 'editors') return c.type === 'editor';
@@ -93,7 +150,7 @@ export default function AdminVettingPage() {
                 : 'text-[#86868B] hover:text-[#1D1D1F]'
             }`}
           >
-            All ({INITIAL_CANDIDATES.length})
+            All ({candidates.length})
           </button>
           <button
             onClick={() => setFilter('colorists')}
@@ -103,7 +160,7 @@ export default function AdminVettingPage() {
                 : 'text-[#86868B] hover:text-[#1D1D1F]'
             }`}
           >
-            Colorists ({INITIAL_CANDIDATES.filter(c => c.type === 'colorist').length})
+            Colorists ({candidates.filter((c: any) => c.type === 'colorist').length})
           </button>
           <button
             onClick={() => setFilter('editors')}
@@ -113,7 +170,7 @@ export default function AdminVettingPage() {
                 : 'text-[#86868B] hover:text-[#1D1D1F]'
             }`}
           >
-            Editors ({INITIAL_CANDIDATES.filter(c => c.type === 'editor').length})
+            Editors ({candidates.filter((c: any) => c.type === 'editor').length})
           </button>
         </div>
       </div>

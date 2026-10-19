@@ -76,26 +76,39 @@ export async function POST(req: NextRequest) {
           ? body.reels.map((r: any) => (typeof r === 'string' ? r : r.url)).filter(Boolean)
           : [];
 
-        await dbClient.from('creator_profiles').upsert([
-          {
-            id: candidateUserId,
-            user_id: candidateUserId,
+        const profilePayload = {
+          id: candidateUserId,
+          tracking_id: trackingId,
+          bio: philosophy || 'Creative Editor',
+          skills: Array.isArray(languages) ? languages : ['4K Color Grading'],
+          software: Array.isArray(software) ? software : ['DaVinci Resolve Studio'],
+          approval_status: 'pending',
+          onboarding_status: 'pending_review',
+          portfolio_url: body.showreelUrl || null,
+          sample_links: reelUrls,
+          public_display_name: alias || legalName || null,
+          pan_number: encryptedPan,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error: insErr } = await dbClient.from('creator_profiles').insert([profilePayload]);
+        if (insErr && (insErr.code === '23505' || insErr.message?.includes('duplicate'))) {
+          // Row already initialized at OTP signup; update fields
+          await dbClient.from('creator_profiles').update({
             tracking_id: trackingId,
-            bio: philosophy || 'Creative Editor',
-            skills: Array.isArray(languages) ? languages : ['4K Color Grading'],
-            software: Array.isArray(software) ? software : ['DaVinci Resolve Studio'],
-            approval_status: 'pending',
-            onboarding_status: 'pending_review',
-            portfolio_url: body.showreelUrl || null,
-            sample_links: reelUrls,
-            public_display_name: alias || legalName || null,
+            bio: profilePayload.bio,
+            skills: profilePayload.skills,
+            software: profilePayload.software,
+            portfolio_url: profilePayload.portfolio_url,
+            sample_links: profilePayload.sample_links,
+            public_display_name: profilePayload.public_display_name,
             pan_number: encryptedPan,
-            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          },
-        ]);
+          }).eq('id', candidateUserId);
+        }
       } catch (dbErr) {
-        console.warn('Supabase creator_profiles upsert non-fatal fallback:', dbErr);
+        console.warn('Supabase creator_profiles save non-fatal fallback:', dbErr);
       }
     }
 

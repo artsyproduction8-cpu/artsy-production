@@ -45,6 +45,12 @@ export async function POST(request: Request) {
     updates.avatar_url = avatar_url;
   }
 
+  if (body.onboarded !== undefined) {
+    updates.onboarded = Boolean(body.onboarded);
+  } else {
+    updates.onboarded = true;
+  }
+
   const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : supabase;
 
   if (dbClient && typeof dbClient.from === 'function') {
@@ -63,6 +69,9 @@ export async function POST(request: Request) {
   const signedCookie = signAuthCookieValue({
     id: authUser.id,
     role: authUser.role,
+    full_name: updates.full_name ?? authUser.full_name,
+    display_name: updates.display_name ?? authUser.display_name,
+    onboarded: updates.onboarded,
     token_version: authUser.token_version,
   });
   response.cookies.set(AUTH_COOKIE_NAME, signedCookie, {

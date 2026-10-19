@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/../lib/supabase';
+import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
@@ -28,18 +28,26 @@ export async function POST(req: NextRequest) {
     const recipientEmail = email || '';
     const recipientPhone = phone || '';
     const creatorName = name || 'Creator';
+    const dbClient = supabaseAdmin || supabase;
 
     if (action === 'approve') {
       // 1. Update Supabase if connected
-      if (supabase && typeof supabase.from === 'function') {
+      if (dbClient && typeof dbClient.from === 'function') {
         try {
-          await supabase
+          const { error: updErr } = await dbClient
             .from('creator_profiles')
             .update({
               approval_status: 'approved',
+              onboarding_status: 'approved',
+              is_public: true,
               approved_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
             })
             .eq('id', creatorId);
+
+          if (updErr) {
+            console.warn('[Admin Approve] DB update warning:', updErr);
+          }
         } catch (dbErr) {
           console.warn('Supabase creator approval non-fatal error:', dbErr);
         }
@@ -66,13 +74,15 @@ export async function POST(req: NextRequest) {
       });
     } else {
       // Rejection flow
-      if (supabase && typeof supabase.from === 'function') {
+      if (dbClient && typeof dbClient.from === 'function') {
         try {
-          await supabase
+          await dbClient
             .from('creator_profiles')
             .update({
               approval_status: 'rejected',
+              onboarding_status: 'rejected',
               rejection_reason: rejectionReason || 'Portfolio needs additional raw timeline proof',
+              updated_at: new Date().toISOString(),
             })
             .eq('id', creatorId);
         } catch (dbErr) {

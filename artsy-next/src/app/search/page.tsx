@@ -30,7 +30,7 @@ export default function SearchPage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans selection:bg-[#3B82F6] selection:text-white">
+    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] flex flex-col font-sans selection:bg-[#1D1D1F] selection:text-white">
       {/* Structured Data: BreadcrumbList */}
       <script
         type="application/ld+json"

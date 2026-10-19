@@ -9,10 +9,16 @@ interface ServiceItem {
   name: string;
   description: string | null;
   category: string;
-  sub_category?: string | null;
-  base_price?: number;
-  standard_delivery_days?: number;
+  categoryTitle: string;
   duration_label?: string | null;
+  base_price: number;
+  base_price_formatted: string;
+  standard_delivery_days?: number;
+  standard_delivery?: string;
+  deliverables?: string[];
+  book_url: string;
+  service_url: string;
+  popular?: boolean;
 }
 
 interface CreatorItem {
@@ -35,6 +41,7 @@ interface PortfolioItem {
   category: string;
   video_url: string;
   thumbnail_url?: string | null;
+  youtube_id?: string;
 }
 
 interface SearchResults {
@@ -45,14 +52,14 @@ interface SearchResults {
 }
 
 const POPULAR_TAGS = [
-  'Wedding',
-  'Commercial',
-  'Color Grading',
+  'Cinematic Story',
+  'Wedding Highlight',
   'Teaser',
-  'Corporate',
-  'Documentary',
-  'Music Video',
-  'Sound Design',
+  'Ad Film',
+  'Product Video',
+  'Social Reel',
+  'Color Grading',
+  'Corporate Film',
 ];
 
 export default function SearchClient() {
@@ -128,18 +135,25 @@ export default function SearchClient() {
   const portfolioCount = results.portfolio.length;
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       {/* Search Header Form */}
-      <div className="text-center max-w-3xl mx-auto mb-8">
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
-          Search Artsy Production
+      <div className="text-center max-w-3xl mx-auto mb-10">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#E5E5E7] text-[11px] font-mono uppercase font-semibold text-[#86868B] shadow-2xs mb-4">
+          <span>Search Artsy Catalog</span>
+        </div>
+        <h1 className="text-3xl sm:text-5xl font-extrabold text-[#1D1D1F] tracking-tight mb-3">
+          Explore Services &amp; Video Portfolio
         </h1>
-        <p className="text-sm sm:text-base text-zinc-400 mb-6">
-          Find specialized editing services, vetted cinematic creators, and award-winning video work.
+        <p className="text-sm sm:text-base text-[#86868B] max-w-2xl mx-auto mb-8 leading-relaxed">
+          Search across our verified post-production catalog with transparent unit pricing, guaranteed turnaround SLAs, and authentic video showcases.
         </p>
 
-        <form onSubmit={handleSearchSubmit} className="relative flex items-center shadow-2xl">
-          <div className="absolute left-4 pointer-events-none text-zinc-400">
+        {/* Premium Search Bar */}
+        <form
+          onSubmit={handleSearchSubmit}
+          className="relative flex items-center bg-white border border-[#E5E5E7] focus-within:border-[#1D1D1F] focus-within:ring-4 focus-within:ring-[#1D1D1F]/5 rounded-2xl shadow-xs transition-all p-1.5"
+        >
+          <div className="pl-3.5 pr-2 pointer-events-none text-[#86868B]">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -149,8 +163,8 @@ export default function SearchClient() {
             type="search"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by keyword, style, editor, or category (e.g. Wedding, Colorist, Trailer)..."
-            className="w-full bg-[#18181B] border border-white/20 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-white placeholder-zinc-500 text-sm sm:text-base rounded-2xl py-3.5 pl-12 pr-28 transition-all"
+            placeholder="Search by keyword, style, or package (e.g. Cinematic Story, Wedding, Teaser, Ad Film)..."
+            className="w-full bg-transparent border-0 text-[#1D1D1F] placeholder:text-[#86868B] text-sm sm:text-base py-2.5 px-2 focus:outline-hidden"
             autoFocus
           />
           {searchTerm && (
@@ -160,8 +174,8 @@ export default function SearchClient() {
                 setSearchTerm('');
                 router.push('/search');
               }}
-              className="absolute right-24 text-zinc-400 hover:text-white p-1 text-xs"
-              title="Clear"
+              className="text-[#86868B] hover:text-[#1D1D1F] p-2 text-xs cursor-pointer transition-colors"
+              title="Clear search"
             >
               ✕
             </button>
@@ -169,21 +183,21 @@ export default function SearchClient() {
           <button
             id="main-search-submit-btn"
             type="submit"
-            className="absolute right-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-sm rounded-xl transition-colors cursor-pointer"
+            className="px-5 py-2.5 bg-[#1D1D1F] hover:bg-black text-white font-semibold text-xs rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
           >
             Search
           </button>
         </form>
 
-        {/* Popular Tags / Suggestions */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
-          <span className="text-xs font-mono uppercase text-zinc-500 mr-1">Popular:</span>
+        {/* Popular Tags */}
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-5">
+          <span className="text-xs font-mono uppercase text-[#86868B] mr-1">Popular:</span>
           {POPULAR_TAGS.map((tag) => (
             <button
               key={tag}
               type="button"
               onClick={() => handleTagClick(tag)}
-              className="text-xs px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 text-zinc-300 hover:text-blue-400 transition-all cursor-pointer"
+              className="text-xs px-3 py-1 rounded-full bg-white border border-[#E5E5E7] hover:border-[#1D1D1F] hover:bg-[#1D1D1F] hover:text-white text-[#1D1D1F] transition-all cursor-pointer shadow-2xs"
             >
               {tag}
             </button>
@@ -193,33 +207,33 @@ export default function SearchClient() {
 
       {/* Query Status Bar & Filter Tabs */}
       {hasSearched && (
-        <div className="border-b border-white/10 pb-4 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="border-b border-[#E5E5E7] pb-4 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="text-lg font-bold text-white">
+            <div className="text-lg font-bold text-[#1D1D1F]">
               {loading ? (
-                <span>Searching database...</span>
+                <span>Searching catalog...</span>
               ) : (
                 <span>
                   {results.total === 0
-                    ? `No results found for "${initialQuery}"`
-                    : `Found ${results.total} results for "${initialQuery}"`}
+                    ? `No matches found for "${initialQuery}"`
+                    : `Found ${results.total} matching ${results.total === 1 ? 'item' : 'items'} for "${initialQuery}"`}
                 </span>
               )}
             </div>
-            <p className="text-xs text-zinc-400 mt-0.5">
-              Across services, verified creators, and portfolio catalog
+            <p className="text-xs text-[#86868B] mt-0.5">
+              Verified services and official video showcase
             </p>
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-1.5 bg-[#18181B] p-1 rounded-xl border border-white/10 self-start sm:self-auto overflow-x-auto max-w-full">
+          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-[#E5E5E7] shadow-2xs self-start sm:self-auto overflow-x-auto max-w-full">
             <button
               type="button"
               onClick={() => setActiveTab('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === 'all'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'bg-[#1D1D1F] text-white shadow-xs'
+                  : 'text-[#86868B] hover:text-[#1D1D1F]'
               }`}
             >
               All ({results.total})
@@ -227,36 +241,40 @@ export default function SearchClient() {
             <button
               type="button"
               onClick={() => setActiveTab('services')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === 'services'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'bg-[#1D1D1F] text-white shadow-xs'
+                  : 'text-[#86868B] hover:text-[#1D1D1F]'
               }`}
             >
               Services ({serviceCount})
             </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('creators')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-                activeTab === 'creators'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Creators ({creatorCount})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('portfolio')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-                activeTab === 'portfolio'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-zinc-400 hover:text-white'
-              }`}
-            >
-              Portfolio ({portfolioCount})
-            </button>
+            {portfolioCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('portfolio')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  activeTab === 'portfolio'
+                    ? 'bg-[#1D1D1F] text-white shadow-xs'
+                    : 'text-[#86868B] hover:text-[#1D1D1F]'
+                }`}
+              >
+                Portfolio ({portfolioCount})
+              </button>
+            )}
+            {creatorCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setActiveTab('creators')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  activeTab === 'creators'
+                    ? 'bg-[#1D1D1F] text-white shadow-xs'
+                    : 'text-[#86868B] hover:text-[#1D1D1F]'
+                }`}
+              >
+                Creators ({creatorCount})
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -265,11 +283,11 @@ export default function SearchClient() {
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="bg-[#18181B] border border-white/10 rounded-2xl p-6 h-64">
-              <div className="h-4 bg-white/10 rounded w-1/3 mb-4"></div>
-              <div className="h-6 bg-white/10 rounded w-3/4 mb-3"></div>
-              <div className="h-16 bg-white/5 rounded w-full mb-6"></div>
-              <div className="h-10 bg-white/10 rounded w-full"></div>
+            <div key={i} className="bg-white border border-[#E5E5E7] rounded-2xl p-6 h-64">
+              <div className="h-4 bg-[#E5E5E7] rounded w-1/3 mb-4"></div>
+              <div className="h-6 bg-[#E5E5E7] rounded w-3/4 mb-3"></div>
+              <div className="h-16 bg-[#F5F5F7] rounded w-full mb-6"></div>
+              <div className="h-10 bg-[#E5E5E7] rounded w-full"></div>
             </div>
           ))}
         </div>
@@ -277,34 +295,34 @@ export default function SearchClient() {
 
       {/* Empty State / Not Searched Yet */}
       {!loading && !hasSearched && (
-        <div className="bg-[#121214] border border-white/10 rounded-2xl p-10 text-center my-6">
-          <div className="w-16 h-16 bg-blue-500/10 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="bg-white border border-[#E5E5E7] rounded-2xl p-10 sm:p-14 text-center my-6 shadow-xs">
+          <div className="w-16 h-16 bg-[#F5F5F7] text-[#1D1D1F] rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[#E5E5E7]">
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Discover What Artsy Has to Offer</h2>
-          <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
-            Type in keywords like &ldquo;Wedding&rdquo;, &ldquo;Commercial&rdquo;, &ldquo;Trailer&rdquo;, or an editor&apos;s name to explore verified post-production talent and rates.
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1D1D1F] mb-2">Explore the Artsy Production Catalog</h2>
+          <p className="text-sm text-[#86868B] max-w-md mx-auto mb-6 leading-relaxed">
+            Search for specialized editing services like &ldquo;Cinematic Story&rdquo;, &ldquo;Wedding Teaser&rdquo;, or &ldquo;Commercial Ad&rdquo; with matching unit prices and instant booking.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
               href="/services"
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors"
+              className="px-4 py-2.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-xl transition-all shadow-xs"
             >
               Browse All Services →
             </Link>
             <Link
-              href="/creators"
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors"
+              href="/book"
+              className="px-4 py-2.5 bg-white hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold rounded-xl border border-[#E5E5E7] transition-all shadow-2xs"
             >
-              Meet Our Creators →
+              Instant Price Estimator
             </Link>
             <Link
               href="/work"
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors"
+              className="px-4 py-2.5 bg-white hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold rounded-xl border border-[#E5E5E7] transition-all shadow-2xs"
             >
-              View Official Portfolio →
+              View Official Work
             </Link>
           </div>
         </div>
@@ -312,28 +330,28 @@ export default function SearchClient() {
 
       {/* No Results Found */}
       {!loading && hasSearched && results.total === 0 && (
-        <div className="bg-[#121214] border border-white/10 rounded-2xl p-10 text-center my-6">
-          <div className="w-16 h-16 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="bg-white border border-[#E5E5E7] rounded-2xl p-10 sm:p-14 text-center my-6 shadow-xs">
+          <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-rose-200">
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">No direct matches for &ldquo;{initialQuery}&rdquo;</h2>
-          <p className="text-sm text-zinc-400 max-w-md mx-auto mb-6">
-            We couldn&apos;t find any active services, creators, or portfolio samples matching that query. Try broader keywords like &ldquo;Wedding&rdquo;, &ldquo;Reel&rdquo;, &ldquo;Grading&rdquo;, or &ldquo;Cinema&rdquo;.
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1D1D1F] mb-2">No matching services for &ldquo;{initialQuery}&rdquo;</h2>
+          <p className="text-sm text-[#86868B] max-w-md mx-auto mb-6 leading-relaxed">
+            We couldn&apos;t find an exact match. Try broader keywords like &ldquo;Cinematic&rdquo;, &ldquo;Wedding&rdquo;, &ldquo;Reel&rdquo;, &ldquo;Teaser&rdquo;, or &ldquo;Ad Film&rdquo;.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
-              href="/book"
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition-colors"
+              href="/services"
+              className="px-5 py-2.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-xl transition-all shadow-xs"
             >
-              Start Custom Booking →
+              Browse Full Service Catalog →
             </Link>
             <Link
-              href="/services"
-              className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl transition-colors"
+              href="/book"
+              className="px-5 py-2.5 bg-white hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold rounded-xl border border-[#E5E5E7] transition-all shadow-2xs"
             >
-              Explore Full Service Catalog
+              Start Custom Booking
             </Link>
           </div>
         </div>
@@ -342,21 +360,21 @@ export default function SearchClient() {
       {/* Results Content */}
       {!loading && hasSearched && results.total > 0 && (
         <div className="space-y-12">
-          {/* SECTION 1: SERVICES */}
+          {/* SECTION 1: SERVICES (Exact Match with /services and /book) */}
           {(activeTab === 'all' || activeTab === 'services') && serviceCount > 0 && (
             <section id="services-results">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-white">Services</h2>
-                  <span className="text-xs bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-mono">
+                  <h2 className="text-xl font-bold text-[#1D1D1F]">Services</h2>
+                  <span className="text-xs bg-white text-[#1D1D1F] border border-[#E5E5E7] px-2.5 py-0.5 rounded-full font-mono font-bold shadow-2xs">
                     {serviceCount}
                   </span>
                 </div>
-                {activeTab === 'all' && serviceCount > 3 && (
+                {activeTab === 'all' && serviceCount > 6 && (
                   <button
                     type="button"
                     onClick={() => setActiveTab('services')}
-                    className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                    className="text-xs text-[#1D1D1F] hover:text-[#3B82F6] font-semibold cursor-pointer"
                   >
                     View all {serviceCount} services →
                   </button>
@@ -364,43 +382,72 @@ export default function SearchClient() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(activeTab === 'all' ? results.services.slice(0, 3) : results.services).map((service) => (
+                {(activeTab === 'all' ? results.services.slice(0, 6) : results.services).map((service) => (
                   <div
                     key={service.id}
-                    className="bg-[#18181B] border border-white/10 hover:border-blue-500/40 rounded-2xl p-6 flex flex-col justify-between transition-all group hover:shadow-xl"
+                    className="bg-white border border-[#E5E5E7] hover:border-[#1D1D1F]/40 rounded-2xl p-6 flex flex-col justify-between transition-all group hover:shadow-md"
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded bg-white/10 text-zinc-300">
-                          {service.category}
+                      {/* Top Badges */}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-md bg-[#F5F5F7] text-[#1D1D1F] font-bold border border-[#E5E5E7]">
+                          {service.categoryTitle || service.category}
                         </span>
-                        {service.standard_delivery_days && (
-                          <span className="text-[10px] text-zinc-400">
-                            ⏱ {service.standard_delivery_days} days
+                        {service.duration_label && (
+                          <span className="text-[11px] text-[#86868B] font-mono">
+                            ⏱ {service.duration_label}
                           </span>
                         )}
                       </div>
-                      <h3 className="text-lg font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+
+                      {/* Service Title */}
+                      <h3 className="text-lg font-bold text-[#1D1D1F] mb-1.5 group-hover:text-[#3B82F6] transition-colors">
                         {service.name}
                       </h3>
-                      <p className="text-xs text-zinc-400 line-clamp-3 mb-4 leading-relaxed">
+
+                      {/* Description */}
+                      <p className="text-xs text-[#86868B] line-clamp-3 mb-4 leading-relaxed">
                         {service.description || 'Specialized post-production package curated by Artsy Production.'}
                       </p>
+
+                      {/* Deliverables tags */}
+                      {service.deliverables && service.deliverables.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          {service.deliverables.slice(0, 3).map((d, idx) => (
+                            <span
+                              key={idx}
+                              className="text-[10px] bg-[#F9F9FB] border border-[#E5E5E7] text-[#86868B] px-2 py-0.5 rounded-md"
+                            >
+                              ✓ {d}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="border-t border-white/10 pt-4 mt-2 flex items-center justify-between">
+                    {/* Bottom Pricing & Actions */}
+                    <div className="border-t border-[#E5E5E7] pt-4 mt-2 flex items-center justify-between">
                       <div>
-                        <div className="text-[10px] text-zinc-500 uppercase font-mono">Starting From</div>
-                        <div className="text-base font-extrabold text-emerald-400">
-                          {service.base_price ? `₹${service.base_price.toLocaleString('en-IN')}` : 'Custom Quote'}
+                        <div className="text-[10px] text-[#86868B] uppercase font-mono tracking-wider">Starting From</div>
+                        <div className="text-lg font-extrabold text-[#1D1D1F]">
+                          {service.base_price_formatted || (service.base_price ? `₹${service.base_price.toLocaleString('en-IN')}` : 'Custom Quote')}
                         </div>
                       </div>
-                      <Link
-                        href={`/book?service=${encodeURIComponent(service.id)}`}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl transition-colors inline-flex items-center gap-1"
-                      >
-                        Book Now →
-                      </Link>
+
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={service.service_url || `/services/${service.category}`}
+                          className="px-3 py-2 text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] transition-colors"
+                        >
+                          Details
+                        </Link>
+                        <Link
+                          href={service.book_url || `/book?category=${service.category}&sub=${service.id}`}
+                          className="px-4 py-2 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-xs inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          Book Now →
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -408,95 +455,13 @@ export default function SearchClient() {
             </section>
           )}
 
-          {/* SECTION 2: CREATORS */}
-          {(activeTab === 'all' || activeTab === 'creators') && creatorCount > 0 && (
-            <section id="creators-results">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-white">Verified Creators</h2>
-                  <span className="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono">
-                    {creatorCount}
-                  </span>
-                </div>
-                {activeTab === 'all' && creatorCount > 3 && (
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('creators')}
-                    className="text-xs text-emerald-400 hover:text-emerald-300 font-medium"
-                  >
-                    View all {creatorCount} creators →
-                  </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {(activeTab === 'all' ? results.creators.slice(0, 3) : results.creators).map((creator) => (
-                  <div
-                    key={creator.id}
-                    className="bg-[#18181B] border border-white/10 hover:border-emerald-500/40 rounded-2xl p-6 flex flex-col justify-between transition-all group hover:shadow-xl"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 text-white font-extrabold flex items-center justify-center text-sm shadow-md">
-                            {creator.public_display_name
-                              ? creator.public_display_name.slice(0, 2).toUpperCase()
-                              : 'CR'}
-                          </div>
-                          <div>
-                            <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors">
-                              {creator.public_display_name}
-                            </h3>
-                            <div className="text-[11px] text-zinc-400">
-                              {creator.public_specialty || 'Film Editor & Colorist'}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 text-[11px] font-mono text-zinc-300 bg-white/5 p-2 rounded-lg mb-3">
-                        {creator.creator_tier && (
-                          <span className="text-emerald-400 font-bold uppercase tracking-wider">
-                            ★ {creator.creator_tier}
-                          </span>
-                        )}
-                        {creator.years_of_experience && (
-                          <span>{creator.years_of_experience}+ yrs exp</span>
-                        )}
-                        {creator.avg_rating ? (
-                          <span className="text-amber-400">⭐ {creator.avg_rating}</span>
-                        ) : null}
-                      </div>
-
-                      <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed mb-4">
-                        {creator.public_bio || 'Vetted post-production specialist accepted into the Artsy Network.'}
-                      </p>
-                    </div>
-
-                    <div className="border-t border-white/10 pt-4 flex items-center justify-between">
-                      <span className="text-[10px] text-zinc-400">
-                        {creator.total_projects_completed || 0} projects delivered
-                      </span>
-                      <Link
-                        href={`/creators/${creator.id}`}
-                        className="px-4 py-2 bg-white/10 hover:bg-emerald-500/20 hover:text-emerald-300 text-white text-xs font-semibold rounded-xl border border-white/10 transition-colors"
-                      >
-                        View Profile →
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* SECTION 3: PORTFOLIO SAMPLES */}
+          {/* SECTION 2: PORTFOLIO SAMPLES */}
           {(activeTab === 'all' || activeTab === 'portfolio') && portfolioCount > 0 && (
             <section id="portfolio-results">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-white">Cinematic Work &amp; Portfolio</h2>
-                  <span className="text-xs bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full font-mono">
+                  <h2 className="text-xl font-bold text-[#1D1D1F]">Cinematic Work &amp; Portfolio</h2>
+                  <span className="text-xs bg-white text-[#1D1D1F] border border-[#E5E5E7] px-2.5 py-0.5 rounded-full font-mono font-bold shadow-2xs">
                     {portfolioCount}
                   </span>
                 </div>
@@ -504,7 +469,7 @@ export default function SearchClient() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('portfolio')}
-                    className="text-xs text-purple-400 hover:text-purple-300 font-medium"
+                    className="text-xs text-[#1D1D1F] hover:text-[#3B82F6] font-semibold cursor-pointer"
                   >
                     View all {portfolioCount} reels →
                   </button>
@@ -515,9 +480,9 @@ export default function SearchClient() {
                 {(activeTab === 'all' ? results.portfolio.slice(0, 3) : results.portfolio).map((sample) => (
                   <div
                     key={sample.id}
-                    className="bg-[#18181B] border border-white/10 hover:border-purple-500/40 rounded-2xl overflow-hidden flex flex-col justify-between transition-all group hover:shadow-xl"
+                    className="bg-white border border-[#E5E5E7] hover:border-[#1D1D1F]/40 rounded-2xl overflow-hidden flex flex-col justify-between transition-all group hover:shadow-md"
                   >
-                    <div className="relative aspect-video bg-black/50 overflow-hidden">
+                    <div className="relative aspect-video bg-black overflow-hidden group">
                       {sample.thumbnail_url ? (
                         <img
                           src={sample.thumbnail_url}
@@ -531,27 +496,32 @@ export default function SearchClient() {
                           </svg>
                         </div>
                       )}
-                      <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-xs text-[10px] font-mono text-white px-2 py-0.5 rounded uppercase">
+                      <div className="absolute top-2.5 left-2.5 bg-black/80 backdrop-blur-xs text-[10px] font-mono text-white px-2 py-0.5 rounded-md uppercase font-bold tracking-wider">
                         {sample.category}
+                      </div>
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-white/95 text-[#1D1D1F] flex items-center justify-center pl-0.5 text-xs font-bold shadow-lg group-hover:scale-110 transition-transform">
+                          ▶
+                        </div>
                       </div>
                     </div>
 
                     <div className="p-5 flex-1 flex flex-col justify-between">
                       <div>
-                        <h3 className="text-base font-bold text-white mb-1.5 group-hover:text-purple-300 transition-colors">
+                        <h3 className="text-base font-bold text-[#1D1D1F] mb-1.5 group-hover:text-[#3B82F6] transition-colors leading-snug">
                           {sample.title}
                         </h3>
                         {sample.description && (
-                          <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed mb-4">
+                          <p className="text-xs text-[#86868B] line-clamp-2 leading-relaxed mb-4">
                             {sample.description}
                           </p>
                         )}
                       </div>
 
-                      <div className="border-t border-white/10 pt-3 mt-2 flex items-center justify-between">
+                      <div className="border-t border-[#E5E5E7] pt-3 mt-2 flex items-center justify-between">
                         <Link
                           href="/work"
-                          className="text-xs text-zinc-400 hover:text-white"
+                          className="text-xs text-[#86868B] hover:text-[#1D1D1F] font-semibold"
                         >
                           Explore Showcase
                         </Link>
@@ -560,12 +530,69 @@ export default function SearchClient() {
                             href={sample.video_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-3 py-1.5 bg-purple-600/30 hover:bg-purple-600 text-purple-300 hover:text-white text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1"
+                            className="px-3.5 py-1.5 bg-[#F5F5F7] hover:bg-[#1D1D1F] text-[#1D1D1F] hover:text-white border border-[#E5E5E7] text-xs font-semibold rounded-lg transition-all inline-flex items-center gap-1 shadow-2xs"
                           >
                             Watch Video ↗
                           </a>
                         )}
                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* SECTION 3: CREATORS */}
+          {(activeTab === 'all' || activeTab === 'creators') && creatorCount > 0 && (
+            <section id="creators-results">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-[#1D1D1F]">Verified Creators</h2>
+                  <span className="text-xs bg-white text-[#1D1D1F] border border-[#E5E5E7] px-2.5 py-0.5 rounded-full font-mono font-bold shadow-2xs">
+                    {creatorCount}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {(activeTab === 'all' ? results.creators.slice(0, 3) : results.creators).map((creator) => (
+                  <div
+                    key={creator.id}
+                    className="bg-white border border-[#E5E5E7] hover:border-[#1D1D1F]/40 rounded-2xl p-6 flex flex-col justify-between transition-all group hover:shadow-md"
+                  >
+                    <div>
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-11 h-11 rounded-full bg-[#1D1D1F] text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
+                          {creator.public_display_name
+                            ? creator.public_display_name.slice(0, 2).toUpperCase()
+                            : 'CR'}
+                        </div>
+                        <div>
+                          <h3 className="text-base font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
+                            {creator.public_display_name}
+                          </h3>
+                          <div className="text-[11px] text-[#86868B]">
+                            {creator.public_specialty || 'Film Editor & Colorist'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#86868B] line-clamp-2 leading-relaxed mb-4">
+                        {creator.public_bio || 'Vetted post-production specialist in the Artsy Network.'}
+                      </p>
+                    </div>
+
+                    <div className="border-t border-[#E5E5E7] pt-3 flex items-center justify-between">
+                      <span className="text-[11px] text-[#86868B]">
+                        {creator.total_projects_completed || 0} projects delivered
+                      </span>
+                      <Link
+                        href={`/creators/${creator.id}`}
+                        className="px-3.5 py-1.5 bg-[#F5F5F7] hover:bg-[#1D1D1F] text-[#1D1D1F] hover:text-white text-xs font-semibold rounded-xl border border-[#E5E5E7] transition-all shadow-2xs"
+                      >
+                        View Profile →
+                      </Link>
                     </div>
                   </div>
                 ))}

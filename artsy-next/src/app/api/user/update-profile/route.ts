@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, signAuthCookieValue, AUTH_COOKIE_NAME, AuthUserPayload } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
+import { setCachedUser, invalidateUserCache, invalidateCache } from '@/lib/cache';
 
 export async function POST(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -121,6 +122,42 @@ export async function POST(request: Request) {
     studio_details: updates.studio_details ?? authUser.studio_details ?? null,
     creator_profile: body.creator_profile ?? authUser.creator_profile ?? null,
   };
+
+  // 1. Instant Cache Refresh & Cross-Panel Invalidation (Sub-20ms)
+  try {
+    // Invalidate dependent admin panels so fresh data is visible immediately
+    await Promise.all([
+      invalidateCache('cache:admin:clients:list'),
+      invalidateCache(`cache:admin:client:${resolvedUser.id}`),
+    ]);
+    // Atomically warm user session cache with the latest saved data
+    await setCachedUser(resolvedUser.id, resolvedUser, 600);
+  } catch (cErr) {
+    console.warn('[Update Profile] Cache update warning:', cErr);
+  }
+
+  // 2. Reliable Record-Keeping: Immutable Audit Trail (WORM Ledger)
+  if (dbClient && typeof dbClient.from === 'function') {
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(authUser.id);
+      await dbClient.from('audit_logs').insert([
+        {
+          action: 'profile_updated',
+          target_table: 'users',
+          target_id: isUuid ? authUser.id : null,
+          new_values: {
+            updated_fields: Object.keys(updates),
+            display_name: updates.display_name,
+            has_studio_details: Boolean(updates.studio_details),
+            timestamp: new Date().toISOString(),
+          },
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    } catch (auditErr) {
+      console.warn('[Update Profile] Non-fatal audit log warning:', auditErr);
+    }
+  }
 
   const response = NextResponse.json({ success: true, user: resolvedUser, updates });
   const signedCookie = signAuthCookieValue({

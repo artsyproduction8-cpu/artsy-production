@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { createErrorResponse } from '@/lib/api-response';
+import { getCachedData, setCachedData } from '@/lib/cache';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -20,9 +21,15 @@ export async function GET(request: Request) {
   try {
     // If specific client ID requested, return full detail view
     if (clientId) {
+      const cacheKey = `cache:admin:client:${clientId}`;
+      const cached = await getCachedData(cacheKey);
+      if (cached) {
+        return NextResponse.json(cached);
+      }
+
       const { data: client, error: clientErr } = await dbClient
         .from('users')
-        .select('id, full_name, phone, email, role, status, created_at, updated_at, deleted_at')
+        .select('id, full_name, display_name, phone, email, role, status, avatar_url, onboarded, studio_details, created_at, updated_at, deleted_at')
         .eq('id', clientId)
         .single();
 
@@ -84,7 +91,7 @@ export async function GET(request: Request) {
         notifications = notifData || [];
       }
 
-      return NextResponse.json({
+      const result = {
         success: true,
         client: {
           ...client,
@@ -94,13 +101,24 @@ export async function GET(request: Request) {
           invoices: invoices || [],
           notifications,
         },
-      });
+      };
+      try {
+        await setCachedData(cacheKey, result, 30);
+      } catch {}
+      return NextResponse.json(result);
     }
 
-    // Default: List all clients with aggregated statistics
+    // Default: Check Redis cache first for sub-20ms rendering
+    const listCacheKey = 'cache:admin:clients:list';
+    const cachedList = await getCachedData(listCacheKey);
+    if (cachedList) {
+      return NextResponse.json(cachedList);
+    }
+
+    // List all clients with aggregated statistics
     const { data: clients, error: usersErr } = await dbClient
       .from('users')
-      .select('id, full_name, phone, email, role, status, created_at, updated_at, deleted_at')
+      .select('id, full_name, display_name, phone, email, role, status, avatar_url, onboarded, studio_details, created_at, updated_at, deleted_at')
       .eq('role', 'client')
       .order('created_at', { ascending: false });
 
@@ -135,10 +153,15 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       clients: enrichedClients,
-    });
+    };
+    try {
+      await setCachedData(listCacheKey, responsePayload, 30);
+    } catch {}
+
+    return NextResponse.json(responsePayload);
   } catch (err: any) {
     return createErrorResponse(err, 'Failed to fetch studio client directory', 500);
   }

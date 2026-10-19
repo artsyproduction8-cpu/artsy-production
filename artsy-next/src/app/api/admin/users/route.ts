@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     let adminsList: any[] = [];
     const { data: dbAdmins, error: adminErr } = await dbClient
       .from('users')
-      .select('id, full_name, phone, email, role, status, created_at, updated_at')
+      .select('id, full_name, display_name, phone, email, role, status, avatar_url, studio_details, created_at, updated_at')
       .in('role', ['admin', 'super_admin'])
       .order('created_at', { ascending: true });
 
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     let clientCandidates: any[] = [];
     const { data: candidates } = await dbClient
       .from('users')
-      .select('id, full_name, phone, email, role, status, created_at')
+      .select('id, full_name, display_name, phone, email, role, status, avatar_url, studio_details, created_at')
       .eq('role', 'client')
       .order('created_at', { ascending: false })
       .limit(20);

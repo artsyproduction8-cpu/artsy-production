@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { isSuperAdminAccount } from '@/lib/auth-utils';
+import { getCachedUser, setCachedUser } from '@/lib/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,28 @@ export async function GET(request: NextRequest) {
           },
         }
       );
+    }
+
+    // Sub-20ms Cache Fast Path (unless fresh=true is requested)
+    const forceFresh = request.nextUrl.searchParams.get('fresh') === 'true';
+    if (!forceFresh) {
+      const cached = await getCachedUser(authUser.id);
+      if (cached && cached.id) {
+        return NextResponse.json(
+          {
+            authenticated: true,
+            user: cached,
+            source: 'cache',
+          },
+          {
+            status: 200,
+            headers: {
+              'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+              'X-Cache': 'HIT',
+            },
+          }
+        );
+      }
     }
 
     const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : supabase;
@@ -105,15 +128,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Cache fresh resolved user object for instant sub-20ms subsequent queries
+    try {
+      await setCachedUser(resolvedUser.id, resolvedUser, 600);
+    } catch (cErr) {
+      console.warn('[api/user/me] Cache write warning:', cErr);
+    }
+
     return NextResponse.json(
       {
         authenticated: true,
         user: resolvedUser,
+        source: 'database',
       },
       {
         status: 200,
         headers: {
           'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'X-Cache': 'MISS',
           Pragma: 'no-cache',
           Expires: '0',
         },

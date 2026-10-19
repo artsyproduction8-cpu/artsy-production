@@ -27,6 +27,7 @@ const MIGRATION_FILES = [
   '008_creator_public_profiles.sql',
   '009_user_display_name_and_studio_details.sql',
   '010_scale_and_performance_indexes.sql',
+  '011_instant_data_and_reliable_records.sql',
 ];
 
 export async function verifyAndBundleMigrations() {

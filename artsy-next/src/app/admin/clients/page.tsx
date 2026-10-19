@@ -6,6 +6,10 @@ import Link from 'next/link';
 interface ClientItem {
   id: string;
   full_name: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  onboarded?: boolean;
+  studio_details?: any;
   phone: string;
   email: string;
   role: string;
@@ -178,7 +182,12 @@ export default function AdminClientsPage() {
                     className="hover:bg-[#F5F5F7]/70 transition-colors cursor-pointer"
                   >
                     <td className="py-3 px-4 font-mono text-[#86868B] text-[10px]">{client.id.slice(0, 8)}...</td>
-                    <td className="py-3 px-4 font-bold text-[#1D1D1F]">{client.full_name}</td>
+                    <td className="py-3 px-4">
+                      <div className="font-bold text-[#1D1D1F]">{client.display_name || client.full_name}</div>
+                      {client.display_name && client.display_name !== client.full_name && (
+                        <div className="text-[11px] text-[#86868B]">{client.full_name}</div>
+                      )}
+                    </td>
                     <td className="py-3 px-4">
                       <div className="font-medium text-[#1D1D1F]">{client.email}</div>
                       <div className="text-[10px] text-[#86868B] font-mono">{client.phone || '—'}</div>
@@ -255,6 +264,46 @@ export default function AdminClientsPage() {
               </div>
             ) : clientDetail ? (
               <div className="space-y-6">
+                {/* 0. Studio & Business Profile Setup */}
+                <div className="bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider">
+                      Studio & Billing Setup
+                    </h3>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700">
+                      {clientDetail.studio_details?.accountType === 'b2b' ? 'B2B Studio' : 'B2C Client'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <span className="text-[#86868B] block text-[11px]">Studio Name:</span>
+                      <span className="font-semibold text-[#1D1D1F]">{clientDetail.display_name || clientDetail.studio_details?.studioName || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[#86868B] block text-[11px]">Billing Name:</span>
+                      <span className="font-semibold text-[#1D1D1F]">{clientDetail.studio_details?.billingName || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[#86868B] block text-[11px]">GSTIN:</span>
+                      <span className="font-mono font-semibold text-[#1D1D1F]">{clientDetail.studio_details?.gstin || 'Unregistered'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[#86868B] block text-[11px]">Billing Address:</span>
+                      <span className="text-[#1D1D1F]">
+                        {[clientDetail.studio_details?.address, clientDetail.studio_details?.city, clientDetail.studio_details?.state, clientDetail.studio_details?.pincode].filter(Boolean).join(', ') || '—'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[#86868B] block text-[11px]">Ingest Provider:</span>
+                      <span className="text-[#1D1D1F]">{clientDetail.studio_details?.ingestProvider || 'Google Drive Enterprise'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[#86868B] block text-[11px]">Aspect Ratio Preset:</span>
+                      <span className="text-[#1D1D1F] font-mono">{clientDetail.studio_details?.aspectRatioPreset || '9:16'}</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* 1. All Orders */}
                 <div>
                   <h3 className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider mb-2">

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin } from '@/lib/supabase';
+import { invalidateUserCache } from '@/lib/cache';
 
 export async function POST(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -16,6 +17,12 @@ export async function POST(request: Request) {
   if (error) {
     console.error('[Complete Onboarding] Error updating user:', error);
     return NextResponse.json({ error: 'Update failed' }, { status: 500 });
+  }
+
+  try {
+    await invalidateUserCache(authUser.id);
+  } catch (cErr) {
+    console.warn('[Complete Onboarding] Cache invalidation warning:', cErr);
   }
 
   return NextResponse.json({ success: true, message: 'Onboarding completed successfully' });

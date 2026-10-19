@@ -158,6 +158,7 @@ export const setCurrentUser = (user: ArtsyUser | null) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user }),
+      credentials: 'include',
     }).catch(() => {});
   } else {
     const LOCAL_KEYS = [
@@ -184,7 +185,7 @@ export const setCurrentUser = (user: ArtsyUser | null) => {
     } catch {}
 
     // Invalidate server HttpOnly cookie
-    fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
+    fetch('/api/auth/session', { method: 'DELETE', credentials: 'include' }).catch(() => {});
   }
 
   // Notify active components in the current window
@@ -200,9 +201,10 @@ export const setCurrentUserAsync = async (user: ArtsyUser | null): Promise<void>
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user }),
+        credentials: 'include',
       });
     } else {
-      await fetch('/api/auth/session', { method: 'DELETE' });
+      await fetch('/api/auth/session', { method: 'DELETE', credentials: 'include' });
     }
   } catch {}
 };

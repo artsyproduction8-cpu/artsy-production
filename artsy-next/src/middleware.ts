@@ -31,6 +31,10 @@ export async function middleware(request: NextRequest) {
     });
   }
   const origin = request.headers.get('origin');
+  const host = request.headers.get('host');
+  const isSameHost = Boolean(host && (origin === `https://${host}` || origin === `http://${host}`));
+  const isVercelDomain = Boolean(origin && (origin.endsWith('.vercel.app') || origin.includes('vercel.app')));
+
   const allowedOrigins = [
     'https://artsyproduction.in',
     'https://www.artsyproduction.in',
@@ -42,12 +46,16 @@ export async function middleware(request: NextRequest) {
       : []),
   ];
 
+  const isOriginAllowed = Boolean(
+    origin && (allowedOrigins.includes(origin) || isSameHost || isVercelDomain)
+  );
+
   const applySecurityHeaders = (res: NextResponse) => {
     res.headers.set('X-Content-Type-Options', 'nosniff');
     res.headers.set('X-Frame-Options', 'DENY');
     res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
     res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-    if (origin && allowedOrigins.includes(origin)) {
+    if (isOriginAllowed && origin) {
       res.headers.set('Access-Control-Allow-Origin', origin);
       res.headers.set('Access-Control-Allow-Credentials', 'true');
       res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
@@ -61,7 +69,7 @@ export async function middleware(request: NextRequest) {
 
   if (pathname.startsWith('/api')) {
     // Check #6: Reject unauthorized cross-origin requests (Disallow wildcard *)
-    if (origin && !allowedOrigins.includes(origin)) {
+    if (origin && !isOriginAllowed) {
       const forbiddenResp = new NextResponse(
         JSON.stringify({
           error: 'Cross-Origin Request Blocked',
@@ -83,6 +91,13 @@ export async function middleware(request: NextRequest) {
     if (request.method === 'OPTIONS') {
       const preflight = new NextResponse(null, { status: 204 });
       return applySecurityHeaders(preflight);
+    }
+
+    // Public / allowed route exemption:
+    // Exempt /api/auth/session from edge rate limiting and blocking to allow seamless cookie sync & heartbeats
+    if (pathname === '/api/auth/session') {
+      const sessionResp = NextResponse.next();
+      return applySecurityHeaders(sessionResp);
     }
 
     // Exempt cron jobs from edge rate limiting (they use CRON_SECRET auth)

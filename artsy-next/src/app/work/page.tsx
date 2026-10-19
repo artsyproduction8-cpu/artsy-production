@@ -51,7 +51,9 @@ async function getCompanyPortfolio(): Promise<PortfolioVideo[]> {
       return [];
     }
 
-    return (samples || []).map((s: any) => ({
+    return (samples || [])
+      .filter((s: any) => s.youtube_id !== 'dQw4w9WgXcQ')
+      .map((s: any) => ({
       id: s.id,
       title: s.title,
       description: s.description || null,

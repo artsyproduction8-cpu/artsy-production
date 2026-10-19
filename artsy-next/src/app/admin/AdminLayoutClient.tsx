@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, setCurrentUser, PRESET_USERS } from '@/lib/auth';
+import { getCurrentUser, setCurrentUser, logout, PRESET_USERS } from '@/lib/auth';
+import { isSuperAdminAccount } from '@/lib/auth-utils';
 import AdminHeader from './components/AdminHeader';
 import AdminSidebar from './components/AdminSidebar';
 
@@ -11,35 +12,74 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
+    // 0. Nuke browser cache / local storage if v2 migration flag is not present
+    if (typeof window !== 'undefined' && !localStorage.getItem('artsy_admin_v2')) {
+      try {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('artsy_')) {
+            localStorage.removeItem(key);
+          }
+        });
+        sessionStorage.clear();
+        localStorage.setItem('artsy_admin_v2', 'true');
+      } catch (e) {
+        console.warn('[AdminLayoutClient] Local storage cleanup warning:', e);
+      }
+      window.location.reload();
+      return;
+    }
+
     async function checkAuth() {
       let user = getCurrentUser();
 
+      // Normalize super admin role
+      if (user && isSuperAdminAccount(user)) {
+        user.role = 'super_admin';
+      }
+
       // 1. If client already has a super_admin or admin in localStorage/sessionStorage,
-      // immediately fire request to mint/refresh the secure HTTP-only cookie on the server
+      // sync the session cookie with the server
       if (user && (user.role === 'super_admin' || user.role === 'admin')) {
         try {
           const syncRes = await fetch('/api/auth/session', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+            },
             body: JSON.stringify({ user }),
             credentials: 'include',
           });
-          if (syncRes.ok) {
-            const syncData = await syncRes.json().catch(() => ({}));
-            if (syncData.user) {
-              setCurrentUser(syncData.user);
-              user = syncData.user;
-            }
+
+          if (!syncRes.ok) {
+            console.warn('[AdminLayoutClient] Session sync rejected by server:', syncRes.status);
+            logout();
+            localStorage.removeItem('artsy_auth_user');
+            router.push('/admin/login?error=sync_failed');
+            return;
+          }
+
+          const syncData = await syncRes.json().catch(() => ({}));
+          if (syncData.user) {
+            setCurrentUser(syncData.user);
+            user = syncData.user;
           }
         } catch (syncErr) {
-          console.warn('[AdminLayoutClient] Failed to mint/sync admin session cookie:', syncErr);
+          console.error('[AdminLayoutClient] Failed to sync session cookie:', syncErr);
+          logout();
+          localStorage.removeItem('artsy_auth_user');
+          router.push('/admin/login?error=network_error');
+          return;
         }
       }
 
       // 2. If no user in local storage, check if active HTTP-only session cookie already exists on server
       if (!user) {
         try {
-          const res = await fetch('/api/auth/session', { credentials: 'include' });
+          const res = await fetch('/api/auth/session', {
+            credentials: 'include',
+            headers: { 'Cache-Control': 'no-cache' },
+          });
           if (res.ok) {
             const data = await res.json();
             if (data.authenticated && data.user) {
@@ -63,30 +103,53 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       }
 
       // 3. In local dev preview fallback (strictly excluded from production builds)
-      if (process.env.NODE_ENV !== 'production' && !user && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        !user &&
+        typeof window !== 'undefined' &&
+        (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      ) {
         const fallback = PRESET_USERS.super_admin;
         setCurrentUser(fallback);
         user = fallback;
         try {
-          await fetch('/api/auth/session', {
+          const fbRes = await fetch('/api/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user: fallback }),
             credentials: 'include',
           });
-        } catch {}
+          if (!fbRes.ok) {
+            logout();
+            localStorage.removeItem('artsy_auth_user');
+            router.push('/admin/login');
+            return;
+          }
+        } catch {
+          logout();
+          localStorage.removeItem('artsy_auth_user');
+          router.push('/admin/login');
+          return;
+        }
       }
 
+      // 4. If no authenticated user, redirect to login
       if (!user) {
-        router.push('/auth/login?redirect=/admin');
+        logout();
+        localStorage.removeItem('artsy_auth_user');
+        router.push('/admin/login');
         return;
       }
 
+      // 5. If unauthorized role, reject and redirect
       if (user.role !== 'admin' && user.role !== 'super_admin') {
-        router.push('/auth/login?unauthorized=true');
+        logout();
+        localStorage.removeItem('artsy_auth_user');
+        router.push('/admin/login?unauthorized=true');
         return;
       }
 
+      // 6. Authorized: render children only after server session cookie is confirmed
       setAuthorized(true);
     }
 

@@ -14,11 +14,54 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const user = body.user;
     if (!user || !user.role) {
-      return NextResponse.json({ error: 'Invalid user payload' }, { status: 400 });
+      const errRes = NextResponse.json({ error: 'Invalid user payload' }, { status: 400 });
+      errRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      return errRes;
+    }
+
+    // Strict validation of token_version against the database
+    const dbClient = supabaseAdmin || supabase;
+    if (dbClient && typeof dbClient.from === 'function') {
+      try {
+        let dbQuery = dbClient.from('users').select('id, token_version, status, role');
+        if (user.id && !user.id.startsWith('mock-')) {
+          dbQuery = dbQuery.eq('id', user.id);
+        } else if (user.email) {
+          dbQuery = dbQuery.eq('email', user.email.toLowerCase().trim());
+        } else if (user.phone) {
+          dbQuery = dbQuery.ilike('phone', `%${user.phone.replace(/\D/g, '').slice(-10)}%`);
+        }
+
+        const { data: dbUser } = await dbQuery.maybeSingle();
+
+        if (dbUser) {
+          if (dbUser.status === 'suspended' || dbUser.status === 'deactivated') {
+            const resp = NextResponse.json({ error: 'Account is deactivated' }, { status: 401 });
+            resp.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+            return resp;
+          }
+
+          if (dbUser.token_version !== undefined && dbUser.token_version !== null) {
+            const dbTokenVersion = Number(dbUser.token_version);
+            const userTokenVersion = Number(user.token_version || 1);
+            if (dbTokenVersion > userTokenVersion) {
+              const resp = NextResponse.json(
+                { error: 'Session token version revoked. Please log in again.' },
+                { status: 401 }
+              );
+              resp.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+              return resp;
+            }
+          }
+        }
+      } catch (dbErr) {
+        console.warn('[POST /api/auth/session] token_version check warning:', dbErr);
+      }
     }
 
     const isSuper = isSuperAdminAccount(user);
     const resolvedRole = isSuper ? 'super_admin' : user.role;
+    const effectiveTokenVersion = Math.max(Number(user.token_version || 2), 2);
 
     const cookieValue = signAuthCookieValue({
       id: user.id || (isSuper ? 'usr-superadmin-000' : 'usr-client-001'),
@@ -27,10 +70,21 @@ export async function POST(request: NextRequest) {
       phone: user.phone,
       full_name: user.full_name,
       onboarded: user.onboarded !== false,
-      token_version: Number(user.token_version) >= 2 ? Number(user.token_version) : 2,
+      token_version: effectiveTokenVersion,
     });
 
-    const response = NextResponse.json({ success: true, user });
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        ...user,
+        role: resolvedRole,
+        token_version: effectiveTokenVersion,
+      },
+    });
+
+    // Never cache session sync or status checks
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+
     response.cookies.set(AUTH_COOKIE_NAME, cookieValue, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -40,19 +94,25 @@ export async function POST(request: NextRequest) {
     });
     return response;
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Session creation failed' }, { status: 500 });
+    const errRes = NextResponse.json({ error: err.message || 'Session creation failed' }, { status: 500 });
+    errRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return errRes;
   }
 }
 
 export async function GET(request: NextRequest) {
   const cookie = request.cookies.get(AUTH_COOKIE_NAME);
   if (!cookie) {
-    return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
+    const unauthRes = NextResponse.json({ authenticated: false, user: null }, { status: 401 });
+    unauthRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return unauthRes;
   }
 
   const authUser = await verifyAndParseAuthCookie(cookie.value);
   if (!authUser) {
-    return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
+    const unauthRes = NextResponse.json({ authenticated: false, user: null }, { status: 401 });
+    unauthRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return unauthRes;
   }
 
   const dbClient = supabaseAdmin || supabase;
@@ -132,6 +192,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   const response = NextResponse.json({ success: true, message: 'Logged out successfully.' });
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   response.cookies.delete(AUTH_COOKIE_NAME);
   return response;
 }

@@ -46,7 +46,7 @@ function signCookie(payload) {
   return `${payloadBase64}.${signature}`;
 }
 
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
+const BASE_URL = (process.env.TEST_BASE_URL || 'http://localhost:3000').trim();
 
 async function runTest() {
   console.log('=============================================================================');

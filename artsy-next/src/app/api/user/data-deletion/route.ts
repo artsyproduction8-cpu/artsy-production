@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { getAuthenticatedUser, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
+import { isSuperAdminAccount } from '@/lib/auth-utils';
 
 /**
  * DPDP Act (v2.0) Data Erasure / Deletion Request Route (§4.4, §10.2, §10.3)
@@ -66,15 +67,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
 
-      const SUPER_ADMIN_PHONE = process.env.SUPER_ADMIN_PHONE;
-      const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL;
-
-      const isSuperAdminAccount =
-        user.role === 'super_admin' ||
-        (SUPER_ADMIN_PHONE && user.phone === SUPER_ADMIN_PHONE) ||
-        (SUPER_ADMIN_EMAIL && user.email === SUPER_ADMIN_EMAIL);
-
-      if (isSuperAdminAccount) {
+      if (isSuperAdminAccount(user)) {
         return NextResponse.json({ error: 'Super Admin account cannot be deleted' }, { status: 403 });
       }
 

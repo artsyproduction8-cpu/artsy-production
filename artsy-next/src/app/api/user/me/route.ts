@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { isSuperAdminAccount } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +40,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Build the resolved fresh user object
-    const finalRole = dbUser?.role || authUser.role || 'client';
+    const isSuperAdmin = isSuperAdminAccount(dbUser) || isSuperAdminAccount(authUser);
+    const finalRole = isSuperAdmin ? 'super_admin' : (dbUser?.role || authUser.role || 'client');
     const resolvedUser: any = {
       id: dbUser?.id || authUser.id,
       role: finalRole,

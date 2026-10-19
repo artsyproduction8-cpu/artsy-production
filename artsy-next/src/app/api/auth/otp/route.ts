@@ -8,6 +8,7 @@ import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 const supabase = supabaseAdmin;
 import { signAuthCookieValue, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 import { createErrorResponse } from '@/lib/api-response';
+import { isSuperAdminAccount, CANONICAL_SUPER_ADMIN_PHONE, CANONICAL_SUPER_ADMIN_EMAIL } from '@/lib/auth-utils';
 
 // Helper for legacy sha256 fallback compatibility
 function legacyHashOtp(otp: string, identifier: string): string {
@@ -216,11 +217,9 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      const superAdminPhone = process.env.SUPER_ADMIN_PHONE?.replace(/\D/g, '').slice(-10);
-      const superAdminEmail = process.env.SUPER_ADMIN_EMAIL?.toLowerCase().trim();
       const isSuperAdminIdentifier = Boolean(
-        (superAdminPhone && cleanPhone === superAdminPhone) ||
-        (superAdminEmail && cleanEmail === superAdminEmail)
+        isSuperAdminAccount({ phone: cleanPhone, email: cleanEmail }) ||
+        isSuperAdminAccount(existingUser)
       );
       let resolvedUser: any;
       let isNewUser = false;
@@ -247,15 +246,17 @@ export async function POST(request: NextRequest) {
         const dbRole = isSuperAdminIdentifier ? 'admin' : requestedRole;
         const generatedUserId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `usr_${cleanPhone || Date.now()}`;
         const defaultName = isSuperAdminIdentifier
-          ? 'Super Admin'
+          ? 'Studio Owner (Super Admin)'
           : (requestedRole === 'freelancer' ? 'Creator Partner' : 'Studio Client');
 
         const newUserData = {
           id: generatedUserId,
           email: isSuperAdminIdentifier
-            ? (superAdminEmail || `${cleanPhone || Date.now()}@artsyprod.studio`)
+            ? CANONICAL_SUPER_ADMIN_EMAIL
             : (cleanEmail || `${cleanPhone || Date.now()}@artsyprod.studio`),
-          phone: formattedPhone || (cleanPhone ? `+91${cleanPhone}` : '+919876543210'),
+          phone: isSuperAdminIdentifier
+            ? `+91${CANONICAL_SUPER_ADMIN_PHONE}`
+            : (formattedPhone || (cleanPhone ? `+91${cleanPhone}` : '+919876543210')),
           full_name: defaultName,
           role: dbRole,
           status: 'active',

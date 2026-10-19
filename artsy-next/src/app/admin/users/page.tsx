@@ -35,6 +35,14 @@ export default function AdminUsersManagementPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<string>('');
 
+  const isUserSuperAdmin = (u: any) => {
+    if (!u) return false;
+    if (u.role === 'super_admin') return true;
+    const phone = u.phone ? u.phone.replace(/\D/g, '').slice(-10) : '';
+    const email = u.email ? u.email.toLowerCase().trim() : '';
+    return phone === '7777078742' || email === 'lilsammy96@gmail.com';
+  };
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -43,7 +51,7 @@ export default function AdminUsersManagementPage() {
       if (data.success) {
         setAdmins(data.admins || []);
         setCandidates(data.clientCandidates || []);
-        setIsSuperAdmin(data.isSuperAdmin || false);
+        setIsSuperAdmin(Boolean(data.isSuperAdmin || isUserSuperAdmin(user)));
       }
     } catch (err) {
       console.error('Failed to fetch admin users:', err);
@@ -54,7 +62,13 @@ export default function AdminUsersManagementPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    if (isUserSuperAdmin(user)) {
+      setIsSuperAdmin(true);
+    }
+  }, [user]);
 
   const handleRoleChange = async (userId: string, newRole: 'client' | 'admin') => {
     setActionLoading(userId);
@@ -91,7 +105,7 @@ export default function AdminUsersManagementPage() {
             </span>
           </div>
           <p className="text-sm text-[#86868B] mt-1">
-            Manage studio directors and admin delegates. Only the Super Admin ({process.env.NEXT_PUBLIC_SUPPORT_PHONE || 'Designated Contact'}) can modify role assignments.
+            Manage studio directors and admin delegates. Only the Super Admin (+91 77770 78742 / lilsammy96@gmail.com) can modify role assignments.
           </p>
         </div>
 
@@ -120,7 +134,7 @@ export default function AdminUsersManagementPage() {
               Super Admin Ownership Protection Active
             </div>
             <div className="text-xs text-[#86868B]">
-              Designated Account: <span className="font-mono font-semibold text-purple-700">{process.env.NEXT_PUBLIC_SUPPORT_PHONE || 'Designated Super Admin'}</span>. Protected against deletion, role alteration, or non-owner modification by Postgres triggers.
+              Designated Account: <span className="font-mono font-semibold text-purple-700">+91 77770 78742 (lilsammy96@gmail.com)</span>. Protected against deletion, role alteration, or non-owner modification by Postgres triggers.
             </div>
           </div>
         </div>

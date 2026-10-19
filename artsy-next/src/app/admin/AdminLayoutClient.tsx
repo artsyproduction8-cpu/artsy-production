@@ -22,8 +22,9 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
             if (data.authenticated && data.user) {
               const u = {
                 id: data.user.id || 'usr-superadmin-000',
-                email: data.user.email || 'admin@artsyproduction.com',
-                full_name: data.user.full_name || 'Super Admin',
+                email: data.user.email || 'lilsammy96@gmail.com',
+                phone: data.user.phone || '+91 77770 78742',
+                full_name: data.user.full_name || 'Studio Owner (Super Admin)',
                 role: data.user.role || 'super_admin',
                 status: 'active' as const,
                 created_at: new Date().toISOString(),

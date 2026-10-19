@@ -93,7 +93,7 @@ export default function AdminHeader() {
                 {/* User Info Header */}
                 <div className="px-3 py-2 border-b border-white/10 mb-1.5">
                   <div className="text-xs font-bold text-white truncate">{adminName}</div>
-                  <div className="text-[10px] text-white/60 font-mono mt-0.5 truncate">Super Admin • {user?.email}</div>
+                  <div className="text-[10px] text-white/60 font-mono mt-0.5 truncate">{user?.role === 'super_admin' ? 'Super Admin' : 'Admin'} • {user?.email || 'lilsammy96@gmail.com'}</div>
                 </div>
 
                 {/* Admin Pages Section */}

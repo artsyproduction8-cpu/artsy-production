@@ -46,9 +46,9 @@ export interface ArtsyUser {
 export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
   super_admin: {
     id: 'usr-superadmin-000',
-    email: 'admin@artsyproduction.com',
-    full_name: 'Super Admin',
-    phone: '+91 9999999999',
+    email: 'lilsammy96@gmail.com',
+    full_name: 'Studio Owner (Super Admin)',
+    phone: '+91 77770 78742',
     role: 'super_admin',
     status: 'active',
     avatar_url: '',
@@ -85,7 +85,7 @@ export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
     id: 'usr-admin-003',
     email: 'admin@artsyproduction.in',
     full_name: 'Studio Director (Admin)',
-    phone: '+91 7777078742',
+    phone: '+91 9876543210',
     role: 'admin',
     status: 'active',
     avatar_url: '',

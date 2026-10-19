@@ -102,7 +102,7 @@ async function runTest() {
     token_version: 4,
   });
 
-  const baseUrl = process.env.TEST_BASE_URL || 'http://localhost:3000';
+  const baseUrl = (process.env.TEST_BASE_URL || 'http://localhost:3000').trim();
 
   console.log('\n2. Testing Profile Save (/api/user/update-profile)...');
   const profileSetupPayload = {

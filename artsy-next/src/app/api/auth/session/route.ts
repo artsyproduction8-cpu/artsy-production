@@ -46,12 +46,58 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
   }
 
-  const user = await verifyAndParseAuthCookie(cookie.value);
-  if (user) {
-    return NextResponse.json({ authenticated: true, user });
+  const authUser = await verifyAndParseAuthCookie(cookie.value);
+  if (!authUser) {
+    return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
   }
 
-  return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
+  const dbClient = supabaseAdmin || supabase;
+  let resolvedUser: any = authUser;
+
+  if (dbClient && typeof dbClient.from === 'function') {
+    try {
+      const { data: dbUser } = await dbClient
+        .from('users')
+        .select('id, email, phone, full_name, display_name, role, status, avatar_url, onboarded, studio_details, created_at, updated_at')
+        .eq('id', authUser.id)
+        .maybeSingle();
+
+      if (dbUser) {
+        resolvedUser = {
+          ...authUser,
+          ...dbUser,
+        };
+
+        if (dbUser.role === 'freelancer') {
+          const { data: creatorProfile } = await dbClient
+            .from('creator_profiles')
+            .select('*')
+            .eq('id', authUser.id)
+            .maybeSingle();
+
+          if (creatorProfile) {
+            resolvedUser.onboarding_status =
+              creatorProfile.onboarding_status || creatorProfile.approval_status || 'pending';
+            resolvedUser.tracking_id = creatorProfile.tracking_id || null;
+            resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
+            resolvedUser.rejected_at = creatorProfile.rejected_at || null;
+            resolvedUser.creator_profile = creatorProfile;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[api/auth/session] DB query warning:', err);
+    }
+  }
+
+  return NextResponse.json(
+    { authenticated: true, user: resolvedUser },
+    {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    }
+  );
 }
 
 export async function DELETE(request: NextRequest) {

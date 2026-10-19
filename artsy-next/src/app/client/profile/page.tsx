@@ -193,8 +193,45 @@ export default function ClientProfilePage() {
     return () => clearTimeout(timer);
   }, [emailCountdown]);
 
-  // Load initial profile from localStorage or user context
+  // Load initial profile prioritizing live database data from useAuth()
   useEffect(() => {
+    if (user) {
+      if (user.full_name) setFullName(user.full_name);
+      if (user.display_name) setStudioName(user.display_name);
+      if (user.phone) {
+        setWhatsapp(user.phone);
+        setVerifiedWhatsappNumber(user.phone);
+      }
+      if (user.email) {
+        setEmail(user.email);
+        setVerifiedEmailAddress(user.email);
+      }
+      if (user.avatar_url) setLogoUrl(user.avatar_url);
+
+      const sd = (user as any).studio_details;
+      if (sd && typeof sd === 'object') {
+        if (sd.accountType) setAccountType(sd.accountType);
+        if (sd.studioName) setStudioName(sd.studioName);
+        if (sd.fullName) setFullName(sd.fullName);
+        if (sd.logoUrl) setLogoUrl(sd.logoUrl);
+        if (sd.billingName) setBillingName(sd.billingName);
+        if (sd.gstin) setGstin(sd.gstin);
+        if (sd.address) setAddress(sd.address);
+        if (sd.city) setCity(sd.city);
+        if (sd.state) setState(sd.state);
+        if (sd.pincode) setPincode(sd.pincode);
+        if (sd.ingestProvider) setIngestProvider(sd.ingestProvider);
+        if (sd.ingestLink) setIngestLink(sd.ingestLink);
+        if (sd.brandLuts) setBrandLuts(sd.brandLuts);
+        if (sd.aspectRatioPreset) setAspectRatioPreset(sd.aspectRatioPreset);
+        if (sd.collaborators) setCollaborators(sd.collaborators);
+        if (typeof sd.notifyWhatsApp === 'boolean') setNotifyWhatsApp(sd.notifyWhatsApp);
+        if (typeof sd.notifyEmail === 'boolean') setNotifyEmail(sd.notifyEmail);
+        if (typeof sd.notifyMilestones === 'boolean') setNotifyMilestones(sd.notifyMilestones);
+        return;
+      }
+    }
+
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem('artsy_client_profile');
@@ -233,23 +270,8 @@ export default function ClientProfilePage() {
           if (typeof p.notifyWhatsApp === 'boolean') setNotifyWhatsApp(p.notifyWhatsApp);
           if (typeof p.notifyEmail === 'boolean') setNotifyEmail(p.notifyEmail);
           if (typeof p.notifyMilestones === 'boolean') setNotifyMilestones(p.notifyMilestones);
-          return;
         }
       } catch {}
-    }
-
-    if (user) {
-      if (user.full_name) setFullName(user.full_name);
-      if (user.display_name) setStudioName(user.display_name);
-      if (user.phone) {
-        setWhatsapp(user.phone);
-        setVerifiedWhatsappNumber(user.phone);
-      }
-      if (user.email) {
-        setEmail(user.email);
-        setVerifiedEmailAddress(user.email);
-      }
-      if (user.avatar_url) setLogoUrl(user.avatar_url);
     }
   }, [user]);
 
@@ -548,6 +570,9 @@ export default function ClientProfilePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           full_name: fullName.trim() || studioName.trim(),
+          display_name: studioName.trim(),
+          studio_details: updatedProfile,
+          avatar_url: logoUrl || undefined,
         }),
       });
     } catch {
@@ -594,10 +619,10 @@ export default function ClientProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
-                  Profile &amp; Studio Workspace
+                  Profile &amp; Workspace
                 </h1>
                 <p className="text-xs sm:text-sm text-[#86868B] mt-1">
-                  Manage your contact details, studio name, logo, billing info, and shared storage folders.
+                  Manage your contact details, company name, logo, billing info, and shared storage folders.
                 </p>
               </div>
 
@@ -641,10 +666,10 @@ export default function ClientProfilePage() {
 
                   <div className="flex-1 space-y-2">
                     <div className="text-xs font-bold text-[#1D1D1F]">
-                      Studio / Company Logo
+                      Company Logo
                     </div>
                     <p className="text-[11px] text-[#86868B] leading-relaxed">
-                      Upload your studio logo or brand mark (PNG, JPG, WebP, SVG up to 5MB). When uploaded, it will automatically appear in the top-right header and sidebar.
+                      Upload your company logo or brand mark (PNG, JPG, WebP, SVG up to 5MB). When uploaded, it will automatically appear in the top-right header and sidebar.
                     </p>
 
                     <div className="flex items-center gap-3 pt-1">
@@ -680,13 +705,13 @@ export default function ClientProfilePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-[#1D1D1F]">
-                      Studio Name or Company *
+                      Company Name *
                     </label>
                     <input
                       type="text"
                       value={studioName}
                       onChange={(e) => setStudioName(e.target.value)}
-                      placeholder="e.g. Acme Studio Productions"
+                      placeholder="e.g. Acme Productions"
                       className="w-full bg-[#F5F5F7] border border-[#E5E5E7] rounded-xl px-4 py-2.5 text-xs font-semibold text-[#1D1D1F] focus:bg-white focus:outline-none focus:border-[#3B82F6]"
                       required
                     />

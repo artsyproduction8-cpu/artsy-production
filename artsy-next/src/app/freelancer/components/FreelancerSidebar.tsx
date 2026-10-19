@@ -7,7 +7,7 @@ import { useAuth, logout } from '@/lib/auth';
 export default function FreelancerSidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
-  const creatorName = user?.full_name || 'Creator Partner';
+  const creatorName = user?.display_name || user?.full_name || 'Creator Partner';
   const creatorInitials = creatorName.trim()
     ? creatorName
         .split(/\s+/)
@@ -20,9 +20,9 @@ export default function FreelancerSidebar() {
 
   const navItems = [
     { label: 'Active Projects', href: '/freelancer' },
-    { label: 'Portfolio Showcase', href: '/freelancer/portfolio' },
-    { label: 'Earnings & Payouts', href: '/freelancer/payouts' },
-    { label: 'Profile & Skills', href: '/freelancer/profile' },
+    { label: 'Portfolio', href: '/freelancer/portfolio' },
+    { label: 'Earnings', href: '/freelancer/payouts' },
+    { label: 'Profile', href: '/freelancer/profile' },
     { label: 'Agreement & NDA', href: '/freelancer/agreement' },
   ];
 

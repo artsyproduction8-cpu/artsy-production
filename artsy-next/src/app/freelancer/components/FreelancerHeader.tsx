@@ -6,9 +6,9 @@ import { useAuth, logout } from '@/lib/auth';
 
 const CREATOR_PAGES = [
   { label: 'Active Projects', href: '/freelancer' },
-  { label: 'Portfolio Showcase', href: '/freelancer/portfolio' },
-  { label: 'Earnings & Payouts', href: '/freelancer/payouts' },
-  { label: 'Profile & Skills', href: '/freelancer/profile' },
+  { label: 'Portfolio', href: '/freelancer/portfolio' },
+  { label: 'Earnings', href: '/freelancer/payouts' },
+  { label: 'Profile', href: '/freelancer/profile' },
   { label: 'Agreement & NDA', href: '/freelancer/agreement' },
 ];
 
@@ -35,7 +35,7 @@ export default function FreelancerHeader() {
     };
   }, []);
 
-  const creatorName = user?.full_name || 'Creator';
+  const creatorName = user?.display_name || user?.full_name || 'Creator';
   const creatorInitials = creatorName.trim()
     ? creatorName
         .split(/\s+/)

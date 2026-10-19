@@ -265,9 +265,9 @@ export const useAuth = () => {
 
     syncUser();
 
-    // Verify session with backend HttpOnly signed cookie
-    fetch('/api/auth/session')
-      .then((res) => (res.ok ? res.json() : null))
+    // Fetch fresh profile data directly from database on page load via /api/user/me
+    fetch('/api/user/me')
+      .then((res) => (res.ok ? res.json() : fetch('/api/auth/session').then((r) => r.ok ? r.json() : null)))
       .then((data) => {
         if (data && data.authenticated && data.user) {
           setUser(data.user);
@@ -293,7 +293,12 @@ export const useAuth = () => {
               created_at: data.user.created_at,
               updated_at: data.user.updated_at,
             };
+            if (data.user.studio_details) {
+              (sanitizedUser as any).studio_details = data.user.studio_details;
+              localStorage.setItem('artsy_client_profile', JSON.stringify(data.user.studio_details));
+            }
             localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitizedUser));
+            window.dispatchEvent(new Event('artsy_profile_updated'));
           } catch {}
         } else if (data && !data.authenticated) {
           // Cookie expired or invalidated

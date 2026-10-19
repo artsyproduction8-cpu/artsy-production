@@ -8,6 +8,20 @@ import { generateLedgerEntries, calculateFinancialWaterfall } from '@/lib/financ
 import { logProjectStart, logStatusChange } from '@/lib/activity/logger';
 import { useAuth } from '@/lib/auth';
 
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
+
 function CheckoutContent() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
@@ -22,7 +36,6 @@ function CheckoutContent() {
     if (typeof window !== 'undefined') {
       const stored =
         sessionStorage.getItem('artsy_active_booking') ||
-        sessionStorage.getItem('artsy_confirmed_order') ||
         localStorage.getItem('artsy_active_booking');
       if (stored) {
         try {
@@ -51,14 +64,23 @@ function CheckoutContent() {
     setIsProcessing(true);
 
     try {
+      // 1. Ensure Razorpay Checkout SDK is loaded
+      const isLoaded = await loadRazorpayScript();
+      const RazorpayClass = (window as any).Razorpay;
+      if (!isLoaded || !RazorpayClass) {
+        alert('Unable to load Razorpay payment gateway. Please check your internet connection and try again.');
+        setIsProcessing(false);
+        return;
+      }
+
       const amountPaise = (bookingData?.priceBreakdown?.grandTotal || 6000) * 100;
 
-      // 1. Create Razorpay order via server API
+      // 2. Create Razorpay order via server API (status = payment_pending in DB)
       const orderRes = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          serviceId: bookingData?.serviceKey || 'wedding_highlight',
+          serviceId: bookingData?.serviceKey || bookingData?.service || 'wedding',
           amount: amountPaise,
           requirements: bookingData?.requirements || {},
           clientPhone: clientPhone || user?.phone || '',
@@ -77,11 +99,11 @@ function CheckoutContent() {
         return;
       }
 
-      const { orderId, razorpayOrderId, razorpayKeyId, mode } = orderData;
+      const { orderId, razorpayOrderId, razorpayKeyId } = orderData;
 
-      // 2. Generate immutable QuoteSnapshot locked at checkout
+      // 3. Generate QuoteSnapshot locked at checkout
       const quote = generateQuoteSnapshot(
-        bookingData?.serviceKey || 'wedding',
+        bookingData?.serviceKey || bookingData?.service || 'wedding',
         bookingData?.requirements || {},
         { orderId }
       );
@@ -95,123 +117,91 @@ function CheckoutContent() {
       logProjectStart(orderId, clientEmail || 'client');
       logStatusChange(orderId, 'system', { oldStatus: 'draft', newStatus: 'payment_pending' });
 
-      // 3. Open Razorpay Checkout (if SDK loaded) or simulate for mock mode
-      const RazorpayClass = (window as any).Razorpay;
+      // 4. Open Razorpay Checkout modal
+      const rzp = new RazorpayClass({
+        key: razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.amount || amountPaise,
+        currency: orderData.currency || 'INR',
+        name: 'Artsy Production',
+        description: bookingData?.serviceName || 'Creative Post-Production Service',
+        order_id: razorpayOrderId,
+        prefill: {
+          name: clientName,
+          email: clientEmail,
+          contact: clientPhone,
+        },
+        theme: { color: '#2563EB' },
+        handler: async function (response: any) {
+          try {
+            // Strictly verify payment HMAC signature on backend before confirming order
+            const verifyRes = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
 
-      if (RazorpayClass && mode === 'live') {
-        const rzp = new RazorpayClass({
-          key: razorpayKeyId,
-          amount: amountPaise,
-          currency: 'INR',
-          name: 'Artsy Production',
-          description: bookingData?.serviceName || 'Post-Production Service',
-          order_id: razorpayOrderId,
-          prefill: {
-            name: clientName,
-            email: clientEmail,
-            contact: clientPhone,
-          },
-          theme: { color: '#2563EB' },
-          handler: async function (response: any) {
-            try {
-              // 1. Verify payment signature on backend
-              const verifyRes = await fetch('/api/verify-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                }),
-              });
-
-              const verifyData = await verifyRes.json();
-              if (!verifyRes.ok || !verifyData.success) {
-                alert(verifyData.error || 'Payment verification failed. Please contact support.');
-                setIsProcessing(false);
-                return;
-              }
-
-              // 2. Payment successfully verified — store confirmation
-              const confirmedOrder = {
-                orderId,
-                razorpayOrderId,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
-                clientName,
-                clientPhone,
-                clientEmail,
-                bookingData,
-                paidAt: new Date().toISOString(),
-                paymentStatus: 'captured',
-                gateway: 'Razorpay (Live)',
-              };
-
-              sessionStorage.setItem('artsy_confirmed_order', JSON.stringify(confirmedOrder));
-              sessionStorage.setItem('artsy_confirmed_quote', JSON.stringify(quote));
-
-              try {
-                const storedQuotes = JSON.parse(localStorage.getItem('artsy_quotes') || '[]');
-                storedQuotes.push(quote);
-                localStorage.setItem('artsy_quotes', JSON.stringify(storedQuotes));
-                const storedLedger = JSON.parse(localStorage.getItem('artsy_financial_ledger') || '[]');
-                storedLedger.push(...ledger);
-                localStorage.setItem('artsy_financial_ledger', JSON.stringify(storedLedger));
-              } catch { /* ignore */ }
-
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.success) {
+              alert(verifyData.error || 'Payment verification failed. Please contact support.');
               setIsProcessing(false);
-              router.push(`/book/confirmation?orderId=${orderId}`);
-            } catch (vErr) {
-              console.error('Signature verification error:', vErr);
-              alert('Error verifying payment response. Please contact support.');
-              setIsProcessing(false);
+              return;
             }
+
+            // Payment successfully verified by server — store confirmation
+            const confirmedOrder = {
+              orderId,
+              razorpayOrderId,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+              clientName,
+              clientPhone,
+              clientEmail,
+              bookingData,
+              paidAt: new Date().toISOString(),
+              paymentStatus: 'captured',
+              gateway: 'Razorpay (Live)',
+            };
+
+            sessionStorage.setItem('artsy_confirmed_order', JSON.stringify(confirmedOrder));
+            sessionStorage.setItem('artsy_confirmed_quote', JSON.stringify(quote));
+
+            try {
+              const storedQuotes = JSON.parse(localStorage.getItem('artsy_quotes') || '[]');
+              storedQuotes.push(quote);
+              localStorage.setItem('artsy_quotes', JSON.stringify(storedQuotes));
+              const storedLedger = JSON.parse(localStorage.getItem('artsy_financial_ledger') || '[]');
+              storedLedger.push(...ledger);
+              localStorage.setItem('artsy_financial_ledger', JSON.stringify(storedLedger));
+            } catch { /* ignore */ }
+
+            setIsProcessing(false);
+            router.push(`/book/confirmation?orderId=${orderId}`);
+          } catch (vErr) {
+            console.error('Signature verification error:', vErr);
+            alert('Error verifying payment response. Please contact support.');
+            setIsProcessing(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            // User closed Razorpay modal — do NOT confirm order, leave as pending
+            console.log('[Razorpay Modal Dismissed] Order remains pending.');
+            setIsProcessing(false);
           },
-          modal: {
-            ondismiss: function () {
-              setIsProcessing(false);
-            },
-          },
-        });
+        },
+      });
 
-        rzp.on('payment.failed', function (failResp: any) {
-          console.error('[Razorpay Payment Failed]', failResp);
-          alert(failResp?.error?.description || 'Payment was unsuccessful. Please try again.');
-          setIsProcessing(false);
-        });
-
-        rzp.open();
-      } else {
-        // Mock/Demo mode — simulate successful payment after short delay
-        await new Promise((resolve) => setTimeout(resolve, 1200));
-
-        const confirmedOrder = {
-          orderId,
-          razorpayOrderId,
-          clientName,
-          clientPhone,
-          clientEmail,
-          bookingData,
-          paidAt: new Date().toISOString(),
-          paymentStatus: 'captured',
-          gateway: mode === 'live' ? 'Razorpay (SDK not loaded)' : 'Razorpay (Mock Demo)',
-        };
-
-        sessionStorage.setItem('artsy_confirmed_order', JSON.stringify(confirmedOrder));
-        sessionStorage.setItem('artsy_confirmed_quote', JSON.stringify(quote));
-
-        try {
-          const storedQuotes = JSON.parse(localStorage.getItem('artsy_quotes') || '[]');
-          storedQuotes.push(quote);
-          localStorage.setItem('artsy_quotes', JSON.stringify(storedQuotes));
-          const storedLedger = JSON.parse(localStorage.getItem('artsy_financial_ledger') || '[]');
-          storedLedger.push(...ledger);
-          localStorage.setItem('artsy_financial_ledger', JSON.stringify(storedLedger));
-        } catch { /* ignore */ }
-
+      rzp.on('payment.failed', function (failResp: any) {
+        console.error('[Razorpay Payment Failed]', failResp);
+        alert(failResp?.error?.description || 'Payment was unsuccessful. Please try again.');
         setIsProcessing(false);
-        router.push(`/book/confirmation?orderId=${orderId}`);
-      }
+      });
+
+      rzp.open();
     } catch (err) {
       console.error('Checkout error:', err);
       alert('Payment processing failed. Please try again.');

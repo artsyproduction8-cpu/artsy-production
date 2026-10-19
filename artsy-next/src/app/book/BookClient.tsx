@@ -296,24 +296,25 @@ export default function BookClient() {
     setOtp(['1', '2', '3', '4', '5', '6']);
   };
 
-  const handleSimulatePayment = () => {
+  const handleProceedToCheckout = () => {
     if (!audioUrl || !audioUrl.trim()) {
       alert('Please provide a Music Reference or Video Link (Mandatory)');
       document.getElementById('music-reference-input')?.focus();
       return;
     }
     setIsProcessing(true);
-    const orderId = generateBookingOrderId();
     const effectiveMobile = isAuthenticated && user ? (user.phone || mobile || '') : mobile;
     const bookingPayload = {
-      orderId,
       bookingData: {
         service: category,
+        serviceKey: category,
         serviceName: `${categoriesList.find((c) => c.key === category)?.title || category} — ${activeSub.label}`,
         subCategoryId: activeSub.id,
         duration: activeSub.duration,
+        cameraAngle: angles,
         angles,
         turnaround,
+        isRush: turnaround === 'rush' || turnaround === 'priority',
         audioUrl: audioUrl.trim(),
         additionalUrls: additionalUrls.map((u) => u.trim()).filter(Boolean),
         referenceUrls: [audioUrl.trim(), ...additionalUrls.map((u) => u.trim()).filter(Boolean)],
@@ -326,6 +327,15 @@ export default function BookClient() {
         clientName: isAuthenticated && user ? (user.full_name || 'Client') : undefined,
         preferredCreatorId,
         preferredCreatorName,
+        requirements: {
+          category,
+          subCategory: activeSub.id,
+          angles,
+          turnaround,
+          hasRawFootage,
+          musicReferenceUrl: audioUrl.trim(),
+          notes,
+        },
         priceBreakdown: {
           baseCost: baseServiceCost,
           angleCost,
@@ -335,13 +345,11 @@ export default function BookClient() {
       },
     };
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('artsy_confirmed_order', JSON.stringify(bookingPayload));
+      sessionStorage.setItem('artsy_active_booking', JSON.stringify(bookingPayload));
       localStorage.setItem('artsy_active_booking', JSON.stringify(bookingPayload));
     }
-    setTimeout(() => {
-      setIsProcessing(false);
-      router.push(`/book/confirmation?orderId=${orderId}`);
-    }, 900);
+    setIsProcessing(false);
+    router.push('/book/checkout');
   };
 
   return (
@@ -817,10 +825,10 @@ export default function BookClient() {
                         type="button"
                         id="auth-confirm-booking-btn"
                         disabled={isProcessing}
-                        onClick={handleSimulatePayment}
+                        onClick={handleProceedToCheckout}
                         className="w-full py-3.5 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50 mt-1 flex items-center justify-center gap-2"
                       >
-                        {isProcessing ? 'Confirming Booking...' : 'Confirm & Book Project →'}
+                        {isProcessing ? 'Proceeding...' : 'Proceed to Checkout →'}
                       </button>
                     </div>
                   ) : (
@@ -893,10 +901,10 @@ export default function BookClient() {
                           <button
                             type="button"
                             disabled={isProcessing}
-                            onClick={handleSimulatePayment}
+                            onClick={handleProceedToCheckout}
                             className="w-full py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50 mt-2"
                           >
-                            {isProcessing ? 'Confirming Booking...' : 'Confirm Booking'}
+                            {isProcessing ? 'Proceeding...' : 'Proceed to Checkout →'}
                           </button>
                         </div>
                       )}
@@ -926,7 +934,7 @@ export default function BookClient() {
             disabled={isProcessing}
             onClick={() => {
               if (isAuthenticated) {
-                handleSimulatePayment();
+                handleProceedToCheckout();
               } else {
                 const el = document.getElementById('booking-mobile-input');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -934,7 +942,7 @@ export default function BookClient() {
             }}
             className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
           >
-            {isProcessing ? 'Confirming...' : isAuthenticated ? 'Confirm & Book →' : 'Checkout Details ↓'}
+            {isProcessing ? 'Proceeding...' : isAuthenticated ? 'Proceed to Checkout →' : 'Checkout Details ↓'}
           </button>
         </div>
 

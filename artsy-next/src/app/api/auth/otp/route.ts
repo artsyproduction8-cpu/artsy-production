@@ -199,7 +199,9 @@ export async function POST(request: NextRequest) {
       if (isSupabaseConfigured && dbClient) {
         try {
           let userQuery = dbClient.from('users').select('*');
-          if (cleanEmail) {
+          if (cleanEmail && cleanPhone) {
+            userQuery = userQuery.or(`email.eq.${cleanEmail},phone.eq.+91${cleanPhone},phone.eq.91${cleanPhone},phone.eq.${cleanPhone}`);
+          } else if (cleanEmail) {
             userQuery = userQuery.eq('email', cleanEmail);
           } else {
             userQuery = userQuery.or(`phone.eq.+91${cleanPhone},phone.eq.91${cleanPhone},phone.eq.${cleanPhone}`);
@@ -291,32 +293,37 @@ export async function POST(request: NextRequest) {
       const finalRole: 'client' | 'freelancer' | 'admin' | 'super_admin' =
         isSuperAdminIdentifier ? 'super_admin' : (resolvedUser.role || 'client');
 
-      let onboarding_status: 'pending' | 'approved' | 'rejected' | null = null;
+      let onboarding_status: 'pending' | 'approved' | 'rejected' | 'pending_review' | null = null;
       let tracking_id: string | null = null;
       let rejection_reason: string | null = null;
       let rejected_at: string | null = null;
 
       if (finalRole === 'freelancer') {
         try {
-          if (isSupabaseConfigured && supabase && resolvedUser.id) {
-            const { data: profile } = await supabase
+          if (isSupabaseConfigured && dbClient && resolvedUser.id) {
+            const { data: profile } = await dbClient
               .from('creator_profiles')
               .select('*')
               .eq('id', resolvedUser.id)
               .maybeSingle();
 
             if (profile) {
-              const rawStatus = profile.approval_status || 'pending';
+              const rawStatus = profile.onboarding_status || profile.approval_status || 'pending';
               if (rawStatus === 'approved') {
                 onboarding_status = 'approved';
               } else if (rawStatus === 'rejected') {
                 onboarding_status = 'rejected';
                 rejection_reason = profile.rejection_reason || null;
                 rejected_at = profile.rejected_at || profile.updated_at || new Date().toISOString();
+              } else if (rawStatus === 'pending_review' || rawStatus === 'pending') {
+                onboarding_status = rawStatus as any;
               } else {
-                onboarding_status = 'pending';
+                onboarding_status = 'pending_review';
               }
               tracking_id = profile.tracking_id || (profile as any).trackingId || (resolvedUser as any).tracking_id || `ART-2026-VET-${String(resolvedUser.id).replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase().padStart(4, '0')}`;
+              if (!resolvedUser.full_name && profile.public_display_name) {
+                resolvedUser.full_name = profile.public_display_name;
+              }
             }
           }
         } catch (pErr) {
@@ -392,15 +399,26 @@ export async function POST(request: NextRequest) {
           phone: userPayload.phone,
           email: userPayload.email,
           full_name: userPayload.full_name,
+          display_name: resolvedUser.display_name || null,
+          studio_details: resolvedUser.studio_details || null,
+          avatar_url: resolvedUser.avatar_url || null,
+          status: resolvedUser.status || 'active',
           onboarded: userPayload.onboarded,
           onboarding_status: userPayload.onboarding_status,
           tracking_id: userPayload.tracking_id,
           rejection_reason: userPayload.rejection_reason,
           rejected_at: userPayload.rejected_at,
+          created_at: resolvedUser.created_at || new Date().toISOString(),
+          updated_at: resolvedUser.updated_at || new Date().toISOString(),
         },
       });
 
-      const signedCookie = signAuthCookieValue(userPayload);
+      // Issue minimal JWT auth cookie containing ONLY id, role, token_version, and exp
+      const signedCookie = signAuthCookieValue({
+        id: String(resolvedUser.id),
+        role: finalRole,
+        token_version: Number(resolvedUser.token_version && Number(resolvedUser.token_version) >= 2 ? resolvedUser.token_version : 2),
+      });
       response.cookies.set(AUTH_COOKIE_NAME, signedCookie, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',

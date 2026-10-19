@@ -16,17 +16,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
   }
 
-  const { full_name } = body;
+  const { full_name, display_name, studio_details, avatar_url } = body;
 
-  if (!full_name || typeof full_name !== 'string' || full_name.trim().length < 2) {
-    return NextResponse.json({ error: 'Full name is required' }, { status: 400 });
+  const updates: Record<string, any> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (full_name !== undefined) {
+    if (typeof full_name !== 'string' || full_name.trim().length < 2) {
+      return NextResponse.json({ error: 'Full name must be at least 2 characters' }, { status: 400 });
+    }
+    const trimmedName = full_name.trim();
+    if (trimmedName.length > 100) {
+      return NextResponse.json({ error: 'Full name must not exceed 100 characters' }, { status: 400 });
+    }
+    updates.full_name = trimmedName;
   }
 
-  const trimmedName = full_name.trim();
+  if (display_name !== undefined) {
+    updates.display_name = typeof display_name === 'string' ? display_name.trim() : null;
+  }
 
-  // L4: Enforce max length on name
-  if (trimmedName.length > 100) {
-    return NextResponse.json({ error: 'Full name must not exceed 100 characters' }, { status: 400 });
+  if (studio_details !== undefined && typeof studio_details === 'object') {
+    updates.studio_details = studio_details;
+  }
+
+  if (avatar_url !== undefined && typeof avatar_url === 'string') {
+    updates.avatar_url = avatar_url;
   }
 
   const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : supabase;
@@ -34,10 +50,7 @@ export async function POST(request: Request) {
   if (dbClient && typeof dbClient.from === 'function') {
     const { error } = await dbClient
       .from('users')
-      .update({
-        full_name: trimmedName,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updates)
       .eq('id', authUser.id);
 
     if (error) {
@@ -46,12 +59,12 @@ export async function POST(request: Request) {
     }
   }
 
-  const response = NextResponse.json({ success: true });
-  const updatedPayload: AuthUserPayload = {
-    ...authUser,
-    full_name: trimmedName,
-  };
-  const signedCookie = signAuthCookieValue(updatedPayload);
+  const response = NextResponse.json({ success: true, updates });
+  const signedCookie = signAuthCookieValue({
+    id: authUser.id,
+    role: authUser.role,
+    token_version: authUser.token_version,
+  });
   response.cookies.set(AUTH_COOKIE_NAME, signedCookie, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',

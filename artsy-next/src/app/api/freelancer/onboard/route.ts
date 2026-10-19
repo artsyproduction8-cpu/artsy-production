@@ -39,34 +39,56 @@ export async function POST(req: NextRequest) {
     const encryptedPan = cleanPan ? encryptPII(cleanPan) : null;
 
     // 1. Ensure user and creator profile exist in Supabase with status = 'pending'
-    if (supabase && typeof supabase.from === 'function') {
+    const { supabaseAdmin } = await import('@/lib/supabase');
+    const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : supabase;
+
+    if (dbClient && typeof dbClient.from === 'function') {
       try {
-        const { data: existingUser } = await supabase
+        const { data: existingUser } = await dbClient
           .from('users')
-          .select('id')
+          .select('id, full_name')
           .eq('id', candidateUserId)
           .maybeSingle();
 
+        const resolvedName = legalName || alias || null;
+
         if (!existingUser) {
-          await supabase.from('users').insert({
+          await dbClient.from('users').insert({
             id: candidateUserId,
             email: candidateEmail,
             phone: candidatePhone,
-            full_name: legalName || alias || null,
+            full_name: resolvedName,
             role: 'freelancer',
             status: 'active',
+            onboarded: true,
+            updated_at: new Date().toISOString(),
           });
+        } else {
+          await dbClient.from('users').update({
+            full_name: resolvedName || existingUser.full_name,
+            role: 'freelancer',
+            onboarded: true,
+            updated_at: new Date().toISOString(),
+          }).eq('id', candidateUserId);
         }
 
-        await supabase.from('creator_profiles').upsert([
+        const reelUrls = Array.isArray(body.reels)
+          ? body.reels.map((r: any) => (typeof r === 'string' ? r : r.url)).filter(Boolean)
+          : [];
+
+        await dbClient.from('creator_profiles').upsert([
           {
             id: candidateUserId,
             user_id: candidateUserId,
+            tracking_id: trackingId,
             bio: philosophy || 'Creative Editor',
             skills: Array.isArray(languages) ? languages : ['4K Color Grading'],
             software: Array.isArray(software) ? software : ['DaVinci Resolve Studio'],
             approval_status: 'pending',
-            onboarding_status: 'pending',
+            onboarding_status: 'pending_review',
+            portfolio_url: body.showreelUrl || null,
+            sample_links: reelUrls,
+            public_display_name: alias || legalName || null,
             pan_number: encryptedPan,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),

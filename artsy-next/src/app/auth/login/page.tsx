@@ -501,13 +501,25 @@ function LoginFormContent() {
         role: serverRole, // ← ALWAYS from server
         phone: data.user?.phone || `+91${cleanDigits}`,
         email: data.user?.email || cleanEmail,
-        full_name: data.user?.full_name || (serverRole === 'freelancer' ? 'Creator Candidate' : ''),
+        full_name: data.user?.full_name || '',
+        display_name: data.user?.display_name || '',
+        avatar_url: data.user?.avatar_url || '',
         onboarded: data.user?.onboarded ?? false,
         onboarding_status: data.user?.onboarding_status || null,
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        tracking_id: data.user?.tracking_id || null,
+        rejection_reason: data.user?.rejection_reason || null,
+        rejected_at: data.user?.rejected_at || null,
+        status: data.user?.status || 'active',
+        created_at: data.user?.created_at || new Date().toISOString(),
+        updated_at: data.user?.updated_at || new Date().toISOString(),
       };
+
+      if (data.user?.studio_details) {
+        (verifiedUser as any).studio_details = data.user.studio_details;
+        try {
+          localStorage.setItem('artsy_client_profile', JSON.stringify(data.user.studio_details));
+        } catch {}
+      }
 
       setCurrentUser(verifiedUser);
 

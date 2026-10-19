@@ -91,7 +91,7 @@ const SEARCH_DIRECTORY: SearchEntry[] = [
   },
   {
     id: 'portal-review',
-    title: 'Review Drafts Room',
+    title: 'Review Room',
     category: 'Client Portal',
     href: '/client/review',
     keywords: ['review', 'draft', 'feedback', 'revision', 'cut', 'approve'],
@@ -105,21 +105,21 @@ const SEARCH_DIRECTORY: SearchEntry[] = [
   },
   {
     id: 'portal-invoices',
-    title: 'Invoices & Receipts',
+    title: 'Invoices',
     category: 'Client Portal',
     href: '/client/invoices',
     keywords: ['invoice', 'receipt', 'tax', 'gst', 'bill', 'payment'],
   },
   {
     id: 'portal-files',
-    title: 'Files & Footage Storage',
+    title: 'Files Storage',
     category: 'Client Portal',
     href: '/client/files',
     keywords: ['files', 'footage', 'storage', 'raw', 'b2', 'drive'],
   },
   {
     id: 'portal-profile',
-    title: 'Profile & Studio Workspace',
+    title: 'Profile & Workspace',
     category: 'Client Portal',
     href: '/client/profile',
     keywords: ['profile', 'studio', 'logo', 'otp', 'whatsapp', 'email'],
@@ -150,19 +150,19 @@ const SEARCH_DIRECTORY: SearchEntry[] = [
 const CLIENT_PAGES = [
   { label: 'Dashboard', href: '/client' },
   { label: 'My Projects', href: '/client/projects' },
-  { label: 'Review Drafts', href: '/client/review' },
+  { label: 'Review', href: '/client/review' },
   { label: 'Final Downloads', href: '/client/masters' },
-  { label: 'Invoices & Receipts', href: '/client/invoices' },
-  { label: 'Files & Footage', href: '/client/files' },
-  { label: 'Profile & Studio', href: '/client/profile' },
+  { label: 'Invoices', href: '/client/invoices' },
+  { label: 'Files', href: '/client/files' },
+  { label: 'Profile', href: '/client/profile' },
   { label: 'Help & Support', href: '/client/support' },
 ];
 
 const CREATOR_PAGES = [
   { label: 'Active Projects', href: '/freelancer' },
-  { label: 'Portfolio Showcase', href: '/freelancer/portfolio' },
-  { label: 'Earnings & Payouts', href: '/freelancer/payouts' },
-  { label: 'Profile & Skills', href: '/freelancer/profile' },
+  { label: 'Portfolio', href: '/freelancer/portfolio' },
+  { label: 'Earnings', href: '/freelancer/payouts' },
+  { label: 'Profile', href: '/freelancer/profile' },
   { label: 'Agreement & NDA', href: '/freelancer/agreement' },
 ];
 
@@ -277,14 +277,17 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
     }
   };
 
+  const executeSearch = (query: string) => {
+    const q = query.trim();
+    if (!q) return;
+    setIsSearchOpen(false);
+    if (onSearch) onSearch(q);
+    router.push(`/search?q=${encodeURIComponent(q)}`);
+  };
+
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      if (filteredResults.length > 0) {
-        handleSelectResult(filteredResults[0]);
-      } else if (onSearch) {
-        onSearch(searchVal);
-        setIsSearchOpen(false);
-      }
+      executeSearch(searchVal);
     }
   };
 
@@ -403,13 +406,22 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
 
             {/* Small live matching suggestions dropdown under the input */}
             {isSearchOpen && searchVal.trim() && (
-              <div className="absolute top-10 right-0 w-60 sm:w-64 bg-[#18181B] border border-white/15 rounded-xl shadow-2xl p-1.5 z-50 text-white animate-fade-in">
-                <div className="text-[9px] font-bold font-mono text-white/50 px-2 py-1 uppercase tracking-wider">Results</div>
+              <div className="absolute top-10 right-0 w-64 sm:w-72 bg-[#18181B] border border-white/15 rounded-xl shadow-2xl p-2 z-50 text-white animate-fade-in">
+                <div className="flex items-center justify-between text-[9px] font-bold font-mono text-white/50 px-2 py-1 uppercase tracking-wider">
+                  <span>Suggestions</span>
+                  <button
+                    type="button"
+                    onClick={() => executeSearch(searchVal)}
+                    className="text-blue-400 hover:text-blue-300 normal-case font-sans text-xs underline cursor-pointer"
+                  >
+                    View all
+                  </button>
+                </div>
                 <div className="max-h-52 overflow-y-auto space-y-0.5">
                   {filteredResults.length === 0 ? (
-                    <div className="px-2 py-3 text-center text-xs text-[#86868B]">No matches found</div>
+                    <div className="px-2 py-2 text-xs text-[#86868B]">Press Enter to search entire database</div>
                   ) : (
-                    filteredResults.slice(0, 5).map((item) => (
+                    filteredResults.slice(0, 4).map((item) => (
                       <button
                         key={item.id}
                         type="button"
@@ -425,6 +437,16 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
                     ))
                   )}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => executeSearch(searchVal)}
+                  className="w-full mt-1.5 pt-1.5 border-t border-white/10 text-center text-xs text-blue-400 hover:text-blue-300 font-medium py-1 rounded hover:bg-white/5 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Search all for &quot;{searchVal.trim()}&quot; →
+                </button>
               </div>
             )}
           </div>
@@ -572,7 +594,37 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
 
       {/* Mobile Dropdown Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#0A0A0A] border-b border-white/10 px-6 py-4 space-y-3">
+        <div className="md:hidden bg-[#0A0A0A] border-b border-white/10 px-6 py-4 space-y-4">
+          {/* Mobile Search Bar */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const q = searchVal.trim();
+              if (q) {
+                setIsMobileMenuOpen(false);
+                router.push(`/search?q=${encodeURIComponent(q)}`);
+              }
+            }}
+            className="flex items-center bg-[#18181B] border border-white/20 rounded-lg px-3 py-2"
+          >
+            <svg className="w-4 h-4 text-white/50 shrink-0 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              value={searchVal}
+              onChange={(e) => setSearchVal(e.target.value)}
+              placeholder="Search services, creators, styles..."
+              className="bg-transparent border-none text-xs text-white placeholder-white/40 focus:outline-none w-full"
+            />
+            <button
+              type="submit"
+              className="text-xs font-semibold text-blue-400 hover:text-blue-300 ml-2 shrink-0 cursor-pointer"
+            >
+              Search
+            </button>
+          </form>
+
           <Link
             href="/book"
             onClick={() => setIsMobileMenuOpen(false)}

@@ -1,0 +1,115 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { supabaseAdmin, supabase, isSupabaseConfigured } from '@/lib/supabase';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
+  try {
+    const authUser = await getAuthenticatedUser(request);
+    if (!authUser || !authUser.id) {
+      return NextResponse.json(
+        { authenticated: false, user: null, error: 'Unauthorized' },
+        {
+          status: 401,
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          },
+        }
+      );
+    }
+
+    const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : supabase;
+    let dbUser: any = null;
+
+    if (isSupabaseConfigured && dbClient && typeof dbClient.from === 'function') {
+      try {
+        const { data, error } = await dbClient
+          .from('users')
+          .select('id, email, phone, full_name, display_name, role, status, avatar_url, onboarded, studio_details, created_at, updated_at, token_version')
+          .eq('id', authUser.id)
+          .maybeSingle();
+
+        if (!error && data) {
+          dbUser = data;
+        }
+      } catch (err) {
+        console.warn('[api/user/me] DB query warning:', err);
+      }
+    }
+
+    // Build the resolved fresh user object
+    const finalRole = dbUser?.role || authUser.role || 'client';
+    const resolvedUser: any = {
+      id: dbUser?.id || authUser.id,
+      role: finalRole,
+      email: dbUser?.email || authUser.email || '',
+      phone: dbUser?.phone || authUser.phone || '',
+      full_name: dbUser?.full_name ?? authUser.full_name ?? null,
+      display_name: dbUser?.display_name || authUser.display_name || null,
+      avatar_url: dbUser?.avatar_url || authUser.avatar_url || '',
+      status: dbUser?.status || 'active',
+      onboarded: dbUser?.onboarded !== undefined ? Boolean(dbUser.onboarded) : Boolean(authUser.onboarded),
+      studio_details: dbUser?.studio_details || null,
+      created_at: dbUser?.created_at || new Date().toISOString(),
+      updated_at: dbUser?.updated_at || new Date().toISOString(),
+    };
+
+    // If freelancer, fetch creator profile details
+    if (finalRole === 'freelancer' && isSupabaseConfigured && dbClient && typeof dbClient.from === 'function') {
+      try {
+        const { data: creatorProfile } = await dbClient
+          .from('creator_profiles')
+          .select('*')
+          .eq('id', resolvedUser.id)
+          .maybeSingle();
+
+        if (creatorProfile) {
+          resolvedUser.creator_profile = creatorProfile;
+          resolvedUser.onboarding_status =
+            creatorProfile.onboarding_status ||
+            (creatorProfile.approval_status === 'approved'
+              ? 'approved'
+              : creatorProfile.approval_status === 'rejected'
+              ? 'rejected'
+              : 'pending_review');
+          resolvedUser.tracking_id = creatorProfile.tracking_id || null;
+          resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
+          resolvedUser.rejected_at = creatorProfile.rejected_at || null;
+          resolvedUser.bio = creatorProfile.bio || null;
+          resolvedUser.skills = creatorProfile.skills || [];
+          resolvedUser.software = creatorProfile.software || [];
+          resolvedUser.languages = creatorProfile.languages || [];
+          resolvedUser.portfolio_url = creatorProfile.portfolio_url || null;
+          resolvedUser.public_display_name = creatorProfile.public_display_name || null;
+          if (!resolvedUser.full_name && creatorProfile.public_display_name) {
+            resolvedUser.full_name = creatorProfile.public_display_name;
+          }
+        }
+      } catch (pErr) {
+        console.warn('[api/user/me] Creator profile lookup warning:', pErr);
+      }
+    }
+
+    return NextResponse.json(
+      {
+        authenticated: true,
+        user: resolvedUser,
+      },
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      }
+    );
+  } catch (error: any) {
+    console.error('[api/user/me] Exception:', error);
+    return NextResponse.json(
+      { authenticated: false, user: null, error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

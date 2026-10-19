@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../../components/marketing/Navbar';
 import Footer from '../../components/marketing/Footer';
-import { getCurrentUser, setCurrentUser, recordAgreementAcceptance } from '@/lib/auth';
+import { getCurrentUser, setCurrentUser, recordAgreementAcceptance, useAuth } from '@/lib/auth';
 
 export default function FreelancerOnboarding() {
   const router = useRouter();
+  const { user } = useAuth();
 
   const [alias, setAlias] = useState('');
   const [showreelUrl, setShowreelUrl] = useState('');
@@ -34,6 +35,33 @@ export default function FreelancerOnboarding() {
   const [submitting, setSubmitting] = useState(false);
 
   const [trackingId, setTrackingId] = useState('ART-2026-VET-982');
+
+  // Pre-fill or redirect based on persistent server onboarding status
+  useEffect(() => {
+    if (user) {
+      if (user.onboarding_status === 'approved') {
+        router.replace('/freelancer');
+        return;
+      }
+      if (user.onboarding_status === 'pending' || user.onboarding_status === 'pending_review') {
+        router.replace('/freelancer/pending-approval');
+        return;
+      }
+      if (user.onboarding_status === 'rejected') {
+        router.replace('/freelancer/rejected');
+        return;
+      }
+      if (user.full_name && !legalName) {
+        setLegalName(user.full_name);
+      }
+      if (user.display_name && !alias) {
+        setAlias(user.display_name);
+      }
+      if (user.tracking_id) {
+        setTrackingId(user.tracking_id);
+      }
+    }
+  }, [user, router]);
 
   const toggleSoftware = (item: string) => {
     setSoftware((prev) =>

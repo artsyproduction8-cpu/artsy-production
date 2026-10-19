@@ -128,15 +128,18 @@ async function computeWebHmac(secret: string, data: string): Promise<string> {
 }
 
 /**
- * Signs an auth user payload using HMAC-SHA256 (Node.js crypto).
+ * Signs a minimal auth user payload using HMAC-SHA256 (Node.js crypto).
  * Format: {base64(JSON)}.{hmac_signature}
+ * Strictly contains ONLY: id, role, token_version, exp (profile data is fetched from DB via /api/user/me).
  */
 export function signAuthCookieValue(payload: AuthUserPayload): string {
-  const payloadWithExp: AuthUserPayload = {
-    ...payload,
+  const minimalPayload: AuthUserPayload = {
+    id: String(payload.id),
+    role: payload.role,
+    token_version: Number(payload.token_version) >= 2 ? Number(payload.token_version) : 2,
     exp: payload.exp || Date.now() + SESSION_DURATION_MS,
   };
-  const jsonStr = JSON.stringify(payloadWithExp);
+  const jsonStr = JSON.stringify(minimalPayload);
   const payloadBase64 = Buffer.from(jsonStr, 'utf-8').toString('base64');
   const secret = getSigningSecret();
   const signature = createHmac('sha256', secret).update(payloadBase64).digest('hex');

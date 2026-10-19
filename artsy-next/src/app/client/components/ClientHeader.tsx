@@ -76,15 +76,15 @@ export default function ClientHeader() {
   const CLIENT_PAGES = [
     { label: 'Dashboard', href: '/client' },
     { label: 'My Projects', href: '/client/projects' },
-    { label: 'Review Drafts', href: '/client/review' },
+    { label: 'Review', href: '/client/review' },
     { label: 'Final Downloads', href: '/client/masters' },
-    { label: 'Invoices & Receipts', href: '/client/invoices' },
-    { label: 'Files & Footage', href: '/client/files' },
-    { label: 'Profile & Studio', href: '/client/profile' },
+    { label: 'Invoices', href: '/client/invoices' },
+    { label: 'Files', href: '/client/files' },
+    { label: 'Profile', href: '/client/profile' },
     { label: 'Help & Support', href: '/client/support' },
   ];
 
-  const clientName = user?.full_name || 'Client';
+  const clientName = user?.display_name || user?.full_name || 'Client';
   const clientInitials = clientName.trim()
     ? clientName
         .split(/\s+/)

@@ -428,8 +428,8 @@ export default function SearchClient() {
                     {/* Bottom Pricing & Actions */}
                     <div className="border-t border-[#E5E5E7] pt-4 mt-2 flex items-center justify-between">
                       <div>
-                        <div className="text-[10px] text-[#86868B] uppercase font-mono tracking-wider">Starting From</div>
-                        <div className="text-lg font-extrabold text-[#1D1D1F]">
+                        <div className="text-[10px] text-[#86868B] uppercase font-mono tracking-wider font-semibold">Package Rate</div>
+                        <div className="text-xl font-extrabold text-[#1D1D1F]">
                           {service.base_price_formatted || (service.base_price ? `₹${service.base_price.toLocaleString('en-IN')}` : 'Custom Quote')}
                         </div>
                       </div>
@@ -443,7 +443,7 @@ export default function SearchClient() {
                         </Link>
                         <Link
                           href={service.book_url || `/book?category=${service.category}&sub=${service.id}`}
-                          className="px-4 py-2 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-xs inline-flex items-center gap-1 cursor-pointer"
+                          className="px-3.5 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-xs inline-flex items-center gap-1 cursor-pointer"
                         >
                           Book Now →
                         </Link>

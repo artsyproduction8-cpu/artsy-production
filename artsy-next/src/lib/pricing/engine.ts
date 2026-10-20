@@ -24,6 +24,13 @@ import {
   FinancialWaterfall,
   DEFAULT_PLATFORM_CONFIG
 } from '../financial/engine';
+import {
+  DEFAULT_PRICING_MATRIX,
+  DEFAULT_CAMERA_ANGLES,
+  DEFAULT_DELIVERY_SLAS,
+  ServiceCategory,
+  ServiceProduct
+} from './catalog-matrix';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -82,18 +89,18 @@ export const DEFAULT_PRICING_RULES: Record<string, PricingRule> = {
     name: 'Wedding Films',
     category: 'wedding',
     description: 'Cinematic wedding highlight reels (3–5 min) and comprehensive documentary films.',
-    basePricePaise: 600000, // ₹6,000
+    basePricePaise: 500000, // ₹5,000 (Standard Highlight + Teaser package rate)
     baseDeliveryDays: 8,
     options: {
       cameraAngles: [
         { label: '1 Camera Angle (Single Shooter)', value: 1, costPaise: 0 },
-        { label: '2–3 Camera Angles (Multi-Cam Sync)', value: 2, costPaise: 200000 },
-        { label: '4+ Camera Angles (Full Multi-Cam & Drone)', value: 4, costPaise: 450000 }
+        { label: '2–3 Camera Angles (Multi-Cam Sync)', value: 2, costPaise: 80000 },
+        { label: '4+ Camera Angles (Full Multi-Cam & Drone)', value: 4, costPaise: 160000 }
       ],
       duration: [
-        { label: 'Teaser Reel (60–90 seconds)', value: 'teaser', costPaise: -100000 },
+        { label: 'Teaser Reel (60–90 seconds)', value: 'teaser', costPaise: -300000 },
         { label: 'Cinematic Highlight (3–5 minutes)', value: 'highlight', costPaise: 0 },
-        { label: 'Full Documentary Film (15–30 minutes)', value: 'documentary', costPaise: 500000 }
+        { label: 'Full Documentary Film (15–30 minutes)', value: 'documentary', costPaise: 300000 }
       ],
       formats: [
         { label: '16:9 4K Master', value: '16_9', costPaise: 0 },
@@ -101,8 +108,8 @@ export const DEFAULT_PRICING_RULES: Record<string, PricingRule> = {
         { label: 'Both 16:9 Master + 9:16 Vertical Cut', value: 'both', costPaise: 140000 }
       ],
       rushTurnaround: {
-        label: 'Priority Express Delivery (3–4 Days)',
-        costPaise: 250000,
+        label: 'Priority Express Delivery (4–5 Days)',
+        costPaise: 200000,
         days: 4
       }
     }
@@ -112,7 +119,7 @@ export const DEFAULT_PRICING_RULES: Record<string, PricingRule> = {
     name: 'Brand & UGC Reels',
     category: 'brand_ugc',
     description: 'High-retention talking heads, product hooks, sound design, and viral short-form.',
-    basePricePaise: 280000, // ₹2,800
+    basePricePaise: 300000, // ₹3,000
     baseDeliveryDays: 5,
     options: {
       variants: [
@@ -131,8 +138,8 @@ export const DEFAULT_PRICING_RULES: Record<string, PricingRule> = {
         { label: '9:16 + 1:1 + 16:9 Multi-Platform Pack', value: 'all', costPaise: 120000 }
       ],
       rushTurnaround: {
-        label: '24–48 Hour Express Delivery',
-        costPaise: 120000,
+        label: 'Priority 4-5 Days / Rush 48h Express',
+        costPaise: 200000,
         days: 2
       }
     }
@@ -142,7 +149,7 @@ export const DEFAULT_PRICING_RULES: Record<string, PricingRule> = {
     name: 'Store & Product Reels',
     category: 'store_product',
     description: 'E-commerce showcase reels with 3D cutaway graphics, feature spotlights, and conversions.',
-    basePricePaise: 380000, // ₹3,800
+    basePricePaise: 300000, // ₹3,000
     baseDeliveryDays: 6,
     options: {
       variants: [
@@ -160,7 +167,7 @@ export const DEFAULT_PRICING_RULES: Record<string, PricingRule> = {
       ],
       rushTurnaround: {
         label: '48-Hour Rush Delivery',
-        costPaise: 160000,
+        costPaise: 200000,
         days: 2
       }
     }
@@ -170,13 +177,13 @@ export const DEFAULT_PRICING_RULES: Record<string, PricingRule> = {
     name: 'Corporate & Event Videos',
     category: 'corporate_event',
     description: 'Multi-cam keynotes, summit recaps, brand anthems, and panel discussion edits.',
-    basePricePaise: 750000, // ₹7,500
+    basePricePaise: 350000, // ₹3,500
     baseDeliveryDays: 8,
     options: {
       cameraAngles: [
         { label: 'Single Camera Presentation', value: 1, costPaise: 0 },
-        { label: '2 Cameras (Speaker + Audience/Slides Sync)', value: 2, costPaise: 250000 },
-        { label: '3+ Multi-Cam Setup with Audio Master', value: 3, costPaise: 450000 }
+        { label: '2 Cameras (Speaker + Audience/Slides Sync)', value: 2, costPaise: 50000 },
+        { label: '3+ Multi-Cam Setup with Audio Master', value: 3, costPaise: 100000 }
       ],
       duration: [
         { label: 'Highlights / Recap Reel (2–3 minutes)', value: 'recap', costPaise: 0 },
@@ -185,7 +192,7 @@ export const DEFAULT_PRICING_RULES: Record<string, PricingRule> = {
       ],
       rushTurnaround: {
         label: 'Priority Event Turnaround (3 Days)',
-        costPaise: 300000,
+        costPaise: 200000,
         days: 3
       }
     }
@@ -223,6 +230,11 @@ export function savePricingRules(rules: Record<string, PricingRule>): void {
 }
 
 export interface ConfiguratorSelections {
+  category?: string;
+  subCategory?: string;
+  subCategoryId?: string;
+  angles?: 'single' | 'dual' | 'multicam' | string;
+  turnaround?: 'standard' | 'priority' | 'rush' | string;
   cameraAngleValue?: number;
   durationValue?: string;
   variantValue?: number;
@@ -232,6 +244,7 @@ export interface ConfiguratorSelections {
   notes?: string;
   rawDriveUrl?: string;
   driveUrl?: string;
+  [key: string]: unknown;
 }
 
 export interface AdjustmentItem {
@@ -307,8 +320,86 @@ export function calculateLivePrice(
   const adjustments: AdjustmentItem[] = [];
   let currentDeliveryDays = rule.baseDeliveryDays;
 
+  // 0. Canonical Catalog Matrix Resolution
+  const subCategoryInput = selections.subCategory || selections.subCategoryId;
+  let catalogCategory: ServiceCategory | undefined;
+  let catalogProduct: ServiceProduct | undefined;
+
+  const catKey = (selections.category || serviceKey || '').toLowerCase();
+  catalogCategory = DEFAULT_PRICING_MATRIX.find(
+    c => c.id.toLowerCase() === catKey || 
+         (catKey.includes('wedding') && c.id === 'wedding') || 
+         (catKey.includes('brand') && c.id === 'brand') || 
+         (catKey.includes('corp') && c.id === 'corporate') || 
+         (catKey.includes('personal') && c.id === 'personal')
+  );
+
+  if (subCategoryInput) {
+    const subLower = String(subCategoryInput).toLowerCase();
+    if (catalogCategory) {
+      catalogProduct = catalogCategory.products.find(
+        p => p.id.toLowerCase() === subLower || 
+             p.name.toLowerCase() === subLower || 
+             p.id.toLowerCase().includes(subLower) || 
+             subLower.includes(p.id.toLowerCase())
+      );
+    }
+    if (!catalogProduct) {
+      for (const cat of DEFAULT_PRICING_MATRIX) {
+        const found = cat.products.find(
+          p => p.id.toLowerCase() === subLower || 
+               p.name.toLowerCase() === subLower || 
+               p.id.toLowerCase().includes(subLower) || 
+               subLower.includes(p.id.toLowerCase())
+        );
+        if (found) {
+          catalogProduct = found;
+          if (!catalogCategory) catalogCategory = cat;
+          break;
+        }
+      }
+    }
+  } else {
+    // If no explicit subcategory passed, check if serviceKey matches a product directly
+    const sLower = serviceKey.toLowerCase();
+    for (const cat of DEFAULT_PRICING_MATRIX) {
+      const found = cat.products.find(p => p.id.toLowerCase() === sLower || p.name.toLowerCase() === sLower);
+      if (found) {
+        catalogProduct = found;
+        if (!catalogCategory) catalogCategory = cat;
+        break;
+      }
+    }
+  }
+
+  let effectiveBasePricePaise = rule.basePricePaise;
+  let resolvedServiceName = rule.name;
+
+  if (catalogProduct) {
+    effectiveBasePricePaise = catalogProduct.basePrice * 100;
+    resolvedServiceName = catalogCategory ? `${catalogCategory.title} — ${catalogProduct.name}` : catalogProduct.name;
+    currentDeliveryDays = Math.ceil((catalogProduct.slaHours || 168) / 24);
+  }
+
   // 1. Camera angles adjustment
-  if (rule.options.cameraAngles && selections.cameraAngleValue !== undefined) {
+  if (selections.angles) {
+    const isWeddingPersonal = Boolean(
+      (catalogCategory && (catalogCategory.id === 'wedding' || catalogCategory.id === 'personal')) ||
+      catKey.includes('wedding') ||
+      catKey.includes('personal')
+    );
+    const angleRule = DEFAULT_CAMERA_ANGLES.find(a => a.id === selections.angles);
+    if (angleRule) {
+      const angleCostRupees = isWeddingPersonal ? angleRule.costWeddingPersonal : angleRule.costBrandCorporate;
+      if (angleCostRupees > 0) {
+        adjustments.push({
+          name: angleRule.label,
+          costPaise: angleCostRupees * 100,
+          costRupees: angleCostRupees
+        });
+      }
+    }
+  } else if (rule.options.cameraAngles && selections.cameraAngleValue !== undefined) {
     const found = rule.options.cameraAngles.find(a => a.value === selections.cameraAngleValue);
     if (found && found.costPaise !== 0) {
       adjustments.push({
@@ -319,7 +410,35 @@ export function calculateLivePrice(
     }
   }
 
-  // 2. Duration adjustment
+  // 2. Turnaround / Delivery SLA adjustment
+  if (selections.turnaround) {
+    const isWeddingPersonal = Boolean(
+      (catalogCategory && (catalogCategory.id === 'wedding' || catalogCategory.id === 'personal')) ||
+      catKey.includes('wedding') ||
+      catKey.includes('personal')
+    );
+    const slaRule = DEFAULT_DELIVERY_SLAS.find(s => s.id === selections.turnaround);
+    if (slaRule) {
+      const slaCostRupees = isWeddingPersonal ? slaRule.costWeddingPersonal : slaRule.costBrandCorporate;
+      if (slaCostRupees > 0) {
+        adjustments.push({
+          name: slaRule.label,
+          costPaise: slaCostRupees * 100,
+          costRupees: slaCostRupees
+        });
+      }
+      currentDeliveryDays = Math.ceil(slaRule.hours / 24);
+    }
+  } else if (selections.isRush && rule.options.rushTurnaround) {
+    adjustments.push({
+      name: rule.options.rushTurnaround.label,
+      costPaise: rule.options.rushTurnaround.costPaise,
+      costRupees: paiseToRupees(rule.options.rushTurnaround.costPaise)
+    });
+    currentDeliveryDays = rule.options.rushTurnaround.days;
+  }
+
+  // 3. Duration adjustment (if durationValue provided)
   if (rule.options.duration && selections.durationValue) {
     const found = rule.options.duration.find(d => d.value === selections.durationValue);
     if (found && found.costPaise !== 0) {
@@ -331,7 +450,7 @@ export function calculateLivePrice(
     }
   }
 
-  // 3. Variants adjustment
+  // 4. Variants adjustment (if variantValue provided)
   if (rule.options.variants && selections.variantValue !== undefined) {
     const found = rule.options.variants.find(v => v.value === selections.variantValue);
     if (found && found.costPaise !== 0) {
@@ -343,7 +462,7 @@ export function calculateLivePrice(
     }
   }
 
-  // 4. Formats adjustment
+  // 5. Formats adjustment (if formatValue provided)
   if (rule.options.formats && selections.formatValue) {
     const found = rule.options.formats.find(f => f.value === selections.formatValue);
     if (found && found.costPaise !== 0) {
@@ -355,17 +474,7 @@ export function calculateLivePrice(
     }
   }
 
-  // 5. Rush turnaround adjustment
-  if (selections.isRush && rule.options.rushTurnaround) {
-    adjustments.push({
-      name: rule.options.rushTurnaround.label,
-      costPaise: rule.options.rushTurnaround.costPaise,
-      costRupees: paiseToRupees(rule.options.rushTurnaround.costPaise)
-    });
-    currentDeliveryDays = rule.options.rushTurnaround.days;
-  }
-
-  const rawSubtotalPaise = rule.basePricePaise + adjustments.reduce((acc, item) => acc + item.costPaise, 0);
+  const rawSubtotalPaise = effectiveBasePricePaise + adjustments.reduce((acc, item) => acc + item.costPaise, 0);
 
   // Guardrails
   const isBelowMinimum = rawSubtotalPaise < config.minOrderValue;
@@ -381,10 +490,10 @@ export function calculateLivePrice(
   validUntilDate.setDate(validUntilDate.getDate() + (config.quoteValidityDays || 7));
 
   return {
-    serviceName: rule.name,
+    serviceName: resolvedServiceName,
     serviceKey,
-    basePricePaise: rule.basePricePaise,
-    basePriceRupees: paiseToRupees(rule.basePricePaise),
+    basePricePaise: effectiveBasePricePaise,
+    basePriceRupees: paiseToRupees(effectiveBasePricePaise),
     adjustments,
     subtotalPaise: rawSubtotalPaise,
     subtotalRupees: paiseToRupees(rawSubtotalPaise),

@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth, getRoleHomePath } from '@/lib/auth';
+import { DEFAULT_PRICING_MATRIX } from '@/lib/pricing/catalog-matrix';
 
 interface NavbarProps {
   onSearch?: (term: string) => void;
@@ -18,34 +19,62 @@ interface SearchEntry {
   keywords: string[];
 }
 
-const SEARCH_DIRECTORY: SearchEntry[] = [
+const CATALOG_SERVICE_ENTRIES: SearchEntry[] = DEFAULT_PRICING_MATRIX.flatMap((cat) =>
+  cat.products
+    .filter((prod) => prod.active)
+    .map((prod) => ({
+      id: `svc-${cat.id}-${prod.id}`,
+      title: `${prod.name} (₹${prod.basePrice.toLocaleString('en-IN')})`,
+      category: `${cat.title} Services`,
+      href: `/book?category=${cat.id}&sub=${prod.id}`,
+      keywords: [
+        prod.name.toLowerCase(),
+        cat.title.toLowerCase(),
+        cat.id.toLowerCase(),
+        prod.duration.toLowerCase(),
+        ...(prod.deliverables || []).map((d) => d.toLowerCase()),
+        'cinematic',
+        'editing',
+        'video',
+      ],
+    }))
+);
+
+const STATIC_NAVIGATION_ENTRIES: SearchEntry[] = [
   {
-    id: 'svc-wedding',
-    title: 'Wedding Cinema Master Cut',
-    category: 'Services',
+    id: 'nav-services',
+    title: 'All Post-Production Services',
+    category: 'Catalog Overview',
     href: '/services',
-    keywords: ['wedding', 'film', 'trailer', 'teaser', 'marriage', 'cinema', 'edit'],
+    keywords: ['services', 'packages', 'pricing', 'overview', 'rates', 'video'],
   },
   {
-    id: 'svc-commercial',
-    title: 'Commercial & Brand Films',
-    category: 'Services',
-    href: '/services',
-    keywords: ['commercial', 'brand', 'ad', 'corporate', 'product', 'promo'],
+    id: 'nav-wedding',
+    title: 'Wedding Cinema Packages (From ₹2,000)',
+    category: 'Wedding Services',
+    href: '/services/wedding',
+    keywords: ['wedding', 'film', 'marriage', 'cinematic', 'teaser', 'highlight', 'story'],
   },
   {
-    id: 'svc-reels',
-    title: 'Short-Form UGC & 9:16 Reels',
-    category: 'Services',
-    href: '/services',
-    keywords: ['ugc', 'reel', 'vertical', '9:16', 'short', 'tiktok', 'instagram', 'shorts'],
+    id: 'nav-brand',
+    title: 'Brand & Commercial Video (From ₹1,500)',
+    category: 'Brand Services',
+    href: '/services/brand',
+    keywords: ['brand', 'commercial', 'product', 'fashion', 'ugc', 'social', 'ad'],
   },
   {
-    id: 'svc-color',
-    title: 'Cinematic Color Grading (Rec.709)',
-    category: 'Services',
-    href: '/services',
-    keywords: ['color', 'grading', 'lut', 'rec709', 'hdr', 'davinci'],
+    id: 'nav-corporate',
+    title: 'Corporate & Event Films (From ₹1,500)',
+    category: 'Corporate Services',
+    href: '/services/corporate',
+    keywords: ['corporate', 'keynote', 'event', 'presentation', 'interview', 'summit'],
+  },
+  {
+    id: 'nav-personal',
+    title: 'Personal & Lifestyle Films (From ₹1,000)',
+    category: 'Personal Services',
+    href: '/services/personal',
+    keywords: ['personal', 'travel', 'birthday', 'anniversary', 'baby shower', 'lifestyle'],
   },
   {
     id: 'creators-dir',
@@ -55,25 +84,11 @@ const SEARCH_DIRECTORY: SearchEntry[] = [
     keywords: ['creator', 'editor', 'freelancer', 'talent', 'hire', 'portfolio'],
   },
   {
-    id: 'creators-join',
-    title: 'Join Artsy Creator Network',
-    category: 'Creators',
-    href: '/auth/login?intent=freelancer',
-    keywords: ['apply', 'freelance', 'join', 'editor', 'job', 'work'],
-  },
-  {
-    id: 'port-reels',
-    title: 'Featured Video Reels (4K)',
+    id: 'port-work',
+    title: 'Official Video Showcase & Lightbox',
     category: 'Portfolio',
-    href: '/#featured-reels',
-    keywords: ['portfolio', 'reel', 'showcase', 'sample', 'demo', 'video'],
-  },
-  {
-    id: 'port-archive',
-    title: 'Verified Production Archive',
-    category: 'Portfolio',
-    href: '/#verified-production-archive',
-    keywords: ['archive', 'benchmark', 'deliverable', 'specs', 'case study', 'prores'],
+    href: '/work',
+    keywords: ['portfolio', 'work', 'sample', 'demo', 'video', 'watch', 'cinematic'],
   },
   {
     id: 'portal-dash',
@@ -81,20 +96,6 @@ const SEARCH_DIRECTORY: SearchEntry[] = [
     category: 'Client Portal',
     href: '/client',
     keywords: ['client', 'dashboard', 'portal', 'orders', 'active'],
-  },
-  {
-    id: 'portal-projects',
-    title: 'My Projects',
-    category: 'Client Portal',
-    href: '/client/projects',
-    keywords: ['projects', 'orders', 'tracking', 'timeline'],
-  },
-  {
-    id: 'portal-review',
-    title: 'Review Room',
-    category: 'Client Portal',
-    href: '/client/review',
-    keywords: ['review', 'draft', 'feedback', 'revision', 'cut', 'approve'],
   },
   {
     id: 'portal-masters',
@@ -132,19 +133,17 @@ const SEARCH_DIRECTORY: SearchEntry[] = [
     keywords: ['help', 'support', 'contact', 'faq'],
   },
   {
-    id: 'price-book',
-    title: 'Instant Booking & Price Estimator',
-    category: 'Pricing',
-    href: '/book',
-    keywords: ['book', 'price', 'quote', 'cost', 'estimate', 'order'],
-  },
-  {
     id: 'faq-sla',
     title: 'SLA Guarantees & FAQs',
     category: 'FAQ',
     href: '/#faq-section',
     keywords: ['faq', 'question', 'sla', 'turnaround', 'refund', 'policy'],
   },
+];
+
+const SEARCH_DIRECTORY: SearchEntry[] = [
+  ...CATALOG_SERVICE_ENTRIES,
+  ...STATIC_NAVIGATION_ENTRIES,
 ];
 
 const CLIENT_PAGES = [

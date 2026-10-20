@@ -11,10 +11,11 @@ function resolveServiceKey(serviceId?: string): string {
   if (!serviceId) return 'wedding';
   const lower = serviceId.toLowerCase();
   if (lower.includes('wedding')) return 'wedding';
-  if (lower.includes('brand') || lower.includes('ugc')) return 'brand_ugc';
+  if (lower.includes('personal')) return 'personal';
+  if (lower.includes('brand') || lower.includes('ugc')) return 'brand';
   if (lower.includes('store') || lower.includes('product')) return 'store_product';
-  if (lower.includes('corporate') || lower.includes('event')) return 'corporate_event';
-  return 'wedding';
+  if (lower.includes('corporate') || lower.includes('event')) return 'corporate';
+  return lower;
 }
 
 /**
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Server-side price calculation via canonical pricing engine
-    const serviceKey = resolveServiceKey(serviceId);
+    const serviceKey = resolveServiceKey((requirements as any)?.category || serviceId);
     const priceBreakdown = calculateLivePrice(serviceKey, (requirements as ConfiguratorSelections) || {});
     const canonicalAmount = priceBreakdown.grandTotalPaise;
 

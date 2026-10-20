@@ -187,8 +187,6 @@ export async function POST(request: Request) {
     phone: authUser.phone,
     full_name: updates.full_name ?? authUser.full_name,
     display_name: updates.display_name ?? authUser.display_name,
-    studio_details: updates.studio_details ?? authUser.studio_details ?? null,
-    creator_profile: body.creator_profile ?? authUser.creator_profile ?? null,
     onboarded: updates.onboarded,
     token_version: authUser.token_version,
   });

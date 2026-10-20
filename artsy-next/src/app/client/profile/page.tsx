@@ -57,10 +57,10 @@ export default function ClientProfilePage() {
   // Profile Form States
   const [accountType, setAccountType] = useState<AccountType>('b2b');
   const [fullName, setFullName] = useState(user?.full_name || '');
-  const [studioName, setStudioName] = useState(user?.display_name || user?.full_name || 'Acme Studio');
+  const [studioName, setStudioName] = useState(user?.display_name || user?.full_name || '');
   const [logoUrl, setLogoUrl] = useState(user?.avatar_url || '');
-  const [whatsapp, setWhatsapp] = useState(user?.phone || '+91 99000 00001');
-  const [email, setEmail] = useState(user?.email || 'client@artsyproduction.com');
+  const [whatsapp, setWhatsapp] = useState(user?.phone || '');
+  const [email, setEmail] = useState(user?.email || '');
 
   // Verification & OTP States
   const [whatsappVerified, setWhatsappVerified] = useState<boolean>(true);
@@ -86,7 +86,7 @@ export default function ClientProfilePage() {
   const [emailDevOtp, setEmailDevOtp] = useState<string>('');
 
   // Billing States
-  const [billingName, setBillingName] = useState('Acme Studio Productions LLP');
+  const [billingName, setBillingName] = useState(user?.display_name || user?.full_name || '');
   const [gstin, setGstin] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -209,7 +209,7 @@ export default function ClientProfilePage() {
       if (user.avatar_url) setLogoUrl(user.avatar_url);
 
       const sd = (user as any).studio_details;
-      if (sd && typeof sd === 'object') {
+      if (sd && typeof sd === 'object' && Object.keys(sd).length > 0) {
         if (sd.accountType) setAccountType(sd.accountType);
         if (sd.studioName) setStudioName(sd.studioName);
         if (sd.fullName) setFullName(sd.fullName);
@@ -275,7 +275,7 @@ export default function ClientProfilePage() {
     }
   }, [user]);
 
-  // Handle Logo Upload via FileReader
+  // Handle Logo Upload with automatic canvas compression (< 25KB)
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -285,32 +285,62 @@ export default function ClientProfilePage() {
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB limit.');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size exceeds 10MB limit.');
       return;
     }
 
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        const newLogo = reader.result;
-        setLogoUrl(newLogo);
-
-        // Immediately update localStorage and auth state so header & sidebar show logo in real time!
-        if (typeof window !== 'undefined') {
+        const rawResult = reader.result;
+        const img = new Image();
+        img.onload = () => {
           try {
-            const raw = localStorage.getItem('artsy_client_profile');
-            const parsed = raw ? JSON.parse(raw) : {};
-            parsed.logoUrl = newLogo;
-            localStorage.setItem('artsy_client_profile', JSON.stringify(parsed));
-          } catch {}
+            const canvas = document.createElement('canvas');
+            const maxDim = 256;
+            let width = img.width;
+            let height = img.height;
+            if (width > height) {
+              if (width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              }
+            } else {
+              if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            canvas.width = Math.max(width, 1);
+            canvas.height = Math.max(height, 1);
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              const optimizedLogo = canvas.toDataURL('image/jpeg', 0.85);
+              setLogoUrl(optimizedLogo);
 
-          if (user) {
-            setCurrentUser({ ...user, avatar_url: newLogo });
-          }
-          window.dispatchEvent(new Event('artsy_profile_updated'));
-          window.dispatchEvent(new Event('artsy_auth_change'));
-        }
+              if (typeof window !== 'undefined') {
+                try {
+                  const raw = localStorage.getItem('artsy_client_profile');
+                  const parsed = raw ? JSON.parse(raw) : {};
+                  parsed.logoUrl = optimizedLogo;
+                  localStorage.setItem('artsy_client_profile', JSON.stringify(parsed));
+                } catch {}
+
+                if (user) {
+                  setCurrentUser({ ...user, avatar_url: optimizedLogo });
+                }
+                window.dispatchEvent(new Event('artsy_profile_updated'));
+                window.dispatchEvent(new Event('artsy_auth_change'));
+              }
+              return;
+            }
+          } catch {}
+          setLogoUrl(rawResult);
+        };
+        img.onerror = () => setLogoUrl(rawResult);
+        img.src = rawResult;
       }
     };
     reader.readAsDataURL(file);
@@ -577,7 +607,7 @@ export default function ClientProfilePage() {
 
     // Attempt server sync
     try {
-      await fetch('/api/user/update-profile', {
+      const res = await fetch('/api/user/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -588,8 +618,15 @@ export default function ClientProfilePage() {
           onboarded: true,
         }),
       });
-    } catch {
-      // ignore in offline/local dev mode
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'Server error while saving profile');
+      }
+    } catch (err: any) {
+      console.error('Profile save error:', err);
+      alert(err.message || 'Error saving profile to database. Please try again.');
+      setSaving(false);
+      return;
     }
 
     setSaving(false);
@@ -605,7 +642,15 @@ export default function ClientProfilePage() {
         .slice(0, 2)
         .join('')
         .toUpperCase()
-    : 'AS';
+    : (fullName
+        ? fullName
+            .split(' ')
+            .map((w) => w[0])
+            .filter(Boolean)
+            .slice(0, 2)
+            .join('')
+            .toUpperCase()
+        : 'CP');
 
   return (
     <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">

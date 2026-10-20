@@ -143,8 +143,6 @@ export function signAuthCookieValue(payload: AuthUserPayload): string {
     full_name: payload.full_name || '',
     display_name: payload.display_name || '',
     onboarded: payload.onboarded !== false,
-    studio_details: payload.studio_details || null,
-    creator_profile: payload.creator_profile || null,
   };
   const jsonStr = JSON.stringify(cookiePayload);
   const payloadBase64 = Buffer.from(jsonStr, 'utf-8').toString('base64');

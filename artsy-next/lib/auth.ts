@@ -281,8 +281,8 @@ export const useAuth = () => {
             sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data.user));
             const sanitizedUser: ArtsyUser = {
               id: data.user.id,
-              email: '',
-              phone: '',
+              email: data.user.email || '',
+              phone: data.user.phone || '',
               full_name: data.user.full_name || '',
               display_name: data.user.display_name || '',
               role: data.user.role,

@@ -81,11 +81,19 @@ export async function GET(request: NextRequest) {
           .join(' ')
           .toLowerCase();
 
-        // Check if query matches or all tokens are present
-        const matchesWhole = searchableText.includes(lowerQuery);
-        const matchesAllTokens = queryTokens.every((token) => searchableText.includes(token));
+        // Scoring algorithm to rank exact name & deliverable matches first
+        const nameLower = prod.name.toLowerCase();
+        let score = 0;
+        if (nameLower === lowerQuery) score = 100;
+        else if (nameLower.startsWith(lowerQuery)) score = 90;
+        else if (nameLower.includes(lowerQuery)) score = 80;
+        else if (queryTokens.some((t) => nameLower.includes(t))) score = 70;
+        else if ((prod.deliverables || []).some((d) => d.toLowerCase().includes(lowerQuery))) score = 60;
+        else if (cat.title.toLowerCase().includes(lowerQuery)) score = 50;
+        else if (searchableText.includes(lowerQuery)) score = 40;
+        else if (queryTokens.every((token) => searchableText.includes(token))) score = 30;
 
-        if (matchesWhole || matchesAllTokens) {
+        if (score > 0) {
           matchingServices.push({
             id: prod.id,
             name: prod.name,
@@ -101,10 +109,14 @@ export async function GET(request: NextRequest) {
             book_url: `/book?category=${cat.id}&sub=${prod.id}`,
             service_url: `/services/${cat.id}`,
             popular: prod.popular,
+            ...( { _score: score } as any ),
           });
         }
       }
     }
+
+    // Sort services by match relevance score descending
+    matchingServices.sort((a: any, b: any) => (b._score || 0) - (a._score || 0));
 
     // ─────────────────────────────────────────────────────────────
     // 2. CREATORS & PORTFOLIO SEARCH (From Database)

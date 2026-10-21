@@ -19,8 +19,34 @@ export async function POST(request: NextRequest) {
       return errRes;
     }
 
-    // P0 Security Guard: Verify existing authentication before granting privileged roles
+    // P0 Security Guard: Verify existing authentication before session sync or minting
     const currentAuthUser = await getAuthenticatedUser(request);
+
+    // In production, unauthenticated session minting is strictly forbidden — authentication must occur via /api/auth/otp
+    if (!currentAuthUser && process.env.NODE_ENV === 'production') {
+      const unauthRes = NextResponse.json(
+        { error: 'Unauthorized: Session sync requires an active authenticated session' },
+        { status: 401 }
+      );
+      unauthRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      return unauthRes;
+    }
+
+    // Prevent cross-user session impersonation: caller can only sync their own session unless admin
+    if (
+      currentAuthUser &&
+      !['admin', 'super_admin'].includes(currentAuthUser.role) &&
+      user.id &&
+      user.id !== currentAuthUser.id
+    ) {
+      const forbiddenRes = NextResponse.json(
+        { error: 'Forbidden: Cannot mint or sync session for another user ID' },
+        { status: 403 }
+      );
+      forbiddenRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      return forbiddenRes;
+    }
+
     const isTargetingAdmin =
       user.role === 'admin' ||
       user.role === 'super_admin' ||

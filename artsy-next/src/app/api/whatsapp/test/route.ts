@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
-import { supabase } from '@/../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 export async function POST(request: Request) {

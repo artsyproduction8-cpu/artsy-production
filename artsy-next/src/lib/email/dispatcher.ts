@@ -7,7 +7,7 @@
 // - GST Statutory Invoices (SAC 999613)
 // =============================================================================
 
-import { supabase, supabaseAdmin } from '@/../lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 const dbClient = supabaseAdmin || supabase;
 import { InvoiceData } from '@/lib/invoices/generator';
 

@@ -319,6 +319,9 @@ export default function AdminFreelancersPage() {
                   >
                     <td className="py-3.5 px-4">
                       <div className="font-bold text-[#1D1D1F] whitespace-nowrap">{creator.display_name}</div>
+                      {creator.public_specialty && (
+                        <div className="text-[11px] font-semibold text-[#3B82F6] whitespace-nowrap">{creator.public_specialty}</div>
+                      )}
                       <div className="text-[10px] font-mono text-[#86868B]">{creator.id.slice(0, 8)}...</div>
                     </td>
                     <td className="py-3.5 px-4 whitespace-nowrap">

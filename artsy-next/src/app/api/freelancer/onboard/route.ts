@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
   try {
     const {
       alias,
+      specialty,
       legalName,
       philosophy,
       software,
@@ -48,6 +49,9 @@ export async function POST(req: NextRequest) {
 
     const cleanLegalName = typeof legalName === 'string' ? legalName.trim() : '';
     const cleanAlias = typeof alias === 'string' ? alias.trim() : '';
+    const cleanSpecialty = typeof specialty === 'string' && specialty.trim().length > 0
+      ? specialty.trim()
+      : 'Commercial & Narrative Film Editor';
     const resolvedName = cleanLegalName || cleanAlias;
 
     if (!resolvedName || resolvedName.length < 2) {
@@ -96,6 +100,7 @@ export async function POST(req: NextRequest) {
         const studioDetails = {
           alias: cleanAlias || null,
           legalName: cleanLegalName || null,
+          specialty: cleanSpecialty,
           software: Array.isArray(software) ? software : [],
           languages: Array.isArray(languages) ? languages : [],
           experience: body.experience || '',
@@ -142,6 +147,7 @@ export async function POST(req: NextRequest) {
           id: candidateUserId,
           tracking_id: trackingId,
           bio: philosophy || 'Creative Editor',
+          public_specialty: cleanSpecialty,
           skills: Array.isArray(languages) ? languages : ['4K Color Grading'],
           software: Array.isArray(software) ? software : ['DaVinci Resolve Studio'],
           approval_status: 'pending',

@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
             onboarding_status: 'approved',
             is_public: true,
             public_display_name: publicDisplayName,
+            public_specialty: existingCp?.public_specialty || userData?.studio_details?.specialty || 'Commercial & Narrative Film Editor',
             approved_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };

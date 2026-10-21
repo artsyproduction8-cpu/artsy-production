@@ -6,11 +6,23 @@ import Navbar from '../../components/marketing/Navbar';
 import Footer from '../../components/marketing/Footer';
 import { getCurrentUser, setCurrentUser, recordAgreementAcceptance, useAuth } from '@/lib/auth';
 
+const VERIFIED_ROLES = [
+  'Commercial & Narrative Film Editor',
+  'Color Grading & Sound Design Lead',
+  'Wedding Film Specialist',
+  'Documentary & Corporate Video Editor',
+  'Social & UGC Lead Editor',
+  'Motion Graphics & VFX Artist',
+  'Other',
+];
+
 export default function FreelancerOnboarding() {
   const router = useRouter();
   const { user } = useAuth();
 
   const [alias, setAlias] = useState('');
+  const [specialty, setSpecialty] = useState('Commercial & Narrative Film Editor');
+  const [customSpecialty, setCustomSpecialty] = useState('');
   const [showreelUrl, setShowreelUrl] = useState('');
   const [philosophy, setPhilosophy] = useState('');
   const [software, setSoftware] = useState<string[]>([
@@ -110,6 +122,7 @@ export default function FreelancerOnboarding() {
           userId: candidateUserId,
           alias,
           legalName,
+          specialty: specialty === 'Other' ? (customSpecialty.trim() || 'Commercial & Narrative Film Editor') : specialty,
           email: candidateEmail,
           phone: candidatePhone,
           showreelUrl,
@@ -255,6 +268,46 @@ export default function FreelancerOnboarding() {
                       />
                       <span className="text-[11px] text-[#86868B]">Link to your showreel or portfolio video (60 to 90 seconds is best).</span>
                     </div>
+                  </div>
+
+                  {/* Verified Role / Creative Discipline */}
+                  <div className="flex flex-col gap-2 pt-1">
+                    <label className="text-xs font-semibold text-[#1D1D1F]">
+                      PRIMARY CREATIVE ROLE &amp; VERIFIED SPECIALTY *
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                      {VERIFIED_ROLES.map((role) => (
+                        <button
+                          key={role}
+                          type="button"
+                          onClick={() => {
+                            setSpecialty(role);
+                            if (role !== 'Other') setCustomSpecialty('');
+                          }}
+                          className={`px-3.5 py-2.5 text-xs font-semibold rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                            specialty === role
+                              ? 'bg-[#1D1D1F] text-white border-[#1D1D1F] shadow-xs'
+                              : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white hover:border-[#3B82F6]'
+                          }`}
+                        >
+                          <span className="truncate">{role}</span>
+                          {specialty === role && <span className="text-blue-400 font-bold ml-1.5 shrink-0">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                    {specialty === 'Other' && (
+                      <input
+                        type="text"
+                        required
+                        value={customSpecialty}
+                        onChange={(e) => setCustomSpecialty(e.target.value)}
+                        placeholder="Specify your creative discipline (e.g. 3D VFX Generalist, Anime & Gaming Editor)..."
+                        className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all mt-1"
+                      />
+                    )}
+                    <span className="text-[11px] text-[#86868B]">
+                      This verified role will appear directly on your public creator card on the /creators page and in client project workrooms upon approval.
+                    </span>
                   </div>
 
                   <div className="flex flex-col gap-1.5">

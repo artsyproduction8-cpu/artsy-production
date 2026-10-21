@@ -106,9 +106,7 @@ export async function POST(request: NextRequest) {
       let sessionRole: string | null = memSession?.role || null;
       let sessionVerified = false;
 
-      if (isDev && inputCode === '123456') {
-        sessionVerified = true;
-      } else if (memSession) {
+      if (memSession) {
         const isMemExpired = Date.now() > memSession.expiresAt;
         if (!isMemExpired && memSession.attempts < 5) {
           let isMatch = false;

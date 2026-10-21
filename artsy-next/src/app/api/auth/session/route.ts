@@ -19,7 +19,26 @@ export async function POST(request: NextRequest) {
       return errRes;
     }
 
+    // P0 Security Guard: Verify existing authentication before granting privileged roles
+    const currentAuthUser = await getAuthenticatedUser(request);
+    const isTargetingAdmin =
+      user.role === 'admin' ||
+      user.role === 'super_admin' ||
+      isSuperAdminAccount(user);
+
+    if (isTargetingAdmin) {
+      if (!currentAuthUser || !['admin', 'super_admin'].includes(currentAuthUser.role)) {
+        const forbiddenRes = NextResponse.json(
+          { error: 'Forbidden: Privileged admin session cannot be minted without existing verified credentials' },
+          { status: 403 }
+        );
+        forbiddenRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        return forbiddenRes;
+      }
+    }
+
     // Strict validation of token_version against the database
+    let dbUser: { id: string; token_version?: number | null; status?: string | null; role?: string | null } | null = null;
     const dbClient = supabaseAdmin || supabase;
     if (dbClient && typeof dbClient.from === 'function') {
       try {
@@ -32,7 +51,8 @@ export async function POST(request: NextRequest) {
           dbQuery = dbQuery.ilike('phone', `%${user.phone.replace(/\D/g, '').slice(-10)}%`);
         }
 
-        const { data: dbUser } = await dbQuery.maybeSingle();
+        const res = await dbQuery.maybeSingle();
+        dbUser = res.data;
 
         if (dbUser) {
           if (dbUser.status === 'suspended' || dbUser.status === 'deactivated') {
@@ -59,12 +79,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const isSuper = isSuperAdminAccount(user);
-    const resolvedRole = isSuper ? 'super_admin' : user.role;
-    const effectiveTokenVersion = Math.max(Number(user.token_version || 2), 2);
+    // Derive role securely: prioritize database role or existing verified role, never trust untrusted client claim
+    let resolvedRole: string = 'client';
+    if (dbUser && dbUser.role) {
+      resolvedRole = dbUser.role;
+    } else if (currentAuthUser && currentAuthUser.role) {
+      resolvedRole = currentAuthUser.role;
+    } else {
+      resolvedRole = user.role === 'freelancer' ? 'freelancer' : 'client';
+    }
+
+    if (['admin', 'super_admin'].includes(resolvedRole)) {
+      if (!currentAuthUser || !['admin', 'super_admin'].includes(currentAuthUser.role)) {
+        const forbiddenRes = NextResponse.json(
+          { error: 'Forbidden: Cannot mint privileged role' },
+          { status: 403 }
+        );
+        forbiddenRes.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        return forbiddenRes;
+      }
+    }
+
+    const effectiveTokenVersion = Math.max(Number(user.token_version || dbUser?.token_version || 2), 2);
 
     const cookieValue = signAuthCookieValue({
-      id: user.id || (isSuper ? 'usr-superadmin-000' : 'usr-client-001'),
+      id: user.id || (resolvedRole === 'super_admin' ? 'usr-superadmin-000' : 'usr-client-001'),
       role: resolvedRole,
       email: user.email,
       phone: user.phone,

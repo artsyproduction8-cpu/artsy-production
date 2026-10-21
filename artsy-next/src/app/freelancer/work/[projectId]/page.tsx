@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { getCurrentUser, hasAcceptedAgreement, recordAgreementAcceptance, type ArtsyUser } from '@/lib/auth';
 import { INITIAL_OPEN_JOBS } from '@/lib/matching/engine';
 import {
@@ -67,38 +66,22 @@ export default function FreelancerWorkView() {
       return;
     }
 
-    // 2. Non-blocking background sync with Supabase (with fast timeout race)
-    const syncWithSupabase = async () => {
+    // 2. Fetch project details via secure server API
+    const syncProjectData = async () => {
       try {
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Supabase sync timeout')), 800)
-        );
-
-        const fetchPromise = supabase
-          .from('projects')
-          .select(`
-            *,
-            orders:orders_id(
-              *,
-              services(*),
-              clients:client_id(full_name, email)
-            )
-          `)
-          .eq('id', projectId)
-          .single();
-
-        const result: any = await Promise.race([fetchPromise, timeoutPromise]);
-        if (result && !result.error && result.data) {
-          setProject(result.data);
-          if (result.data.orders) setOrder(result.data.orders);
-          if (result.data.orders?.services) setService(result.data.orders.services);
+        const res = await fetch(`/api/freelancer/work/${encodeURIComponent(projectId || '')}`);
+        const data = await res.json();
+        if (data.success && data.project) {
+          setProject(data.project);
+          if (data.project.orders) setOrder(data.project.orders);
+          if (data.project.orders?.services) setService(data.project.orders.services);
         }
       } catch {
         // Fallback to instant mock state gracefully without delaying render
       }
     };
 
-    syncWithSupabase();
+    syncProjectData();
   }, [projectId, router]);
 
   const handleFootageAccess = () => {
@@ -129,16 +112,17 @@ export default function FreelancerWorkView() {
       logCheckin(projectId, user?.id || 'creator', { status, notes: message });
       setActivityLogs(getProjectActivityLog(projectId));
 
-      // 2. Update Supabase if available
+      // 2. Update via server API
       try {
-        await supabase
-          .from('assignments')
-          .update({
+        await fetch(`/api/freelancer/work/${encodeURIComponent(projectId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'checkin',
             checkin_status: status,
-            last_checkin_at: new Date().toISOString(),
-          })
-          .eq('project_id', projectId)
-          .eq('creator_id', user?.id);
+            notes: message,
+          }),
+        });
       } catch {
         // ignore in mock mode
       }
@@ -181,15 +165,16 @@ export default function FreelancerWorkView() {
       });
       setActivityLogs(getProjectActivityLog(projectId));
 
-      // 2. Update Supabase if available
+      // 2. Update deliverable status via server API
       try {
-        await supabase
-          .from('projects')
-          .update({
-            status: 'submitted',
-            actual_delivery: new Date().toISOString(),
-          })
-          .eq('id', projectId);
+        await fetch(`/api/freelancer/work/${encodeURIComponent(projectId)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'deliverable',
+            deliverableUrl,
+          }),
+        });
       } catch {
         // mock
       }

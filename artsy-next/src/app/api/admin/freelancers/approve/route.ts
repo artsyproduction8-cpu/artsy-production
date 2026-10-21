@@ -67,8 +67,7 @@ export async function POST(req: NextRequest) {
           };
 
           if (existingCp) {
-            await dbClient.from('creator_profiles').delete().eq('id', creatorId);
-            await dbClient.from('creator_profiles').insert({ ...existingCp, ...approvalData });
+            await dbClient.from('creator_profiles').update(approvalData).eq('id', creatorId);
           } else {
             await dbClient.from('creator_profiles').insert({
               id: creatorId,

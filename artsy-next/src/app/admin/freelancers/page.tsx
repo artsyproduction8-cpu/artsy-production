@@ -295,7 +295,24 @@ export default function AdminFreelancersPage() {
         {loading ? (
           <div className="p-12 text-center text-xs text-[#86868B]">Loading verified creators from database...</div>
         ) : filteredCreators.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#86868B]">No creators matching criteria.</div>
+          <div className="p-16 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] text-2xl flex items-center justify-center mx-auto mb-3">
+              🎬
+            </div>
+            <h3 className="text-sm font-bold text-[#1D1D1F]">No Creator Applications Found</h3>
+            <p className="text-xs text-[#86868B] max-w-sm mx-auto">
+              When editors apply through the onboarding application or are invited by the studio, their submissions and verified creative disciplines will appear here for vetting.
+            </p>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAddModal(true)}
+                className="px-4 py-2 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
+              >
+                <span>+ Provision Creator</span>
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">

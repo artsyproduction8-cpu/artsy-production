@@ -47,7 +47,7 @@ export interface ArtsyUser {
 // Preset standard test accounts for instant role demo & testing
 export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
   super_admin: {
-    id: 'usr-superadmin-000',
+    id: '50d2d4d3-b55f-4c9c-8281-a3fa324c52ad',
     email: 'lilsammy96@gmail.com',
     full_name: 'Studio Owner (Super Admin)',
     phone: '+91 77770 78742',

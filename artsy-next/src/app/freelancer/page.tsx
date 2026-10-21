@@ -373,9 +373,9 @@ export default function FreelancerDashboard() {
                       </p>
                     </div>
                     <div className="mt-8 pt-4 border-t border-white/10 space-y-1">
-                      <div className="text-[10px] uppercase text-[#86868B] font-semibold">PRIMARY SKILLS</div>
-                      <div className="text-xs uppercase text-white font-bold bg-white/10 px-3 py-1 rounded-lg inline-block">
-                        Video Editor &amp; Colorist
+                      <div className="text-[10px] uppercase text-[#86868B] font-semibold tracking-wider">VERIFIED CREATIVE ROLE</div>
+                      <div className="text-xs font-bold text-white bg-white/10 px-3 py-1.5 rounded-lg inline-block">
+                        {(user as any)?.public_specialty || (user as any)?.creator_profile?.public_specialty || (user as any)?.studio_details?.specialty || 'Commercial & Narrative Film Editor'}
                       </div>
                     </div>
                   </div>

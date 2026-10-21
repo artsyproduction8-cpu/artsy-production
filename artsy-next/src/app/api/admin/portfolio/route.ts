@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     // Enrich with creator names
     const creatorIds = Array.from(new Set(cleanSamples.map((s: any) => s.creator_id).filter(Boolean)));
-    let creatorMap: Record<string, string> = {};
+    const creatorMap: Record<string, string> = {};
 
     if (creatorIds.length > 0) {
       const { data: creators } = await dbClient

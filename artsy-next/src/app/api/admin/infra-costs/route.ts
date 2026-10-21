@@ -93,7 +93,7 @@ export async function GET(request: Request) {
     try {
       // Query Bunny API for storage and video statistics
       let storageGb = 0;
-      let bandwidthGb = 0;
+      const bandwidthGb = 0;
 
       if (bunnyLibraryId) {
         const libRes = await fetch(`https://video.bunnycdn.com/library/${bunnyLibraryId}`, {
@@ -207,7 +207,7 @@ export async function GET(request: Request) {
 
     let authCount = 0;
     let utilityCount = 0;
-    let marketingCount = 0;
+    const marketingCount = 0;
 
     (notifLogs || []).forEach((n: any) => {
       if (n.channel === 'whatsapp_otp') {
@@ -305,7 +305,7 @@ export async function GET(request: Request) {
       .eq('status', 'paid');
 
     let totalFeesPaisa = 0;
-    let count = (paidOrders || []).length;
+    const count = (paidOrders || []).length;
 
     (paidOrders || []).forEach((o: any) => {
       // standard Razorpay fee: 2% + 18% GST on fee = 2.36%

@@ -171,11 +171,11 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7]">
+    <div className="min-h-screen bg-[#F5F5F7] overflow-x-hidden">
       <AdminHeader />
-      <div className="flex pt-16 min-h-screen">
+      <div className="flex pt-16 min-h-screen w-full max-w-full overflow-x-hidden">
         <AdminSidebar />
-        <main className="flex-1 lg:pl-72 min-h-[calc(100vh-4rem)] w-full min-w-0">
+        <main className="flex-1 lg:pl-72 min-h-[calc(100vh-4rem)] w-full min-w-0 max-w-full overflow-x-hidden">
           <div className="w-full max-w-[1680px] mx-auto p-4 sm:p-6 lg:p-8">
             {children}
           </div>

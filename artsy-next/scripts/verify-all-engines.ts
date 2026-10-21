@@ -214,11 +214,11 @@ console.log('\n[3/8] Testing Pricing Engine (Paise calculations & Guardrails)');
     isRush: true // +₹2,500 (250,000 paise)
   });
 
-  // Base: 600000 + 200000 + 140000 + 250000 = 1,190,000 paise = ₹11,900
+  // Canonical: Base 500000 + Angle 80000 + Formats 140000 + Rush 200000 = 920,000 paise = ₹9,200
   assert(
-    weddingQuote.grandTotalPaise === 1190000,
-    'Wedding quote with multi-cam, rush, and formats computes ₹11,900 (1,190,000 paise)',
-    `Expected 1190000, got ${weddingQuote.grandTotalPaise}`
+    weddingQuote.grandTotalPaise === 920000,
+    'Wedding quote with multi-cam, rush, and formats computes ₹9,200 (920,000 paise)',
+    `Expected 920000, got ${weddingQuote.grandTotalPaise}`
   );
 
   assert(

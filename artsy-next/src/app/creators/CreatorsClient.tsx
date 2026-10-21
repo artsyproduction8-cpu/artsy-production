@@ -40,10 +40,6 @@ export default function CreatorsClient() {
   const [tierFilter, setTierFilter] = useState('all');
   const [availabilityFilter, setAvailabilityFilter] = useState('all');
 
-  useEffect(() => {
-    fetchCreators();
-  }, [categoryFilter, tierFilter, availabilityFilter]);
-
   const fetchCreators = async () => {
     setLoading(true);
     setError(null);
@@ -66,6 +62,10 @@ export default function CreatorsClient() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCreators();
+  }, [categoryFilter, tierFilter, availabilityFilter]);
 
   const categories = [
     { id: 'all', label: 'All Disciplines' },
@@ -172,24 +172,42 @@ export default function CreatorsClient() {
           </button>
         </div>
       ) : creators.length === 0 ? (
-        <div className="bg-white rounded-3xl p-16 text-center border border-[#E5E5E7] shadow-xs max-w-lg mx-auto">
-          <div className="w-16 h-16 rounded-2xl bg-[#F5F5F7] text-[#86868B] flex items-center justify-center text-2xl mx-auto mb-4">
+        <div className="bg-white rounded-3xl p-12 sm:p-16 text-center border border-[#E5E5E7] shadow-xs max-w-lg mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-[#F5F5F7] text-[#1D1D1F] flex items-center justify-center text-2xl mx-auto mb-4">
             🎬
           </div>
-          <h3 className="text-lg font-bold text-[#1D1D1F]">No creators matching this filter</h3>
-          <p className="text-xs text-[#86868B] mt-2">
-            Try adjusting your category or tier filters to view active talent profiles.
+          <h3 className="text-lg font-bold text-[#1D1D1F]">
+            {categoryFilter !== 'all' || tierFilter !== 'all' || availabilityFilter !== 'all'
+              ? 'No creators matching this filter'
+              : 'Curated Talent Roster in Vetting'}
+          </h3>
+          <p className="text-xs text-[#86868B] mt-2 leading-relaxed">
+            {categoryFilter !== 'all' || tierFilter !== 'all' || availabilityFilter !== 'all'
+              ? 'Try resetting your category or tier filters to view active talent profiles.'
+              : 'Our creator directory is currently onboarding new elite post-production talent. Are you an editor or colorist? Apply to join our verified roster.'}
           </p>
-          <button
-            onClick={() => {
-              setCategoryFilter('all');
-              setTierFilter('all');
-              setAvailabilityFilter('all');
-            }}
-            className="mt-6 px-4 py-2 bg-[#1D1D1F] text-white rounded-xl text-xs font-semibold hover:bg-black transition-all cursor-pointer"
-          >
-            Reset Filters
-          </button>
+          <div className="flex items-center justify-center gap-3 mt-6">
+            {categoryFilter !== 'all' || tierFilter !== 'all' || availabilityFilter !== 'all' ? (
+              <button
+                onClick={() => {
+                  setCategoryFilter('all');
+                  setTierFilter('all');
+                  setAvailabilityFilter('all');
+                }}
+                className="px-4 py-2 bg-[#1D1D1F] text-white rounded-xl text-xs font-semibold hover:bg-black transition-all cursor-pointer"
+              >
+                Reset Filters
+              </button>
+            ) : (
+              <Link
+                href="/freelancer/onboarding"
+                className="px-5 py-2.5 bg-[#1D1D1F] text-white rounded-xl text-xs font-semibold hover:bg-black transition-all cursor-pointer inline-flex items-center gap-2"
+              >
+                <span>Apply as Creator</span>
+                <span>→</span>
+              </Link>
+            )}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">

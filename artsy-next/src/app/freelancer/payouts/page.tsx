@@ -13,7 +13,7 @@ export default function FreelancerPayoutsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans">
+    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans overflow-x-hidden">
       <FreelancerHeader />
 
       <div className="flex w-full max-w-full overflow-x-hidden">

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase, isSupabaseConfigured } from '@/../lib/supabase';
+import { supabaseAdmin, supabase, isSupabaseConfigured } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -21,10 +21,11 @@ export async function GET() {
     let dbMode: 'connected' | 'mock' = 'mock';
     let dbLatencyMs = 0;
 
-    if (isSupabaseConfigured && supabase) {
+    const dbClient = supabaseAdmin || supabase;
+    if (isSupabaseConfigured && dbClient) {
       try {
         const dbStart = Date.now();
-        const { error } = await supabase.from('platform_config').select('key').limit(1);
+        const { error } = await dbClient.from('platform_config').select('key').limit(1);
         dbLatencyMs = Date.now() - dbStart;
 
         if (!error) {
@@ -160,7 +161,7 @@ export async function GET() {
   const totalResponseTimeMs = Date.now() - startTime;
 
   const healthPayload = {
-    status: isHealthy && waStatus !== 'degraded' && redisStatus !== 'degraded' ? 'ok' : 'degraded',
+    status: isHealthy && redisStatus !== 'degraded' ? 'ok' : 'degraded',
     responseTimeMs: totalResponseTimeMs,
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',

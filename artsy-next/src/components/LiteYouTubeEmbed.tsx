@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 
 interface LiteYouTubeEmbedProps {
   id: string;
@@ -46,10 +47,12 @@ export default function LiteYouTubeEmbed({
         }
       }}
     >
-      <img
+      <Image
         src={thumb}
         alt={title}
-        loading="lazy"
+        width={640}
+        height={360}
+        unoptimized
         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 group-hover:bg-black/40 transition-colors" />

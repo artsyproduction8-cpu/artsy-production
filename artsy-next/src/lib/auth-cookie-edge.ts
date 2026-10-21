@@ -1,5 +1,3 @@
-import type { NextRequest } from 'next/server';
-
 export const AUTH_COOKIE_NAME = 'artsy_auth_token';
 export const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 

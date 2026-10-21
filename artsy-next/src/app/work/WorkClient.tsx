@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { extractYouTubeId } from '@/lib/youtube';
 const YouTubePlayerModal = dynamic(() => import('@/components/YouTubePlayerModal'), {
@@ -28,15 +29,17 @@ type CategoryFilter = 'all' | 'wedding' | 'brand' | 'product' | 'corporate' | 'm
 
 export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
   const [videos, setVideos] = useState<PortfolioVideo[]>(initialVideos);
+  const [prevInitial, setPrevInitial] = useState<PortfolioVideo[]>(initialVideos);
   const [filter, setFilter] = useState<CategoryFilter>('all');
   const [selectedVideo, setSelectedVideo] = useState<PortfolioVideo | null>(null);
 
-  // Sync state if initialVideos changes
-  useEffect(() => {
+  // Sync state if initialVideos changes (React-recommended pattern during render)
+  if (initialVideos !== prevInitial) {
+    setPrevInitial(initialVideos);
     if (initialVideos.length > 0) {
       setVideos(initialVideos);
     }
-  }, [initialVideos]);
+  }
 
   // Re-fetch on mount so client always reflects live database portfolio
   useEffect(() => {
@@ -158,11 +161,13 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                           />
                         </div>
                       ) : (
-                        <img
+                        <Image
                           src={thumbUrl}
                           alt={video.title}
+                          width={640}
+                          height={360}
+                          unoptimized
                           className="w-full h-full object-cover"
-                          loading="lazy"
                         />
                       )}
 

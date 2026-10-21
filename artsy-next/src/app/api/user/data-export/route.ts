@@ -57,13 +57,13 @@ export async function GET(request: NextRequest) {
       const { data: projects } = await supabase
         .from('projects')
         .select('*')
-        .eq('user_id', userId);
+        .eq('client_id', userId);
 
       // 3. Fetch Orders
       const { data: orders } = await supabase
         .from('orders')
         .select('*')
-        .eq('user_id', userId);
+        .eq('client_id', userId);
 
       // 4. Fetch Consent Records
       const { data: consents } = await supabase
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       const { data: revisions } = await supabase
         .from('revisions')
         .select('*')
-        .eq('user_id', userId);
+        .eq('author_id', userId);
 
       const exportBundle = {
         dpdpCompliance: 'India Digital Personal Data Protection Act 2023',

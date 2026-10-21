@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 
     // Enrich with creator names and emails from users / creator_profiles
     const creatorIds = Array.from(new Set((submissions || []).map((s: any) => s.creator_id)));
-    let creatorMap: Record<string, { name: string; email?: string; phone?: string }> = {};
+    const creatorMap: Record<string, { name: string; email?: string; phone?: string }> = {};
 
     if (creatorIds.length > 0) {
       const { data: usersData } = await dbClient

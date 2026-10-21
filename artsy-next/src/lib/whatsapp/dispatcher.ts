@@ -2,10 +2,8 @@
 // ARTSY PRODUCTION — NOTIFICATION DISPATCHER (44 EVENTS)
 // =============================================================================
 // Source: Artsy Production — Master Plan (Reviewed & Finalized).md, Section 7
-
-import { supabase, supabaseAdmin } from '@/../lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 const dbClient = supabaseAdmin || supabase;
-import { WHATSAPP_TEMPLATES } from './templates';
 
 export interface NotificationPayload {
   eventNumber: number; // 1 to 44

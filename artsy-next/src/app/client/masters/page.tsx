@@ -20,7 +20,7 @@ export default function ClientMastersPage() {
   const masters = MASTERS;
 
   return (
-    <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
+    <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans overflow-x-hidden">
       <ClientHeader />
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />

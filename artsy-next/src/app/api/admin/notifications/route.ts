@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const statusFilter = searchParams.get('status') || '';
 
   try {
-    let query = dbClient
+    const query = dbClient
       .from('notification_delivery_log')
       .select('*')
       .order('created_at', { ascending: false })

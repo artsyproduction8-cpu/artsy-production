@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, signAuthCookieValue, AUTH_COOKIE_NAME, AuthUserPayload } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { setCachedUser, invalidateUserCache, invalidateCache, invalidateCreatorCache } from '@/lib/cache';
+import { formatPublicCreatorName } from '@/lib/masking';
 
 export async function POST(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -35,7 +36,11 @@ export async function POST(request: Request) {
   }
 
   if (display_name !== undefined) {
-    updates.display_name = typeof display_name === 'string' ? display_name.trim() : null;
+    updates.display_name = typeof display_name === 'string' && display_name.trim().length > 0
+      ? formatPublicCreatorName(display_name.trim())
+      : (updates.full_name ? formatPublicCreatorName(updates.full_name) : null);
+  } else if (updates.full_name) {
+    updates.display_name = formatPublicCreatorName(updates.full_name);
   }
 
   if (studio_details !== undefined && typeof studio_details === 'object') {
@@ -96,13 +101,20 @@ export async function POST(request: Request) {
         };
         if (creatorPayload.bio) cpUpdates.bio = String(creatorPayload.bio).trim();
         if (creatorPayload.public_bio) cpUpdates.public_bio = String(creatorPayload.public_bio).trim();
-        if (creatorPayload.public_display_name) cpUpdates.public_display_name = String(creatorPayload.public_display_name).trim();
+        if (creatorPayload.public_display_name) {
+          cpUpdates.public_display_name = formatPublicCreatorName(String(creatorPayload.public_display_name).trim());
+        } else if (updates.display_name) {
+          cpUpdates.public_display_name = updates.display_name;
+        }
         if (creatorPayload.portfolio_url || creatorPayload.showreelUrl) {
           cpUpdates.portfolio_url = String(creatorPayload.portfolio_url || creatorPayload.showreelUrl).trim();
         }
         if (Array.isArray(creatorPayload.software)) cpUpdates.software = creatorPayload.software;
         if (Array.isArray(creatorPayload.languages)) cpUpdates.languages = creatorPayload.languages;
         if (Array.isArray(creatorPayload.skills)) cpUpdates.skills = creatorPayload.skills;
+        if (creatorPayload.public_specialty || creatorPayload.specialty) {
+          cpUpdates.public_specialty = String(creatorPayload.public_specialty || creatorPayload.specialty).trim();
+        }
         if (creatorPayload.bank_account_name) cpUpdates.bank_account_name = String(creatorPayload.bank_account_name).trim();
         if (creatorPayload.bank_account_number) cpUpdates.bank_account_number = String(creatorPayload.bank_account_number).trim();
         if (creatorPayload.bank_ifsc_code) cpUpdates.bank_ifsc_code = String(creatorPayload.bank_ifsc_code).trim().toUpperCase();
@@ -110,23 +122,22 @@ export async function POST(request: Request) {
 
         const { data: existingCp } = await dbClient
           .from('creator_profiles')
-          .select('*')
+          .select('id')
           .eq('id', authUser.id)
           .maybeSingle();
 
-        const mergedCp = {
-          ...(existingCp || {}),
-          id: authUser.id,
-          user_id: authUser.id,
-          ...cpUpdates,
-          approval_status: existingCp?.approval_status || 'pending',
-          onboarding_status: existingCp?.onboarding_status || 'pending_review',
-        };
-
         if (existingCp) {
-          await dbClient.from('creator_profiles').delete().eq('id', authUser.id);
+          await dbClient.from('creator_profiles').update(cpUpdates).eq('id', authUser.id);
+        } else {
+          await dbClient.from('creator_profiles').insert({
+            id: authUser.id,
+            user_id: authUser.id,
+            ...cpUpdates,
+            approval_status: 'pending',
+            onboarding_status: 'pending_review',
+            created_at: new Date().toISOString(),
+          });
         }
-        await dbClient.from('creator_profiles').insert(mergedCp);
       } catch (cpErr) {
         console.warn('[Update Profile] Non-fatal creator_profiles sync warning:', cpErr);
       }

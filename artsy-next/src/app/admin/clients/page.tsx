@@ -158,7 +158,15 @@ export default function AdminClientsPage() {
         {loading ? (
           <div className="p-12 text-center text-xs text-[#86868B]">Loading client records from database...</div>
         ) : filteredClients.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#86868B]">No clients found matching criteria.</div>
+          <div className="p-16 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] text-2xl flex items-center justify-center mx-auto mb-3">
+              👥
+            </div>
+            <h3 className="text-sm font-bold text-[#1D1D1F]">No Client Accounts Registered</h3>
+            <p className="text-xs text-[#86868B] max-w-sm mx-auto">
+              When clients sign in or place editing orders via the booking flow, their profiles and lifetime order values will appear here.
+            </p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">

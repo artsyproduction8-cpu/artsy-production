@@ -2,7 +2,6 @@ import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 const DEFAULT_DEV_KEY = 'artsy_production_secret_encryption_key_2026_32char'; // 32 chars minimum
-const ENCRYPTION_KEY = process.env.PII_ENCRYPTION_KEY || DEFAULT_DEV_KEY;
 
 function getKey(): Buffer {
   const key = process.env.PII_ENCRYPTION_KEY;

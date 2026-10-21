@@ -35,7 +35,7 @@ export default function YouTubePlayerModal({
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
-        } catch (e) {
+        } catch {
           // ignore
         }
         playerRef.current = null;
@@ -95,7 +95,7 @@ export default function YouTubePlayerModal({
                   if (typeof event.target.setPlaybackQualityRange === 'function') {
                     event.target.setPlaybackQualityRange('hd2160', 'hd2160');
                   }
-                } catch (err) {
+                } catch {
                   // ignore
                 }
               }
@@ -141,7 +141,7 @@ export default function YouTubePlayerModal({
           if (playerRef.current) {
             try {
               playerRef.current.destroy();
-            } catch (e) {
+            } catch {
               // ignore
             }
             playerRef.current = null;
@@ -155,7 +155,7 @@ export default function YouTubePlayerModal({
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
-        } catch (e) {
+        } catch {
           // ignore
         }
         playerRef.current = null;

@@ -104,11 +104,18 @@ export async function POST(request: NextRequest) {
       (requirements as any)?.category || serviceId || (requirements as any)?.subCategory || (requirements as any)?.serviceId
     );
 
+    const effectiveSelections: ConfiguratorSelections = {
+      ...((requirements as ConfiguratorSelections) || {}),
+      serviceId: (requirements as any)?.serviceId || serviceId,
+      subCategory: (requirements as any)?.subCategory || (requirements as any)?.subCategoryId || serviceId,
+      category: (requirements as any)?.category || serviceKey
+    };
+
     let priceBreakdown;
     try {
       priceBreakdown = calculateLivePrice(
         serviceKey,
-        (requirements as ConfiguratorSelections) || {}
+        effectiveSelections
       );
     } catch (calcErr: any) {
       console.warn('[Price Calculation Error]', calcErr?.message);

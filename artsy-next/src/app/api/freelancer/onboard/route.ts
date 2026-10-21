@@ -114,10 +114,10 @@ export async function POST(req: NextRequest) {
           pan: cleanPan || '',
         };
 
-        const legalFullName = cleanLegalName || cleanAlias || 'Creator Partner';
+        const legalFullName = cleanLegalName || cleanAlias || resolvedName;
         const publicDisplayName = cleanAlias
           ? formatPublicCreatorName(cleanAlias)
-          : formatPublicCreatorName(cleanLegalName);
+          : formatPublicCreatorName(cleanLegalName || resolvedName);
 
         if (!existingUser) {
           await dbClient.from('users').insert({
@@ -145,6 +145,7 @@ export async function POST(req: NextRequest) {
 
         const profilePayload: Record<string, any> = {
           id: candidateUserId,
+          user_id: candidateUserId,
           tracking_id: trackingId,
           bio: philosophy || 'Creative Editor',
           public_specialty: cleanSpecialty,
@@ -159,7 +160,6 @@ export async function POST(req: NextRequest) {
           bank_account_name: cleanLegalName || null,
           bank_account_number: body.bankAccount || null,
           bank_ifsc_code: body.ifsc ? String(body.ifsc).toUpperCase().trim() : null,
-          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
 
@@ -169,15 +169,14 @@ export async function POST(req: NextRequest) {
           .eq('id', candidateUserId)
           .maybeSingle();
 
-        const mergedPayload = {
-          ...(existingCp || {}),
-          ...profilePayload,
-        };
-
         if (existingCp) {
-          await dbClient.from('creator_profiles').delete().eq('id', candidateUserId);
+          await dbClient.from('creator_profiles').update(profilePayload).eq('id', candidateUserId);
+        } else {
+          await dbClient.from('creator_profiles').insert({
+            ...profilePayload,
+            created_at: new Date().toISOString(),
+          });
         }
-        await dbClient.from('creator_profiles').insert(mergedPayload);
 
         // Immutable WORM audit trail
         await dbClient.from('audit_logs').insert([{

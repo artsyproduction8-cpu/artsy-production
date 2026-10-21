@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const format = searchParams.get('format'); // 'json' | 'csv'
 
   try {
-    let query = dbClient
+    const query = dbClient
       .from('audit_logs')
       .select('*')
       .order('created_at', { ascending: false })

@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import ClientHeader from '../components/ClientHeader';
 import ClientSidebar from '../components/ClientSidebar';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 
 interface NotificationItem {
@@ -32,33 +31,15 @@ export default function ClientNotificationsPage() {
     async function loadNotifications() {
       setLoading(true);
       try {
-        if (supabase) {
-          let query = supabase
-            .from('notifications')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-          if (user?.id) {
-            query = query.eq('user_id', user.id);
-          }
-
-          const { data, error } = await query;
-          if (!error && data && data.length > 0) {
-            const mapped = data.map((n: any) => {
-              const ev = n.event_number || 0;
-              const isPayment = [1, 2, 4, 18, 29, 31].includes(ev);
-              return {
-                ...n,
-                category: isPayment ? 'payments' : 'projects',
-              };
-            });
-            setNotifications(mapped);
-            setLoading(false);
-            return;
-          }
+        const res = await fetch('/api/client/notifications');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.notifications)) {
+          setNotifications(data.notifications);
+          setLoading(false);
+          return;
         }
       } catch (err) {
-        console.warn('Failed to load from Supabase notifications, using fallback', err);
+        console.warn('Failed to load notifications from API', err);
       }
       setNotifications([]);
       setLoading(false);
@@ -69,18 +50,14 @@ export default function ClientNotificationsPage() {
 
   const markAllAsRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    if (supabase) {
-      try {
-        const unreadIds = notifications.filter((n) => !n.read).map((n) => n.id);
-        if (unreadIds.length > 0) {
-          await supabase
-            .from('notifications')
-            .update({ read: true, read_at: new Date().toISOString() })
-            .in('id', unreadIds);
-        }
-      } catch (err) {
-        console.warn('Failed to mark read in Supabase', err);
-      }
+    try {
+      await fetch('/api/client/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true }),
+      });
+    } catch (err) {
+      console.warn('Failed to mark all read via API', err);
     }
   };
 
@@ -88,15 +65,14 @@ export default function ClientNotificationsPage() {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
-    if (supabase) {
-      try {
-        await supabase
-          .from('notifications')
-          .update({ read: true, read_at: new Date().toISOString() })
-          .eq('id', id);
-      } catch (err) {
-        console.warn('Failed to mark single read in Supabase', err);
-      }
+    try {
+      await fetch('/api/client/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+    } catch (err) {
+      console.warn('Failed to mark single read via API', err);
     }
   };
 
@@ -143,7 +119,7 @@ export default function ClientNotificationsPage() {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
-    <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
+    <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans overflow-x-hidden">
       <ClientHeader />
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />

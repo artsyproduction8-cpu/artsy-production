@@ -365,9 +365,25 @@ export function calculateLivePrice(
     const subLower = String(subCategoryInput).toLowerCase();
     if (catalogCategory) {
       catalogProduct = catalogCategory.products.find(
-        p => p.id.toLowerCase() === subLower || 
-             p.name.toLowerCase() === subLower || 
-             p.id.toLowerCase().includes(subLower) || 
+        p => p.id.toLowerCase() === subLower || p.name.toLowerCase() === subLower
+      );
+    }
+    if (!catalogProduct) {
+      for (const cat of DEFAULT_PRICING_MATRIX) {
+        const found = cat.products.find(
+          p => p.id.toLowerCase() === subLower || p.name.toLowerCase() === subLower
+        );
+        if (found) {
+          catalogProduct = found;
+          if (!catalogCategory) catalogCategory = cat;
+          break;
+        }
+      }
+    }
+    // Fallback fuzzy match if no exact match exists
+    if (!catalogProduct && catalogCategory) {
+      catalogProduct = catalogCategory.products.find(
+        p => p.id.toLowerCase().includes(subLower) || 
              subLower.includes(p.id.toLowerCase()) ||
              p.name.toLowerCase().includes(subLower) ||
              subLower.includes(p.name.toLowerCase())
@@ -376,9 +392,7 @@ export function calculateLivePrice(
     if (!catalogProduct) {
       for (const cat of DEFAULT_PRICING_MATRIX) {
         const found = cat.products.find(
-          p => p.id.toLowerCase() === subLower || 
-               p.name.toLowerCase() === subLower || 
-               p.id.toLowerCase().includes(subLower) || 
+          p => p.id.toLowerCase().includes(subLower) || 
                subLower.includes(p.id.toLowerCase()) ||
                p.name.toLowerCase().includes(subLower) ||
                subLower.includes(p.name.toLowerCase())

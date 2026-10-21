@@ -167,9 +167,10 @@ export async function GET(request: Request) {
 
     const creators = (creatorUsers || []).map((u: any) => {
       const p = profileMap[u.id] || {};
+      const resolvedSpecialty = p.public_specialty || u.studio_details?.specialty || 'Commercial & Narrative Film Editor';
       return {
         id: u.id,
-        display_name: u.display_name || u.full_name || 'Creator Member',
+        display_name: u.display_name || u.full_name || 'Creator',
         full_name: u.full_name || '',
         phone: u.phone || '',
         email: u.email || '',
@@ -183,7 +184,7 @@ export async function GET(request: Request) {
         total_earned: earnedMap[u.id] || 0,
         is_public: Boolean(p.is_public),
         public_display_name: p.public_display_name || u.display_name || u.full_name,
-        public_specialty: p.public_specialty || '',
+        public_specialty: resolvedSpecialty,
         creator_tier: p.creator_tier || 'rising_talent',
         created_at: u.created_at,
       };
@@ -365,8 +366,8 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: true, creatorId: id, action: 'delete' });
     }
 
-    let profileUpdate: Record<string, any> = { updated_at: new Date().toISOString() };
-    let userUpdate: Record<string, any> = { updated_at: new Date().toISOString() };
+    const profileUpdate: Record<string, any> = { updated_at: new Date().toISOString() };
+    const userUpdate: Record<string, any> = { updated_at: new Date().toISOString() };
 
     if (action === 'approve') {
       profileUpdate.approval_status = 'approved';

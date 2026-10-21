@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useTransition } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface ServiceItem {
   id: string;
@@ -67,8 +68,9 @@ export default function SearchClient() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const initialQuery = searchParams.get('q') || searchParams.get('query') || '';
-  const [searchTerm, setSearchTerm] = useState(initialQuery);
+  const currentParamQuery = searchParams.get('q') || searchParams.get('query') || '';
+  const [searchTerm, setSearchTerm] = useState(currentParamQuery);
+  const [prevQuery, setPrevQuery] = useState(currentParamQuery);
   const [activeTab, setActiveTab] = useState<'all' | 'services' | 'creators' | 'portfolio'>('all');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResults>({
@@ -79,16 +81,11 @@ export default function SearchClient() {
   });
   const [hasSearched, setHasSearched] = useState(false);
 
-  useEffect(() => {
-    const q = searchParams.get('q') || searchParams.get('query') || '';
-    setSearchTerm(q);
-    if (q.trim()) {
-      fetchSearchResults(q.trim());
-    } else {
-      setResults({ services: [], creators: [], portfolio: [], total: 0 });
-      setHasSearched(false);
-    }
-  }, [searchParams]);
+  // Sync state if URL query changes during render
+  if (currentParamQuery !== prevQuery) {
+    setPrevQuery(currentParamQuery);
+    setSearchTerm(currentParamQuery);
+  }
 
   const fetchSearchResults = async (query: string) => {
     setLoading(true);
@@ -113,6 +110,16 @@ export default function SearchClient() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const q = searchParams.get('q') || searchParams.get('query') || '';
+    if (q.trim()) {
+      fetchSearchResults(q.trim());
+    } else {
+      setResults({ services: [], creators: [], portfolio: [], total: 0 });
+      setHasSearched(false);
+    }
+  }, [searchParams]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,9 +190,10 @@ export default function SearchClient() {
           <button
             id="main-search-submit-btn"
             type="submit"
-            className="px-5 py-2.5 bg-[#1D1D1F] hover:bg-black text-white font-semibold text-xs rounded-xl transition-all shadow-xs shrink-0 cursor-pointer"
+            disabled={isPending || loading}
+            className="px-5 py-2.5 bg-[#1D1D1F] hover:bg-black text-white font-semibold text-xs rounded-xl transition-all shadow-xs shrink-0 cursor-pointer disabled:opacity-50"
           >
-            Search
+            {isPending || loading ? 'Searching...' : 'Search'}
           </button>
         </form>
 
@@ -215,8 +223,8 @@ export default function SearchClient() {
               ) : (
                 <span>
                   {results.total === 0
-                    ? `No matches found for "${initialQuery}"`
-                    : `Found ${results.total} matching ${results.total === 1 ? 'item' : 'items'} for "${initialQuery}"`}
+                    ? `No matches found for "${currentParamQuery || searchTerm}"`
+                    : `Found ${results.total} matching ${results.total === 1 ? 'item' : 'items'} for "${currentParamQuery || searchTerm}"`}
                 </span>
               )}
             </div>
@@ -336,7 +344,7 @@ export default function SearchClient() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-[#1D1D1F] mb-2">No matching services for &ldquo;{initialQuery}&rdquo;</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1D1D1F] mb-2">No matching services for &ldquo;{currentParamQuery || searchTerm}&rdquo;</h2>
           <p className="text-sm text-[#86868B] max-w-md mx-auto mb-6 leading-relaxed">
             We couldn&apos;t find an exact match. Try broader keywords like &ldquo;Cinematic&rdquo;, &ldquo;Wedding&rdquo;, &ldquo;Reel&rdquo;, &ldquo;Teaser&rdquo;, or &ldquo;Ad Film&rdquo;.
           </p>
@@ -484,9 +492,12 @@ export default function SearchClient() {
                   >
                     <div className="relative aspect-video bg-black overflow-hidden group">
                       {sample.thumbnail_url ? (
-                        <img
+                        <Image
                           src={sample.thumbnail_url}
                           alt={sample.title}
+                          width={640}
+                          height={360}
+                          unoptimized
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       ) : (

@@ -68,6 +68,19 @@ export async function GET(request: NextRequest) {
 
         if (!error && data) {
           dbUser = data;
+        } else if (!error && !data && isUuid && !authUser.id.startsWith('usr-')) {
+          // Account was purged from database. Cleanly invalidate cookie and session.
+          const res = NextResponse.json(
+            { authenticated: false, user: null, error: 'User account not found' },
+            {
+              status: 401,
+              headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate',
+              },
+            }
+          );
+          res.cookies.delete('artsy_auth_token');
+          return res;
         }
       } catch (err) {
         console.warn('[api/user/me] DB query warning:', err);
@@ -98,7 +111,7 @@ export async function GET(request: NextRequest) {
       try {
         const { data: creatorProfile } = await dbClient
           .from('creator_profiles')
-          .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, bank_account_name, bank_account_number, bank_ifsc_code, pan_number')
+          .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, public_specialty, bank_account_name, bank_account_number, bank_ifsc_code, pan_number')
           .eq('id', resolvedUser.id)
           .maybeSingle();
 
@@ -125,6 +138,7 @@ export async function GET(request: NextRequest) {
           resolvedUser.languages = creatorProfile.languages || [];
           resolvedUser.portfolio_url = creatorProfile.portfolio_url || null;
           resolvedUser.public_display_name = creatorProfile.public_display_name || null;
+          resolvedUser.public_specialty = creatorProfile.public_specialty || resolvedUser.studio_details?.specialty || null;
           if (!resolvedUser.full_name && creatorProfile.public_display_name) {
             resolvedUser.full_name = creatorProfile.public_display_name;
           }

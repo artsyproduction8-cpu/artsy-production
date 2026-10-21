@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import ClientHeader from '../components/ClientHeader';
 import ClientSidebar from '../components/ClientSidebar';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 
 interface FileRecordItem {
@@ -49,37 +48,15 @@ export default function ClientFilesPage() {
     async function loadFiles() {
       setLoading(true);
       try {
-        if (supabase) {
-          const { data, error } = await supabase
-            .from('file_records')
-            .select('*')
-            .eq('is_soft_deleted', false)
-            .order('created_at', { ascending: false });
-
-          if (!error && data && data.length > 0) {
-            const mapped: FileRecordItem[] = data.map((item: any) => {
-              const isExpiring = isFileExpiring(item.retention_delete_at);
-
-              let status: 'delivered' | 'in_progress' | 'expiring_soon' = 'in_progress';
-              if (isExpiring) {
-                status = 'expiring_soon';
-              } else if (item.file_type === 'master_delivery') {
-                status = 'delivered';
-              }
-
-              return {
-                ...item,
-                project_title: `Project ${item.project_id}`,
-                status,
-              };
-            });
-            setFiles(mapped);
-            setLoading(false);
-            return;
-          }
+        const res = await fetch('/api/client/files');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.files)) {
+          setFiles(data.files);
+          setLoading(false);
+          return;
         }
       } catch (err) {
-        console.warn('Failed to load file records from Supabase', err);
+        console.warn('Failed to load file records from API', err);
       }
       setFiles(FALLBACK_FILES);
       setLoading(false);
@@ -120,7 +97,7 @@ export default function ClientFilesPage() {
   }, [filteredFiles]);
 
   return (
-    <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
+    <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans overflow-x-hidden">
       <ClientHeader />
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />

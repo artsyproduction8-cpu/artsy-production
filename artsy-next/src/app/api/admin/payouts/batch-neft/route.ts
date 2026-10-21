@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 interface NeftBatchRecord {
@@ -37,9 +37,10 @@ export async function GET(request: NextRequest) {
 
     let batchRecords: NeftBatchRecord[] = [];
 
-    if (supabase) {
+    const db = supabaseAdmin || supabase;
+    if (db) {
       // Fetch approved pending payouts with creator profile details
-      const { data: payouts, error } = await supabase
+      const { data: payouts, error } = await db
         .from('creator_payouts')
         .select(`
           id,

@@ -5,11 +5,23 @@ import { useAuth, getCurrentUser, setCurrentUser, PRESET_USERS, logout } from '@
 import FreelancerHeader from '../components/FreelancerHeader';
 import FreelancerSidebar from '../components/FreelancerSidebar';
 
+const VERIFIED_ROLES = [
+  'Commercial & Narrative Film Editor',
+  'Color Grading & Sound Design Lead',
+  'Wedding Film Specialist',
+  'Documentary & Corporate Video Editor',
+  'Social & UGC Lead Editor',
+  'Motion Graphics & VFX Artist',
+  'Other',
+];
+
 export default function FreelancerProfilePage() {
   const { user } = useAuth();
 
   // Profile data states
   const [alias, setAlias] = useState(user?.full_name || '');
+  const [specialty, setSpecialty] = useState('Commercial & Narrative Film Editor');
+  const [customSpecialty, setCustomSpecialty] = useState('');
   const [showreelUrl, setShowreelUrl] = useState('');
   const [philosophy, setPhilosophy] = useState('');
 
@@ -177,6 +189,14 @@ export default function FreelancerProfilePage() {
         try {
           const parsed = JSON.parse(stored);
           if (parsed.alias) setAlias(parsed.alias);
+          if (parsed.specialty) {
+            if (VERIFIED_ROLES.includes(parsed.specialty)) {
+              setSpecialty(parsed.specialty);
+            } else {
+              setSpecialty('Other');
+              setCustomSpecialty(parsed.specialty);
+            }
+          }
           if (parsed.showreelUrl) setShowreelUrl(parsed.showreelUrl);
           if (parsed.philosophy) setPhilosophy(parsed.philosophy);
           if (parsed.software && Array.isArray(parsed.software)) setSoftware(parsed.software);
@@ -216,6 +236,15 @@ export default function FreelancerProfilePage() {
             if (u.phone) setPhone(u.phone);
 
             const sd = u.studio_details || {};
+            const serverSpecialty = u.public_specialty || u.creator_profile?.public_specialty || sd.specialty;
+            if (serverSpecialty) {
+              if (VERIFIED_ROLES.includes(serverSpecialty)) {
+                setSpecialty(serverSpecialty);
+              } else {
+                setSpecialty('Other');
+                setCustomSpecialty(serverSpecialty);
+              }
+            }
             if (sd.alias) setAlias(sd.alias);
             if (sd.showreelUrl) setShowreelUrl(sd.showreelUrl);
             if (sd.philosophy || u.bio) setPhilosophy(sd.philosophy || u.bio);
@@ -300,8 +329,11 @@ export default function FreelancerProfilePage() {
   const handleSaveAll = async () => {
     setIsSaving(true);
 
+    const resolvedSpecialty = specialty === 'Other' ? (customSpecialty.trim() || 'Commercial & Narrative Film Editor') : specialty;
+
     const payload = {
       alias,
+      specialty: resolvedSpecialty,
       showreelUrl,
       philosophy,
       software,
@@ -332,6 +364,7 @@ export default function FreelancerProfilePage() {
         email: email || currentUser.email,
         phone: phone || currentUser.phone,
         studio_details: payload,
+        public_specialty: resolvedSpecialty,
       };
       setCurrentUser(updatedUser);
       window.dispatchEvent(new Event('artsy_auth_change'));
@@ -349,6 +382,7 @@ export default function FreelancerProfilePage() {
             bio: philosophy,
             public_bio: philosophy,
             public_display_name: alias,
+            public_specialty: resolvedSpecialty,
             software,
             languages,
             bank_account_name: legalName,
@@ -521,7 +555,7 @@ export default function FreelancerProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans">
+    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans overflow-x-hidden">
       <FreelancerHeader />
 
       <div className="flex w-full max-w-full overflow-x-hidden">
@@ -664,6 +698,46 @@ export default function FreelancerProfilePage() {
                       className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
                     />
                   </div>
+                </div>
+
+                {/* Verified Role / Creative Discipline */}
+                <div className="flex flex-col gap-2 pt-1">
+                  <label className="text-xs font-semibold text-[#1D1D1F]">
+                    PRIMARY CREATIVE ROLE &amp; VERIFIED SPECIALTY *
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {VERIFIED_ROLES.map((role) => (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => {
+                          setSpecialty(role);
+                          if (role !== 'Other') setCustomSpecialty('');
+                        }}
+                        className={`px-3.5 py-2.5 text-xs font-semibold rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                          specialty === role
+                            ? 'bg-[#1D1D1F] text-white border-[#1D1D1F] shadow-xs'
+                            : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white hover:border-[#3B82F6]'
+                        }`}
+                      >
+                        <span className="truncate">{role}</span>
+                        {specialty === role && <span className="text-blue-400 font-bold ml-1.5 shrink-0">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                  {specialty === 'Other' && (
+                    <input
+                      type="text"
+                      required
+                      value={customSpecialty}
+                      onChange={(e) => setCustomSpecialty(e.target.value)}
+                      placeholder="Specify your creative discipline (e.g. 3D VFX Generalist, Anime & Gaming Editor)..."
+                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all mt-1"
+                    />
+                  )}
+                  <span className="text-[11px] text-[#86868B]">
+                    This verified specialty displays on your public creator showcase and client project workrooms upon studio approval.
+                  </span>
                 </div>
 
                 <div className="flex flex-col gap-1.5">

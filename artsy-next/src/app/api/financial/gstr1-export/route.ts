@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 export const dynamic = 'force-dynamic';
@@ -55,12 +55,13 @@ export async function GET(request: NextRequest) {
       },
     ];
 
-    if (supabase && typeof supabase.from === 'function') {
+    const db = supabaseAdmin || supabase;
+    if (db && typeof db.from === 'function') {
       // Query paid orders for the period
       const startDate = `${year}-${month}-01T00:00:00.000Z`;
       const endDate = new Date(Number(year), Number(month), 0, 23, 59, 59).toISOString();
 
-      const { data: orders } = await supabase
+      const { data: orders } = await db
         .from('orders')
         .select('*')
         .eq('status', 'paid')

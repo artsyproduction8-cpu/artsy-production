@@ -55,7 +55,6 @@ export default function RazorpayCheckoutButton({
   currency = 'INR',
   name = 'Artsy Production',
   description = 'Creative Studio Services',
-  receipt,
   buttonText,
   className = '',
   prefill = {},

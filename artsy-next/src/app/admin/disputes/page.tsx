@@ -78,7 +78,7 @@ export default function AdminDisputesPage() {
   };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8">
+    <div className="w-full space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -119,15 +119,15 @@ export default function AdminDisputesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold">
-                  <th className="py-3 px-4">Opened Date</th>
-                  <th className="py-3 px-4">Client</th>
-                  <th className="py-3 px-4">Project / Order</th>
-                  <th className="py-3 px-4">Disputed Amount</th>
-                  <th className="py-3 px-4">Dispute Reason</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Resolution Timeline</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold text-[11px]">
+                  <th className="py-3 px-4 whitespace-nowrap">Opened Date</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Client</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Project / Order</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Disputed Amount</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Dispute Reason</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Resolution Timeline</th>
+                  <th className="py-3 px-4 whitespace-nowrap text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E7]">

@@ -219,7 +219,7 @@ export default function AdminFreelancersPage() {
   };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8">
+    <div className="w-full space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -300,15 +300,15 @@ export default function AdminFreelancersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold">
-                  <th className="py-3 px-4">Creator / Legal Name</th>
-                  <th className="py-3 px-4">Contact</th>
-                  <th className="py-3 px-4">Skills</th>
-                  <th className="py-3 px-4">Public Status</th>
-                  <th className="py-3 px-4">Rating</th>
-                  <th className="py-3 px-4">Completed</th>
-                  <th className="py-3 px-4">Earned</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold text-[11px]">
+                  <th className="py-3.5 px-4 whitespace-nowrap">Creator / Legal Name</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Contact</th>
+                  <th className="py-3.5 px-4">Skills</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Public Status</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Rating</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Completed</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Earned</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E7]">
@@ -317,27 +317,27 @@ export default function AdminFreelancersPage() {
                     key={creator.id}
                     className="hover:bg-[#F5F5F7]/70 transition-colors"
                   >
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-[#1D1D1F]">{creator.display_name}</div>
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-[#1D1D1F] whitespace-nowrap">{creator.display_name}</div>
                       <div className="text-[10px] font-mono text-[#86868B]">{creator.id.slice(0, 8)}...</div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="font-medium text-[#1D1D1F]">{creator.email}</div>
                       <div className="text-[10px] font-mono text-[#86868B]">{creator.phone || '—'}</div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4">
                       <div className="flex flex-wrap gap-1 max-w-xs">
                         {creator.skills.slice(0, 2).map((s, idx) => (
-                          <span key={idx} className="px-1.5 py-0.5 bg-[#F5F5F7] text-[10px] rounded text-[#1D1D1F]">
+                          <span key={idx} className="px-1.5 py-0.5 bg-[#F5F5F7] text-[10px] rounded text-[#1D1D1F] whitespace-nowrap">
                             {s}
                           </span>
                         ))}
                         {creator.skills.length > 2 && (
-                          <span className="text-[10px] text-[#86868B]">+{creator.skills.length - 2}</span>
+                          <span className="text-[10px] text-[#86868B] whitespace-nowrap">+{creator.skills.length - 2}</span>
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
                         <span
                           className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -359,16 +359,16 @@ export default function AdminFreelancersPage() {
                         )}
                       </div>
                     </td>
-                    <td className="py-3 px-4 font-semibold text-[#1D1D1F]">
+                    <td className="py-3.5 px-4 whitespace-nowrap font-semibold text-[#1D1D1F]">
                       <span className="text-amber-500">★</span> {creator.rating.toFixed(1)}
                     </td>
-                    <td className="py-3 px-4 font-mono font-medium text-[#1D1D1F]">
+                    <td className="py-3.5 px-4 whitespace-nowrap font-mono font-medium text-[#1D1D1F]">
                       {creator.total_jobs} Jobs
                     </td>
-                    <td className="py-3 px-4 font-mono font-bold text-emerald-600">
+                    <td className="py-3.5 px-4 whitespace-nowrap font-mono font-bold text-emerald-600">
                       {formatInr(creator.total_earned)}
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3.5 px-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <Link
                           href={`/admin/freelancers/${creator.id}`}

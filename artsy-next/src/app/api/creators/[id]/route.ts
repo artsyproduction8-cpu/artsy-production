@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { createErrorResponse } from '@/lib/api-response';
 import { getCachedData, setCachedData } from '@/lib/cache';
+import { formatPublicCreatorName } from '@/lib/masking';
 
 export const dynamic = 'force-dynamic';
 
@@ -76,6 +77,7 @@ export async function GET(
       success: true,
       creator: {
         ...creator,
+        public_display_name: formatPublicCreatorName(creator.public_display_name) || 'Artsy Creator',
         onTimeDeliveryRate,
         samples: samples || [],
       },

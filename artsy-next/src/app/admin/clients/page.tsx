@@ -98,7 +98,7 @@ export default function AdminClientsPage() {
   };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8">
+    <div className="w-full space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -163,15 +163,15 @@ export default function AdminClientsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold">
-                  <th className="py-3 px-4">Client ID</th>
-                  <th className="py-3 px-4">Full Name</th>
-                  <th className="py-3 px-4">Contact</th>
-                  <th className="py-3 px-4">Total Orders</th>
-                  <th className="py-3 px-4">Lifetime Value</th>
-                  <th className="py-3 px-4">Account Status</th>
-                  <th className="py-3 px-4">Joined Date</th>
-                  <th className="py-3 px-4 text-right">Profile Detail</th>
+                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold text-[11px]">
+                  <th className="py-3.5 px-4 whitespace-nowrap">Client ID</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Full Name</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Contact</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Total Orders</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Lifetime Value</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Account Status</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Joined Date</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap text-right">Profile Detail</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E7]">
@@ -181,24 +181,24 @@ export default function AdminClientsPage() {
                     onClick={() => openClientDetail(client.id)}
                     className="hover:bg-[#F5F5F7]/70 transition-colors cursor-pointer"
                   >
-                    <td className="py-3 px-4 font-mono text-[#86868B] text-[10px]">{client.id.slice(0, 8)}...</td>
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-[#1D1D1F]">{client.display_name || client.full_name}</div>
+                    <td className="py-3.5 px-4 font-mono text-[#86868B] text-[10px] whitespace-nowrap">{client.id.slice(0, 8)}...</td>
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-[#1D1D1F] whitespace-nowrap">{client.display_name || client.full_name}</div>
                       {client.display_name && client.display_name !== client.full_name && (
-                        <div className="text-[11px] text-[#86868B]">{client.full_name}</div>
+                        <div className="text-[11px] text-[#86868B] whitespace-nowrap">{client.full_name}</div>
                       )}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="font-medium text-[#1D1D1F]">{client.email}</div>
                       <div className="text-[10px] text-[#86868B] font-mono">{client.phone || '—'}</div>
                     </td>
-                    <td className="py-3 px-4 font-mono font-medium text-[#1D1D1F]">
+                    <td className="py-3.5 px-4 font-mono font-medium text-[#1D1D1F] whitespace-nowrap">
                       {client.total_orders} Orders
                     </td>
-                    <td className="py-3 px-4 font-mono font-bold text-emerald-600">
+                    <td className="py-3.5 px-4 font-mono font-bold text-emerald-600 whitespace-nowrap">
                       {formatInr(client.lifetime_value)}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <span
                         className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                           client.deleted_at
@@ -211,7 +211,7 @@ export default function AdminClientsPage() {
                         {client.deleted_at ? 'DELETED' : (client.status || 'ACTIVE').toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-[#86868B]">
+                    <td className="py-3.5 px-4 text-[#86868B] whitespace-nowrap">
                       {new Date(client.created_at).toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'short',

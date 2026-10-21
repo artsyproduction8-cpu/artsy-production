@@ -308,8 +308,10 @@ export default function BookClient() {
       bookingData: {
         service: category,
         serviceKey: category,
+        serviceId: activeSub.id,
         serviceName: `${categoriesList.find((c) => c.key === category)?.title || category} — ${activeSub.label}`,
         subCategoryId: activeSub.id,
+        subCategory: activeSub.id,
         duration: activeSub.duration,
         cameraAngle: angles,
         angles,
@@ -330,6 +332,7 @@ export default function BookClient() {
         requirements: {
           category,
           subCategory: activeSub.id,
+          serviceId: activeSub.id,
           angles,
           turnaround,
           hasRawFootage,

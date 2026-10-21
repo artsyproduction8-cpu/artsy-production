@@ -310,7 +310,7 @@ export default function FreelancerDashboard() {
           <div className="flex flex-col w-full max-w-full overflow-x-hidden">
             
 
-            <div className="p-6 md:p-8 space-y-8 max-w-7xl">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
               {toastMessage && (
                 <div
                   className={`p-4 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-between ${

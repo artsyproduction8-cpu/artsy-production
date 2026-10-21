@@ -271,7 +271,7 @@ export default function AdminFreelancerDetail() {
     .toUpperCase();
 
   return (
-    <div className="p-6 md:p-10 space-y-8 max-w-6xl mx-auto">
+    <div className="w-full space-y-8">
       {/* Alert Notices */}
       {actionNotice && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 shadow-xs flex items-center justify-between">

@@ -20,7 +20,7 @@ export default function FreelancerPayoutsPage() {
         <FreelancerSidebar />
 
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
-          <div className="p-6 md:p-8 space-y-8 max-w-7xl">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
         {/* Notice Alert */}
         {statementNotice && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs text-emerald-800 animate-in fade-in duration-200">
@@ -114,10 +114,10 @@ export default function FreelancerPayoutsPage() {
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-[#F5F5F7] text-[#86868B] text-[11px] uppercase tracking-wider font-semibold border-b border-[#E5E5E7]">
-                  <th className="p-4">Project</th>
-                  <th className="p-4">Date</th>
-                  <th className="p-4 text-right">Amount</th>
-                  <th className="p-4">Status</th>
+                  <th className="p-4 whitespace-nowrap">Project</th>
+                  <th className="p-4 whitespace-nowrap">Date</th>
+                  <th className="p-4 whitespace-nowrap text-right">Amount</th>
+                  <th className="p-4 whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#F5F5F7]">

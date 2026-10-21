@@ -2,18 +2,33 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { formatPublicCreatorName } from '@/lib/masking';
 
 interface CreatorItem {
   id: string;
-  public_display_name: string;
-  public_specialty: string;
-  public_bio: string;
-  years_of_experience: number;
-  avg_rating: number | string;
-  total_projects_completed: number;
-  is_accepting_work: boolean;
-  creator_tier: 'rising_talent' | 'standard' | 'senior';
+  public_display_name?: string;
+  public_specialty?: string;
+  public_bio?: string;
+  years_of_experience?: number;
+  avg_rating?: number | string;
+  total_projects_completed?: number;
+  is_accepting_work?: boolean;
+  creator_tier?: 'rising_talent' | 'standard' | 'senior';
+  users?: {
+    full_name?: string;
+  };
 }
+
+const isGenericPlaceholder = (name?: string | null): boolean => {
+  if (!name) return true;
+  const lower = name.trim().toLowerCase();
+  return (
+    lower === 'creator partner' ||
+    lower === 'creator' ||
+    lower === 'creator member' ||
+    lower === 'artsy creator'
+  );
+};
 
 export default function CreatorsClient() {
   const [creators, setCreators] = useState<CreatorItem[]>([]);
@@ -78,7 +93,7 @@ export default function CreatorsClient() {
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs mb-10">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
           {/* Category Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+          <div className="flex flex-wrap items-center gap-1.5">
             {categories.map((cat) => (
               <button
                 key={cat.id}
@@ -179,16 +194,24 @@ export default function CreatorsClient() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {creators.map((c) => {
+            const validProfileName = !isGenericPlaceholder(c.public_display_name) ? c.public_display_name?.trim() : null;
+            const validUserName = !isGenericPlaceholder(c.users?.full_name) ? c.users?.full_name?.trim() : null;
+            const rawName = validProfileName || validUserName;
+            const displayName = rawName ? formatPublicCreatorName(rawName) : 'Artsy Creator';
+
             const initials =
-              (c.public_display_name || '')
-                .split(' ')
-                .filter(Boolean)
-                .map((n) => n[0])
-                .slice(0, 2)
-                .join('') || 'CR';
+              displayName.toLowerCase() === 'artsy creator'
+                ? 'AC'
+                : displayName
+                    .split(' ')
+                    .filter(Boolean)
+                    .map((n) => n[0])
+                    .slice(0, 2)
+                    .join('')
+                    .toUpperCase() || 'AC';
 
             const isRisingTalent =
-              c.creator_tier === 'rising_talent' || c.total_projects_completed < 10;
+              c.creator_tier === 'rising_talent' || (c.total_projects_completed ?? 0) < 10;
 
             return (
               <div
@@ -235,7 +258,7 @@ export default function CreatorsClient() {
 
                   {/* Name & Specialty */}
                   <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-tight group-hover:text-[#3B82F6] transition-colors">
-                    {c.public_display_name}
+                    {displayName}
                   </h2>
                   <p className="text-xs font-semibold text-[#3B82F6] mt-1 leading-snug">
                     {c.public_specialty || 'Cinematic Video Editor'}

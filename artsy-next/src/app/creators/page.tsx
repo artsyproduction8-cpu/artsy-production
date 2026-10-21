@@ -48,7 +48,7 @@ export default function PublicCreatorsPage() {
 
       <Navbar />
 
-      <main className="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
+      <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
         {/* Hero Header with Expanded Editorial Copy */}
         <div className="max-w-3xl mx-auto mb-10 text-center">
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#1D1D1F] leading-tight">

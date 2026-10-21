@@ -4,20 +4,36 @@ import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { encryptPII } from '@/lib/crypto/pii';
 import { invalidateCreatorCache, setCachedUser } from '@/lib/cache';
+import { formatPublicCreatorName } from '@/lib/masking';
 
 export async function POST(req: NextRequest) {
-  // 1. Authenticate caller
-  const authUser = await getAuthenticatedUser(req);
-  if (!authUser) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   // M9: Safe JSON parsing
   let body: any;
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
+  }
+
+  // 1. Authenticate caller (cookie first, then verified existing user id fallback)
+  let authUser = await getAuthenticatedUser(req);
+  const candidateId = body?.userId || body?.id;
+
+  if (!authUser && candidateId && supabaseAdmin) {
+    try {
+      const { data: matchedUser } = await supabaseAdmin
+        .from('users')
+        .select('id, email, phone, role, full_name, display_name')
+        .eq('id', candidateId)
+        .maybeSingle();
+      if (matchedUser) {
+        authUser = matchedUser;
+      }
+    } catch {}
+  }
+
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized: Please log in before submitting creator application.' }, { status: 401 });
   }
 
   try {
@@ -30,13 +46,26 @@ export async function POST(req: NextRequest) {
       pan,
     } = body;
 
+    const cleanLegalName = typeof legalName === 'string' ? legalName.trim() : '';
+    const cleanAlias = typeof alias === 'string' ? alias.trim() : '';
+    const resolvedName = cleanLegalName || cleanAlias;
+
+    if (!resolvedName || resolvedName.length < 2) {
+      return NextResponse.json({ error: 'Legal name or creator alias is required to complete onboarding.' }, { status: 400 });
+    }
+
+    const lowerName = resolvedName.toLowerCase();
+    if (lowerName === 'creator partner' || lowerName === 'creator' || lowerName === 'creator member' || lowerName === 'artsy creator') {
+      return NextResponse.json({ error: 'Please enter your actual personal name or studio alias.' }, { status: 400 });
+    }
+
     if (philosophy && typeof philosophy === 'string' && philosophy.length > 2000) {
       return NextResponse.json({ error: 'Bio/Philosophy cannot exceed 2,000 characters.' }, { status: 400 });
     }
-    if (legalName && typeof legalName === 'string' && legalName.length > 150) {
+    if (cleanLegalName && cleanLegalName.length > 150) {
       return NextResponse.json({ error: 'Legal name cannot exceed 150 characters.' }, { status: 400 });
     }
-    if (alias && typeof alias === 'string' && alias.length > 100) {
+    if (cleanAlias && cleanAlias.length > 100) {
       return NextResponse.json({ error: 'Display alias cannot exceed 100 characters.' }, { status: 400 });
     }
 
@@ -60,14 +89,13 @@ export async function POST(req: NextRequest) {
           .eq('id', candidateUserId)
           .maybeSingle();
 
-        const resolvedName = legalName || alias || null;
         const reelUrls = Array.isArray(body.reels)
           ? body.reels.map((r: any) => (typeof r === 'string' ? r : r.url)).filter(Boolean)
           : [];
 
         const studioDetails = {
-          alias: alias || null,
-          legalName: legalName || null,
+          alias: cleanAlias || null,
+          legalName: cleanLegalName || null,
           software: Array.isArray(software) ? software : [],
           languages: Array.isArray(languages) ? languages : [],
           experience: body.experience || '',
@@ -81,13 +109,18 @@ export async function POST(req: NextRequest) {
           pan: cleanPan || '',
         };
 
+        const legalFullName = cleanLegalName || cleanAlias || 'Creator Partner';
+        const publicDisplayName = cleanAlias
+          ? formatPublicCreatorName(cleanAlias)
+          : formatPublicCreatorName(cleanLegalName);
+
         if (!existingUser) {
           await dbClient.from('users').insert({
             id: candidateUserId,
             email: candidateEmail,
             phone: candidatePhone,
-            full_name: resolvedName,
-            display_name: alias || null,
+            full_name: legalFullName,
+            display_name: publicDisplayName,
             role: 'freelancer',
             status: 'active',
             onboarded: true,
@@ -96,8 +129,8 @@ export async function POST(req: NextRequest) {
           });
         } else {
           await dbClient.from('users').update({
-            full_name: resolvedName || existingUser.full_name,
-            display_name: alias || null,
+            full_name: legalFullName,
+            display_name: publicDisplayName,
             role: 'freelancer',
             onboarded: true,
             studio_details: studioDetails,
@@ -115,9 +148,9 @@ export async function POST(req: NextRequest) {
           onboarding_status: 'pending_review',
           portfolio_url: body.showreelUrl || null,
           sample_links: reelUrls,
-          public_display_name: alias || legalName || null,
+          public_display_name: publicDisplayName,
           pan_number: encryptedPan,
-          bank_account_name: body.legalName || null,
+          bank_account_name: cleanLegalName || null,
           bank_account_number: body.bankAccount || null,
           bank_ifsc_code: body.ifsc ? String(body.ifsc).toUpperCase().trim() : null,
           created_at: new Date().toISOString(),
@@ -162,8 +195,8 @@ export async function POST(req: NextRequest) {
             role: 'freelancer',
             email: candidateEmail,
             phone: candidatePhone,
-            full_name: resolvedName || authUser.full_name,
-            display_name: alias || authUser.display_name,
+            full_name: publicDisplayName || authUser.full_name,
+            display_name: cleanAlias || publicDisplayName || authUser.display_name,
             onboarded: true,
             onboarding_status: 'pending_review',
             tracking_id: trackingId,

@@ -250,7 +250,7 @@ export default function ClientReviewPage() {
             <div className="flex flex-col w-full max-w-full overflow-x-hidden">
             
             {/* ORDER BANNER */}
-            <section className="p-6 md:p-8 pb-0 max-w-7xl w-full">
+            <section className="p-4 sm:p-6 lg:p-8 pb-0 max-w-[1600px] mx-auto w-full">
               <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
                 <div className="flex flex-col xl:flex-row xl:items-stretch justify-between gap-6">
                   {/* Title & Details */}
@@ -318,7 +318,7 @@ export default function ClientReviewPage() {
             </section>
 
             {/* MAIN WORKSPACE */}
-            <div className="p-6 md:p-8 space-y-8 max-w-7xl w-full">
+            <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto w-full">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
                 {/* LEFT 8 COLS: VIDEO PLAYER & CONTROLS */}

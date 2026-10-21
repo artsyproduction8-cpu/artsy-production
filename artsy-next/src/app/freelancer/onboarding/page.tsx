@@ -51,10 +51,10 @@ export default function FreelancerOnboarding() {
         router.replace('/freelancer/rejected');
         return;
       }
-      if (user.full_name && !legalName) {
+      if (user.full_name && !legalName && user.full_name !== 'Creator Partner' && user.full_name !== 'Creator') {
         setLegalName(user.full_name);
       }
-      if (user.display_name && !alias) {
+      if (user.display_name && !alias && user.display_name !== 'Creator Partner' && user.display_name !== 'Creator') {
         setAlias(user.display_name);
       }
       if (user.tracking_id) {
@@ -77,6 +77,17 @@ export default function FreelancerOnboarding() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanLegal = legalName.trim();
+    const cleanAliasVal = alias.trim();
+    if (!cleanLegal && !cleanAliasVal) {
+      alert('Please enter your full legal name or creator alias before submitting.');
+      return;
+    }
+    const lowerName = (cleanLegal || cleanAliasVal).toLowerCase();
+    if (lowerName === 'creator partner' || lowerName === 'creator' || lowerName === 'artsy creator') {
+      alert('Please enter your actual personal name or studio alias rather than a placeholder.');
+      return;
+    }
     if (!ndaAccepted) {
       alert('Please accept the Creator Agreement & Confidentiality NDA');
       return;
@@ -94,6 +105,7 @@ export default function FreelancerOnboarding() {
       const res = await fetch('/api/freelancer/onboard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           userId: candidateUserId,
           alias,
@@ -115,7 +127,11 @@ export default function FreelancerOnboarding() {
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to submit onboarding');
+      }
+
       if (data.trackingId) {
         setTrackingId(data.trackingId);
         try {
@@ -217,10 +233,12 @@ export default function FreelancerOnboarding() {
                         required
                         value={alias}
                         onChange={(e) => setAlias(e.target.value)}
-                        placeholder="e.g. Rahul Sharma or Rahul Edits"
+                        placeholder="e.g. Rahul S. or Rahul Edits"
                         className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
                       />
-                      <span className="text-[11px] text-[#86868B]">This name will appear on your creator profile and projects.</span>
+                      <span className="text-[11px] text-[#86868B]">
+                        Appears on your public creator card. To protect privacy, full surnames are displayed as an initial only (e.g. Rahul S.).
+                      </span>
                     </div>
 
                     <div className="flex flex-col gap-1.5">

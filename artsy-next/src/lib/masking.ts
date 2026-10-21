@@ -4,15 +4,33 @@
  */
 
 /**
- * Formats a name to First Name + Last Initial (e.g., "Jane Doe" -> "Jane D.")
+ * Formats a name to First Name + Surname Initial (e.g., "Shivratan Kanojiya" -> "Shivratan K", "Jane Doe" -> "Jane D")
+ * Respects single names (e.g. "Shreyas") and protects creator PII.
  */
 export function formatPublicCreatorName(fullName?: string | null): string {
   if (!fullName || !fullName.trim()) return '';
-  const parts = fullName.trim().split(/\s+/);
+  const cleaned = fullName.trim();
+  const lower = cleaned.toLowerCase();
+  if (
+    lower === 'creator partner' ||
+    lower === 'creator' ||
+    lower === 'creator member' ||
+    lower === 'artsy creator'
+  ) {
+    return 'Artsy Creator';
+  }
+  const parts = cleaned.split(/\s+/).filter(Boolean);
   if (parts.length === 1) return parts[0];
+
+  // If already formatted like "Shivratan K" or "Shivratan K."
+  if (parts.length === 2 && parts[1].replace(/\.$/, '').length === 1) {
+    return `${parts[0]} ${parts[1].replace(/\.$/, '').toUpperCase()}`;
+  }
+
   const firstName = parts[0];
-  const lastInitial = parts[parts.length - 1][0].toUpperCase();
-  return `${firstName} ${lastInitial}.`;
+  const lastPart = parts[parts.length - 1].replace(/\.$/, '');
+  const lastInitial = lastPart[0]?.toUpperCase() || '';
+  return `${firstName} ${lastInitial}`;
 }
 
 /**

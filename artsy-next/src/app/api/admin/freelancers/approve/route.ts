@@ -3,6 +3,7 @@ import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { invalidateCreatorCache } from '@/lib/cache';
+import { formatPublicCreatorName } from '@/lib/masking';
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,10 +42,25 @@ export async function POST(req: NextRequest) {
             .eq('id', creatorId)
             .maybeSingle();
 
+          // Ensure public_display_name is populated and formatted with surname initial
+          let rawName = existingCp?.public_display_name;
+          const { data: userData } = await dbClient
+            .from('users')
+            .select('full_name, display_name')
+            .eq('id', creatorId)
+            .maybeSingle();
+
+          if (!rawName || rawName === 'Creator Partner' || rawName.trim() === '') {
+            rawName = userData?.full_name?.trim() || (creatorName !== 'Creator' ? creatorName : null) || 'Artsy Creator';
+          }
+
+          const publicDisplayName = formatPublicCreatorName(rawName) || 'Artsy Creator';
+
           const approvalData = {
             approval_status: 'approved',
             onboarding_status: 'approved',
             is_public: true,
+            public_display_name: publicDisplayName,
             approved_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };
@@ -63,7 +79,12 @@ export async function POST(req: NextRequest) {
 
           await dbClient
             .from('users')
-            .update({ status: 'active', updated_at: new Date().toISOString() })
+            .update({
+              status: 'active',
+              full_name: userData?.full_name || rawName,
+              display_name: publicDisplayName,
+              updated_at: new Date().toISOString(),
+            })
             .eq('id', creatorId);
 
           // WORM audit trail

@@ -27,7 +27,7 @@ export default function ClientInvoicesPage() {
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen">
-          <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
             {/* Header */}
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
@@ -63,13 +63,13 @@ export default function ClientInvoicesPage() {
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="border-b border-[#E5E5E7] text-[#86868B] font-bold uppercase text-[10px]">
-                        <th className="py-3 px-3">Invoice # / Date</th>
-                        <th className="py-3 px-3">Project</th>
-                        <th className="py-3 px-3">Price</th>
-                        <th className="py-3 px-3">GST (18%)</th>
-                        <th className="py-3 px-3">Total Paid</th>
-                        <th className="py-3 px-3">Payment Status</th>
-                        <th className="py-3 px-3 text-right">Receipt</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Invoice # / Date</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Project</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Price</th>
+                        <th className="py-3 px-3 whitespace-nowrap">GST (18%)</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Total Paid</th>
+                        <th className="py-3 px-3 whitespace-nowrap">Payment Status</th>
+                        <th className="py-3 px-3 whitespace-nowrap text-right">Receipt</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#F5F5F7]">

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth, logout } from '@/lib/auth';
 
 export default function ClientHeader() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [avatarUrl, setAvatarUrl] = useState<string>('');
 
   const syncAvatar = () => {
@@ -121,27 +121,31 @@ export default function ClientHeader() {
 
           {/* User Avatar & Dropdown Trigger */}
           <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer select-none"
-              title={`${clientName} (Client Profile)`}
-            >
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Client Logo"
-                  className="w-8 h-8 rounded-full object-cover border border-white/20 bg-white shadow-xs"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                  {clientInitials}
-                </div>
-              )}
-              <span className="hidden sm:inline text-xs font-medium text-white max-w-[120px] truncate">
-                {clientName.split(' ')[0]}
-              </span>
-            </button>
+            {loading || !user ? (
+              <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse border border-white/10" />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer select-none"
+                title={`${clientName} (Client Profile)`}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Client Logo"
+                    className="w-8 h-8 rounded-full object-cover border border-white/20 bg-white shadow-xs"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-[#3B82F6] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    {clientInitials}
+                  </div>
+                )}
+                <span className="hidden sm:inline text-xs font-medium text-white max-w-[120px] truncate">
+                  {clientName.split(' ')[0]}
+                </span>
+              </button>
+            )}
 
             {/* Compact Client Pages Dropdown Menu */}
             {isMenuOpen && (

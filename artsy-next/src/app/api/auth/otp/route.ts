@@ -247,7 +247,7 @@ export async function POST(request: NextRequest) {
         const generatedUserId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `usr_${cleanPhone || Date.now()}`;
         const defaultName = isSuperAdminIdentifier
           ? 'Studio Owner (Super Admin)'
-          : (requestedRole === 'freelancer' ? 'Creator Partner' : 'Studio Client');
+          : null;
 
         const newUserData = {
           id: generatedUserId,

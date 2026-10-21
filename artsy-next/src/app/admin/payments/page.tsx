@@ -68,7 +68,7 @@ export default function AdminPaymentsPage() {
   };
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto space-y-8">
+    <div className="w-full space-y-8">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -185,17 +185,17 @@ export default function AdminPaymentsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold">
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Type</th>
-                  <th className="py-3 px-4">Reference</th>
-                  <th className="py-3 px-4">Party</th>
-                  <th className="py-3 px-4">Gross</th>
-                  <th className="py-3 px-4">TDS / Fee</th>
-                  <th className="py-3 px-4">Net Flow</th>
-                  <th className="py-3 px-4">Running Balance</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Method</th>
+                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold text-[11px]">
+                  <th className="py-3.5 px-4 whitespace-nowrap">Date</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Type</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Reference</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Party</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Gross</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">TDS / Fee</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Net Flow</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Running Balance</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Method</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E7]">

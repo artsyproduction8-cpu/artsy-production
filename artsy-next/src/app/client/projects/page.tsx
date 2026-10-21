@@ -96,7 +96,7 @@ export default function ClientProjectsPage() {
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen">
-          <div className="p-6 md:p-8 space-y-8 max-w-6xl mx-auto">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
             {/* User Identity Greeting */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-[#E5E5E7]">
               <div className="flex items-center gap-4">

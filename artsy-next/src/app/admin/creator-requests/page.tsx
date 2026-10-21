@@ -227,14 +227,14 @@ export default function AdminCreatorRequestsPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[#F5F5F7] text-[#86868B] border-b border-[#E5E5E7]">
+              <thead className="bg-[#F5F5F7] text-[#86868B] border-b border-[#E5E5E7] text-[11px]">
                 <tr>
-                  <th className="py-3 px-4 font-semibold">Order</th>
-                  <th className="py-3 px-4 font-semibold">Client</th>
-                  <th className="py-3 px-4 font-semibold">Requested Creator</th>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap">Order</th>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap">Client</th>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap">Requested Creator</th>
                   <th className="py-3 px-4 font-semibold">Service & Value</th>
-                  <th className="py-3 px-4 font-semibold">Status</th>
-                  <th className="py-3 px-4 font-semibold text-right">Actions</th>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap">Status</th>
+                  <th className="py-3 px-4 font-semibold whitespace-nowrap text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E7]">

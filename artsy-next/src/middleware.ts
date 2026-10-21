@@ -190,6 +190,13 @@ export async function middleware(request: NextRequest) {
   // 2. Server-Side Page Route Guards (SEC-02)
   // ─────────────────────────────────────────────────────────────────────────────
 
+  // Exempt public routes from any server route blocking or cookie manipulation
+  const publicRoutes = ['/', '/creators', '/work', '/services', '/pricing', '/about', '/contact', '/book'];
+  const isPublicRoute = publicRoutes.some((route) => pathname === route || (route !== '/' && pathname.startsWith(route + '/')));
+  if (isPublicRoute) {
+    return NextResponse.next();
+  }
+
   // Exempt public onboarding / login subroutes
   if (pathname === '/admin/login' || pathname === '/freelancer/onboarding') {
     return NextResponse.next();

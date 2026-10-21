@@ -103,23 +103,23 @@ const AUTH_STORAGE_KEY = 'artsy_auth_user';
 export const getCurrentUser = (): ArtsyUser | null => {
   if (typeof window === 'undefined') return null;
 
-  // Multi-tab logout sync: if persistent state is cleared, destroy local tab session
-  const userStr = localStorage.getItem(AUTH_STORAGE_KEY);
-  if (!userStr) {
-    try { sessionStorage.removeItem(AUTH_STORAGE_KEY); } catch {}
-    return null;
-  }
-
   try {
     const sessionStr = sessionStorage.getItem(AUTH_STORAGE_KEY);
-    if (sessionStr) return JSON.parse(sessionStr);
+    if (sessionStr) {
+      const parsed = JSON.parse(sessionStr);
+      if (parsed && parsed.id) return parsed;
+    }
   } catch {}
 
   try {
-    return JSON.parse(userStr);
-  } catch {
-    return null;
-  }
+    const userStr = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (userStr) {
+      const parsed = JSON.parse(userStr);
+      if (parsed && parsed.id) return parsed;
+    }
+  } catch {}
+
+  return null;
 };
 
 // Set current user in sessionStorage / localStorage and server cookie via session endpoint
@@ -264,19 +264,49 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const syncUser = () => {
-      setUser(getCurrentUser());
-      setLoading(false);
+      const current = getCurrentUser();
+      if (isMounted) {
+        setUser(current);
+      }
     };
 
+    // Hydrate immediately from persistent local cache
     syncUser();
 
     // Fetch fresh profile data directly from database on page load via /api/user/me
-    fetch('/api/user/me')
-      .then((res) => (res.ok ? res.json() : fetch('/api/auth/session').then((r) => r.ok ? r.json() : null)))
-      .then((data) => {
+    const refreshProfile = async () => {
+      try {
+        const res = await fetch('/api/user/me', {
+          credentials: 'include',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+
+        if (res.status === 401) {
+          // Explicitly 401 Unauthorized from server -> only then clear local session
+          if (isMounted) {
+            setUser(null);
+          }
+          try {
+            sessionStorage.removeItem(AUTH_STORAGE_KEY);
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+          } catch {}
+          return;
+        }
+
+        if (!res.ok) {
+          // If server error (500, 502, 503, etc.), DO NOT clear local session
+          console.warn('[useAuth] /api/user/me returned status', res.status, '- preserving local session');
+          return;
+        }
+
+        const data = await res.json().catch(() => null);
         if (data && data.authenticated && data.user) {
-          setUser(data.user);
+          if (isMounted) {
+            setUser(data.user);
+          }
           try {
             sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data.user));
             const sanitizedUser: ArtsyUser = {
@@ -306,17 +336,18 @@ export const useAuth = () => {
             localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitizedUser));
             window.dispatchEvent(new Event('artsy_profile_updated'));
           } catch {}
-        } else if (data && !data.authenticated) {
-          // Cookie expired or invalidated
-          setUser(null);
-          try {
-            sessionStorage.removeItem(AUTH_STORAGE_KEY);
-            localStorage.removeItem(AUTH_STORAGE_KEY);
-          } catch {}
         }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      } catch (err) {
+        // Network error / connection blip -> DO NOT clear local session
+        console.warn('[useAuth] Network blip fetching /api/user/me - preserving local session:', err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    refreshProfile();
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === AUTH_STORAGE_KEY) {
@@ -335,6 +366,7 @@ export const useAuth = () => {
     window.addEventListener('artsy_auth_change', handleLocalAuthChange);
 
     return () => {
+      isMounted = false;
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('artsy_auth_change', handleLocalAuthChange);
     };

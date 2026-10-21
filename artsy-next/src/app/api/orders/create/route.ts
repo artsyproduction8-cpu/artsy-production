@@ -8,13 +8,38 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 function resolveServiceKey(serviceId?: string): string {
-  if (!serviceId) return 'wedding';
+  if (!serviceId) return '';
   const lower = serviceId.toLowerCase();
   if (lower.includes('wedding')) return 'wedding';
-  if (lower.includes('personal')) return 'personal';
-  if (lower.includes('brand') || lower.includes('ugc')) return 'brand';
+  if (
+    lower.includes('personal') ||
+    lower.includes('maternity') ||
+    lower.includes('birthday') ||
+    lower.includes('engagement') ||
+    lower.includes('baby') ||
+    lower.includes('memorial')
+  ) {
+    return 'personal';
+  }
+  if (
+    lower.includes('brand') ||
+    lower.includes('ugc') ||
+    lower.includes('fashion') ||
+    lower.includes('ad-film') ||
+    lower.includes('explainer')
+  ) {
+    return 'brand';
+  }
   if (lower.includes('store') || lower.includes('product')) return 'store_product';
-  if (lower.includes('corporate') || lower.includes('event')) return 'corporate';
+  if (
+    lower.includes('corporate') ||
+    lower.includes('event') ||
+    lower.includes('keynote') ||
+    lower.includes('testimonial') ||
+    lower.includes('training')
+  ) {
+    return 'corporate';
+  }
   return lower;
 }
 
@@ -52,6 +77,8 @@ export async function POST(request: NextRequest) {
       clientEmail,
     } = body;
 
+    console.log('SERVER RECEIVED:', { serviceId, requirements });
+
     // Security Fix #3: Log client-supplied amount tampering if provided, but never use it
     if (body.amount !== undefined) {
       console.warn(
@@ -60,14 +87,44 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Server-side price calculation via canonical pricing engine
-    const serviceKey = resolveServiceKey((requirements as any)?.category || serviceId);
-    const priceBreakdown = calculateLivePrice(serviceKey, (requirements as ConfiguratorSelections) || {});
+    const rawTarget =
+      (requirements as any)?.serviceId ||
+      (requirements as any)?.subCategory ||
+      (requirements as any)?.category ||
+      serviceId;
+
+    if (!rawTarget) {
+      return NextResponse.json(
+        { error: 'Unable to calculate price for this configuration' },
+        { status: 400 }
+      );
+    }
+
+    const serviceKey = resolveServiceKey(
+      (requirements as any)?.category || serviceId || (requirements as any)?.subCategory || (requirements as any)?.serviceId
+    );
+
+    let priceBreakdown;
+    try {
+      priceBreakdown = calculateLivePrice(
+        serviceKey,
+        (requirements as ConfiguratorSelections) || {}
+      );
+    } catch (calcErr: any) {
+      console.warn('[Price Calculation Error]', calcErr?.message);
+      return NextResponse.json(
+        { error: 'Unable to calculate price for this configuration' },
+        { status: 400 }
+      );
+    }
+
     const canonicalAmount = priceBreakdown.grandTotalPaise;
+    console.log('SERVER CALCULATED PRICE:', canonicalAmount);
 
     // 2. Validate amount bounds (guardrails)
     if (!canonicalAmount || canonicalAmount < 100) {
       return NextResponse.json(
-        { error: 'Calculated order amount is invalid.' },
+        { error: 'Unable to calculate price for this configuration' },
         { status: 400 }
       );
     }

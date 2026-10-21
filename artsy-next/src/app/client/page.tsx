@@ -96,7 +96,7 @@ export default function ClientDashboardPage() {
 
         {/* Main Content Dashboard */}
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
-          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+          <div className="p-4 sm:p-6 lg:p-8 w-full max-w-[1600px] mx-auto space-y-8">
 
           {/* Top Banner: Welcome */}
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-6">

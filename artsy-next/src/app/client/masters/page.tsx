@@ -25,7 +25,7 @@ export default function ClientMastersPage() {
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen">
-          <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
             {/* Header */}
             <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">

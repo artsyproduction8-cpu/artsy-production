@@ -565,7 +565,13 @@ export default function SearchClient() {
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-11 h-11 rounded-full bg-[#1D1D1F] text-white font-extrabold flex items-center justify-center text-xs shadow-xs">
                           {creator.public_display_name
-                            ? creator.public_display_name.slice(0, 2).toUpperCase()
+                            ? creator.public_display_name
+                                .split(' ')
+                                .filter(Boolean)
+                                .map((n: string) => n[0])
+                                .slice(0, 2)
+                                .join('')
+                                .toUpperCase()
                             : 'CR'}
                         </div>
                         <div>

@@ -179,7 +179,7 @@ export default function CoverflowReels() {
           handlePointerEnd();
         }}
         onMouseDown={(e) => {
-          if ((e.target as HTMLElement).closest('#coverflow-dots') || (e.target as HTMLElement).closest('button'))
+          if ((e.target as HTMLElement).closest('button'))
             return;
           handlePointerStart(e.clientX);
         }}
@@ -304,33 +304,8 @@ export default function CoverflowReels() {
           })}
         </div>
 
-        {/* Bottom Pagination Dots with Accessible Hit Area & Uniform Geometry */}
-        <div className="flex items-center justify-center gap-1.5 mt-8" id="coverflow-dots">
-          {REELS.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              aria-label={`Go to slide ${idx + 1}`}
-              aria-current={idx === currentIndex ? 'true' : undefined}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCurrentIndex(idx);
-              }}
-              className="w-8 h-8 flex items-center justify-center cursor-pointer rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]"
-            >
-              <span
-                className={`h-2.5 w-2.5 rounded-full transition-all duration-300 block pointer-events-none ${
-                  idx === currentIndex
-                    ? 'bg-[#3B82F6] ring-2 ring-[#3B82F6]/30'
-                    : 'bg-[#DCDFE3] hover:bg-[#86868B]'
-                }`}
-              />
-            </button>
-          ))}
-        </div>
-
         {/* View All Work Prominent Secondary CTA */}
-        <div className="mt-10 text-center">
+        <div className="mt-6 text-center">
           <Link
             href="/work"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-sm font-bold uppercase tracking-wider text-[#1D1D1F] transition-all shadow-xs group"

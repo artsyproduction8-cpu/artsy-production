@@ -66,7 +66,7 @@ export interface PricingOption {
 export interface PricingRule {
   id: string;
   name: string;
-  category: 'wedding' | 'brand_ugc' | 'store_product' | 'corporate_event';
+  category: 'wedding' | 'brand_ugc' | 'store_product' | 'corporate_event' | 'personal';
   description: string;
   basePricePaise: number; // in paise
   baseDeliveryDays: number;
@@ -196,6 +196,31 @@ export const DEFAULT_PRICING_RULES: Record<string, PricingRule> = {
         days: 3
       }
     }
+  },
+  personal: {
+    id: 'personal',
+    name: 'Personal & Milestone Films',
+    category: 'personal',
+    description: 'Birthdays, engagements, baby showers, memorials, and family anniversaries.',
+    basePricePaise: 100000, // ₹1,000 (Base rate matching entry milestone reels like Maternity Reel Only)
+    baseDeliveryDays: 7,
+    options: {
+      cameraAngles: [
+        { label: 'Single Angle (1 Camera)', value: 1, costPaise: 0 },
+        { label: 'Dual Angles (2 Cameras)', value: 2, costPaise: 80000 },
+        { label: 'Multi-Cam / Drone (3+ Cameras)', value: 3, costPaise: 160000 }
+      ],
+      duration: [
+        { label: 'Social Reel (30–60s)', value: 'reel', costPaise: 0 },
+        { label: 'Teaser Cut (45–60s)', value: 'teaser', costPaise: 50000 },
+        { label: 'Milestone Highlight (3–5 min)', value: 'highlight', costPaise: 200000 }
+      ],
+      rushTurnaround: {
+        label: 'Priority Express Delivery (4–5 Days)',
+        costPaise: 100000,
+        days: 4
+      }
+    }
   }
 };
 
@@ -315,23 +340,25 @@ export function calculateLivePrice(
 ): PriceBreakdown {
   const config = { ...loadPlatformConfig(), ...configOverride };
   const rules = rulesOverride || getActivePricingRules();
-  const rule = rules[serviceKey] || rules.wedding;
 
-  const adjustments: AdjustmentItem[] = [];
-  let currentDeliveryDays = rule.baseDeliveryDays;
-
-  // 0. Canonical Catalog Matrix Resolution
-  const subCategoryInput = selections.subCategory || selections.subCategoryId;
+  // 0. Canonical Catalog Matrix & Rule Resolution
+  const subCategoryInput = selections.subCategory || selections.subCategoryId || (selections as any).serviceId;
   let catalogCategory: ServiceCategory | undefined;
   let catalogProduct: ServiceProduct | undefined;
 
-  const catKey = (selections.category || serviceKey || '').toLowerCase();
+  const rawKey = (selections.category || serviceKey || '').toLowerCase();
   catalogCategory = DEFAULT_PRICING_MATRIX.find(
-    c => c.id.toLowerCase() === catKey || 
-         (catKey.includes('wedding') && c.id === 'wedding') || 
-         (catKey.includes('brand') && c.id === 'brand') || 
-         (catKey.includes('corp') && c.id === 'corporate') || 
-         (catKey.includes('personal') && c.id === 'personal')
+    c => c.id.toLowerCase() === rawKey || 
+         c.title.toLowerCase() === rawKey ||
+         (rawKey.includes('wedding') && c.id === 'wedding') || 
+         (rawKey.includes('brand') && c.id === 'brand') || 
+         (rawKey.includes('corp') && c.id === 'corporate') || 
+         (rawKey.includes('personal') && c.id === 'personal') ||
+         (rawKey.includes('maternity') && c.id === 'personal') ||
+         (rawKey.includes('birthday') && c.id === 'personal') ||
+         (rawKey.includes('engagement') && c.id === 'personal') ||
+         (rawKey.includes('baby') && c.id === 'personal') ||
+         (rawKey.includes('memorial') && c.id === 'personal')
   );
 
   if (subCategoryInput) {
@@ -341,7 +368,9 @@ export function calculateLivePrice(
         p => p.id.toLowerCase() === subLower || 
              p.name.toLowerCase() === subLower || 
              p.id.toLowerCase().includes(subLower) || 
-             subLower.includes(p.id.toLowerCase())
+             subLower.includes(p.id.toLowerCase()) ||
+             p.name.toLowerCase().includes(subLower) ||
+             subLower.includes(p.name.toLowerCase())
       );
     }
     if (!catalogProduct) {
@@ -350,7 +379,9 @@ export function calculateLivePrice(
           p => p.id.toLowerCase() === subLower || 
                p.name.toLowerCase() === subLower || 
                p.id.toLowerCase().includes(subLower) || 
-               subLower.includes(p.id.toLowerCase())
+               subLower.includes(p.id.toLowerCase()) ||
+               p.name.toLowerCase().includes(subLower) ||
+               subLower.includes(p.name.toLowerCase())
         );
         if (found) {
           catalogProduct = found;
@@ -360,10 +391,17 @@ export function calculateLivePrice(
       }
     }
   } else {
-    // If no explicit subcategory passed, check if serviceKey matches a product directly
-    const sLower = serviceKey.toLowerCase();
+    // If no explicit subcategory passed, check if serviceKey or rawKey matches a product directly
+    const sLower = (serviceKey || '').toLowerCase();
     for (const cat of DEFAULT_PRICING_MATRIX) {
-      const found = cat.products.find(p => p.id.toLowerCase() === sLower || p.name.toLowerCase() === sLower);
+      const found = cat.products.find(
+        p => p.id.toLowerCase() === sLower || 
+             p.name.toLowerCase() === sLower ||
+             p.id.toLowerCase().includes(sLower) || 
+             sLower.includes(p.id.toLowerCase()) ||
+             p.name.toLowerCase().includes(sLower) || 
+             sLower.includes(p.name.toLowerCase())
+      );
       if (found) {
         catalogProduct = found;
         if (!catalogCategory) catalogCategory = cat;
@@ -372,8 +410,28 @@ export function calculateLivePrice(
     }
   }
 
-  let effectiveBasePricePaise = rule.basePricePaise;
-  let resolvedServiceName = rule.name;
+  // Resolve rule key
+  let ruleKey = (catalogCategory ? catalogCategory.id : serviceKey || '').toLowerCase();
+  if (ruleKey.includes('maternity') || ruleKey.includes('personal')) ruleKey = 'personal';
+  else if (ruleKey.includes('wedding')) ruleKey = 'wedding';
+  else if (ruleKey.includes('brand') || ruleKey.includes('ugc')) ruleKey = 'brand_ugc';
+  else if (ruleKey.includes('store') || ruleKey.includes('product')) ruleKey = 'store_product';
+  else if (ruleKey.includes('corp') || ruleKey.includes('event')) ruleKey = 'corporate_event';
+
+  const rule = rules[ruleKey] || (catalogCategory ? rules[catalogCategory.id] : undefined);
+
+  // If configuration is completely unrecognized, throw 400 error rather than silently defaulting to wedding
+  if (!catalogProduct && !catalogCategory && !rule) {
+    throw new Error('Unable to calculate price for this configuration');
+  }
+
+  const effectiveRule = rule || (catalogCategory ? rules[catalogCategory.id] : undefined) || rules.personal || rules.wedding;
+
+  const adjustments: AdjustmentItem[] = [];
+  let currentDeliveryDays = effectiveRule.baseDeliveryDays;
+
+  let effectiveBasePricePaise = effectiveRule.basePricePaise;
+  let resolvedServiceName = effectiveRule.name;
 
   if (catalogProduct) {
     effectiveBasePricePaise = catalogProduct.basePrice * 100;
@@ -385,8 +443,9 @@ export function calculateLivePrice(
   if (selections.angles) {
     const isWeddingPersonal = Boolean(
       (catalogCategory && (catalogCategory.id === 'wedding' || catalogCategory.id === 'personal')) ||
-      catKey.includes('wedding') ||
-      catKey.includes('personal')
+      rawKey.includes('wedding') ||
+      rawKey.includes('personal') ||
+      rawKey.includes('maternity')
     );
     const angleRule = DEFAULT_CAMERA_ANGLES.find(a => a.id === selections.angles);
     if (angleRule) {
@@ -399,8 +458,8 @@ export function calculateLivePrice(
         });
       }
     }
-  } else if (rule.options.cameraAngles && selections.cameraAngleValue !== undefined) {
-    const found = rule.options.cameraAngles.find(a => a.value === selections.cameraAngleValue);
+  } else if (effectiveRule.options.cameraAngles && selections.cameraAngleValue !== undefined) {
+    const found = effectiveRule.options.cameraAngles.find(a => a.value === selections.cameraAngleValue);
     if (found && found.costPaise !== 0) {
       adjustments.push({
         name: found.label,
@@ -414,8 +473,9 @@ export function calculateLivePrice(
   if (selections.turnaround) {
     const isWeddingPersonal = Boolean(
       (catalogCategory && (catalogCategory.id === 'wedding' || catalogCategory.id === 'personal')) ||
-      catKey.includes('wedding') ||
-      catKey.includes('personal')
+      rawKey.includes('wedding') ||
+      rawKey.includes('personal') ||
+      rawKey.includes('maternity')
     );
     const slaRule = DEFAULT_DELIVERY_SLAS.find(s => s.id === selections.turnaround);
     if (slaRule) {
@@ -429,18 +489,18 @@ export function calculateLivePrice(
       }
       currentDeliveryDays = Math.ceil(slaRule.hours / 24);
     }
-  } else if (selections.isRush && rule.options.rushTurnaround) {
+  } else if (selections.isRush && effectiveRule.options.rushTurnaround) {
     adjustments.push({
-      name: rule.options.rushTurnaround.label,
-      costPaise: rule.options.rushTurnaround.costPaise,
-      costRupees: paiseToRupees(rule.options.rushTurnaround.costPaise)
+      name: effectiveRule.options.rushTurnaround.label,
+      costPaise: effectiveRule.options.rushTurnaround.costPaise,
+      costRupees: paiseToRupees(effectiveRule.options.rushTurnaround.costPaise)
     });
-    currentDeliveryDays = rule.options.rushTurnaround.days;
+    currentDeliveryDays = effectiveRule.options.rushTurnaround.days;
   }
 
   // 3. Duration adjustment (if durationValue provided)
-  if (rule.options.duration && selections.durationValue) {
-    const found = rule.options.duration.find(d => d.value === selections.durationValue);
+  if (effectiveRule.options.duration && selections.durationValue) {
+    const found = effectiveRule.options.duration.find(d => d.value === selections.durationValue);
     if (found && found.costPaise !== 0) {
       adjustments.push({
         name: found.label,
@@ -451,8 +511,8 @@ export function calculateLivePrice(
   }
 
   // 4. Variants adjustment (if variantValue provided)
-  if (rule.options.variants && selections.variantValue !== undefined) {
-    const found = rule.options.variants.find(v => v.value === selections.variantValue);
+  if (effectiveRule.options.variants && selections.variantValue !== undefined) {
+    const found = effectiveRule.options.variants.find(v => v.value === selections.variantValue);
     if (found && found.costPaise !== 0) {
       adjustments.push({
         name: found.label,
@@ -463,8 +523,8 @@ export function calculateLivePrice(
   }
 
   // 5. Formats adjustment (if formatValue provided)
-  if (rule.options.formats && selections.formatValue) {
-    const found = rule.options.formats.find(f => f.value === selections.formatValue);
+  if (effectiveRule.options.formats && selections.formatValue) {
+    const found = effectiveRule.options.formats.find(f => f.value === selections.formatValue);
     if (found && found.costPaise !== 0) {
       adjustments.push({
         name: found.label,
@@ -477,11 +537,15 @@ export function calculateLivePrice(
   const rawSubtotalPaise = effectiveBasePricePaise + adjustments.reduce((acc, item) => acc + item.costPaise, 0);
 
   // Guardrails
-  const isBelowMinimum = rawSubtotalPaise < config.minOrderValue;
+  const effectiveMinOrderValue = Math.min(
+    config.minOrderValue,
+    catalogProduct ? catalogProduct.basePrice * 100 : config.minOrderValue
+  );
+  const isBelowMinimum = rawSubtotalPaise < effectiveMinOrderValue;
   const isAboveMaximum = rawSubtotalPaise > config.maxOrderValue;
 
   // Clamped subtotal within guardrails
-  const clampedTotalPaise = Math.max(config.minOrderValue, Math.min(rawSubtotalPaise, config.maxOrderValue));
+  const clampedTotalPaise = Math.max(effectiveMinOrderValue, Math.min(rawSubtotalPaise, config.maxOrderValue));
 
   // Compute financial waterfall on client-facing total
   const waterfall = calculateFinancialWaterfall(clampedTotalPaise, config);
@@ -499,7 +563,7 @@ export function calculateLivePrice(
     subtotalRupees: paiseToRupees(rawSubtotalPaise),
     isBelowMinimum,
     isAboveMaximum,
-    minOrderValuePaise: config.minOrderValue,
+    minOrderValuePaise: effectiveMinOrderValue,
     maxOrderValuePaise: config.maxOrderValue,
     grandTotalPaise: clampedTotalPaise,
     grandTotalRupees: paiseToRupees(clampedTotalPaise),

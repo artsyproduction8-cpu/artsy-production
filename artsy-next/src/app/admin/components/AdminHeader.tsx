@@ -17,7 +17,7 @@ const ADMIN_PAGES = [
 ];
 
 export default function AdminHeader() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -73,19 +73,23 @@ export default function AdminHeader() {
           </Link>
 
           <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer select-none"
-              title={`${adminName} (Admin Control)`}
-            >
-              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                {adminInitials}
-              </div>
-              <span className="hidden sm:inline text-xs font-medium text-white max-w-[120px] truncate">
-                {adminName.split(' ')[0]}
-              </span>
-            </button>
+            {loading || !user ? (
+              <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse border border-white/10" />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="flex items-center gap-2 p-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer select-none"
+                title={`${adminName} (Admin Control)`}
+              >
+                <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                  {adminInitials}
+                </div>
+                <span className="hidden sm:inline text-xs font-medium text-white max-w-[120px] truncate">
+                  {adminName.split(' ')[0]}
+                </span>
+              </button>
+            )}
 
             {/* Compact Admin Dropdown Menu */}
             {isMenuOpen && (

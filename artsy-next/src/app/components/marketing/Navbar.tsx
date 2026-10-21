@@ -180,7 +180,7 @@ const ADMIN_PAGES = [
 
 export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
   const router = useRouter();
-  const { user, role, isAuthenticated, logout } = useAuth();
+  const { user, role, isAuthenticated, loading, logout } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState(searchTerm);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -444,7 +444,11 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             )}
           </div>
 
-          {!isAuthenticated ? (
+          {loading ? (
+            <div className="flex items-center gap-2 pr-1">
+              <div className="w-8 h-8 rounded-full bg-white/10 animate-pulse border border-white/10" />
+            </div>
+          ) : !isAuthenticated || !user ? (
             <>
               {/* FIND JOB Secondary Link */}
               <Link

@@ -89,7 +89,7 @@ export default function AdminOrdersPage() {
   });
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto font-sans">
+    <div className="w-full space-y-8 font-sans">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-50 p-4 rounded-2xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-xl border border-white/10 flex items-center gap-3 animate-fade-in">
@@ -176,13 +176,13 @@ export default function AdminOrdersPage() {
             <table className="w-full text-left text-xs">
               <thead className="bg-[#F5F5F7] text-[#86868B] font-semibold border-b border-[#E5E5E7] uppercase tracking-wider text-[10px]">
                 <tr>
-                  <th className="py-3.5 px-4">Order #</th>
-                  <th className="py-3.5 px-4">Client</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Order #</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Client</th>
                   <th className="py-3.5 px-4">Service Package</th>
-                  <th className="py-3.5 px-4">Amount</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Date</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Amount</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap">Date</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E7]">
@@ -192,23 +192,23 @@ export default function AdminOrdersPage() {
 
                   return (
                     <tr key={order.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-4 px-4 font-mono font-bold text-[#1D1D1F]">
+                      <td className="py-4 px-4 font-mono font-bold text-[#1D1D1F] whitespace-nowrap">
                         {order.orderNum}
                       </td>
                       <td className="py-4 px-4">
-                        <div className="font-semibold text-[#1D1D1F]">{order.client}</div>
+                        <div className="font-semibold text-[#1D1D1F] whitespace-nowrap">{order.client}</div>
                         {order.clientPhone && (
-                          <div className="text-[10px] text-[#86868B]">{order.clientPhone}</div>
+                          <div className="text-[10px] text-[#86868B] whitespace-nowrap">{order.clientPhone}</div>
                         )}
                       </td>
                       <td className="py-4 px-4">
                         <div className="font-medium text-[#1D1D1F]">{order.title}</div>
                         <div className="text-[10px] text-[#86868B] capitalize">{order.type} • {order.cameraProfile}</div>
                       </td>
-                      <td className="py-4 px-4 font-mono font-bold text-emerald-600">
+                      <td className="py-4 px-4 font-mono font-bold text-emerald-600 whitespace-nowrap">
                         ₹{order.amount.toLocaleString('en-IN')}
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-4 whitespace-nowrap">
                         {isPaid ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>

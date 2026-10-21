@@ -73,22 +73,40 @@ function CheckoutContent() {
         return;
       }
 
-      const amountPaise = (bookingData?.priceBreakdown?.grandTotal || 6000) * 100;
+      const resolvedServiceId =
+        bookingData?.serviceId ||
+        bookingData?.subCategoryId ||
+        bookingData?.requirements?.serviceId ||
+        bookingData?.requirements?.subCategory ||
+        bookingData?.serviceKey ||
+        bookingData?.service ||
+        'personal';
+
+      const grandTotalRupees = bookingData?.priceBreakdown?.grandTotal || 1000;
+      const amountPaise = grandTotalRupees * 100;
+
+      const checkoutPayload = {
+        serviceId: resolvedServiceId,
+        amount: amountPaise,
+        requirements: {
+          category: bookingData?.requirements?.category || bookingData?.serviceKey || bookingData?.service || 'personal',
+          subCategory: bookingData?.requirements?.subCategory || bookingData?.subCategoryId || bookingData?.serviceId || resolvedServiceId,
+          serviceId: resolvedServiceId,
+          ...bookingData?.requirements,
+        },
+        clientPhone: clientPhone || user?.phone || '',
+        clientName: clientName || user?.full_name || 'Client',
+        clientEmail: clientEmail || user?.email || '',
+        client_id: user?.id || null,
+        preferred_creator_id: bookingData?.preferredCreatorId || bookingData?.preferred_creator_id || null,
+      };
+      console.log('CHECKOUT PAYLOAD:', checkoutPayload);
 
       // 2. Create Razorpay order via server API (status = payment_pending in DB)
       const orderRes = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          serviceId: bookingData?.serviceKey || bookingData?.service || 'wedding',
-          amount: amountPaise,
-          requirements: bookingData?.requirements || {},
-          clientPhone: clientPhone || user?.phone || '',
-          clientName: clientName || user?.full_name || 'Client',
-          clientEmail: clientEmail || user?.email || '',
-          client_id: user?.id || null,
-          preferred_creator_id: bookingData?.preferredCreatorId || bookingData?.preferred_creator_id || null,
-        }),
+        body: JSON.stringify(checkoutPayload),
       });
 
       const orderData = await orderRes.json();
@@ -103,8 +121,8 @@ function CheckoutContent() {
 
       // 3. Generate QuoteSnapshot locked at checkout
       const quote = generateQuoteSnapshot(
-        bookingData?.serviceKey || bookingData?.service || 'wedding',
-        bookingData?.requirements || {},
+        resolvedServiceId,
+        checkoutPayload.requirements,
         { orderId }
       );
       quote.status = 'accepted';
@@ -209,7 +227,7 @@ function CheckoutContent() {
     }
   };
 
-  const grandTotal = bookingData?.priceBreakdown?.grandTotal || 6000;
+  const grandTotal = bookingData?.priceBreakdown?.grandTotal || 1000;
   const serviceName = bookingData?.serviceName || 'Custom Post-Production';
 
   return (

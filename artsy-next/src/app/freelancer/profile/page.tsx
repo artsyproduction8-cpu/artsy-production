@@ -528,7 +528,7 @@ export default function FreelancerProfilePage() {
         <FreelancerSidebar />
 
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
-          <div className="p-6 md:p-8 space-y-8 max-w-6xl mx-auto">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
             {/* Live Success Toast */}
             {toastMessage && (
               <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs text-emerald-800 shadow-sm animate-in fade-in duration-200">

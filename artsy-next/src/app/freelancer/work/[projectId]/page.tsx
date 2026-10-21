@@ -231,7 +231,7 @@ export default function FreelancerWorkView() {
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7] pb-16">
           {/* Workroom Project Banner */}
           <div className="bg-white border-b border-[#E5E5E7] px-6 py-4">
-            <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1D1D1F]">
                   Active Project #{project.id}
@@ -252,7 +252,7 @@ export default function FreelancerWorkView() {
           </div>
 
           {/* Main Content */}
-          <div className="max-w-6xl mx-auto px-6 py-8">
+          <div className="max-w-[1600px] mx-auto px-6 py-8">
         {/* Creator Agreement Gating Warning (if unsigned) */}
         {!hasAcceptedAgreement(user) && (
           <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

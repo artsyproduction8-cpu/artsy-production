@@ -375,6 +375,24 @@ export async function PATCH(request: Request) {
       profileUpdate.approved_by = authUser.id;
       profileUpdate.approved_at = new Date().toISOString();
       userUpdate.status = 'active';
+
+      // Ensure public_display_name is populated if missing/empty
+      const { data: currentCp } = await dbClient
+        .from('creator_profiles')
+        .select('public_display_name')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (!currentCp?.public_display_name || currentCp.public_display_name === 'Creator Partner' || currentCp.public_display_name.trim() === '') {
+        const { data: userData } = await dbClient
+          .from('users')
+          .select('full_name')
+          .eq('id', id)
+          .maybeSingle();
+        if (userData?.full_name?.trim()) {
+          profileUpdate.public_display_name = userData.full_name.trim();
+        }
+      }
     } else if (action === 'reject') {
       profileUpdate.approval_status = 'rejected';
       profileUpdate.onboarding_status = 'rejected';

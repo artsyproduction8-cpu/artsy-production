@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { createErrorResponse } from '@/lib/api-response';
 import { getCachedData, setCachedData } from '@/lib/cache';
+import { formatPublicCreatorName } from '@/lib/masking';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
 
   try {
     let query = dbClient
-      .from('creators_public_view')
+      .from('creator_profiles')
       .select(`
         id,
         public_display_name,
@@ -44,8 +45,12 @@ export async function GET(request: Request) {
         avg_rating,
         total_projects_completed,
         is_accepting_work,
-        creator_tier
-      `);
+        creator_tier,
+        users:users!creator_profiles_id_fkey(full_name)
+      `)
+      .eq('is_public', true)
+      .eq('approval_status', 'approved')
+      .eq('is_suspended', false);
 
     if (tier && tier !== 'all') {
       query = query.eq('creator_tier', tier);
@@ -55,13 +60,42 @@ export async function GET(request: Request) {
       query = query.eq('is_accepting_work', true);
     }
 
-    const { data: creators, error } = await query;
+    let { data: creators, error } = await query;
 
     if (error) {
-      return createErrorResponse(error, 'Failed to retrieve creators catalog', 500);
+      // Fallback query to creators_public_view if relationship join fails
+      console.warn('[api/creators] creator_profiles join query warning, falling back to public view:', error.message);
+      const fallbackQuery = dbClient.from('creators_public_view').select('*');
+      const { data: fallbackData } = await fallbackQuery;
+      if (fallbackData) {
+        creators = fallbackData;
+        error = null;
+      } else {
+        return createErrorResponse(error, 'Failed to retrieve creators catalog', 500);
+      }
     }
 
-    let filtered = creators || [];
+    const isGenericPlaceholder = (name?: string | null): boolean => {
+      if (!name) return true;
+      const lower = name.trim().toLowerCase();
+      return (
+        lower === 'creator partner' ||
+        lower === 'creator' ||
+        lower === 'creator member' ||
+        lower === 'artsy creator'
+      );
+    };
+
+    let filtered = (creators || []).map((c: any) => {
+      const userFullName = Array.isArray(c.users) ? c.users[0]?.full_name : c.users?.full_name;
+      const validProfileName = !isGenericPlaceholder(c.public_display_name) ? c.public_display_name?.trim() : null;
+      const validUserName = !isGenericPlaceholder(userFullName) ? userFullName?.trim() : null;
+      const rawName = validProfileName || validUserName;
+      return {
+        ...c,
+        public_display_name: rawName ? formatPublicCreatorName(rawName) : 'Artsy Creator',
+      };
+    });
 
     // Filter by category if requested (matching public_specialty or portfolio category)
     if (category && category !== 'all') {

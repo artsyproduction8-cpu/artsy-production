@@ -90,7 +90,7 @@ export const DEFAULT_PLATFORM_CONFIG: PlatformConfig = {
   gatewayFeePct: 0.02,
   gatewayFeeGstPct: 0.18,
   infraAllocationPerProject: 11500,  // ₹115 in paise
-  minOrderValue: 200000,             // ₹2,000 in paise
+  minOrderValue: 100000,             // ₹1,000 in paise (supports entry reel offerings)
   maxOrderValue: 50000000,           // ₹5,00,000 in paise
   includedRevisionRounds: 1,         // 1 Complimentary revision (Master Plan v2.1 Locked)
   quoteValidityDays: 7,

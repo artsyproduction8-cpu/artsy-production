@@ -98,7 +98,7 @@ export default function AdminVaultPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="w-full space-y-8">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-50 p-4 rounded-2xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-xl border border-white/10 flex items-center gap-3 animate-fade-in">
@@ -183,12 +183,12 @@ export default function AdminVaultPage() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-[#E5E5E7] text-[#86868B] font-bold uppercase text-[10px]">
-                <th className="py-3 px-3">Creator / Project</th>
-                <th className="py-3 px-3">Gross Share</th>
-                <th className="py-3 px-3">194C TDS</th>
-                <th className="py-3 px-3">Net Payout</th>
-                <th className="py-3 px-3">Bank IFSC</th>
-                <th className="py-3 px-3">Status</th>
+                <th className="py-3 px-3 whitespace-nowrap">Creator / Project</th>
+                <th className="py-3 px-3 whitespace-nowrap">Gross Share</th>
+                <th className="py-3 px-3 whitespace-nowrap">194C TDS</th>
+                <th className="py-3 px-3 whitespace-nowrap">Net Payout</th>
+                <th className="py-3 px-3 whitespace-nowrap">Bank IFSC</th>
+                <th className="py-3 px-3 whitespace-nowrap">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F5F5F7]">

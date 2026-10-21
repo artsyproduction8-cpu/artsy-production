@@ -206,7 +206,7 @@ export default function AdminPayoutsPage() {
   });
 
   return (
-    <div className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="w-full space-y-8">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-50 p-4 rounded-2xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-xl border border-white/10 flex items-center gap-3 animate-fade-in">
@@ -355,15 +355,15 @@ export default function AdminPayoutsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#E5E5E7] bg-[#FAFAFA] text-[10px] uppercase font-bold text-[#86868B] tracking-wider">
-                  <th className="py-3 px-4">Payout Ref / Date</th>
-                  <th className="py-3 px-4">Creator / Beneficiary</th>
-                  <th className="py-3 px-4">Banking Coordinates</th>
-                  <th className="py-3 px-4">Project</th>
-                  <th className="py-3 px-4 text-right">Gross Amount</th>
-                  <th className="py-3 px-4 text-right">TDS (10%/2%)</th>
-                  <th className="py-3 px-4 text-right">Net Payout</th>
-                  <th className="py-3 px-4">Status / UTR</th>
-                  <th className="py-3 px-4 text-center">Actions</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Payout Ref / Date</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Creator / Beneficiary</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Banking Coordinates</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Project</th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap">Gross Amount</th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap">TDS (10%/2%)</th>
+                  <th className="py-3 px-4 text-right whitespace-nowrap">Net Payout</th>
+                  <th className="py-3 px-4 whitespace-nowrap">Status / UTR</th>
+                  <th className="py-3 px-4 text-center whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E7] text-xs text-[#1D1D1F]">

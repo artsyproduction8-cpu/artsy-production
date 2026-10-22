@@ -119,45 +119,68 @@ export async function GET(request: NextRequest) {
     };
 
     // If freelancer, fetch creator profile details
-    if (finalRole === 'freelancer' && isSupabaseConfigured && dbClient && typeof dbClient.from === 'function') {
-      try {
-        const { data: creatorProfile } = await dbClient
-          .from('creator_profiles')
-          .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, public_specialty, bank_account_name, bank_account_number, bank_ifsc_code, pan_number')
-          .eq('id', resolvedUser.id)
-          .maybeSingle();
+    if (finalRole === 'freelancer') {
+      let resolvedStatus: 'pending' | 'approved' | 'rejected' | 'pending_review' | null = null;
+      let resolvedTrackingId: string | null = null;
 
-        if (creatorProfile) {
-          const safeCreatorProfile = {
-            ...creatorProfile,
-            pan_number: creatorProfile.pan_number ? maskPAN(creatorProfile.pan_number) : null,
-            bank_account_number: creatorProfile.bank_account_number ? maskBankAccount(creatorProfile.bank_account_number) : null,
-            bank_ifsc_code: creatorProfile.bank_ifsc_code ? maskIFSC(creatorProfile.bank_ifsc_code) : null,
-          };
-          resolvedUser.creator_profile = safeCreatorProfile;
-          resolvedUser.onboarding_status =
-            creatorProfile.onboarding_status ||
-            (creatorProfile.approval_status === 'approved'
-              ? 'approved'
-              : creatorProfile.approval_status === 'rejected'
-              ? 'rejected'
-              : 'pending_review');
-          resolvedUser.tracking_id = creatorProfile.tracking_id || null;
-          resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
-          resolvedUser.bio = creatorProfile.bio || null;
-          resolvedUser.skills = creatorProfile.skills || [];
-          resolvedUser.software = creatorProfile.software || [];
-          resolvedUser.languages = creatorProfile.languages || [];
-          resolvedUser.portfolio_url = creatorProfile.portfolio_url || null;
-          resolvedUser.public_display_name = creatorProfile.public_display_name || null;
-          resolvedUser.public_specialty = creatorProfile.public_specialty || resolvedUser.studio_details?.specialty || null;
-          if (!resolvedUser.full_name && creatorProfile.public_display_name) {
-            resolvedUser.full_name = creatorProfile.public_display_name;
+      if (isSupabaseConfigured && dbClient && typeof dbClient.from === 'function') {
+        try {
+          const { data: creatorProfile } = await dbClient
+            .from('creator_profiles')
+            .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, public_specialty, bank_account_name, bank_account_number, bank_ifsc_code, pan_number')
+            .eq('id', resolvedUser.id)
+            .maybeSingle();
+
+          if (creatorProfile) {
+            const safeCreatorProfile = {
+              ...creatorProfile,
+              pan_number: creatorProfile.pan_number ? maskPAN(creatorProfile.pan_number) : null,
+              bank_account_number: creatorProfile.bank_account_number ? maskBankAccount(creatorProfile.bank_account_number) : null,
+              bank_ifsc_code: creatorProfile.bank_ifsc_code ? maskIFSC(creatorProfile.bank_ifsc_code) : null,
+            };
+            resolvedUser.creator_profile = safeCreatorProfile;
+
+            const hasSubmitted = Boolean(
+              creatorProfile.onboarding_status === 'pending_review' ||
+              creatorProfile.tracking_id ||
+              creatorProfile.portfolio_url ||
+              creatorProfile.public_specialty
+            );
+
+            if (creatorProfile.approval_status === 'approved' || creatorProfile.onboarding_status === 'approved') {
+              resolvedStatus = 'approved';
+            } else if (creatorProfile.approval_status === 'rejected' || creatorProfile.onboarding_status === 'rejected') {
+              resolvedStatus = 'rejected';
+            } else if (hasSubmitted && (creatorProfile.approval_status === 'pending' || creatorProfile.onboarding_status === 'pending_review')) {
+              resolvedStatus = 'pending_review';
+            } else {
+              resolvedStatus = null;
+            }
+
+            resolvedTrackingId = creatorProfile.tracking_id || null;
+            resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
+            resolvedUser.bio = creatorProfile.bio || null;
+            resolvedUser.skills = creatorProfile.skills || [];
+            resolvedUser.software = creatorProfile.software || [];
+            resolvedUser.languages = creatorProfile.languages || [];
+            resolvedUser.portfolio_url = creatorProfile.portfolio_url || null;
+            resolvedUser.public_display_name = creatorProfile.public_display_name || null;
+            resolvedUser.public_specialty = creatorProfile.public_specialty || resolvedUser.studio_details?.specialty || null;
+            if (!resolvedUser.full_name && creatorProfile.public_display_name) {
+              resolvedUser.full_name = creatorProfile.public_display_name;
+            }
+          } else {
+            // Strict rule: No creator profile row -> onboarding_status MUST be null
+            resolvedUser.creator_profile = null;
           }
+        } catch (pErr) {
+          console.warn('[api/user/me] Creator profile lookup warning:', pErr);
         }
-      } catch (pErr) {
-        console.warn('[api/user/me] Creator profile lookup warning:', pErr);
       }
+
+      resolvedUser.onboarding_status = resolvedStatus;
+      resolvedUser.tracking_id = resolvedTrackingId;
+      resolvedUser.onboarded = Boolean(dbUser?.onboarded) && resolvedStatus !== null;
     }
 
     // Cache fresh resolved user object for instant sub-20ms subsequent queries

@@ -11,6 +11,10 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '../supabase/migrations');
 
@@ -29,6 +33,7 @@ const MIGRATION_FILES = [
   '010_scale_and_performance_indexes.sql',
   '011_instant_data_and_reliable_records.sql',
   '012_fix_creator_profiles_rls.sql',
+  '013_fix_creator_signup_trigger.sql',
 ];
 
 export async function verifyAndBundleMigrations() {
@@ -65,20 +70,18 @@ export async function verifyAndBundleMigrations() {
   return { count: MIGRATION_FILES.length, totalBytes, bundlePath };
 }
 
-if (require.main === module) {
-  verifyAndBundleMigrations()
-    .then((res) => {
-      console.log('\nReady for deployment:');
-      console.log('  OPTION A (Recommended & Fastest):');
-      console.log('    1. Open Supabase Dashboard: https://supabase.com/dashboard/project/cldewthefsteotdvftlj/sql/new');
-      console.log(`    2. Open supabase/combined_migrations.sql and paste into the SQL Editor.`);
-      console.log('    3. Click "Run" to create all 24+ tables, indexes, RLS policies, and triggers.');
-      console.log('\n  OPTION B (Supabase CLI):');
-      console.log('    1. npx supabase link --project-ref cldewthefsteotdvftlj');
-      console.log('    2. npx supabase db push');
-    })
-    .catch((err) => {
-      console.error('Migration verification failed:', err);
-      process.exit(1);
-    });
-}
+verifyAndBundleMigrations()
+  .then((res) => {
+    console.log('\nReady for deployment:');
+    console.log('  OPTION A (Recommended & Fastest):');
+    console.log('    1. Open Supabase Dashboard: https://supabase.com/dashboard/project/cldewthefsteotdvftlj/sql/new');
+    console.log(`    2. Open supabase/combined_migrations.sql and paste into the SQL Editor.`);
+    console.log('    3. Click "Run" to create all tables, indexes, RLS policies, and triggers.');
+    console.log('\n  OPTION B (Supabase CLI):');
+    console.log('    1. npx supabase link --project-ref cldewthefsteotdvftlj');
+    console.log('    2. npx supabase db push');
+  })
+  .catch((err) => {
+    console.error('Migration verification failed:', err);
+    process.exit(1);
+  });

@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { getCurrentUser, setCurrentUser, PRESET_USERS } from '@/lib/auth';
 
 export default function FreelancerLayoutClient({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
@@ -65,32 +66,70 @@ export default function FreelancerLayoutClient({ children }: { children: React.R
         return;
       }
 
-      // 3.2 State Machine Guard for Freelancers:
-      // Only approved creators can access the Dashboard.
-      // Missing/null status -> must be forced back to /freelancer/onboarding.
-      // Pending review -> must be routed to /freelancer/pending-approval.
-      if (user.role === 'freelancer') {
-        if (user.onboarding_status === 'approved') {
+      // Admins and Super Admins have unrestricted access across workstation
+      if (user.role === 'admin' || user.role === 'super_admin') {
+        setAuthorized(true);
+        return;
+      }
+
+      // State Machine Guard for Freelancers:
+      const currentPath = pathname || (typeof window !== 'undefined' ? window.location.pathname : '');
+      const status = user.onboarding_status;
+      const isOnboardingPage = currentPath.startsWith('/freelancer/onboarding');
+      const isPendingPage = currentPath.startsWith('/freelancer/pending-approval');
+      const isRejectedPage = currentPath.startsWith('/freelancer/rejected');
+
+      // Rule 1: If user with onboarding_status === null (or not onboarded) accesses /freelancer/onboarding, they MUST be allowed
+      // If they try to access /freelancer/pending-approval or /freelancer, forcefully redirect back to /freelancer/onboarding
+      if (!user.onboarded || status === null || status === undefined) {
+        if (isOnboardingPage) {
           setAuthorized(true);
-          return;
-        }
-        if (user.onboarding_status === 'pending' || user.onboarding_status === 'pending_review') {
-          router.push('/freelancer/pending-approval');
-          return;
-        }
-        if (user.onboarding_status === 'rejected') {
-          router.push('/freelancer/rejected');
           return;
         }
         router.push('/freelancer/onboarding');
         return;
       }
 
-      setAuthorized(true);
+      // Rule 2: If onboarding_status === 'pending' or 'pending_review'
+      if (status === 'pending' || status === 'pending_review') {
+        if (isPendingPage) {
+          setAuthorized(true);
+          return;
+        }
+        router.push('/freelancer/pending-approval');
+        return;
+      }
+
+      // Rule 3: If onboarding_status === 'rejected'
+      if (status === 'rejected') {
+        if (isRejectedPage) {
+          setAuthorized(true);
+          return;
+        }
+        router.push('/freelancer/rejected');
+        return;
+      }
+
+      // Rule 4: If onboarding_status === 'approved'
+      if (status === 'approved') {
+        if (isOnboardingPage || isPendingPage) {
+          router.push('/freelancer');
+          return;
+        }
+        setAuthorized(true);
+        return;
+      }
+
+      // Default safe fallback
+      if (isOnboardingPage) {
+        setAuthorized(true);
+        return;
+      }
+      router.push('/freelancer/onboarding');
     }
 
     checkAuth();
-  }, [router]);
+  }, [router, pathname]);
 
   if (!authorized) {
     return (

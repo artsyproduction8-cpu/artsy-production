@@ -302,7 +302,8 @@ function LoginFormContent() {
     }
 
     const intentParam = searchParams.get('intent');
-    if (intentParam === 'freelancer') {
+    const roleParam = searchParams.get('role');
+    if (intentParam === 'freelancer' || roleParam === 'freelancer') {
       try {
         sessionStorage.setItem('artsy_signup_intent', 'freelancer');
       } catch {}
@@ -533,11 +534,18 @@ function LoginFormContent() {
       if (serverRole === 'admin' || serverRole === 'super_admin') {
         router.push('/admin');
       } else if (serverRole === 'freelancer') {
-        if (data.user?.onboarding_status === 'approved') {
-          router.push('/freelancer');
-        } else if (data.user?.onboarding_status === 'pending' || data.user?.onboarding_status === 'pending_review') {
+        const uStatus = data.user?.onboarding_status;
+        const isOnboarded = Boolean(data.user?.onboarded);
+
+        // Strict state machine order for freelancers:
+        // 1. If not onboarded or onboarding_status is null -> Force to onboarding form
+        if (!isOnboarded || uStatus === null || uStatus === undefined) {
+          router.push('/freelancer/onboarding');
+        } else if (uStatus === 'pending' || uStatus === 'pending_review') {
           router.push('/freelancer/pending-approval');
-        } else if (data.user?.onboarding_status === 'rejected') {
+        } else if (uStatus === 'approved') {
+          router.push('/freelancer');
+        } else if (uStatus === 'rejected') {
           router.push('/freelancer/rejected');
         } else {
           router.push('/freelancer/onboarding');

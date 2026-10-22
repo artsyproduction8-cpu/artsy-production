@@ -305,6 +305,7 @@ export async function POST(request: NextRequest) {
       let rejected_at: string | null = null;
 
       if (finalRole === 'freelancer') {
+        let profileFound = false;
         try {
           if (isSupabaseConfigured && dbClient && resolvedUser.id) {
             const { data: profile } = await dbClient
@@ -314,6 +315,7 @@ export async function POST(request: NextRequest) {
               .maybeSingle();
 
             if (profile) {
+              profileFound = true;
               const hasSubmittedApplication = Boolean(
                 profile.onboarding_status === 'pending_review' ||
                 profile.tracking_id ||
@@ -321,13 +323,13 @@ export async function POST(request: NextRequest) {
                 profile.public_specialty
               );
 
-              if (profile.onboarding_status === 'approved' || profile.approval_status === 'approved') {
+              if (profile.approval_status === 'approved' || profile.onboarding_status === 'approved') {
                 onboarding_status = 'approved';
-              } else if (profile.onboarding_status === 'rejected' || profile.approval_status === 'rejected') {
+              } else if (profile.approval_status === 'rejected' || profile.onboarding_status === 'rejected') {
                 onboarding_status = 'rejected';
                 rejection_reason = profile.rejection_reason || null;
                 rejected_at = profile.rejected_at || profile.updated_at || new Date().toISOString();
-              } else if (hasSubmittedApplication && (profile.onboarding_status === 'pending_review' || profile.approval_status === 'pending')) {
+              } else if (hasSubmittedApplication && (profile.approval_status === 'pending' || profile.onboarding_status === 'pending_review')) {
                 onboarding_status = 'pending_review';
               } else {
                 // Application form has not been submitted yet
@@ -343,31 +345,12 @@ export async function POST(request: NextRequest) {
           console.warn('Creator profile lookup warning:', pErr);
         }
 
-        // If not resolved from creator_profiles table
-        if (!onboarding_status) {
-          if (!isNewUser) {
-            const uStatus = (resolvedUser as any).onboarding_status;
-            const isOnboarded = Boolean((resolvedUser as any).onboarded);
-            if (uStatus === 'approved') {
-              onboarding_status = 'approved';
-            } else if (uStatus === 'rejected') {
-              onboarding_status = 'rejected';
-              rejection_reason = (resolvedUser as any).rejection_reason || 'Portfolio did not meet current studio criteria.';
-              rejected_at = (resolvedUser as any).rejected_at || (resolvedUser as any).updated_at || new Date().toISOString();
-            } else if (isOnboarded && (uStatus === 'pending_review' || uStatus === 'pending')) {
-              onboarding_status = 'pending_review';
-              tracking_id = (resolvedUser as any).tracking_id || null;
-            } else {
-              onboarding_status = null;
-              tracking_id = null;
-            }
-          } else {
-            // Brand new freelancer user prior to completing onboarding
-            onboarding_status = null;
-            tracking_id = null;
-            rejection_reason = null;
-            rejected_at = null;
-          }
+        // Strict rule: If the user has no creator_profiles row, onboarding_status MUST be null
+        if (!profileFound) {
+          onboarding_status = null;
+          tracking_id = null;
+          rejection_reason = null;
+          rejected_at = null;
         }
       }
 
@@ -377,7 +360,7 @@ export async function POST(request: NextRequest) {
         phone: resolvedUser.phone || formattedPhone || (cleanPhone ? `+91${cleanPhone}` : ''),
         email: resolvedUser.email || cleanEmail || '',
         full_name: resolvedUser.full_name ?? null,
-        onboarded: Boolean(resolvedUser.onboarded),
+        onboarded: finalRole === 'freelancer' ? Boolean(resolvedUser.onboarded && onboarding_status !== null) : Boolean(resolvedUser.onboarded),
         status: 'active',
         token_version: Number(resolvedUser.token_version && Number(resolvedUser.token_version) >= 2 ? resolvedUser.token_version : 2),
       };

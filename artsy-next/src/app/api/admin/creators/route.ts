@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
 import { createErrorResponse } from '@/lib/api-response';
 import { getCachedData, setCachedData, invalidateCreatorCache } from '@/lib/cache';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -209,6 +210,15 @@ export async function PATCH(request: Request) {
   const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+  }
+
+  // Rate Limiting: Max 30 creator mutation actions per minute
+  const limit = await checkRateLimit(`admin_creators_${authUser.id}`, 'admin', 30, 60);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: `Admin rate limit exceeded. Please wait ${Math.ceil(limit.resetSeconds)} seconds.` },
+      { status: 429 }
+    );
   }
 
   const dbClient = supabaseAdmin || anonSupabase;

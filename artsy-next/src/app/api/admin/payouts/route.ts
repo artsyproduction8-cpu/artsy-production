@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -105,6 +106,15 @@ export async function PATCH(request: NextRequest) {
     const authUser = await getAuthenticatedUser(request);
     if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
+    // Rate Limiting: Max 20 payout actions per 10 minutes per admin
+    const limit = await checkRateLimit(`admin_payouts_${authUser.id}`, 'admin', 20, 600);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: `Admin rate limit exceeded. Please wait ${Math.ceil(limit.resetSeconds / 60)} minutes.` },
+        { status: 429 }
+      );
     }
 
     const body = await request.json().catch(() => ({}));

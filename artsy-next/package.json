@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "regression-guard": "node scripts/regression-guard",
     "test:e2e": "tsx scripts/test-e2e-suite.ts",
     "deploy:migrations": "tsx scripts/deploy-migrations.ts",
     "pii-lint": "bash scripts/pii-lint.sh",

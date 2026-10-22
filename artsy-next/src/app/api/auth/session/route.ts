@@ -206,12 +206,27 @@ export async function GET(request: NextRequest) {
             .maybeSingle();
 
           if (creatorProfile) {
-            resolvedUser.onboarding_status =
-              creatorProfile.onboarding_status || creatorProfile.approval_status || 'pending';
+            const hasSubmitted = Boolean(
+              creatorProfile.onboarding_status === 'pending_review' ||
+              creatorProfile.tracking_id ||
+              creatorProfile.portfolio_url ||
+              creatorProfile.public_specialty
+            );
+            if (creatorProfile.onboarding_status === 'approved' || creatorProfile.approval_status === 'approved') {
+              resolvedUser.onboarding_status = 'approved';
+            } else if (creatorProfile.onboarding_status === 'rejected' || creatorProfile.approval_status === 'rejected') {
+              resolvedUser.onboarding_status = 'rejected';
+            } else if (hasSubmitted && (creatorProfile.onboarding_status === 'pending_review' || creatorProfile.approval_status === 'pending')) {
+              resolvedUser.onboarding_status = 'pending_review';
+            } else {
+              resolvedUser.onboarding_status = null;
+            }
             resolvedUser.tracking_id = creatorProfile.tracking_id || null;
             resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
             resolvedUser.rejected_at = creatorProfile.rejected_at || null;
             resolvedUser.creator_profile = creatorProfile;
+          } else {
+            resolvedUser.onboarding_status = null;
           }
         }
       }

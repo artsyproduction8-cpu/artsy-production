@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ClientHeader from '../components/ClientHeader';
 import ClientSidebar from '../components/ClientSidebar';
 import { useAuth, setCurrentUser, logout } from '@/lib/auth';
@@ -51,6 +52,8 @@ const ASPECT_RATIOS = [
 ];
 
 export default function ClientProfilePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -598,6 +601,7 @@ export default function ClientProfilePage() {
         email: email.trim() || user.email,
         avatar_url: logoUrl || user.avatar_url,
         studio_details: updatedProfile,
+        onboarded: true,
       };
       setCurrentUser(updatedUser);
     }
@@ -631,7 +635,15 @@ export default function ClientProfilePage() {
 
     setSaving(false);
     setSavedFeedback(true);
-    setTimeout(() => setSavedFeedback(false), 4000);
+
+    const isSetupMode = searchParams?.get('setup') === 'true' || searchParams?.get('onboarding') === 'true' || !user?.onboarded;
+    if (isSetupMode) {
+      setTimeout(() => {
+        router.push('/client');
+      }, 600);
+    } else {
+      setTimeout(() => setSavedFeedback(false), 4000);
+    }
   };
 
   const initials = studioName

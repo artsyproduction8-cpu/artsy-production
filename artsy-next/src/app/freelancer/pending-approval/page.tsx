@@ -27,9 +27,25 @@ export default function FreelancerPendingApprovalPage() {
       return;
     }
 
-    // 3. Must be role='freelancer'
+    // 3. Redirect to rejected if rejected
+    if (activeUser.role === 'freelancer' && activeUser.onboarding_status === 'rejected') {
+      router.replace('/freelancer/rejected');
+      return;
+    }
+
+    // 4. Must be role='freelancer'
     if (activeUser.role !== 'freelancer' && activeUser.role !== 'admin') {
       router.replace('/client');
+      return;
+    }
+
+    // 5. If creator has not submitted onboarding application, block direct URL access and force to form
+    if (
+      activeUser.role === 'freelancer' &&
+      activeUser.onboarding_status !== 'pending' &&
+      activeUser.onboarding_status !== 'pending_review'
+    ) {
+      router.replace('/freelancer/onboarding');
       return;
     }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateUploadUrl } from '@/lib/storage/b2-client';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin } from '@/lib/supabase';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const ALLOWED_MIME_TYPES = [
   'video/mp4',
@@ -20,6 +21,17 @@ export async function POST(request: NextRequest) {
   const authUser = await getAuthenticatedUser(request);
   if (!authUser) {
     return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
+  }
+
+  // Rate Limiting: Max 20 presigned uploads per 10 minutes per user/IP
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anon';
+  const rateKey = `presign_${authUser.id || ip}`;
+  const limit = await checkRateLimit(rateKey, 'storage', 20, 600);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: `Too many upload requests. Please wait ${Math.ceil(limit.resetSeconds / 60)} minutes.` },
+      { status: 429 }
+    );
   }
 
   // M9: Safe JSON parsing

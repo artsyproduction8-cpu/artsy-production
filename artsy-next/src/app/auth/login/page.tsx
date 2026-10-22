@@ -545,7 +545,7 @@ function LoginFormContent() {
       } else {
         // Client
         if (data.user?.onboarded === false) {
-          router.push('/client/studio?onboarding=true');
+          router.push('/client/profile?setup=true');
         } else {
           router.push(sessionStorage.getItem('artsy_redirect') || '/client');
         }

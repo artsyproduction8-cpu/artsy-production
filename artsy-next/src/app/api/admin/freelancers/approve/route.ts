@@ -4,6 +4,7 @@ import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { invalidateCreatorCache } from '@/lib/cache';
 import { formatPublicCreatorName } from '@/lib/masking';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,6 +12,15 @@ export async function POST(req: NextRequest) {
     const authUser = await getAuthenticatedUser(req);
     if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
+    // Rate Limiting: Max 30 creator approval/rejection actions per minute
+    const limit = await checkRateLimit(`admin_approve_${authUser.id}`, 'admin', 30, 60);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: `Admin rate limit exceeded. Please wait ${Math.ceil(limit.resetSeconds)} seconds.` },
+        { status: 429 }
+      );
     }
 
     const body = await req.json();

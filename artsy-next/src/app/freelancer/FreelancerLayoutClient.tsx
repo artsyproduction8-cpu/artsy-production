@@ -30,7 +30,7 @@ export default function FreelancerLayoutClient({ children }: { children: React.R
               creator_profile: data.user.creator_profile || user?.creator_profile,
               role: data.user.role || user?.role || 'freelancer',
               status: data.user.status || user?.status || 'active',
-              onboarding_status: data.user.onboarding_status || user?.onboarding_status || 'approved',
+              onboarding_status: data.user.onboarding_status !== undefined ? data.user.onboarding_status : (user?.onboarding_status ?? null),
               agreement_accepted: data.user.agreement_accepted !== undefined ? data.user.agreement_accepted : (user?.agreement_accepted !== false),
               onboarded: data.user.onboarded !== undefined ? data.user.onboarded : (user?.onboarded !== false),
             };
@@ -42,7 +42,7 @@ export default function FreelancerLayoutClient({ children }: { children: React.R
         // ignore
       }
 
-      // In local dev mode, immediately fallback so there is zero spinner delay (excluded from production)
+      // In local dev mode without an active user, only set fallback if no cookie/user
       const isLocalhost = process.env.NODE_ENV !== 'production' && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       if (!user && isLocalhost) {
         const fallback = PRESET_USERS.freelancer;
@@ -62,6 +62,27 @@ export default function FreelancerLayoutClient({ children }: { children: React.R
 
       if (user.role !== 'freelancer' && user.role !== 'admin' && user.role !== 'super_admin') {
         router.push('/auth/login');
+        return;
+      }
+
+      // 3.2 State Machine Guard for Freelancers:
+      // Only approved creators can access the Dashboard.
+      // Missing/null status -> must be forced back to /freelancer/onboarding.
+      // Pending review -> must be routed to /freelancer/pending-approval.
+      if (user.role === 'freelancer') {
+        if (user.onboarding_status === 'approved') {
+          setAuthorized(true);
+          return;
+        }
+        if (user.onboarding_status === 'pending' || user.onboarding_status === 'pending_review') {
+          router.push('/freelancer/pending-approval');
+          return;
+        }
+        if (user.onboarding_status === 'rejected') {
+          router.push('/freelancer/rejected');
+          return;
+        }
+        router.push('/freelancer/onboarding');
         return;
       }
 

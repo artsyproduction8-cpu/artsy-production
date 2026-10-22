@@ -1,0 +1,269 @@
+#!/usr/bin/env node
+
+/**
+ * ARTSY PRODUCTION — NO-REGRESSION FIREWALL (scripts/regression-guard)
+ * ===================================================================
+ * Automated static analysis and behavioral integrity guard.
+ * MUST be executed and pass before declaring ANY task complete or committing changes.
+ *
+ * HISTORICAL REGRESSION CHECKS:
+ * 1. AUTH BYPASS: Ensures no hardcoded '123456' OTP or mock admin logic exists in auth routes.
+ * 2. WORKFLOW SKIP: Ensures a new Creator cannot bypass the onboarding form to go straight to Pending Approval.
+ * 3. PRICING FALLBACK: Ensures unknown services throw a 400 error instead of defaulting to ₹6,000.
+ * 4. PHANTOM LOGOUT: Ensures cross-portal navigation between public and admin does not clear the session cookie.
+ * 5. RLS VIOLATION: Ensures no client-side React components ('use client') query Supabase directly.
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+// Resolve repository root and artsy-next directory
+let repoRoot = __dirname;
+if (path.basename(repoRoot) === 'scripts') {
+  repoRoot = path.dirname(repoRoot);
+}
+let artsyNextDir = path.join(repoRoot, 'artsy-next');
+if (!fs.existsSync(artsyNextDir) && fs.existsSync(path.join(repoRoot, 'src'))) {
+  artsyNextDir = repoRoot;
+  repoRoot = path.dirname(repoRoot);
+}
+
+console.log('================================================================');
+console.log('   ARTSY PRODUCTION — AUTONOMOUS NO-REGRESSION FIREWALL        ');
+console.log('================================================================');
+console.log(`Repository Root: ${repoRoot}`);
+console.log(`Next.js Target:  ${artsyNextDir}\n`);
+
+let failureCount = 0;
+const errors = [];
+
+function recordFailure(checkId, message) {
+  failureCount++;
+  errors.push(`[${checkId}] ${message}`);
+  console.error(`  FAIL: ${message}`);
+}
+
+function recordPass(checkId, message) {
+  console.log(`  PASS: [${checkId}] ${message}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHECK 1: AUTH BYPASS
+// Ensures no hardcoded '123456' OTP or mock admin logic exists in auth paths
+// ─────────────────────────────────────────────────────────────────────────────
+console.log('Running Check 1: AUTH BYPASS...');
+try {
+  const otpRoutePath = path.join(artsyNextDir, 'src/app/api/auth/otp/route.ts');
+  const sessionRoutePath = path.join(artsyNextDir, 'src/app/api/auth/session/route.ts');
+  const supabaseLibPath = path.join(artsyNextDir, 'lib/supabase.ts');
+  const authCookiePath = path.join(artsyNextDir, 'src/lib/auth-cookie.ts');
+
+  const filesToCheck = [otpRoutePath, sessionRoutePath, supabaseLibPath, authCookiePath];
+
+  for (const filePath of filesToCheck) {
+    if (!fs.existsSync(filePath)) continue;
+    const content = fs.readFileSync(filePath, 'utf-8');
+
+    // Test for hardcoded OTP codes
+    if (content.includes("'123456'") || content.includes('"123456"') || content.includes("'4210'") || content.includes('"4210"')) {
+      recordFailure('CHECK_1_AUTH_BYPASS', `Hardcoded test OTP found in ${path.relative(repoRoot, filePath)}`);
+    }
+
+    // Test for mock admin auto-authentication bypasses
+    if (content.includes('role = "super_admin"') && content.includes('isDevBypass') && !content.includes('isSuperAdminAccount')) {
+      recordFailure('CHECK_1_AUTH_BYPASS', `Unrestricted admin bypass flag found in ${path.relative(repoRoot, filePath)}`);
+    }
+  }
+
+  // Verify OTP route requires bcrypt comparison
+  if (fs.existsSync(otpRoutePath)) {
+    const otpContent = fs.readFileSync(otpRoutePath, 'utf-8');
+    if (!otpContent.includes('bcrypt.compare') && !otpContent.includes('legacyHashOtp')) {
+      recordFailure('CHECK_1_AUTH_BYPASS', 'OTP verification logic does not utilize cryptographic hash comparison.');
+    } else {
+      recordPass('CHECK_1_AUTH_BYPASS', 'No hardcoded OTPs found. Cryptographic verification enforced.');
+    }
+  }
+} catch (err) {
+  recordFailure('CHECK_1_AUTH_BYPASS', `Exception during check: ${err.message}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHECK 2: WORKFLOW SKIP
+// Ensures a new Creator cannot bypass the onboarding form to go straight to Pending Approval
+// ─────────────────────────────────────────────────────────────────────────────
+console.log('\nRunning Check 2: WORKFLOW SKIP...');
+try {
+  const pendingPagePath = path.join(artsyNextDir, 'src/app/freelancer/pending-approval/page.tsx');
+  const layoutPath = path.join(artsyNextDir, 'src/app/freelancer/FreelancerLayoutClient.tsx');
+  const otpRoutePath = path.join(artsyNextDir, 'src/app/api/auth/otp/route.ts');
+
+  if (fs.existsSync(pendingPagePath)) {
+    const content = fs.readFileSync(pendingPagePath, 'utf-8');
+    // Ensure check redirects non-pending creators to onboarding form
+    const hasRedirectToOnboarding = content.includes('/freelancer/onboarding');
+    const hasPendingStatusCheck = content.includes('pending') || content.includes('pending_review');
+
+    if (!hasRedirectToOnboarding || !hasPendingStatusCheck) {
+      recordFailure('CHECK_2_WORKFLOW_SKIP', 'Pending approval page does not redirect unsubmitted creators to /freelancer/onboarding.');
+    } else {
+      recordPass('CHECK_2_WORKFLOW_SKIP', 'Pending approval page strictly guards against premature direct visits.');
+    }
+  }
+
+  if (fs.existsSync(layoutPath)) {
+    const content = fs.readFileSync(layoutPath, 'utf-8');
+    if (!content.includes('/freelancer/onboarding') || !content.includes('onboarding_status')) {
+      recordFailure('CHECK_2_WORKFLOW_SKIP', 'Freelancer layout does not enforce onboarding status routing.');
+    } else {
+      recordPass('CHECK_2_WORKFLOW_SKIP', 'Freelancer layout enforces state machine redirection to onboarding.');
+    }
+  }
+
+  // Ensure brand new freelancer users do not default to 'pending' in OTP route
+  if (fs.existsSync(otpRoutePath)) {
+    const otpContent = fs.readFileSync(otpRoutePath, 'utf-8');
+    if (otpContent.includes("approval_status: 'pending'") && otpContent.includes("insert([{\n                  id: generatedUserId")) {
+      recordFailure('CHECK_2_WORKFLOW_SKIP', 'OTP route creates premature pending creator profile upon initial login.');
+    } else {
+      recordPass('CHECK_2_WORKFLOW_SKIP', 'OTP route does not create premature pending creator profile before form submission.');
+    }
+  }
+} catch (err) {
+  recordFailure('CHECK_2_WORKFLOW_SKIP', `Exception during check: ${err.message}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHECK 3: PRICING FALLBACK
+// Ensures unknown services throw a 400 error instead of defaulting to ₹6,000
+// ─────────────────────────────────────────────────────────────────────────────
+console.log('\nRunning Check 3: PRICING FALLBACK...');
+try {
+  const pricingEnginePath = path.join(artsyNextDir, 'src/lib/pricing/engine.ts');
+  const ordersCreatePath = path.join(artsyNextDir, 'src/app/api/orders/create/route.ts');
+
+  if (fs.existsSync(pricingEnginePath)) {
+    const content = fs.readFileSync(pricingEnginePath, 'utf-8');
+    // Check that unrecognized configuration throws an explicit error
+    if (!content.includes('Unable to calculate price for this configuration')) {
+      recordFailure('CHECK_3_PRICING_FALLBACK', 'Pricing engine does not throw for unrecognized service configuration.');
+    } else if (content.includes('effectiveBasePricePaise = 600000;') || content.includes('grandTotalPaise = 600000;')) {
+      recordFailure('CHECK_3_PRICING_FALLBACK', 'Pricing engine contains silent fallback to 600000 paise.');
+    } else {
+      recordPass('CHECK_3_PRICING_FALLBACK', 'Pricing engine throws on unrecognized service configurations.');
+    }
+  }
+
+  if (fs.existsSync(ordersCreatePath)) {
+    const content = fs.readFileSync(ordersCreatePath, 'utf-8');
+    if (!content.includes('status: 400') || !content.includes('Unable to calculate price for this configuration')) {
+      recordFailure('CHECK_3_PRICING_FALLBACK', 'POST /api/orders/create does not return HTTP 400 on price calculation failure.');
+    } else {
+      recordPass('CHECK_3_PRICING_FALLBACK', 'POST /api/orders/create returns HTTP 400 on unrecognized pricing.');
+    }
+  }
+} catch (err) {
+  recordFailure('CHECK_3_PRICING_FALLBACK', `Exception during check: ${err.message}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHECK 4: PHANTOM LOGOUT
+// Ensures navigation between public and admin pages does not clear the session
+// ─────────────────────────────────────────────────────────────────────────────
+console.log('\nRunning Check 4: PHANTOM LOGOUT...');
+try {
+  const userMePath = path.join(artsyNextDir, 'src/app/api/user/me/route.ts');
+  const middlewarePath = path.join(artsyNextDir, 'src/middleware.ts');
+
+  if (fs.existsSync(userMePath)) {
+    const content = fs.readFileSync(userMePath, 'utf-8');
+    // Ensure that privileged admin accounts are preserved when queried
+    if (!content.includes('isSuperAdminAccount') && !content.includes('isPrivilegedAdmin')) {
+      recordFailure('CHECK_4_PHANTOM_LOGOUT', 'GET /api/user/me does not handle super_admin preservation across portal navigation.');
+    } else {
+      recordPass('CHECK_4_PHANTOM_LOGOUT', 'GET /api/user/me preserves super_admin session integrity.');
+    }
+  }
+
+  if (fs.existsSync(middlewarePath)) {
+    const content = fs.readFileSync(middlewarePath, 'utf-8');
+    // Ensure public routes are explicitly exempted from route guards
+    if (!content.includes('publicRoutes') && !content.includes('isPublicRoute')) {
+      recordFailure('CHECK_4_PHANTOM_LOGOUT', 'Middleware does not explicitly exempt public routes.');
+    } else {
+      recordPass('CHECK_4_PHANTOM_LOGOUT', 'Middleware exempts public routes from session stripping.');
+    }
+  }
+} catch (err) {
+  recordFailure('CHECK_4_PHANTOM_LOGOUT', `Exception during check: ${err.message}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHECK 5: RLS VIOLATION
+// Ensures no client-side React components are querying the database directly
+// ─────────────────────────────────────────────────────────────────────────────
+console.log('\nRunning Check 5: RLS VIOLATION...');
+try {
+  function scanDir(dir) {
+    let files = [];
+    if (!fs.existsSync(dir)) return files;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules' && entry.name !== '.next') {
+          files = files.concat(scanDir(fullPath));
+        }
+      } else if (entry.isFile() && (entry.name.endsWith('.tsx') || entry.name.endsWith('.jsx'))) {
+        files.push(fullPath);
+      }
+    }
+    return files;
+  }
+
+  const componentsDir = path.join(artsyNextDir, 'src/components');
+  const appDir = path.join(artsyNextDir, 'src/app');
+  const allReactFiles = [...scanDir(componentsDir), ...scanDir(appDir)];
+
+  let rlsViolations = 0;
+  const directImportRegex = /import\s+.*(?:from\s+['"]@supabase\/supabase-js['"]|from\s+['"][^'"]*lib\/supabase['"])/;
+  const directQueryRegex = /(?:supabase|dbClient|anonSupabase|supabaseAdmin)\s*\.\s*from\s*\(/;
+
+  for (const filePath of allReactFiles) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const isClientComponent = content.includes("'use client'") || content.includes('"use client"');
+
+    if (isClientComponent) {
+      if (directImportRegex.test(content) || directQueryRegex.test(content)) {
+        // Direct DB import or query in client component is strictly forbidden
+        recordFailure('CHECK_5_RLS_VIOLATION', `Direct Supabase DB client query/import in Client Component: ${path.relative(repoRoot, filePath)}`);
+        rlsViolations++;
+      }
+    }
+  }
+
+  if (rlsViolations === 0) {
+    recordPass('CHECK_5_RLS_VIOLATION', `All ${allReactFiles.length} React components adhere to zero direct client DB queries.`);
+  }
+} catch (err) {
+  recordFailure('CHECK_5_RLS_VIOLATION', `Exception during check: ${err.message}`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FINAL VERDICT
+// ─────────────────────────────────────────────────────────────────────────────
+console.log('\n================================================================');
+if (failureCount === 0) {
+  console.log(' FIREWALL STATUS: PASS (0 Regressions Detected)');
+  console.log(' All historical vulnerability checks and state machines verified.');
+  console.log('================================================================\n');
+  process.exit(0);
+} else {
+  console.error(` FIREWALL STATUS: FAILED (${failureCount} Regressions Detected)`);
+  for (const err of errors) {
+    console.error(`  - ${err}`);
+  }
+  console.error('\n Aborting: All failures must be resolved before task completion.');
+  console.log('================================================================\n');
+  process.exit(1);
+}

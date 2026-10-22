@@ -87,6 +87,51 @@ export async function middleware(request: NextRequest) {
       return forbiddenResp;
     }
 
+    // 1.3 Payload Limit Protection
+    const contentLength = Number(request.headers.get('content-length') || 0);
+    const isStorageRoute = pathname.startsWith('/api/storage');
+    const maxPayloadBytes = isStorageRoute ? 10 * 1024 * 1024 : 2 * 1024 * 1024; // 10MB storage, 2MB other
+
+    if (contentLength > maxPayloadBytes) {
+      const payloadResp = new NextResponse(
+        JSON.stringify({
+          error: 'Payload Too Large',
+          message: `Request entity exceeds maximum permitted limit (${Math.round(maxPayloadBytes / (1024 * 1024))}MB).`,
+        }),
+        {
+          status: 413,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Content-Type-Options': 'nosniff',
+          },
+        }
+      );
+      return applySecurityHeaders(payloadResp);
+    }
+
+    // Input & Query Sanitization: Block prototype pollution and PostgREST/SQL injection patterns in URL
+    const rawSearch = request.nextUrl.search || '';
+    if (
+      rawSearch.includes('__proto__') ||
+      rawSearch.includes('constructor.prototype') ||
+      /(?:;\s*DROP\s+TABLE|UNION\s+ALL\s+SELECT|UNION\s+SELECT|\/\*!\d+)/i.test(rawSearch)
+    ) {
+      const badReqResp = new NextResponse(
+        JSON.stringify({
+          error: 'Bad Request',
+          message: 'Malformed or disallowed query parameter detected.',
+        }),
+        {
+          status: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Content-Type-Options': 'nosniff',
+          },
+        }
+      );
+      return applySecurityHeaders(badReqResp);
+    }
+
     // Handle preflight OPTIONS requests
     if (request.method === 'OPTIONS') {
       const preflight = new NextResponse(null, { status: 204 });

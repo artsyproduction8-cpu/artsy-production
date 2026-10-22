@@ -35,7 +35,7 @@ export interface RateLimitResult {
 
 export async function checkRateLimit(
   identifier: string,
-  prefix: 'auth' | 'pay' | 'api' = 'api',
+  prefix: 'auth' | 'pay' | 'api' | 'admin' | 'storage' | 'leads' | string = 'api',
   maxAllowed: number = 5,
   windowSeconds: number = 600 // 10 minutes
 ): Promise<RateLimitResult> {

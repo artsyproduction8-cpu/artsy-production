@@ -3,6 +3,7 @@ node_modules/
 artsy-next/node_modules/
 
 # Next.js Build Outputs
+.next/
 artsy-next/.next/
 artsy-next/out/
 artsy-next/build/

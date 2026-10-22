@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { isSuperAdminAccount } from '@/lib/auth-utils';
+import { isSuperAdminAccount, CANONICAL_SUPER_ADMIN_PHONE, CANONICAL_SUPER_ADMIN_EMAIL } from '@/lib/auth-utils';
 import { getCachedUser, setCachedUser } from '@/lib/cache';
 import { maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
 
@@ -69,18 +69,30 @@ export async function GET(request: NextRequest) {
         if (!error && data) {
           dbUser = data;
         } else if (!error && !data && isUuid && !authUser.id.startsWith('usr-')) {
-          // Account was purged from database. Cleanly invalidate cookie and session.
-          const res = NextResponse.json(
-            { authenticated: false, user: null, error: 'User account not found' },
-            {
-              status: 401,
-              headers: {
-                'Cache-Control': 'no-store, no-cache, must-revalidate',
-              },
-            }
-          );
-          res.cookies.delete('artsy_auth_token');
-          return res;
+          const isPrivilegedAdmin = isSuperAdminAccount(authUser) || authUser.role === 'admin' || authUser.role === 'super_admin';
+          if (isPrivilegedAdmin) {
+            dbUser = {
+              id: authUser.id,
+              role: authUser.role || 'super_admin',
+              status: 'active',
+              full_name: authUser.full_name || 'Studio Owner (Super Admin)',
+              email: authUser.email || CANONICAL_SUPER_ADMIN_EMAIL,
+              phone: authUser.phone || `+91${CANONICAL_SUPER_ADMIN_PHONE}`,
+            };
+          } else {
+            // Account was purged from database. Cleanly invalidate cookie and session.
+            const res = NextResponse.json(
+              { authenticated: false, user: null, error: 'User account not found' },
+              {
+                status: 401,
+                headers: {
+                  'Cache-Control': 'no-store, no-cache, must-revalidate',
+                },
+              }
+            );
+            res.cookies.delete('artsy_auth_token');
+            return res;
+          }
         }
       } catch (err) {
         console.warn('[api/user/me] DB query warning:', err);

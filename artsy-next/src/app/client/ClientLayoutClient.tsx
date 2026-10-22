@@ -29,7 +29,7 @@ export default function ClientLayoutClient({ children }: { children: React.React
               studio_details: data.user.studio_details || user?.studio_details,
               role: data.user.role || user?.role || 'client',
               status: data.user.status || user?.status || 'active',
-              onboarded: data.user.onboarded !== undefined ? data.user.onboarded : (user?.onboarded !== false),
+              onboarded: data.user.onboarded !== undefined ? Boolean(data.user.onboarded) : (user?.onboarded ?? false),
             };
             setCurrentUser(u);
             user = u;
@@ -39,7 +39,7 @@ export default function ClientLayoutClient({ children }: { children: React.React
         // ignore
       }
 
-      // In local dev mode, immediately fallback so there is zero spinner delay (excluded from production)
+      // In local dev mode without an active user, only set fallback if no cookie/user
       const isLocalhost = process.env.NODE_ENV !== 'production' && typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       if (!user && isLocalhost) {
         user = PRESET_USERS.client;
@@ -59,6 +59,17 @@ export default function ClientLayoutClient({ children }: { children: React.React
       if (user.role !== 'client' && user.role !== 'admin' && user.role !== 'super_admin') {
         router.push('/auth/login');
         return;
+      }
+
+      // 4.1 Client Workflow State Machine Guard:
+      // If client has not completed onboarding, block direct URL access to Dashboard/Files
+      // and redirect to the Setup Form (/client/profile?setup=true).
+      if (user.role === 'client' && !user.onboarded) {
+        const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+        if (pathname !== '/client/profile' && pathname !== '/client/studio') {
+          router.push('/client/profile?setup=true');
+          return;
+        }
       }
 
       setAuthorized(true);

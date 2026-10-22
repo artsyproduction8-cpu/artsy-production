@@ -7,7 +7,8 @@
     "dev": "npm --prefix artsy-next run dev",
     "build": "npm --prefix artsy-next run build",
     "lint": "npm --prefix artsy-next run lint",
-    "test:e2e": "npm --prefix artsy-next run test:e2e"
+    "test:e2e": "npm --prefix artsy-next run test:e2e",
+    "regression-guard": "node scripts/regression-guard"
   },
   "keywords": [],
   "author": "",

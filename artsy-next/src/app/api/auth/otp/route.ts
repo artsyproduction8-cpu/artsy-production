@@ -87,11 +87,11 @@ export async function POST(request: NextRequest) {
 
       const inputCode = String(submittedCode).trim();
 
-      // Security Fix L: Distributed rate limiting on OTP verification (10 attempts per 10 mins per identifier)
-      const verifyLimit = await checkRateLimit(`verify_${identifier}`, 'auth', 10, 600);
-      if (!verifyLimit.allowed && !isDev) {
+      // Security Fix L: Distributed rate limiting on OTP verification (5 attempts per 10 mins per identifier)
+      const verifyLimit = await checkRateLimit(`verify_${identifier}`, 'auth', 5, 600);
+      if (!verifyLimit.allowed) {
         return NextResponse.json(
-          { error: `Too many attempts. Wait ${Math.ceil(verifyLimit.resetSeconds / 60)} minutes.` },
+          { error: `Too many failed attempts. Session locked. Please request a new code in ${Math.ceil(verifyLimit.resetSeconds / 60)} minutes.`, remainingAttempts: 0 },
           { status: 429 }
         );
       }
@@ -157,11 +157,12 @@ export async function POST(request: NextRequest) {
           }
         }
 
-
         if (!sessionVerified) {
           if (memSession) {
             memSession.attempts += 1;
             if (memSession.attempts >= 5) {
+              memSession.expiresAt = 0;
+              memSession.verified = false;
               return NextResponse.json(
                 { error: 'Too many attempts. Please request a new code.', remainingAttempts: 0 },
                 { status: 429 }
@@ -278,19 +279,8 @@ export async function POST(request: NextRequest) {
               role: defaultRole,
             };
 
-            // If freelancer, ensure creator profile row is also created in DB
-            if (requestedRole === 'freelancer') {
-              try {
-                await dbClient.from('creator_profiles').insert([{
-                  id: generatedUserId,
-                  approval_status: 'pending',
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                }]);
-              } catch (cpErr) {
-                console.warn('[OTP Route] Creator profile insert warning:', cpErr);
-              }
-            }
+            // If freelancer, creator profile will be created upon onboarding application submission
+            // Do not insert premature pending approval profile
           } catch (createErr) {
             console.warn('[OTP Route] User creation exception:', createErr);
             resolvedUser = {
@@ -324,19 +314,26 @@ export async function POST(request: NextRequest) {
               .maybeSingle();
 
             if (profile) {
-              const rawStatus = profile.onboarding_status || profile.approval_status || 'pending';
-              if (rawStatus === 'approved') {
+              const hasSubmittedApplication = Boolean(
+                profile.onboarding_status === 'pending_review' ||
+                profile.tracking_id ||
+                profile.portfolio_url ||
+                profile.public_specialty
+              );
+
+              if (profile.onboarding_status === 'approved' || profile.approval_status === 'approved') {
                 onboarding_status = 'approved';
-              } else if (rawStatus === 'rejected') {
+              } else if (profile.onboarding_status === 'rejected' || profile.approval_status === 'rejected') {
                 onboarding_status = 'rejected';
                 rejection_reason = profile.rejection_reason || null;
                 rejected_at = profile.rejected_at || profile.updated_at || new Date().toISOString();
-              } else if (rawStatus === 'pending_review' || rawStatus === 'pending') {
-                onboarding_status = rawStatus as any;
-              } else {
+              } else if (hasSubmittedApplication && (profile.onboarding_status === 'pending_review' || profile.approval_status === 'pending')) {
                 onboarding_status = 'pending_review';
+              } else {
+                // Application form has not been submitted yet
+                onboarding_status = null;
               }
-              tracking_id = profile.tracking_id || (profile as any).trackingId || (resolvedUser as any).tracking_id || `ART-2026-VET-${String(resolvedUser.id).replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase().padStart(4, '0')}`;
+              tracking_id = profile.tracking_id || (profile as any).trackingId || (resolvedUser as any).tracking_id || null;
               if (!resolvedUser.full_name && profile.public_display_name) {
                 resolvedUser.full_name = profile.public_display_name;
               }
@@ -346,19 +343,23 @@ export async function POST(request: NextRequest) {
           console.warn('Creator profile lookup warning:', pErr);
         }
 
-        // If not found in creator_profiles table
+        // If not resolved from creator_profiles table
         if (!onboarding_status) {
           if (!isNewUser) {
             const uStatus = (resolvedUser as any).onboarding_status;
+            const isOnboarded = Boolean((resolvedUser as any).onboarded);
             if (uStatus === 'approved') {
               onboarding_status = 'approved';
             } else if (uStatus === 'rejected') {
               onboarding_status = 'rejected';
               rejection_reason = (resolvedUser as any).rejection_reason || 'Portfolio did not meet current studio criteria.';
               rejected_at = (resolvedUser as any).rejected_at || (resolvedUser as any).updated_at || new Date().toISOString();
+            } else if (isOnboarded && (uStatus === 'pending_review' || uStatus === 'pending')) {
+              onboarding_status = 'pending_review';
+              tracking_id = (resolvedUser as any).tracking_id || null;
             } else {
-              onboarding_status = 'pending';
-              tracking_id = (resolvedUser as any).tracking_id || `ART-2026-VET-${String(resolvedUser.id).replace(/[^a-zA-Z0-9]/g, '').slice(-4).toUpperCase().padStart(4, '0')}`;
+              onboarding_status = null;
+              tracking_id = null;
             }
           } else {
             // Brand new freelancer user prior to completing onboarding

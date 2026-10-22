@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 /**
  * DPDP Act (v2.0) Data Export Route (§4.4, §10.2)
@@ -24,6 +25,17 @@ export async function GET(request: NextRequest) {
     const authUser = await getAuthenticatedUser(request);
     if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
+    }
+
+    // Rate Limiting: Max 3 export requests per hour per user/IP
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anon';
+    const rateKey = `export_${authUser.id || ip}`;
+    const limit = await checkRateLimit(rateKey, 'api', 3, 3600);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: `Too many export requests. Please wait ${Math.ceil(limit.resetSeconds / 60)} minutes.` },
+        { status: 429 }
+      );
     }
 
     // 2. Authorization check: caller must be owner or admin

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -58,6 +59,15 @@ export async function PATCH(request: Request) {
   const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+  }
+
+  // Rate Limiting: Max 15 refund actions per 10 minutes per admin
+  const limit = await checkRateLimit(`admin_refunds_${authUser.id}`, 'admin', 15, 600);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: `Admin rate limit exceeded. Please wait ${Math.ceil(limit.resetSeconds / 60)} minutes.` },
+      { status: 429 }
+    );
   }
 
   const dbClient = supabaseAdmin || anonSupabase;

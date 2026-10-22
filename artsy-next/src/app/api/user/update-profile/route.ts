@@ -3,11 +3,21 @@ import { getAuthenticatedUser, signAuthCookieValue, AUTH_COOKIE_NAME, AuthUserPa
 import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { setCachedUser, invalidateUserCache, invalidateCache, invalidateCreatorCache } from '@/lib/cache';
 import { formatPublicCreatorName } from '@/lib/masking';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: Request) {
   const authUser = await getAuthenticatedUser(request);
   if (!authUser) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rateKey = `profile_update_${authUser.id}`;
+  const limit = await checkRateLimit(rateKey, 'api', 15, 600);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: `Too many profile updates. Please wait ${Math.ceil(limit.resetSeconds / 60)} minutes.` },
+      { status: 429 }
+    );
   }
 
   // M9: Safe JSON parsing

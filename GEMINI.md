@@ -67,3 +67,4 @@ flowchart TD
 3. Verify TypeScript (`npx tsc --noEmit`) and production build (`npm run build`).
 4. Run `node scripts/regression-guard` to verify 0 regressions across all checks.
 5. Never use `git add -A`; stage only specific modified files.
+6. Clean Up Test Data: Always delete any test records created in the database and remove any temporary files from the filesystem immediately after tests complete.

@@ -125,10 +125,31 @@ export async function POST(request: Request) {
         if (creatorPayload.public_specialty || creatorPayload.specialty) {
           cpUpdates.public_specialty = String(creatorPayload.public_specialty || creatorPayload.specialty).trim();
         }
+        if (creatorPayload.hardware_config || creatorPayload.hardwareConfig) {
+          cpUpdates.hardware_config = String(creatorPayload.hardware_config || creatorPayload.hardwareConfig).trim();
+        }
+        if (creatorPayload.sample_url_1 || creatorPayload.sampleUrl1) {
+          cpUpdates.sample_url_1 = String(creatorPayload.sample_url_1 || creatorPayload.sampleUrl1).trim();
+        }
+        if (creatorPayload.sample_url_2 || creatorPayload.sampleUrl2) {
+          cpUpdates.sample_url_2 = String(creatorPayload.sample_url_2 || creatorPayload.sampleUrl2).trim();
+        }
+        if (creatorPayload.sample_url_3 || creatorPayload.sampleUrl3) {
+          cpUpdates.sample_url_3 = String(creatorPayload.sample_url_3 || creatorPayload.sampleUrl3).trim();
+        }
+        if (creatorPayload.bank_name || creatorPayload.bankName) {
+          cpUpdates.bank_name = String(creatorPayload.bank_name || creatorPayload.bankName).trim();
+        }
         if (creatorPayload.bank_account_name) cpUpdates.bank_account_name = String(creatorPayload.bank_account_name).trim();
-        if (creatorPayload.bank_account_number) cpUpdates.bank_account_number = String(creatorPayload.bank_account_number).trim();
-        if (creatorPayload.bank_ifsc_code) cpUpdates.bank_ifsc_code = String(creatorPayload.bank_ifsc_code).trim().toUpperCase();
-        if (creatorPayload.pan_number) cpUpdates.pan_number = String(creatorPayload.pan_number).trim().toUpperCase();
+        if (creatorPayload.bank_account_number && !/[•*X]/.test(String(creatorPayload.bank_account_number))) {
+          cpUpdates.bank_account_number = String(creatorPayload.bank_account_number).trim();
+        }
+        if (creatorPayload.bank_ifsc_code && !/[•*X]/.test(String(creatorPayload.bank_ifsc_code))) {
+          cpUpdates.bank_ifsc_code = String(creatorPayload.bank_ifsc_code).trim().toUpperCase();
+        }
+        if (creatorPayload.pan_number && !/[•*X]/.test(String(creatorPayload.pan_number))) {
+          cpUpdates.pan_number = String(creatorPayload.pan_number).trim().toUpperCase();
+        }
 
         const { data: existingCp } = await dbClient
           .from('creator_profiles')

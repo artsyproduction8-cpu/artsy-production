@@ -111,20 +111,26 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
       }
     }
 
-    // 2. Resolve User Email for Resend Delivery / Fallbacks
+    // 2. Resolve User Phone and Email for Delivery & Fallbacks if missing
     let emailToUse = payload.recipientEmail;
-    if (!emailToUse && payload.userId && !payload.userId.startsWith('anon_') && supabase && typeof supabase.from === 'function') {
-      try {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('email')
-          .eq('id', payload.userId)
-          .maybeSingle();
-        if (userData?.email) {
-          emailToUse = userData.email;
+    let phoneToUse = payload.recipientPhone;
+
+    if ((!emailToUse || !phoneToUse) && payload.userId && !payload.userId.startsWith('anon_')) {
+      const db = dbClient || supabase;
+      if (db && typeof db.from === 'function') {
+        try {
+          const { data: userData } = await db
+            .from('users')
+            .select('email, phone')
+            .eq('id', payload.userId)
+            .maybeSingle();
+          if (userData) {
+            if (!emailToUse && userData.email) emailToUse = userData.email;
+            if (!phoneToUse && userData.phone) phoneToUse = userData.phone;
+          }
+        } catch (userErr) {
+          console.warn('Failed to resolve user phone/email for notification:', userErr);
         }
-      } catch (userErr) {
-        console.warn('Failed to resolve user email for notification:', userErr);
       }
     }
 
@@ -161,8 +167,8 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
 
     let metaSendSuccess = false;
 
-    if (payload.recipientPhone) {
-      const cleanPhone = payload.recipientPhone.replace(/\D/g, '');
+    if (phoneToUse) {
+      const cleanPhone = phoneToUse.replace(/\D/g, '');
 
       if (isMetaConfigured) {
         // Map 44 events to the 3 Meta utility templates

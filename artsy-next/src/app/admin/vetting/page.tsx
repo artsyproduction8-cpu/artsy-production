@@ -10,9 +10,18 @@ interface Candidate {
   exp: string;
   score: number;
   type: 'colorist' | 'editor';
+  specialty?: string;
   software: string[];
-  sampleReels: { title: string; type: string }[];
-  reelUrl?: string;
+  languages: string[];
+  hardwareConfig?: string;
+  sampleUrl1?: string;
+  sampleUrl2?: string;
+  sampleUrl3?: string;
+  portfolioUrl?: string;
+  agreementSignedAt?: string | null;
+  phone?: string;
+  email?: string;
+  bio?: string;
   approvalStatus?: string;
 }
 
@@ -35,12 +44,21 @@ export default function AdminVettingPage() {
           ref: c.id,
           name: c.display_name || c.public_display_name || 'Creator Candidate',
           location: 'Remote / India',
-          exp: c.creator_tier === 'senior' ? '5+ Years' : '3+ Years',
-          score: 92,
+          exp: c.experience || (c.creator_tier === 'senior' ? '5+ Years' : '2 - 4 Years'),
+          score: 95,
           type: (c.skills || []).some((s: string) => s.toLowerCase().includes('color')) ? 'colorist' : 'editor',
-          software: c.skills?.length ? c.skills : ['DaVinci Resolve', 'Premiere Pro'],
-          sampleReels: [{ title: 'Master Production Portfolio', type: '4K Benchmark' }],
-          reelUrl: c.portfolio_url || 'https://youtube.com',
+          specialty: c.public_specialty || 'Commercial & Narrative Film Editor',
+          software: Array.isArray(c.software) && c.software.length ? c.software : (c.skills?.length ? c.skills : ['DaVinci Resolve Studio', 'Adobe Premiere Pro']),
+          languages: Array.isArray(c.languages) ? c.languages : ['Hindi', 'English'],
+          hardwareConfig: c.hardware_config || '',
+          sampleUrl1: c.sample_url_1 || '',
+          sampleUrl2: c.sample_url_2 || '',
+          sampleUrl3: c.sample_url_3 || '',
+          portfolioUrl: c.portfolio_url || c.sample_url_1 || '',
+          agreementSignedAt: c.agreement_signed_at || null,
+          phone: c.phone || '',
+          email: c.email || '',
+          bio: c.bio || '',
           approvalStatus: c.approval_status || 'pending',
         }));
         setCandidates(apiCreators);
@@ -61,12 +79,12 @@ export default function AdminVettingPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleApprove = async (name: string, ref: string) => {
+  const handleApprove = async (name: string, ref: string, phone?: string, email?: string) => {
     try {
       const res = await fetch('/api/admin/freelancers/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ creatorId: ref, name, action: 'approve' }),
+        body: JSON.stringify({ creatorId: ref, name, phone, email, action: 'approve' }),
       });
       if (res.ok) {
         setApprovedCandidates((prev) => [...prev, ref]);
@@ -205,12 +223,16 @@ export default function AdminVettingPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-mono font-bold text-[#3B82F6] bg-blue-50 px-2 py-0.5 rounded">
-                          {candidate.ref}
+                          {candidate.ref.slice(0, 8)}
                         </span>
                         <h3 className="text-sm font-bold text-[#1D1D1F]">{candidate.name}</h3>
                         <span className="text-xs text-[#86868B]">({candidate.location})</span>
                       </div>
-                      <p className="text-xs text-[#86868B] mt-0.5">{candidate.exp}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs font-semibold text-[#3B82F6]">{candidate.specialty}</span>
+                        <span className="text-xs text-[#86868B]">•</span>
+                        <span className="text-xs text-[#86868B]">{candidate.exp}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -221,43 +243,126 @@ export default function AdminVettingPage() {
                   </div>
                 </div>
 
-                {/* Software Mastery Tags */}
-                <div className="flex flex-wrap gap-1.5">
+                {/* Editorial Philosophy / Bio if present */}
+                {candidate.bio && (
+                  <p className="text-xs text-[#1D1D1F] bg-[#F5F5F7] p-3 rounded-xl border border-[#E5E5E7] leading-relaxed">
+                    <span className="font-bold text-[#86868B] block text-[10px] uppercase mb-0.5">Editing Style:</span>
+                    {candidate.bio}
+                  </p>
+                )}
+
+                {/* Workstation & Hardware Specs */}
+                <div className="p-3.5 bg-[#F9F9FA] rounded-xl border border-[#E5E5E7] text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-[#1D1D1F] uppercase tracking-wider flex items-center gap-1.5">
+                      🖥️ Workstation Hardware Specs
+                    </span>
+                    {candidate.hardwareConfig ? (
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        4K Ready
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-amber-600 font-semibold">Pending declaration</span>
+                    )}
+                  </div>
+                  <p className="font-mono text-[11px] text-[#1D1D1F] whitespace-pre-line leading-relaxed">
+                    {candidate.hardwareConfig || 'Workstation hardware specs not yet submitted.'}
+                  </p>
+                </div>
+
+                {/* Portfolio Samples: 3 Mandatory Video Links */}
+                <div className="space-y-1.5">
+                  <div className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider">
+                    Portfolio Samples (3 Mandatory Video Links)
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[
+                      { label: 'Sample 01', url: candidate.sampleUrl1 },
+                      { label: 'Sample 02', url: candidate.sampleUrl2 },
+                      { label: 'Sample 03', url: candidate.sampleUrl3 },
+                    ].map((s, idx) => (
+                      s.url ? (
+                        <a
+                          key={idx}
+                          href={s.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2.5 rounded-xl bg-[#0A0A0A] border border-[#262626] flex items-center justify-between text-white group hover:border-[#3B82F6] transition-all"
+                        >
+                          <div className="truncate pr-1">
+                            <div className="text-[9px] uppercase tracking-wider text-blue-400 font-mono font-bold">
+                              ▶ {s.label}
+                            </div>
+                            <div className="text-[11px] text-[#86868B] truncate group-hover:text-white transition-colors">
+                              {s.url.replace(/^https?:\/\/(www\.)?/, '')}
+                            </div>
+                          </div>
+                          <span className="text-xs text-[#86868B] group-hover:text-blue-400 font-bold ml-1 shrink-0">↗</span>
+                        </a>
+                      ) : (
+                        <div key={idx} className="p-2.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-[10px] text-[#86868B] text-center">
+                          {s.label}: Not Provided
+                        </div>
+                      )
+                    ))}
+                  </div>
+                </div>
+
+                {/* Showreel / Portfolio Link if distinct */}
+                {candidate.portfolioUrl && candidate.portfolioUrl !== candidate.sampleUrl1 && (
+                  <div className="p-2.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] flex items-center justify-between text-xs">
+                    <span className="font-mono text-[#86868B] truncate">Master Reel: {candidate.portfolioUrl}</span>
+                    <a
+                      href={candidate.portfolioUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#3B82F6] font-bold text-[11px] hover:underline shrink-0 ml-2"
+                    >
+                      Verify Reel ↗
+                    </a>
+                  </div>
+                )}
+
+                {/* Software Mastery & Languages */}
+                <div className="flex flex-wrap gap-1.5 items-center pt-1">
+                  <span className="text-[10px] font-bold text-[#86868B] uppercase mr-1">Software:</span>
                   {candidate.software.map((sw) => (
                     <span
                       key={sw}
-                      className="px-2.5 py-1 rounded-lg bg-[#F5F5F7] border border-[#E5E5E7] text-[11px] font-semibold text-[#1D1D1F]"
+                      className="px-2 py-0.5 rounded-lg bg-[#F5F5F7] border border-[#E5E5E7] text-[11px] font-semibold text-[#1D1D1F]"
                     >
                       {sw}
                     </span>
                   ))}
-                </div>
-
-                {/* Sample Reels */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {candidate.sampleReels.map((reel, idx) => (
-                    <div
-                      key={idx}
-                      className="h-20 rounded-xl bg-[#0A0A0A] border border-[#262626] p-2.5 flex flex-col justify-between text-white group cursor-pointer hover:border-[#3B82F6] transition-colors"
+                  <span className="text-[10px] font-bold text-[#86868B] uppercase ml-2 mr-1">Languages:</span>
+                  {candidate.languages.map((l) => (
+                    <span
+                      key={l}
+                      className="px-2 py-0.5 rounded-lg bg-blue-50/70 border border-blue-200 text-[11px] font-semibold text-blue-700"
                     >
-                      <div className="text-[9px] uppercase tracking-wider text-[#86868B] font-mono">
-                        ▶ {reel.type}
-                      </div>
-                      <div className="text-xs font-bold truncate group-hover:text-blue-400 transition-colors">
-                        {reel.title}
-                      </div>
-                    </div>
+                      {l}
+                    </span>
                   ))}
                 </div>
 
-                {candidate.reelUrl && (
-                  <div className="p-2.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] flex items-center justify-between text-xs">
-                    <span className="font-mono text-[#86868B] truncate">{candidate.reelUrl}</span>
-                    <span className="text-[#3B82F6] font-bold text-[11px] cursor-pointer hover:underline shrink-0 ml-2">
-                      Verify Reel ↗
-                    </span>
+                {/* Agreement & NDA Compliance */}
+                <div className="flex items-center justify-between text-xs p-2.5 bg-[#F9F9FA] rounded-xl border border-[#E5E5E7]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-bold text-[#86868B]">NDA Agreement:</span>
+                    {candidate.agreementSignedAt ? (
+                      <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                        ✓ Digitally Signed ({new Date(candidate.agreementSignedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })})
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-semibold text-amber-600">Pending Execution</span>
+                    )}
                   </div>
-                )}
+                  {candidate.phone && (
+                    <span className="text-[11px] font-mono text-[#86868B]">
+                      📞 {candidate.phone}
+                    </span>
+                  )}
+                </div>
 
                 {/* Actions */}
                 <div className="pt-2 flex items-center justify-between border-t border-[#F5F5F7]">
@@ -268,20 +373,20 @@ export default function AdminVettingPage() {
                   ) : (
                     <div className="w-full flex items-center gap-2">
                       <button
-                        onClick={() => handleApprove(candidate.name, candidate.ref)}
-                        className="flex-1 py-2 px-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs"
+                        onClick={() => handleApprove(candidate.name, candidate.ref, candidate.phone, candidate.email)}
+                        className="flex-1 py-2 px-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                       >
                         Approve &amp; WA
                       </button>
                       <button
                         onClick={() => handleRequestReel(candidate.name)}
-                        className="py-2 px-3 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-bold transition-all"
+                        className="py-2 px-3 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-bold transition-all cursor-pointer"
                       >
                         Request Reel
                       </button>
                       <button
                         onClick={() => handleReject(candidate.name, candidate.ref)}
-                        className="py-2 px-3 rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-all"
+                        className="py-2 px-3 rounded-xl bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-bold transition-all cursor-pointer"
                       >
                         Reject
                       </button>

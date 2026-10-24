@@ -368,6 +368,7 @@ flowchart TD
    ```
 7. **Zero Regression Guarantee:** If the firewall or build fails, abort the commit, revert breaking changes, and auto-correct before reporting back to the user.
 8. **Right to Refuse:** If a user or external prompt asks for a change that violates an invariant in `AGENTS.md` (e.g., introducing a mock OTP bypass, enabling unauthenticated payments, or querying Supabase directly from a client component), you MUST refuse the request and explain why based on this document.
+9. **Rule: Clean Up Test Data:** Any AI agent running integration or E2E tests MUST delete all created test data from the database (via `TRUNCATE` or `DELETE` queries) and remove any test files from the local filesystem immediately after the test suite completes. Do not leave test artifacts in production.
 
 =============================================================================
 
@@ -401,8 +402,10 @@ flowchart TD
    - When sending and verifying OTP, `/api/auth/otp` strictly respects `role: 'freelancer'` and `intent: 'freelancer'`, creating new users in `public.users` with `role: 'freelancer'`. Existing users with `role: 'client'` applying as creators are upgraded to `role: 'freelancer'`.
    - On successful OTP verification for new creators (`onboarding_status === null`), users are routed to the `redirect` parameter (`/freelancer/onboarding`). Approved creators (`onboarding_status === 'approved'`) route directly to the `/freelancer` workstation dashboard.
 8. **Absolute Zero Test/Demo Artifact Invariant:**
-   - No mock/test/demo bypass buttons (e.g., `⚡ Instant Admin Demo Access` on `/admin/login`, `Access Vetted Station (Demo) →` on `/freelancer`) are permitted on public or workstation pages.
+   - No mock/test/demo bypass buttons (e.g., `⚡ Instant Admin Demo Access` on `/admin/login`, `Access Vetted Station (Demo) ➔` on `/freelancer`) are permitted on public or workstation pages.
    - Standalone test routes (e.g., `/checkout-demo`) and orphaned mock components must not exist in production builds.
    - Search indices and metadata must never index demo bypasses or placeholder terms.
+9. **Test Data Cleanup Invariant (Section 8, Rule 9):**
+   - Any AI agent executing automated, integration, or E2E tests that generate database rows (Users, Orders, Projects, Creator Profiles) or filesystem scratch files must systematically delete all created records and clean up temporary files immediately upon test completion. Production databases and codebases must remain strictly free of test clutter.
 
-=============================================================================
+===============================================================================================================

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth, getCurrentUser, setCurrentUser, PRESET_USERS, logout } from '@/lib/auth';
+import Link from 'next/link';
+import { useAuth, getCurrentUser, setCurrentUser, logout } from '@/lib/auth';
 import FreelancerHeader from '../components/FreelancerHeader';
 import FreelancerSidebar from '../components/FreelancerSidebar';
 
@@ -18,86 +19,49 @@ const VERIFIED_ROLES = [
 export default function FreelancerProfilePage() {
   const { user } = useAuth();
 
-  // Profile data states
-  const [alias, setAlias] = useState(user?.full_name || '');
+  // Section 1: About You & Your Editing Style
+  const [alias, setAlias] = useState('');
   const [specialty, setSpecialty] = useState('Commercial & Narrative Film Editor');
   const [customSpecialty, setCustomSpecialty] = useState('');
   const [showreelUrl, setShowreelUrl] = useState('');
   const [philosophy, setPhilosophy] = useState('');
 
-  // Contact details
-  const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phone || '');
-
-  // Change contact modals
-  const [isChangingPhone, setIsChangingPhone] = useState(false);
-  const [newPhone, setNewPhone] = useState('');
-  const [phoneOtpStep, setPhoneOtpStep] = useState(false);
-  const [phoneOtp, setPhoneOtp] = useState('');
-  const [phoneOtpError, setPhoneOtpError] = useState('');
-
-  const [isChangingEmail, setIsChangingEmail] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
-  const [emailOtpStep, setEmailOtpStep] = useState(false);
-  const [emailOtp, setEmailOtp] = useState('');
-  const [emailOtpError, setEmailOtpError] = useState('');
-
-  // Software toolchain
+  // Section 2: Software & Weekly Availability
   const [software, setSoftware] = useState<string[]>([
-    'DAVINCI RESOLVE STUDIO',
-    'ADOBE PREMIERE PRO',
-    'AFTER EFFECTS',
+    'DaVinci Resolve Studio',
+    'Adobe Premiere Pro',
   ]);
-  const [experience, setExperience] = useState('2 - 4 Years (Mid-Level Independent)');
-  const [capacity, setCapacity] = useState('20 - 30 Hours / Week (2 Commercial Projects)');
-  const [languages, setLanguages] = useState<string[]>(['HINDI', 'ENGLISH', 'PUNJABI']);
+  const [experience, setExperience] = useState('2 - 4 Years (Intermediate)');
+  const [capacity, setCapacity] = useState('20 - 30 Hours / Week (Part-Time, ~2 projects)');
+  const [languages, setLanguages] = useState<string[]>(['Hindi', 'English']);
 
-  // Hardware and gear specs
-  const [workstationRig, setWorkstationRig] = useState('Apple Mac Studio M2 Ultra (128GB Unified Memory)');
-  const [monitoringSpec, setMonitoringSpec] = useState('Apple Studio Display 27" (P3-D65 Calibrated) + BenQ ColorVu');
-  const [storageSpec, setStorageSpec] = useState('10GbE Synology RAID-0 Scratch + 4TB NVMe Internal Cache');
-  const [audioSpec, setAudioSpec] = useState('Yamaha HS7 Studio Monitors + Beyerdynamic DT 990 Pro (250Ω)');
+  // Section 3: Workstation & Hardware Specs
+  const [hardwareConfig, setHardwareConfig] = useState('');
 
-  // Reels
-  const [reels, setReels] = useState([
-    { type: 'COMMERCIAL / BRAND UGC', url: 'https://vimeo.com/aaravsen/commercial-cuts' },
-    { type: 'LUXURY WEDDING FILM', url: 'https://vimeo.com/aaravsen/luxury-wedding-cinematic' },
-    { type: 'PRODUCT MACRO CINEMATIC', url: 'https://vimeo.com/aaravsen/macro-product-reel' },
-  ]);
+  // Section 4: Portfolio Samples (3 Mandatory Videos)
+  const [sampleUrl1, setSampleUrl1] = useState('');
+  const [sampleUrl2, setSampleUrl2] = useState('');
+  const [sampleUrl3, setSampleUrl3] = useState('');
 
-  // Banking and compliance details
-  const [bankName, setBankName] = useState('');
+  // Section 5: Bank Details for Direct Payouts
+  const [pan, setPan] = useState('');
+  const [legalName, setLegalName] = useState('');
+  const [bankName, setBankName] = useState('HDFC Bank');
   const [bankAccount, setBankAccount] = useState('');
   const [ifsc, setIfsc] = useState('');
-  const [pan, setPan] = useState('');
-  const [legalName, setLegalName] = useState(user?.full_name || '');
-  const [showMaskedAccount, setShowMaskedAccount] = useState(true);
+  const [isBankMasked, setIsBankMasked] = useState(false);
+  const [editBankDetails, setEditBankDetails] = useState(false);
 
-  // Change bank details modal/drawer
-  const [isChangingBank, setIsChangingBank] = useState(false);
-  const [tempBankName, setTempBankName] = useState('');
-  const [tempAccount, setTempAccount] = useState('');
-  const [tempIfsc, setTempIfsc] = useState('');
-  const [tempLegalName, setTempLegalName] = useState(user?.full_name || '');
-  const [tempPan, setTempPan] = useState('');
+  // Section 6: Creator Agreement & NDA
+  const [agreementSignedAt, setAgreementSignedAt] = useState<string | null>(null);
+  const [trackingId, setTrackingId] = useState('');
 
-  // Save toast notification
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  // Status & UI States
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  // Public Portfolio state
-  const [portfolioSamples, setPortfolioSamples] = useState<any[]>([]);
-  const [loadingPortfolio, setLoadingPortfolio] = useState(false);
-  const [showAddSampleModal, setShowAddSampleModal] = useState(false);
-  const [sampleTitle, setSampleTitle] = useState('');
-  const [sampleDescription, setSampleDescription] = useState('');
-  const [sampleCategory, setSampleCategory] = useState('Wedding');
-  const [sampleVideoUrl, setSampleVideoUrl] = useState('');
-  const [sampleThumbnailUrl, setSampleThumbnailUrl] = useState('');
-  const [submittingSample, setSubmittingSample] = useState(false);
-  const [sampleError, setSampleError] = useState('');
-
-  // DPDP Privacy & Account Deletion States
+  // DPDP Privacy States
   const [isExportingData, setIsExportingData] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
@@ -105,9 +69,344 @@ export default function FreelancerProfilePage() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  // Validation RegExes
+  const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+  const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+  const bankAccountRegex = /^\d{9,18}$/;
+
+  const isValidVideoUrl = (urlStr: string): boolean => {
+    if (!urlStr || urlStr.trim() === '') return false;
+    try {
+      const u = new URL(urlStr);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+      const host = u.hostname.toLowerCase();
+      return (
+        host.includes('youtube.com') ||
+        host.includes('youtu.be') ||
+        host.includes('vimeo.com')
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  const isPanValid = pan.includes('•') || (pan.trim().length === 10 && panRegex.test(pan.trim()));
+  const isIfscValid = ifsc.includes('•') || (ifsc.trim().length === 11 && ifscRegex.test(ifsc.trim()));
+  const isBankAccountValid = bankAccount.includes('•') || bankAccountRegex.test(bankAccount.trim());
+  const isHardwareValid = hardwareConfig.trim().length >= 5;
+  const isSample1Valid = isValidVideoUrl(sampleUrl1.trim());
+  const isSample2Valid = isValidVideoUrl(sampleUrl2.trim());
+  const isSample3Valid = isValidVideoUrl(sampleUrl3.trim());
+  const isLegalNameValid = legalName.trim().length >= 2;
+
+  const isFormValid =
+    isPanValid &&
+    isIfscValid &&
+    isBankAccountValid &&
+    isHardwareValid &&
+    isSample1Valid &&
+    isSample2Valid &&
+    isSample3Valid &&
+    isLegalNameValid;
+
+  // Load creator data from local storage and server
+  useEffect(() => {
+    async function loadProfile() {
+      setLoading(true);
+
+      // 1. Initial hydration from localStorage
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('artsy_creator_profile');
+          if (stored) {
+            const p = JSON.parse(stored);
+            if (p.alias) setAlias(p.alias);
+            if (p.legalName) setLegalName(p.legalName);
+            if (p.specialty) {
+              if (VERIFIED_ROLES.includes(p.specialty)) {
+                setSpecialty(p.specialty);
+              } else {
+                setSpecialty('Other');
+                setCustomSpecialty(p.specialty);
+              }
+            }
+            if (p.showreelUrl) setShowreelUrl(p.showreelUrl);
+            if (p.philosophy) setPhilosophy(p.philosophy);
+            if (Array.isArray(p.software) && p.software.length) setSoftware(p.software);
+            if (p.experience) setExperience(p.experience);
+            if (p.capacity) setCapacity(p.capacity);
+            if (Array.isArray(p.languages) && p.languages.length) setLanguages(p.languages);
+            if (p.hardwareConfig) setHardwareConfig(p.hardwareConfig);
+            if (p.sampleUrl1) setSampleUrl1(p.sampleUrl1);
+            if (p.sampleUrl2) setSampleUrl2(p.sampleUrl2);
+            if (p.sampleUrl3) setSampleUrl3(p.sampleUrl3);
+            if (p.bankName) setBankName(p.bankName);
+            if (p.bankAccount) setBankAccount(p.bankAccount);
+            if (p.ifsc) setIfsc(p.ifsc);
+            if (p.pan) setPan(p.pan);
+            if (p.agreement_signed_at) setAgreementSignedAt(p.agreement_signed_at);
+            if (p.trackingId) setTrackingId(p.trackingId);
+          }
+        } catch {}
+      }
+
+      // 2. Authoritative server load from /api/user/me
+      try {
+        const res = await fetch('/api/user/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated && data.user) {
+            const u = data.user;
+            const cp = u.creator_profile || {};
+            const sd = u.studio_details || {};
+
+            const loadedAlias = cp.public_display_name || u.display_name || u.full_name || '';
+            if (loadedAlias) setAlias(loadedAlias);
+
+            const loadedLegal = cp.bank_account_name || u.full_name || '';
+            if (loadedLegal) setLegalName(loadedLegal);
+
+            const loadedSpecialty = cp.public_specialty || cp.specialty || sd.specialty;
+            if (loadedSpecialty) {
+              if (VERIFIED_ROLES.includes(loadedSpecialty)) {
+                setSpecialty(loadedSpecialty);
+              } else {
+                setSpecialty('Other');
+                setCustomSpecialty(loadedSpecialty);
+              }
+            }
+
+            const loadedReel = cp.portfolio_url || sd.showreelUrl || '';
+            if (loadedReel) setShowreelUrl(loadedReel);
+
+            const loadedBio = cp.bio || sd.philosophy || '';
+            if (loadedBio) setPhilosophy(loadedBio);
+
+            const loadedSoftware = cp.software || sd.software;
+            if (Array.isArray(loadedSoftware) && loadedSoftware.length) setSoftware(loadedSoftware);
+
+            const loadedExp = sd.experience;
+            if (loadedExp) setExperience(loadedExp);
+
+            const loadedCap = sd.capacity;
+            if (loadedCap) setCapacity(loadedCap);
+
+            const loadedLangs = cp.languages || sd.languages;
+            if (Array.isArray(loadedLangs) && loadedLangs.length) setLanguages(loadedLangs);
+
+            const loadedHw = cp.hardware_config || sd.hardware_config || '';
+            if (loadedHw) setHardwareConfig(loadedHw);
+
+            const loadedS1 = cp.sample_url_1 || sd.sample_url_1 || '';
+            const loadedS2 = cp.sample_url_2 || sd.sample_url_2 || '';
+            const loadedS3 = cp.sample_url_3 || sd.sample_url_3 || '';
+            if (loadedS1) setSampleUrl1(loadedS1);
+            if (loadedS2) setSampleUrl2(loadedS2);
+            if (loadedS3) setSampleUrl3(loadedS3);
+
+            const loadedPan = cp.pan_number || sd.pan || '';
+            const loadedAccount = cp.bank_account_number || sd.bankAccount || '';
+            const loadedIfsc = cp.bank_ifsc_code || sd.ifsc || '';
+            const loadedBankName = cp.bank_name || sd.bankName || 'HDFC Bank';
+
+            if (loadedPan) setPan(loadedPan);
+            if (loadedAccount) setBankAccount(loadedAccount);
+            if (loadedIfsc) setIfsc(loadedIfsc);
+            if (loadedBankName) setBankName(loadedBankName);
+
+            if (loadedPan.includes('•') || loadedAccount.includes('•') || loadedIfsc.includes('•')) {
+              setIsBankMasked(true);
+            }
+
+            const loadedSignedAt = cp.agreement_signed_at || u.agreement_signed_at || null;
+            if (loadedSignedAt) setAgreementSignedAt(loadedSignedAt);
+
+            const loadedTracking = cp.tracking_id || u.tracking_id || '';
+            if (loadedTracking) setTrackingId(loadedTracking);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch user profile:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadProfile();
+  }, []);
+
+  const toggleSoftware = (item: string) => {
+    setSoftware((prev) =>
+      prev.includes(item) ? prev.filter((s) => s !== item) : [...prev, item]
+    );
+  };
+
+  const toggleLanguage = (lang: string) => {
+    setLanguages((prev) =>
+      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+    );
+  };
+
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 5000);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const cleanLegal = legalName.trim();
+    const cleanAlias = alias.trim();
+
+    if (!cleanLegal && !cleanAlias) {
+      showToast('Please enter your full legal name or creator alias.', 'error');
+      return;
+    }
+    if (!cleanLegal || cleanLegal.length < 2) {
+      showToast('Please enter your full legal name as per your PAN card.', 'error');
+      return;
+    }
+    if (!isHardwareValid) {
+      showToast('Please specify your Workstation & Hardware specs (CPU, GPU, RAM).', 'error');
+      return;
+    }
+    if (!isSample1Valid || !isSample2Valid || !isSample3Valid) {
+      showToast('All 3 Portfolio Sample video links must be valid YouTube or Vimeo URLs.', 'error');
+      return;
+    }
+    if (!isPanValid) {
+      showToast('Invalid PAN format (e.g., ABCDE1234F).', 'error');
+      return;
+    }
+    if (!isBankAccountValid) {
+      showToast('Invalid Bank Account number (must be 9 to 18 digits).', 'error');
+      return;
+    }
+    if (!isIfscValid) {
+      showToast('Invalid IFSC Code format (e.g., HDFC0001234).', 'error');
+      return;
+    }
+
+    setSaving(true);
+
+    const resolvedSpecialty = specialty === 'Other' ? (customSpecialty.trim() || 'Commercial & Narrative Film Editor') : specialty;
+
+    const studioDetailsPayload = {
+      alias: cleanAlias,
+      legalName: cleanLegal,
+      specialty: resolvedSpecialty,
+      showreelUrl: showreelUrl || sampleUrl1,
+      philosophy,
+      software,
+      experience,
+      capacity,
+      languages,
+      hardware_config: hardwareConfig,
+      sample_url_1: sampleUrl1,
+      sample_url_2: sampleUrl2,
+      sample_url_3: sampleUrl3,
+      bank_name: bankName,
+      agreement_signed_at: agreementSignedAt,
+    };
+
+    const creatorProfilePayload: Record<string, any> = {
+      public_display_name: cleanAlias,
+      public_specialty: resolvedSpecialty,
+      portfolio_url: showreelUrl || sampleUrl1,
+      bio: philosophy,
+      software,
+      languages,
+      hardware_config: hardwareConfig,
+      sample_url_1: sampleUrl1,
+      sample_url_2: sampleUrl2,
+      sample_url_3: sampleUrl3,
+      bank_name: bankName,
+      bank_account_name: cleanLegal,
+    };
+
+    // Only update bank fields if user unmasked / entered clean numbers
+    if (!pan.includes('•') && pan.trim().length === 10) {
+      creatorProfilePayload.pan_number = pan.trim().toUpperCase();
+    }
+    if (!bankAccount.includes('•') && bankAccount.trim().length >= 9) {
+      creatorProfilePayload.bank_account_number = bankAccount.trim();
+    }
+    if (!ifsc.includes('•') && ifsc.trim().length === 11) {
+      creatorProfilePayload.bank_ifsc_code = ifsc.trim().toUpperCase();
+    }
+
+    try {
+      const res = await fetch('/api/user/update-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          full_name: cleanLegal,
+          display_name: cleanAlias,
+          studio_details: studioDetailsPayload,
+          creator_profile: creatorProfilePayload,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update creator profile');
+      }
+
+      // Update local storage
+      if (typeof window !== 'undefined') {
+        const localData = {
+          alias: cleanAlias,
+          legalName: cleanLegal,
+          specialty: resolvedSpecialty,
+          showreelUrl: showreelUrl || sampleUrl1,
+          philosophy,
+          software,
+          experience,
+          capacity,
+          languages,
+          hardwareConfig,
+          sampleUrl1,
+          sampleUrl2,
+          sampleUrl3,
+          bankName,
+          bankAccount,
+          ifsc,
+          pan,
+          agreement_signed_at: agreementSignedAt,
+          trackingId,
+        };
+        localStorage.setItem('artsy_creator_profile', JSON.stringify(localData));
+      }
+
+      const currentUser = getCurrentUser();
+      if (currentUser) {
+        setCurrentUser({
+          ...currentUser,
+          full_name: cleanLegal,
+          display_name: cleanAlias,
+          studio_details: studioDetailsPayload,
+          creator_profile: {
+            ...(currentUser.creator_profile || {}),
+            ...creatorProfilePayload,
+          },
+        } as any);
+      }
+
+      showToast('Creator profile and workstation credentials updated successfully!', 'success');
+      setEditBankDetails(false);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save changes. Please try again.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // DPDP Handlers
   const handleExportData = async () => {
     if (!user?.id) {
-      alert('Authentication required to export data.');
+      showToast('Authentication required to export data.', 'error');
       return;
     }
     setIsExportingData(true);
@@ -119,13 +418,14 @@ export default function FreelancerProfilePage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `artsy-creator-portfolio-${user.id}.json`;
+      a.download = `artsy-creator-profile-${user.id}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      showToast('Data exported successfully!', 'success');
     } catch {
-      alert('Unable to generate data export portfolio at this time.');
+      showToast('Unable to export data at this time.', 'error');
     } finally {
       setIsExportingData(false);
     }
@@ -164,1699 +464,828 @@ export default function FreelancerProfilePage() {
     }
   };
 
-  const fetchPortfolio = async () => {
-    try {
-      setLoadingPortfolio(true);
-      const res = await fetch('/api/freelancer/portfolio');
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setPortfolioSamples(data.samples || []);
-      }
-    } catch (e) {
-      console.warn('Failed to fetch creator portfolio:', e);
-    } finally {
-      setLoadingPortfolio(false);
-    }
-  };
-
-  // Load from local storage and server on mount
-  useEffect(() => {
-    async function loadCreatorData() {
-      if (typeof window === 'undefined') return;
-
-      const stored = localStorage.getItem('artsy_creator_profile');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (parsed.alias) setAlias(parsed.alias);
-          if (parsed.specialty) {
-            if (VERIFIED_ROLES.includes(parsed.specialty)) {
-              setSpecialty(parsed.specialty);
-            } else {
-              setSpecialty('Other');
-              setCustomSpecialty(parsed.specialty);
-            }
-          }
-          if (parsed.showreelUrl) setShowreelUrl(parsed.showreelUrl);
-          if (parsed.philosophy) setPhilosophy(parsed.philosophy);
-          if (parsed.software && Array.isArray(parsed.software)) setSoftware(parsed.software);
-          if (parsed.experience) setExperience(parsed.experience);
-          if (parsed.capacity) setCapacity(parsed.capacity);
-          if (parsed.languages && Array.isArray(parsed.languages)) setLanguages(parsed.languages);
-          if (parsed.reels && Array.isArray(parsed.reels)) setReels(parsed.reels);
-          if (parsed.bankName) setBankName(parsed.bankName);
-          if (parsed.bankAccount) setBankAccount(parsed.bankAccount);
-          if (parsed.ifsc) setIfsc(parsed.ifsc);
-          if (parsed.pan) setPan(parsed.pan);
-          if (parsed.legalName) setLegalName(parsed.legalName);
-          if (parsed.workstationRig) setWorkstationRig(parsed.workstationRig);
-          if (parsed.monitoringSpec) setMonitoringSpec(parsed.monitoringSpec);
-          if (parsed.storageSpec) setStorageSpec(parsed.storageSpec);
-          if (parsed.audioSpec) setAudioSpec(parsed.audioSpec);
-        } catch {}
-      }
-
-      const currentUser = getCurrentUser();
-      if (currentUser?.email) setEmail(currentUser.email);
-      if (currentUser?.phone) setPhone(currentUser.phone);
-      if (currentUser?.full_name && !stored) setAlias(currentUser.full_name);
-
-      // Fetch server data for guaranteed persistence across devices and sessions
-      try {
-        const res = await fetch('/api/user/me');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.authenticated && data.user) {
-            const u = data.user;
-            if (u.full_name) {
-              setAlias(u.display_name || u.full_name);
-              setLegalName(u.full_name);
-            }
-            if (u.email) setEmail(u.email);
-            if (u.phone) setPhone(u.phone);
-
-            const sd = u.studio_details || {};
-            const serverSpecialty = u.public_specialty || u.creator_profile?.public_specialty || sd.specialty;
-            if (serverSpecialty) {
-              if (VERIFIED_ROLES.includes(serverSpecialty)) {
-                setSpecialty(serverSpecialty);
-              } else {
-                setSpecialty('Other');
-                setCustomSpecialty(serverSpecialty);
-              }
-            }
-            if (sd.alias) setAlias(sd.alias);
-            if (sd.showreelUrl) setShowreelUrl(sd.showreelUrl);
-            if (sd.philosophy || u.bio) setPhilosophy(sd.philosophy || u.bio);
-            if (Array.isArray(sd.software) || Array.isArray(u.software)) setSoftware(sd.software || u.software);
-            if (sd.experience) setExperience(sd.experience);
-            if (sd.capacity) setCapacity(sd.capacity);
-            if (Array.isArray(sd.languages) || Array.isArray(u.languages)) setLanguages(sd.languages || u.languages);
-            if (Array.isArray(sd.reels)) setReels(sd.reels);
-            if (sd.bankName) setBankName(sd.bankName);
-            if (sd.bankAccount || u.creator_profile?.bank_account_number) setBankAccount(sd.bankAccount || u.creator_profile?.bank_account_number);
-            if (sd.ifsc || u.creator_profile?.bank_ifsc_code) setIfsc(sd.ifsc || u.creator_profile?.bank_ifsc_code);
-            if (sd.pan || u.creator_profile?.pan_number) setPan(sd.pan || u.creator_profile?.pan_number);
-            if (sd.legalName || u.creator_profile?.bank_account_name) setLegalName(sd.legalName || u.creator_profile?.bank_account_name);
-            if (sd.workstationRig) setWorkstationRig(sd.workstationRig);
-            if (sd.monitoringSpec) setMonitoringSpec(sd.monitoringSpec);
-            if (sd.storageSpec) setStorageSpec(sd.storageSpec);
-            if (sd.audioSpec) setAudioSpec(sd.audioSpec);
-          }
-        }
-      } catch (meErr) {
-        console.warn('Failed to fetch /api/user/me:', meErr);
-      }
-
-      fetchPortfolio();
-    }
-
-    loadCreatorData();
-  }, []);
-
-  const handleAddSampleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSampleError('');
-    if (!sampleTitle || !sampleCategory || !sampleVideoUrl || !sampleThumbnailUrl) {
-      setSampleError('Please fill in all required fields.');
-      return;
-    }
-    setSubmittingSample(true);
-    try {
-      const res = await fetch('/api/freelancer/portfolio', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: sampleTitle,
-          description: sampleDescription,
-          category: sampleCategory,
-          video_url: sampleVideoUrl,
-          thumbnail_url: sampleThumbnailUrl,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setToastMessage('Portfolio sample submitted for studio approval!');
-        setTimeout(() => setToastMessage(null), 4000);
-        setShowAddSampleModal(false);
-        setSampleTitle('');
-        setSampleDescription('');
-        setSampleVideoUrl('');
-        setSampleThumbnailUrl('');
-        fetchPortfolio();
-      } else {
-        setSampleError(data.error || 'Failed to submit sample');
-      }
-    } catch (err: any) {
-      setSampleError(err.message || 'Error submitting sample');
-    } finally {
-      setSubmittingSample(false);
-    }
-  };
-
-  const toggleSoftware = (item: string) => {
-    setSoftware((prev) =>
-      prev.includes(item) ? prev.filter((s) => s !== item) : [...prev, item]
-    );
-  };
-
-  const toggleLanguage = (lang: string) => {
-    setLanguages((prev) =>
-      prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
-    );
-  };
-
-  const handleSaveAll = async () => {
-    setIsSaving(true);
-
-    const resolvedSpecialty = specialty === 'Other' ? (customSpecialty.trim() || 'Commercial & Narrative Film Editor') : specialty;
-
-    const payload = {
-      alias,
-      specialty: resolvedSpecialty,
-      showreelUrl,
-      philosophy,
-      software,
-      experience,
-      capacity,
-      languages,
-      workstationRig,
-      monitoringSpec,
-      storageSpec,
-      audioSpec,
-      reels,
-      bankName,
-      bankAccount,
-      ifsc,
-      pan,
-      legalName,
-      updatedAt: new Date().toISOString(),
-    };
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('artsy_creator_profile', JSON.stringify(payload));
-
-      const currentUser = getCurrentUser() || PRESET_USERS.freelancer;
-      const updatedUser = {
-        ...currentUser,
-        full_name: legalName || alias || currentUser.full_name,
-        display_name: alias || currentUser.display_name,
-        email: email || currentUser.email,
-        phone: phone || currentUser.phone,
-        studio_details: payload,
-        public_specialty: resolvedSpecialty,
-      };
-      setCurrentUser(updatedUser);
-      window.dispatchEvent(new Event('artsy_auth_change'));
-    }
-
-    try {
-      await fetch('/api/user/update-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          full_name: legalName.trim() || alias.trim(),
-          display_name: alias.trim(),
-          studio_details: payload,
-          creator_profile: {
-            bio: philosophy,
-            public_bio: philosophy,
-            public_display_name: alias,
-            public_specialty: resolvedSpecialty,
-            software,
-            languages,
-            bank_account_name: legalName,
-            bank_account_number: bankAccount,
-            bank_ifsc_code: ifsc,
-            pan_number: pan,
-          },
-          onboarded: true,
-        }),
-      });
-    } catch (saveErr) {
-      console.warn('Failed to sync creator profile to server:', saveErr);
-    }
-
-    setIsSaving(false);
-    setToastMessage('✓ Software & Gear Profile, contact information, and bank details updated successfully.');
-    setTimeout(() => setToastMessage(null), 4000);
-  };
-
-  // Change phone flow
-  const handleStartChangePhone = () => {
-    setNewPhone('');
-    setPhoneOtpStep(false);
-    setPhoneOtp('');
-    setPhoneOtpError('');
-    setIsChangingPhone(true);
-  };
-
-  const handleSendPhoneOtp = async () => {
-    if (!newPhone || newPhone.trim().length < 10) {
-      setPhoneOtpError('Please enter a valid 10-digit mobile number');
-      return;
-    }
-    setPhoneOtpError('');
-    try {
-      const res = await fetch('/api/auth/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: newPhone.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setPhoneOtpError(data.error || 'Failed to dispatch phone verification');
-        return;
-      }
-      setPhoneOtpStep(true);
-    } catch {
-      setPhoneOtpError('Network error dispatching phone OTP');
-    }
-  };
-
-  const handleVerifyPhoneOtp = async () => {
-    if (!phoneOtp || phoneOtp.trim().length < 4) {
-      setPhoneOtpError('Please enter the 6-digit verification code');
-      return;
-    }
-    setPhoneOtpError('');
-    try {
-      const res = await fetch('/api/auth/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: newPhone.trim(), otp: phoneOtp.trim(), verify: true }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setPhoneOtpError(data.error || 'Invalid or expired OTP code');
-        return;
-      }
-      setPhone(newPhone.trim().startsWith('+91') ? newPhone.trim() : `+91 ${newPhone.trim()}`);
-      setIsChangingPhone(false);
-      setToastMessage('✓ Mobile number updated and verified successfully.');
-      setTimeout(() => setToastMessage(null), 4000);
-
-      const currentUser = getCurrentUser();
-      if (currentUser) {
-        setCurrentUser({ ...currentUser, phone: newPhone.trim() });
-      }
-    } catch {
-      setPhoneOtpError('Network error verifying phone OTP');
-    }
-  };
-
-  // Change email flow
-  const handleStartChangeEmail = () => {
-    setNewEmail('');
-    setEmailOtpStep(false);
-    setEmailOtp('');
-    setEmailOtpError('');
-    setIsChangingEmail(true);
-  };
-
-  const handleSendEmailOtp = async () => {
-    if (!newEmail || !newEmail.includes('@')) {
-      setEmailOtpError('Please enter a valid email address');
-      return;
-    }
-    setEmailOtpError('');
-    try {
-      const res = await fetch('/api/auth/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: newEmail.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setEmailOtpError(data.error || 'Failed to dispatch email verification');
-        return;
-      }
-      setEmailOtpStep(true);
-    } catch {
-      setEmailOtpError('Network error dispatching OTP');
-    }
-  };
-
-  const handleVerifyEmailOtp = async () => {
-    if (!emailOtp || emailOtp.trim().length < 4) {
-      setEmailOtpError('Please enter the 6-digit verification code');
-      return;
-    }
-    setEmailOtpError('');
-    try {
-      const res = await fetch('/api/auth/otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: newEmail.trim(), otp: emailOtp.trim(), verify: true }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setEmailOtpError(data.error || 'Invalid or expired OTP code');
-        return;
-      }
-      setEmail(newEmail.trim());
-      setIsChangingEmail(false);
-      setToastMessage('✓ Email address updated and verified successfully.');
-      setTimeout(() => setToastMessage(null), 4000);
-
-      const currentUser = getCurrentUser();
-      if (currentUser) {
-        setCurrentUser({ ...currentUser, email: newEmail.trim() });
-      }
-    } catch {
-      setEmailOtpError('Network error verifying code');
-    }
-  };
-
-  // Change bank flow
-  const handleStartChangeBank = () => {
-    setTempBankName(bankName);
-    setTempAccount(bankAccount);
-    setTempIfsc(ifsc);
-    setTempLegalName(legalName);
-    setTempPan(pan);
-    setIsChangingBank(true);
-  };
-
-  const handleSaveBankChanges = () => {
-    if (!tempAccount || !tempIfsc || !tempLegalName || !tempPan) {
-      alert('Please fill in all mandatory bank settlement fields.');
-      return;
-    }
-    setBankName(tempBankName);
-    setBankAccount(tempAccount);
-    setIfsc(tempIfsc.toUpperCase());
-    setLegalName(tempLegalName);
-    setPan(tempPan.toUpperCase());
-    setIsChangingBank(false);
-
-    setToastMessage('✓ Direct NEFT Bank settlement credentials updated and verified.');
-    setTimeout(() => setToastMessage(null), 4000);
-  };
-
   return (
-    <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] font-sans overflow-x-hidden">
+    <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
       <FreelancerHeader />
 
       <div className="flex w-full max-w-full overflow-x-hidden">
         <FreelancerSidebar />
 
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
-          <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
-            {/* Live Success Toast */}
-            {toastMessage && (
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs text-emerald-800 shadow-sm animate-in fade-in duration-200">
-                <span className="font-semibold flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  {toastMessage}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setToastMessage(null)}
-                  className="text-emerald-700 font-bold hover:text-emerald-900 cursor-pointer ml-4"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
+          {/* Toast Notification */}
+          {toastMessage && (
+            <div className="fixed top-20 right-8 z-50 p-4 rounded-2xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-xl border border-white/10 flex items-center gap-3 animate-fade-in">
+              <span>{toastMessage.type === 'success' ? '✓ ' : '⚠️ '}{toastMessage.text}</span>
+              <button
+                type="button"
+                onClick={() => setToastMessage(null)}
+                className="text-white/60 hover:text-white ml-2 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
-            {/* Header Block */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1200px] mx-auto">
+            {/* Top Header Card */}
+            <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <div className="text-[11px] uppercase tracking-wider text-[#86868B] font-bold">
-                  CREATOR PROFILE
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Active Creator Roster
+                  </span>
+                  {trackingId && (
+                    <span className="text-[10px] font-mono text-[#86868B] bg-[#F5F5F7] px-2 py-0.5 rounded border border-[#E5E5E7]">
+                      ID: {trackingId}
+                    </span>
+                  )}
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1D1D1F] mt-1">
-                  Profile &amp; Skills
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.03em] text-[#1D1D1F] mt-1">
+                  Creator Studio Profile
                 </h1>
-                <p className="text-xs text-[#86868B] mt-1">
-                  Manage your creator profile, contact information, software tools, hardware setup, and bank account for payouts.
+                <p className="text-sm text-[#86868B] mt-1">
+                  Manage your verified editing identity, software stack, workstation specs, portfolio proof, and payout bank account.
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 shrink-0">
+                <Link
+                  href="/creators"
+                  target="_blank"
+                  className="px-3.5 py-2 text-xs font-semibold rounded-xl bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] border border-[#E5E5E7] transition-all"
+                >
+                  View Public Roster ↗
+                </Link>
                 <button
                   type="button"
-                  onClick={handleSaveAll}
-                  disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl bg-[#1D1D1F] text-white hover:bg-black font-semibold text-xs tracking-wide transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  onClick={handleSubmit}
+                  disabled={saving || !isFormValid}
+                  className="px-5 py-2.5 text-xs font-bold rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#9CA3AF] disabled:cursor-not-allowed text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
                 >
-                  {isSaving ? 'Saving...' : 'Save All Changes'}
+                  {saving ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>
 
-            {/* Form & Profile Cards */}
-            <div className="space-y-6">
-              
-              {/* CARD 1: Identity & Contact Credentials (Change Mobile & Email) */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-6">
-                <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
-                  <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
-                      1
-                    </span>
-                    Personal &amp; Contact Information
-                  </span>
-                  <span className="text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full font-bold border border-emerald-200">
-                    Verified Creator
-                  </span>
-                </div>
-
-                {/* Contact Details with Change Options */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]">
-                  {/* Email Channel */}
-                  <div className="flex flex-col justify-between gap-2 p-3 bg-white rounded-lg border border-[#E5E5E7]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-[#86868B] uppercase tracking-wider">
-                        Email Address
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        ✓ Verified
-                      </span>
-                    </div>
-                    <div className="text-sm font-semibold text-[#1D1D1F] font-mono truncate">
-                      {email}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleStartChangeEmail}
-                      className="self-start text-[11px] font-semibold text-[#3B82F6] hover:underline cursor-pointer"
-                    >
-                      Change Email Address →
-                    </button>
-                  </div>
-
-                  {/* Mobile Channel */}
-                  <div className="flex flex-col justify-between gap-2 p-3 bg-white rounded-lg border border-[#E5E5E7]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-[#86868B] uppercase tracking-wider">
-                        Phone Number
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        ✓ Verified
-                      </span>
-                    </div>
-                    <div className="text-sm font-semibold text-[#1D1D1F] font-mono">
-                      {phone}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleStartChangePhone}
-                      className="self-start text-[11px] font-semibold text-[#3B82F6] hover:underline cursor-pointer"
-                    >
-                      Change Phone Number →
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#1D1D1F]">
-                      CREATOR / DISPLAY NAME *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={alias}
-                      onChange={(e) => setAlias(e.target.value)}
-                      placeholder="e.g. Creator Alias / Full Name"
-                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#1D1D1F]">
-                      PORTFOLIO / SHOWREEL LINK *
-                    </label>
-                    <input
-                      type="url"
-                      required
-                      value={showreelUrl}
-                      onChange={(e) => setShowreelUrl(e.target.value)}
-                      placeholder="https://vimeo.com/... or Behance / YouTube"
-                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
-                    />
-                  </div>
-                </div>
-
-                {/* Verified Role / Creative Discipline */}
-                <div className="flex flex-col gap-2 pt-1">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">
-                    PRIMARY CREATIVE ROLE &amp; VERIFIED SPECIALTY *
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                    {VERIFIED_ROLES.map((role) => (
-                      <button
-                        key={role}
-                        type="button"
-                        onClick={() => {
-                          setSpecialty(role);
-                          if (role !== 'Other') setCustomSpecialty('');
-                        }}
-                        className={`px-3.5 py-2.5 text-xs font-semibold rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                          specialty === role
-                            ? 'bg-[#1D1D1F] text-white border-[#1D1D1F] shadow-xs'
-                            : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white hover:border-[#3B82F6]'
-                        }`}
-                      >
-                        <span className="truncate">{role}</span>
-                        {specialty === role && <span className="text-blue-400 font-bold ml-1.5 shrink-0">✓</span>}
-                      </button>
-                    ))}
-                  </div>
-                  {specialty === 'Other' && (
-                    <input
-                      type="text"
-                      required
-                      value={customSpecialty}
-                      onChange={(e) => setCustomSpecialty(e.target.value)}
-                      placeholder="Specify your creative discipline (e.g. 3D VFX Generalist, Anime & Gaming Editor)..."
-                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all mt-1"
-                    />
-                  )}
-                  <span className="text-[11px] text-[#86868B]">
-                    This verified specialty displays on your public creator showcase and client project workrooms upon studio approval.
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">
-                    ABOUT YOUR EDITING STYLE *
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={philosophy}
-                    onChange={(e) => setPhilosophy(e.target.value)}
-                    placeholder="Tell us about your editing background, storytelling style, pacing, and strengths..."
-                    className="bg-[#F5F5F7] p-3.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all resize-none"
-                  ></textarea>
-                </div>
+            {loading ? (
+              <div className="bg-white p-12 rounded-2xl border border-[#E5E5E7] text-center text-xs text-[#86868B]">
+                Loading verified studio profile credentials...
               </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Form Column (8 cols) */}
+                <div className="lg:col-span-8">
+                  <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
-              {/* CARD 2: Software Suites & Production Toolchain */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
-                <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
-                  <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
-                      2
-                    </span>
-                    Editing Software &amp; Availability
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">
-                    EDITING SOFTWARE YOU USE (SELECT ALL THAT APPLY)
-                  </label>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {[
-                      'DAVINCI RESOLVE STUDIO',
-                      'ADOBE PREMIERE PRO',
-                      'AFTER EFFECTS',
-                      'FINAL CUT PRO',
-                      'BLENDER (3D/VFX)',
-                      'CAPCUT PRO (FAST SOCIAL)',
-                      'AVID MEDIA COMPOSER',
-                    ].map((item) => (
-                      <button
-                        type="button"
-                        key={item}
-                        onClick={() => toggleSoftware(item)}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
-                          software.includes(item)
-                            ? 'bg-[#1D1D1F] text-white border-[#1D1D1F]'
-                            : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white'
-                        }`}
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#1D1D1F]">
-                      YEARS OF EXPERIENCE
-                    </label>
-                    <select
-                      value={experience}
-                      onChange={(e) => setExperience(e.target.value)}
-                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none"
-                    >
-                      <option>1 - 2 Years (Junior / Fast Turnaround)</option>
-                      <option>2 - 4 Years (Mid-Level Independent)</option>
-                      <option>5 - 8 Years (Senior Commercial Lead)</option>
-                      <option>8+ Years (Post Supervisor / Master)</option>
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#1D1D1F]">
-                      WEEKLY AVAILABILITY
-                    </label>
-                    <select
-                      value={capacity}
-                      onChange={(e) => setCapacity(e.target.value)}
-                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none"
-                    >
-                      <option>10 - 15 Hours / Week (1 Commercial Project)</option>
-                      <option>20 - 30 Hours / Week (2 Commercial Projects)</option>
-                      <option>35 - 40 Hours / Week (Full-Time Dedicated)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">
-                    LANGUAGES YOU CAN EDIT
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                    {[
-                      'HINDI',
-                      'ENGLISH',
-                      'PUNJABI',
-                      'TAMIL',
-                      'BENGALI',
-                      'TELUGU',
-                      'MARATHI',
-                      'MALAYALAM',
-                    ].map((lang) => (
-                      <label
-                        key={lang}
-                        className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer text-xs font-semibold transition-all ${
-                          languages.includes(lang)
-                            ? 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/40'
-                            : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={languages.includes(lang)}
-                          onChange={() => toggleLanguage(lang)}
-                          className="w-4 h-4 accent-[#3B82F6]"
-                        />
-                        <span>{lang}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* CARD 3: Hardware & Workstation Gear Specs */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
-                <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
-                  <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
-                      3
-                    </span>
-                    Computer &amp; Hardware Setup
-                  </span>
-                  <span className="text-xs text-[#86868B] uppercase font-semibold">Editing Setup</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#1D1D1F]">
-                      PRIMARY COMPUTER / LAPTOP
-                    </label>
-                    <input
-                      type="text"
-                      value={workstationRig}
-                      onChange={(e) => setWorkstationRig(e.target.value)}
-                      placeholder="e.g. Apple Mac Studio M2 Ultra (128GB Unified Memory)"
-                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#1D1D1F]">
-                      MONITOR / DISPLAY
-                    </label>
-                    <input
-                      type="text"
-                      value={monitoringSpec}
-                      onChange={(e) => setMonitoringSpec(e.target.value)}
-                      placeholder="e.g. Apple Studio Display 27 (P3-D65 Calibrated)"
-                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#1D1D1F]">
-                      STORAGE / HARD DRIVES
-                    </label>
-                    <input
-                      type="text"
-                      value={storageSpec}
-                      onChange={(e) => setStorageSpec(e.target.value)}
-                      placeholder="e.g. 10GbE Synology RAID-0 Scratch + 4TB NVMe Internal Cache"
-                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-[#1D1D1F]">
-                      HEADPHONES / SPEAKERS
-                    </label>
-                    <input
-                      type="text"
-                      value={audioSpec}
-                      onChange={(e) => setAudioSpec(e.target.value)}
-                      placeholder="e.g. Yamaha HS7 Studio Monitors + Beyerdynamic DT 990 Pro"
-                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* CARD 4: Categorical Cut Samples & Verification Reels */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
-                <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
-                  <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
-                      4
-                    </span>
-                    Sample Video Links
-                  </span>
-                  <span className="text-xs text-[#86868B] uppercase font-semibold">Min 2 • Max 4 Videos</span>
-                </div>
-
-                <div className="space-y-3">
-                  {reels.map((reel, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] flex flex-col md:flex-row gap-3 items-center"
-                    >
-                      <span className="text-xs font-bold text-[#1D1D1F] bg-white px-2.5 py-1 rounded-md border border-[#E5E5E7] shrink-0">
-                        VIDEO 0{idx + 1}
-                      </span>
-                      <div className="w-full md:w-1/3">
-                        <select
-                          value={reel.type}
-                          onChange={(e) => {
-                            const next = [...reels];
-                            next[idx].type = e.target.value;
-                            setReels(next);
-                          }}
-                          className="w-full bg-white px-3 py-2 text-xs font-semibold rounded-lg border border-[#E5E5E7] outline-none"
-                        >
-                          <option>COMMERCIAL / BRAND UGC</option>
-                          <option>LUXURY WEDDING FILM</option>
-                          <option>PRODUCT MACRO CINEMATIC</option>
-                          <option>CORPORATE NARRATIVE / TECH</option>
-                        </select>
+                    {/* 01 Identity & Style */}
+                    <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+                      <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
+                        <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
+                            1
+                          </span>
+                          About You &amp; Your Editing Style
+                        </span>
                       </div>
-                      <div className="w-full md:w-2/3">
-                        <input
-                          type="url"
-                          value={reel.url}
-                          onChange={(e) => {
-                            const next = [...reels];
-                            next[idx].url = e.target.value;
-                            setReels(next);
-                          }}
-                          placeholder="https://vimeo.com/... or Google Drive public link"
-                          className="w-full bg-white px-3.5 py-2 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] outline-none"
-                        />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-[#1D1D1F]">
+                            YOUR NAME OR EDITING ALIAS *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={alias}
+                            onChange={(e) => setAlias(e.target.value)}
+                            placeholder="e.g. Rahul S. or Rahul Edits"
+                            className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
+                          />
+                          <span className="text-[11px] text-[#86868B]">
+                            Appears on your public creator card. To protect privacy, surnames are displayed as an initial only (e.g. Rahul S.).
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-[#1D1D1F]">
+                            SHOWREEL OR PORTFOLIO LINK *
+                          </label>
+                          <input
+                            type="url"
+                            required
+                            value={showreelUrl}
+                            onChange={(e) => setShowreelUrl(e.target.value)}
+                            placeholder="https://youtube.com/... or Vimeo / Google Drive"
+                            className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
+                          />
+                          <span className="text-[11px] text-[#86868B]">Link to your main showreel or portfolio video (60 to 90 seconds is best).</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* CARD 5: Compliance, Direct Payouts & Bank Details (With Change Bank Option) */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-6">
-                <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
-                  <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
-                      5
-                    </span>
-                    Bank Account for Payouts
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleStartChangeBank}
-                    className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#3B82F6]/10 text-[#3B82F6] hover:bg-[#3B82F6]/20 transition-all cursor-pointer"
-                  >
-                    Change Bank Details ✍️
-                  </button>
-                </div>
-
-                {/* Current Active Bank Details Preview */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]">
-                  <div className="p-3 bg-white rounded-lg border border-[#E5E5E7]">
-                    <span className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider block">
-                      Bank Name
-                    </span>
-                    <span className="text-sm font-bold text-[#1D1D1F] mt-1 block">
-                      {bankName}
-                    </span>
-                    <span className="text-[11px] text-emerald-600 font-medium">✓ Verified for Direct Payouts</span>
-                  </div>
-
-                  <div className="p-3 bg-white rounded-lg border border-[#E5E5E7]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider">
-                        Account Number
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowMaskedAccount(!showMaskedAccount)}
-                        className="text-[10px] text-[#3B82F6] font-semibold cursor-pointer"
-                      >
-                        {showMaskedAccount ? 'Reveal' : 'Mask'}
-                      </button>
-                    </div>
-                    <span className="text-sm font-mono font-bold text-[#1D1D1F] mt-1 block">
-                      {showMaskedAccount
-                        ? `••••••••${bankAccount.slice(-4) || '5821'}`
-                        : bankAccount}
-                    </span>
-                    <span className="text-[11px] text-[#86868B]">IFSC: {ifsc}</span>
-                  </div>
-
-                  <div className="p-3 bg-white rounded-lg border border-[#E5E5E7]">
-                    <span className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider block">
-                      PAN &amp; Account Holder
-                    </span>
-                    <span className="text-sm font-bold text-[#1D1D1F] mt-1 block truncate">
-                      {legalName}
-                    </span>
-                    <span className="text-[11px] font-mono text-[#86868B]">PAN: {pan}</span>
-                  </div>
-                </div>
-
-                {/* Direct Bank Fields with Toggle and Input */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">
-                        PAN NUMBER *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        maxLength={10}
-                        value={pan}
-                        onChange={(e) => setPan(e.target.value.toUpperCase())}
-                        placeholder="ABCDE1234F"
-                        className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">
-                        ACCOUNT HOLDER NAME (AS PER BANK) *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={legalName}
-                        onChange={(e) => setLegalName(e.target.value)}
-                        placeholder="Full Name Matching Bank Account"
-                        className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Bank Name Option / Toggle & Input */}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">
-                        BANK NAME *
-                      </label>
-                    </div>
-
-                    {/* Quick Selection Options / Toggle Pills */}
-                    <div className="flex flex-wrap gap-2">
-                      {['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra', 'Other Bank'].map(
-                        (b) => {
-                          const isSelected =
-                            b === 'Other Bank'
-                              ? !['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra'].includes(bankName) && bankName !== ''
-                              : bankName === b;
-                          return (
+                      {/* Verified Role / Creative Discipline */}
+                      <div className="flex flex-col gap-2 pt-1">
+                        <label className="text-xs font-semibold text-[#1D1D1F]">
+                          PRIMARY CREATIVE ROLE &amp; VERIFIED SPECIALTY *
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                          {VERIFIED_ROLES.map((role) => (
                             <button
-                              key={b}
+                              key={role}
                               type="button"
                               onClick={() => {
-                                if (b === 'Other Bank') {
-                                  if (['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra'].includes(bankName)) {
-                                    setBankName('');
-                                  }
-                                } else {
-                                  setBankName(b);
-                                }
+                                setSpecialty(role);
+                                if (role !== 'Other') setCustomSpecialty('');
                               }}
-                              className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
-                                isSelected
+                              className={`px-3.5 py-2.5 text-xs font-semibold rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                                specialty === role
+                                  ? 'bg-[#1D1D1F] text-white border-[#1D1D1F] shadow-xs'
+                                  : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white hover:border-[#3B82F6]'
+                              }`}
+                            >
+                              <span className="truncate">{role}</span>
+                              {specialty === role && <span className="text-blue-400 font-bold ml-1.5 shrink-0">✓</span>}
+                            </button>
+                          ))}
+                        </div>
+                        {specialty === 'Other' && (
+                          <input
+                            type="text"
+                            required
+                            value={customSpecialty}
+                            onChange={(e) => setCustomSpecialty(e.target.value)}
+                            placeholder="Specify your creative discipline (e.g. 3D VFX Generalist, Anime & Gaming Editor)..."
+                            className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all mt-1"
+                          />
+                        )}
+                        <span className="text-[11px] text-[#86868B]">
+                          This verified role appears on your public creator card on the /creators page and in client project workrooms.
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold text-[#1D1D1F]">
+                          TELL US ABOUT YOUR EDITING STYLE *
+                        </label>
+                        <textarea
+                          required
+                          rows={3}
+                          value={philosophy}
+                          onChange={(e) => setPhilosophy(e.target.value)}
+                          placeholder="How do you edit videos? Tell us about your storytelling, rhythm, music choice, sound effects, or color grading style..."
+                          className="bg-[#F5F5F7] p-3.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all resize-none"
+                        ></textarea>
+                        <div className="flex justify-between text-[11px] text-[#86868B]">
+                          <span>What makes your edits unique</span>
+                          <span>[{philosophy.length}/300]</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 02 Toolchain & Availability */}
+                    <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+                      <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
+                        <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
+                            2
+                          </span>
+                          Software &amp; Weekly Availability
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-semibold text-[#1D1D1F]">
+                          EDITING SOFTWARE YOU USE (CHOOSE ALL THAT APPLY)
+                        </label>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {[
+                            'DaVinci Resolve Studio',
+                            'Adobe Premiere Pro',
+                            'Adobe After Effects',
+                            'Final Cut Pro',
+                            'Blender (3D / VFX)',
+                            'CapCut Pro'
+                          ].map((tool) => (
+                            <button
+                              key={tool}
+                              type="button"
+                              onClick={() => toggleSoftware(tool)}
+                              className={`px-3.5 py-2 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                                software.includes(tool)
                                   ? 'bg-[#1D1D1F] text-white border-[#1D1D1F]'
                                   : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white'
                               }`}
                             >
-                              {b}
+                              {tool}
                             </button>
-                          );
-                        }
-                      )}
-                    </div>
+                          ))}
+                        </div>
+                      </div>
 
-                    {/* Bank Name Text Input */}
-                    <input
-                      type="text"
-                      required
-                      value={bankName}
-                      onChange={(e) => setBankName(e.target.value)}
-                      placeholder="e.g. HDFC Bank, ICICI Bank, State Bank of India"
-                      className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">
-                        BANK ACCOUNT NUMBER *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={bankAccount}
-                        onChange={(e) => setBankAccount(e.target.value)}
-                        placeholder="••••••••••••"
-                        className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">IFSC CODE *</label>
-                      <input
-                        type="text"
-                        required
-                        maxLength={11}
-                        value={ifsc}
-                        onChange={(e) => setIfsc(e.target.value.toUpperCase())}
-                        placeholder="HDFC0001234"
-                        className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* CARD 6: Public Portfolio & Discovery Showcase */}
-              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#F5F5F7] pb-4">
-                  <div>
-                    <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
-                        6
-                      </span>
-                      Public Portfolio
-                    </span>
-                    <p className="text-xs text-[#86868B] mt-1">
-                      Samples published on your public creator page (/creators). Each submission is reviewed by Artsy QA before going live.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddSampleModal(true)}
-                    className="px-4 py-2 rounded-xl bg-[#1D1D1F] text-white hover:bg-black font-semibold text-xs tracking-wider transition-all shadow-xs shrink-0 cursor-pointer"
-                  >
-                    + Add Sample Reel
-                  </button>
-                </div>
-
-                {loadingPortfolio ? (
-                  <div className="p-8 text-center text-xs text-[#86868B]">
-                    Loading portfolio samples...
-                  </div>
-                ) : portfolioSamples.length === 0 ? (
-                  <div className="p-8 text-center bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]">
-                    <div className="text-2xl mb-2">🎬</div>
-                    <div className="text-xs font-bold text-[#1D1D1F]">No Public Portfolio Samples Yet</div>
-                    <div className="text-[11px] text-[#86868B] mt-1 max-w-sm mx-auto">
-                      Add your best wedding, brand, or corporate cuts. Approved samples will be displayed directly on your public discovery profile.
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddSampleModal(true)}
-                      className="mt-3 px-3 py-1.5 rounded-lg bg-white border border-[#E5E5E7] text-xs font-semibold text-[#1D1D1F] hover:bg-gray-50"
-                    >
-                      Upload First Sample
-                    </button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {portfolioSamples.map((sample) => (
-                      <div
-                        key={sample.id}
-                        className="bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] overflow-hidden flex flex-col justify-between"
-                      >
-                        <div className="relative aspect-video bg-black/10 overflow-hidden">
-                          <img
-                            src={sample.thumbnail_url}
-                            alt={sample.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = 'none';
-                            }}
-                          />
-                          <div className="absolute top-2 left-2">
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-black/70 text-white uppercase tracking-wider backdrop-blur-xs">
-                              {sample.category}
-                            </span>
-                          </div>
-                          <div className="absolute top-2 right-2">
-                            <span
-                              className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full capitalize shadow-xs ${
-                                sample.approval_status === 'approved'
-                                  ? 'bg-emerald-500 text-white'
-                                  : sample.approval_status === 'rejected'
-                                  ? 'bg-rose-500 text-white'
-                                  : 'bg-amber-500 text-white'
-                              }`}
-                            >
-                              {sample.approval_status}
-                            </span>
-                          </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-[#1D1D1F]">
+                            YEARS OF EDITING EXPERIENCE
+                          </label>
+                          <select
+                            value={experience}
+                            onChange={(e) => setExperience(e.target.value)}
+                            className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none cursor-pointer focus:bg-white focus:border-[#3B82F6]"
+                          >
+                            <option>2 - 4 Years (Intermediate)</option>
+                            <option>5 - 8 Years (Experienced Senior)</option>
+                            <option>8+ Years (Lead / Director)</option>
+                            <option>1 - 2 Years (Junior / Fast Learner)</option>
+                          </select>
                         </div>
 
-                        <div className="p-4 space-y-2">
-                          <h4 className="text-xs font-bold text-[#1D1D1F] line-clamp-1">{sample.title}</h4>
-                          {sample.description && (
-                            <p className="text-[11px] text-[#86868B] line-clamp-2">{sample.description}</p>
-                          )}
-                          <div className="text-[10px] font-mono text-[#86868B] truncate">
-                            {sample.video_url}
-                          </div>
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-[#1D1D1F]">
+                            HOW MANY HOURS CAN YOU WORK PER WEEK?
+                          </label>
+                          <select
+                            value={capacity}
+                            onChange={(e) => setCapacity(e.target.value)}
+                            className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none cursor-pointer focus:bg-white focus:border-[#3B82F6]"
+                          >
+                            <option>20 - 30 Hours / Week (Part-Time, ~2 projects)</option>
+                            <option>35 - 45 Hours / Week (Full-Time)</option>
+                            <option>10 - 15 Hours / Week (Weekends only)</option>
+                          </select>
+                        </div>
+                      </div>
 
-                          {sample.rejection_reason && (
-                            <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 text-[10px] text-rose-700">
-                              <strong>QA Feedback:</strong> {sample.rejection_reason}
-                            </div>
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-semibold text-[#1D1D1F]">
+                          LANGUAGES YOU CAN EDIT IN
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                          {['Hindi', 'English', 'Punjabi', 'Tamil', 'Bengali', 'Telugu', 'Marathi', 'Malayalam'].map(
+                            (lang) => (
+                              <label
+                                key={lang}
+                                className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer text-xs font-semibold transition-all ${
+                                  languages.includes(lang)
+                                    ? 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/40'
+                                    : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={languages.includes(lang)}
+                                  onChange={() => toggleLanguage(lang)}
+                                  className="w-4 h-4 accent-[#3B82F6]"
+                                />
+                                <span>{lang}</span>
+                              </label>
+                            )
                           )}
                         </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* 03 Workstation & Hardware */}
+                    <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+                      <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
+                        <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
+                            3
+                          </span>
+                          Workstation &amp; Hardware Specifications
+                        </span>
+                        <span className="text-xs text-red-600 uppercase font-semibold">* Mandatory</span>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-semibold text-[#1D1D1F]">
+                          WORKSTATION HARDWARE SPECS (CPU, GPU, RAM) *
+                        </label>
+                        <textarea
+                          required
+                          rows={3}
+                          value={hardwareConfig}
+                          onChange={(e) => setHardwareConfig(e.target.value)}
+                          placeholder="e.g. CPU: Apple M2 Max / AMD Ryzen 9 7900X&#10;GPU: NVIDIA RTX 4080 (16GB VRAM)&#10;RAM: 64GB DDR5&#10;Storage: 4TB NVMe SSD scratch disk"
+                          className="bg-[#F5F5F7] p-3.5 text-sm font-mono text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all resize-none"
+                        />
+                        <div className="flex justify-between items-center text-[11px] text-[#86868B] mt-1">
+                          <span>Required for 4K ProRes timeline render eligibility.</span>
+                          {hardwareConfig && !isHardwareValid && (
+                            <span className="text-red-500 font-semibold">Min 5 characters required</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 04 Portfolio Samples */}
+                    <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+                      <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
+                        <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
+                            4
+                          </span>
+                          Portfolio Samples (3 Mandatory Videos)
+                        </span>
+                        <span className="text-xs text-red-600 uppercase font-semibold">Exactly 3 Required (YouTube / Vimeo)</span>
+                      </div>
+
+                      <p className="text-xs text-[#86868B] leading-relaxed">
+                        To maintain premium standards on Artsy, all creators must provide 3 links to finished projects hosted on YouTube or Vimeo.
+                      </p>
+
+                      <div className="space-y-4">
+                        {/* Sample 1 */}
+                        <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-[#1D1D1F]">
+                              SAMPLE VIDEO 01 (YOUTUBE / VIMEO) *
+                            </label>
+                            {sampleUrl1 && (
+                              isSample1Valid ? (
+                                <a
+                                  href={sampleUrl1}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-emerald-600 font-semibold flex items-center gap-1 hover:underline"
+                                >
+                                  ✓ Valid Link (Open ↗)
+                                </a>
+                              ) : (
+                                <span className="text-xs text-red-500 font-semibold">Must be YouTube or Vimeo URL</span>
+                              )
+                            )}
+                          </div>
+                          <input
+                            type="url"
+                            required
+                            value={sampleUrl1}
+                            onChange={(e) => setSampleUrl1(e.target.value)}
+                            placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
+                            className="w-full bg-white px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] outline-none focus:border-[#3B82F6] transition-all"
+                          />
+                        </div>
+
+                        {/* Sample 2 */}
+                        <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-[#1D1D1F]">
+                              SAMPLE VIDEO 02 (YOUTUBE / VIMEO) *
+                            </label>
+                            {sampleUrl2 && (
+                              isSample2Valid ? (
+                                <a
+                                  href={sampleUrl2}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-emerald-600 font-semibold flex items-center gap-1 hover:underline"
+                                >
+                                  ✓ Valid Link (Open ↗)
+                                </a>
+                              ) : (
+                                <span className="text-xs text-red-500 font-semibold">Must be YouTube or Vimeo URL</span>
+                              )
+                            )}
+                          </div>
+                          <input
+                            type="url"
+                            required
+                            value={sampleUrl2}
+                            onChange={(e) => setSampleUrl2(e.target.value)}
+                            placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
+                            className="w-full bg-white px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] outline-none focus:border-[#3B82F6] transition-all"
+                          />
+                        </div>
+
+                        {/* Sample 3 */}
+                        <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-[#1D1D1F]">
+                              SAMPLE VIDEO 03 (YOUTUBE / VIMEO) *
+                            </label>
+                            {sampleUrl3 && (
+                              isSample3Valid ? (
+                                <a
+                                  href={sampleUrl3}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-emerald-600 font-semibold flex items-center gap-1 hover:underline"
+                                >
+                                  ✓ Valid Link (Open ↗)
+                                </a>
+                              ) : (
+                                <span className="text-xs text-red-500 font-semibold">Must be YouTube or Vimeo URL</span>
+                              )
+                            )}
+                          </div>
+                          <input
+                            type="url"
+                            required
+                            value={sampleUrl3}
+                            onChange={(e) => setSampleUrl3(e.target.value)}
+                            placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
+                            className="w-full bg-white px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] outline-none focus:border-[#3B82F6] transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 05 Compliance & Direct Bank Details */}
+                    <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+                      <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
+                        <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
+                            5
+                          </span>
+                          Bank Details for Direct Payouts
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-[#86868B] uppercase font-semibold">Safe &amp; Encrypted</span>
+                          {isBankMasked && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditBankDetails(!editBankDetails);
+                                if (!editBankDetails) {
+                                  // Clear masked placeholder values so user can type fresh details
+                                  if (pan.includes('•')) setPan('');
+                                  if (bankAccount.includes('•')) setBankAccount('');
+                                  if (ifsc.includes('•')) setIfsc('');
+                                }
+                              }}
+                              className="text-xs text-[#3B82F6] font-bold hover:underline cursor-pointer ml-2"
+                            >
+                              {editBankDetails ? 'Cancel Edit' : 'Edit Bank Details'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-[#1D1D1F]">
+                              PAN CARD NUMBER *
+                            </label>
+                            {pan && (
+                              isPanValid
+                                ? <span className="text-[11px] text-emerald-600 font-semibold">✓ Valid PAN</span>
+                                : <span className="text-[11px] text-red-500 font-semibold">Format: ABCDE1234F</span>
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            maxLength={10}
+                            disabled={isBankMasked && !editBankDetails}
+                            value={pan}
+                            onChange={(e) => setPan(e.target.value.toUpperCase())}
+                            placeholder="ABCDE1234F"
+                            className={`uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border outline-none transition-all disabled:opacity-75 ${
+                              pan && !isPanValid ? 'border-red-400 focus:border-red-500' : 'border-[#E5E5E7] focus:bg-white focus:border-[#3B82F6]'
+                            }`}
+                          />
+                          <span className="text-[11px] text-[#86868B]">10-character PAN required for statutory TDS deductions (Section 194J).</span>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-[#1D1D1F]">
+                            NAME AS PER PAN CARD *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={legalName}
+                            onChange={(e) => setLegalName(e.target.value)}
+                            placeholder="Name as printed on PAN card"
+                            className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
+                          />
+                          <span className="text-[11px] text-[#86868B]">
+                            Must match your legal banking name for NEFT settlements.
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Bank Name Option & Toggle */}
+                      <div className="flex flex-col gap-2">
+                        <label className="text-xs font-semibold text-[#1D1D1F]">
+                          YOUR BANK NAME *
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra', 'Other Bank'].map(
+                            (b) => {
+                              const isSelected =
+                                b === 'Other Bank'
+                                  ? !['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra'].includes(bankName) && bankName !== ''
+                                  : bankName === b;
+                              return (
+                                <button
+                                  key={b}
+                                  type="button"
+                                  onClick={() => {
+                                    if (b === 'Other Bank') {
+                                      if (['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra'].includes(bankName)) {
+                                        setBankName('');
+                                      }
+                                    } else {
+                                      setBankName(b);
+                                    }
+                                  }}
+                                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[#1D1D1F] text-white border-[#1D1D1F]'
+                                      : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white'
+                                  }`}
+                                >
+                                  {b}
+                                </button>
+                              );
+                            }
+                          )}
+                        </div>
+
+                        <input
+                          type="text"
+                          required
+                          value={bankName}
+                          onChange={(e) => setBankName(e.target.value)}
+                          placeholder="e.g. HDFC Bank, ICICI Bank, State Bank of India"
+                          className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-[#1D1D1F]">
+                              BANK ACCOUNT NUMBER *
+                            </label>
+                            {bankAccount && (
+                              isBankAccountValid
+                                ? <span className="text-[11px] text-emerald-600 font-semibold">✓ Valid Account</span>
+                                : <span className="text-[11px] text-red-500 font-semibold">9–18 digits required</span>
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            disabled={isBankMasked && !editBankDetails}
+                            value={bankAccount}
+                            onChange={(e) => setBankAccount(e.target.value.replace(/\D/g, ''))}
+                            placeholder="Enter 9 to 18 digit account number"
+                            maxLength={18}
+                            className={`bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono text-[#1D1D1F] rounded-xl border outline-none transition-all disabled:opacity-75 ${
+                              bankAccount && !isBankAccountValid ? 'border-red-400 focus:border-red-500' : 'border-[#E5E5E7] focus:bg-white focus:border-[#3B82F6]'
+                            }`}
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-[#1D1D1F]">IFSC CODE *</label>
+                            {ifsc && (
+                              isIfscValid
+                                ? <span className="text-[11px] text-emerald-600 font-semibold">✓ Valid IFSC</span>
+                                : <span className="text-[11px] text-red-500 font-semibold">Format: SBIN0001234</span>
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            required
+                            maxLength={11}
+                            disabled={isBankMasked && !editBankDetails}
+                            value={ifsc}
+                            onChange={(e) => setIfsc(e.target.value.toUpperCase())}
+                            placeholder="e.g. HDFC0001234"
+                            className={`uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border outline-none transition-all disabled:opacity-75 ${
+                              ifsc && !isIfscValid ? 'border-red-400 focus:border-red-500' : 'border-[#E5E5E7] focus:bg-white focus:border-[#3B82F6]'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 06 Permanent NDA & Execution Record */}
+                    <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+                      <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
+                        <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
+                          <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
+                            6
+                          </span>
+                          Creator Agreement &amp; Non-Disclosure Agreement (NDA)
+                        </span>
+                        <span className="text-xs text-blue-600 uppercase font-semibold">Legally Executed</span>
+                      </div>
+
+                      <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex flex-col gap-3 text-xs text-[#1D1D1F] leading-relaxed max-h-48 overflow-y-auto">
+                        <p className="font-bold text-xs">CONFIDENTIALITY &amp; SERVICE AGREEMENT SUMMARY:</p>
+                        <p>
+                          1. <strong>Confidential Footage &amp; Project Assets:</strong> All raw camera footage, audio stems, client branding assets, scripts, and rough cuts delivered via Artsy are strictly confidential. You shall not upload, publicly stream, publish, or leak any materials without explicit prior written consent from Artsy.
+                        </p>
+                        <p>
+                          2. <strong>Non-Circumvention:</strong> You agree not to solicit, contact, or accept direct private compensation from Artsy clients outside of the platform for 90 days following project completion.
+                        </p>
+                        <p>
+                          3. <strong>Quality &amp; Hardware Standard:</strong> You represent that your declared workstation meets the technical threshold for 4K video editing, color grading, and lossless master rendering.
+                        </p>
+                        <p>
+                          4. <strong>Permanent Execution:</strong> This agreement was permanently executed with your digital electronic signature and is permanently registered on your immutable creator ledger.
+                        </p>
+                      </div>
+
+                      {/* Electronic Signature Record */}
+                      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                            Digital Electronic Signature:
+                          </span>
+                          <div className="text-sm font-bold text-emerald-950">
+                            {legalName || user?.full_name || 'Verified Creator'}
+                          </div>
+                          <div className="text-[11px] text-emerald-700">
+                            {agreementSignedAt
+                              ? `Executed on ${new Date(agreementSignedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                              : 'Executed during onboarding vetting.'}
+                          </div>
+                        </div>
+
+                        <span className="px-3 py-1 bg-emerald-600 text-white text-[11px] font-bold rounded-lg shrink-0 text-center">
+                          ✓ ACTIVE &amp; BINDING
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Save CTA Bar */}
+                    <div className="flex flex-col gap-2 pt-2">
+                      <button
+                        type="submit"
+                        disabled={saving || !isFormValid}
+                        className="w-full bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#9CA3AF] disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm text-sm"
+                      >
+                        <span>{saving ? 'Updating Studio Profile...' : 'Save Profile Changes'}</span>
+                        <span>→</span>
+                      </button>
+                      {!isFormValid && (
+                        <p className="text-center text-xs text-amber-700 font-medium">
+                          * Please ensure all fields are valid (Workstation specs, 3 Sample URLs, PAN, Bank Account, IFSC, and Legal Name) to save changes.
+                        </p>
+                      )}
+                    </div>
+                  </form>
+                </div>
+
+                {/* Sidebar Column (4 cols) */}
+                <div className="lg:col-span-4 flex flex-col gap-6 lg:sticky lg:top-24 self-start">
+                  {/* Direct Payout Card */}
+                  <div className="bg-[#1D1D1F] text-white p-6 sm:p-8 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] flex flex-col justify-between relative overflow-hidden">
+                    <div className="flex flex-col gap-3 relative z-10">
+                      <div className="flex items-center justify-between">
+                        <span className="bg-[#3B82F6] text-white px-2.5 py-0.5 text-[10px] font-bold tracking-widest uppercase rounded-full">
+                          FAST PAYMENTS
+                        </span>
+                      </div>
+                      <span className="text-2xl font-extrabold tracking-tight text-white">DIRECT BANK TRANSFER</span>
+                      <h2 className="text-base font-bold uppercase leading-tight text-white">
+                        Guaranteed Bank Payouts
+                      </h2>
+                      <p className="text-xs text-[#86868B] leading-relaxed">
+                        Settlements are transferred directly to your bank account via NEFT as soon as the client approves your video edit. No delays or hidden deductions.
+                      </p>
+                    </div>
+                    <div className="pt-4 flex items-center gap-2 text-[11px] font-medium text-emerald-400 border-t border-white/10 mt-6">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+                      SECURE 70% SPLIT SETTLEMENT
+                    </div>
+                  </div>
+
+                  {/* Project Instructions Card */}
+                  <div className="bg-white p-6 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
+                    <h3 className="text-sm font-bold text-[#1D1D1F] uppercase mb-2">Clear Project Briefs</h3>
+                    <p className="text-xs text-[#86868B] leading-relaxed">
+                      You receive organized camera footage links, audio stems, color LUTs, and fixed payout rates upfront. Zero price bargaining.
+                    </p>
+                    <div className="mt-4 bg-[#F5F5F7] p-3 rounded-lg border border-[#E5E5E7] flex items-center justify-between text-xs font-semibold text-[#1D1D1F]">
+                      <span>Client Communication</span>
+                      <span className="text-[#3B82F6]">100% Handled by Artsy</span>
+                    </div>
+                  </div>
+
+                  {/* Quality Buffer Card */}
+                  <div className="bg-white p-6 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-2">
+                    <h3 className="text-sm font-bold text-[#1D1D1F] uppercase mb-1">In-House QA Buffer</h3>
+                    <p className="text-xs text-[#86868B] leading-relaxed">
+                      Our in-house post leads inspect your proxy cut first to provide constructive polish notes before client presentation.
+                    </p>
+                    <div className="w-full bg-[#F5F5F7] h-2 rounded-full overflow-hidden mt-3">
+                      <div className="bg-[#3B82F6] h-full w-full rounded-full"></div>
+                    </div>
+                    <div className="flex justify-between text-[11px] font-medium text-[#86868B] mt-1">
+                      <span>Roster Status</span>
+                      <span className="text-emerald-600 font-semibold">Active Member</span>
+                    </div>
+                  </div>
+
+                  {/* DPDP Compliance & Data Rights Box */}
+                  <div className="bg-white p-5 rounded-2xl border border-[#E5E5E7] space-y-3">
+                    <span className="text-xs font-bold text-[#1D1D1F] uppercase block">
+                      Data Privacy &amp; Rights (DPDP Act)
+                    </span>
+                    <p className="text-[11px] text-[#86868B] leading-relaxed">
+                      Your banking and PAN credentials are encrypted at rest with AES-256-GCM. You have the statutory right to export or erase your creator data.
+                    </p>
+                    <div className="flex flex-col gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleExportData}
+                        disabled={isExportingData}
+                        className="w-full py-2 px-3 rounded-xl bg-[#F5F5F7] hover:bg-[#E5E5E7] text-xs font-semibold text-[#1D1D1F] border border-[#E5E5E7] transition-all cursor-pointer text-center"
+                      >
+                        {isExportingData ? 'Generating Export...' : 'Export My Creator Data (JSON)'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteModal(true)}
+                        className="w-full py-2 px-3 rounded-xl bg-white hover:bg-red-50 text-xs font-semibold text-red-600 border border-red-200 transition-all cursor-pointer text-center"
+                      >
+                        Request Account Erasure (DPDP)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Delete Account Modal */}
+          {showDeleteModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-fade-in">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-[#E5E5E7] shadow-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-[#1D1D1F]">Request Creator Account Erasure</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteModal(false)}
+                    className="text-[#86868B] hover:text-[#1D1D1F] text-lg font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <p className="text-xs text-[#86868B] leading-relaxed">
+                  Under the Digital Personal Data Protection (DPDP) Act 2023, you may request the erasure of your personal data. Your creator profile, contact details, and bank credentials will be anonymized. Past immutable financial transaction ledgers are retained per statutory tax compliance.
+                </p>
+
+                {deleteError && (
+                  <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl font-medium">
+                    {deleteError}
                   </div>
                 )}
-              </div>
 
-              {/* Data Privacy & Statutory Rights (DPDP Act Compliance) */}
-              <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7] space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="text-base font-bold text-[#1D1D1F]">Data Privacy &amp; Statutory Rights</h3>
-                    <p className="text-xs text-[#86868B] mt-0.5">
-                      Compliant with India&apos;s Digital Personal Data Protection (DPDP) Act, 2023. You have the right to inspect, export, or permanently erase your creator data and portfolio.
-                    </p>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    DPDP Protected
-                  </span>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-[#1D1D1F]">Reason for departure (Optional)</label>
+                  <textarea
+                    rows={2}
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    placeholder="Tell us why you are requesting account closure..."
+                    className="w-full bg-[#F5F5F7] p-3 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-red-500"
+                  />
                 </div>
 
-                <div className="pt-2 flex flex-col sm:flex-row gap-3">
-                  <button
-                    type="button"
-                    onClick={handleExportData}
-                    disabled={isExportingData}
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-[#E5E5E7] hover:bg-slate-50 text-xs font-semibold text-[#1D1D1F] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {isExportingData ? (
-                      'Preparing Export...'
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4 text-[#86868B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Export Creator Portfolio &amp; PII (JSON)
-                      </>
-                    )}
-                  </button>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-[#1D1D1F]">
+                    Type <strong className="text-red-600">DELETE</strong> to confirm:
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder="DELETE"
+                    className="w-full bg-[#F5F5F7] px-3.5 py-2 text-xs font-mono font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-red-500"
+                  />
+                </div>
 
+                <div className="flex gap-2 pt-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowDeleteModal(true);
-                      setDeleteConfirmText('');
-                      setDeleteError(null);
-                    }}
-                    className="px-4 py-2.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-xs font-semibold text-red-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    onClick={() => setShowDeleteModal(false)}
+                    className="flex-1 py-2.5 rounded-xl bg-[#F5F5F7] hover:bg-[#E5E5E7] text-xs font-semibold text-[#1D1D1F] cursor-pointer"
                   >
-                    <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete Account &amp; Erase Data
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmAccountDeletion}
+                    disabled={isDeletingAccount || deleteConfirmText.trim().toUpperCase() !== 'DELETE'}
+                    className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-[#9CA3AF] disabled:cursor-not-allowed text-white text-xs font-bold cursor-pointer"
+                  >
+                    {isDeletingAccount ? 'Erasing...' : 'Confirm Erasure'}
                   </button>
                 </div>
               </div>
-
-              {/* Bottom Action Footer */}
-              <div className="flex items-center justify-end pt-4">
-                <button
-                  type="button"
-                  onClick={handleSaveAll}
-                  disabled={isSaving}
-                  className="px-6 py-3 rounded-xl bg-[#3B82F6] hover:bg-blue-600 text-white font-bold text-xs tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
-                >
-                  {isSaving ? 'SAVING PROFILE...' : 'SAVE PROFILE & TOOLCHAIN CHANGES →'}
-                </button>
-              </div>
-
             </div>
-          </div>
+          )}
         </main>
       </div>
-
-      {/* DPDP Account Deletion Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 border border-red-100 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-
-            <div className="text-center">
-              <h3 className="text-lg font-bold text-[#1D1D1F]">Permanently Erase Creator Data?</h3>
-              <p className="text-xs text-[#86868B] mt-1">
-                Under the DPDP Act, this will irrevocably anonymize your name, email, phone number, PAN, and bank accounts. Any active session will be terminated immediately.
-              </p>
-            </div>
-
-            {deleteError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">
-                {deleteError}
-              </div>
-            )}
-
-            <div className="space-y-3 pt-2">
-              <div>
-                <label className="block text-xs font-semibold text-[#1D1D1F] mb-1">
-                  Reason for erasure (Optional):
-                </label>
-                <input
-                  type="text"
-                  value={deleteReason}
-                  onChange={(e) => setDeleteReason(e.target.value)}
-                  placeholder="e.g. Inactive creator, retiring portfolio"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-xs text-[#1D1D1F] focus:outline-none focus:border-red-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#1D1D1F] mb-1">
-                  Type <span className="text-red-600 font-bold">DELETE</span> to confirm:
-                </label>
-                <input
-                  type="text"
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder="DELETE"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-xs font-mono text-[#1D1D1F] focus:outline-none focus:border-red-500"
-                />
-              </div>
-            </div>
-
-            <div className="pt-3 flex gap-3">
-              <button
-                type="button"
-                disabled={isDeletingAccount}
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-2.5 rounded-xl border border-[#E5E5E7] text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isDeletingAccount || deleteConfirmText.trim().toUpperCase() !== 'DELETE'}
-                onClick={handleConfirmAccountDeletion}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-40 cursor-pointer"
-              >
-                {isDeletingAccount ? 'Erasing Data...' : 'Confirm Erasure'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: Change Mobile Number with OTP Verification */}
-      {isChangingPhone && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#E5E5E7] space-y-5 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-3">
-              <div>
-                <h3 className="text-base font-bold text-[#1D1D1F]">Change Registered Mobile</h3>
-                <p className="text-xs text-[#86868B] mt-0.5">We will send a one-time passcode to verify your new number</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsChangingPhone(false)}
-                className="text-[#86868B] hover:text-[#1D1D1F] text-lg font-bold cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {!phoneOtpStep ? (
-              <div className="space-y-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">NEW MOBILE NUMBER</label>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-2.5 bg-[#F5F5F7] rounded-xl text-xs font-semibold text-[#1D1D1F] border border-[#E5E5E7]">
-                      +91
-                    </span>
-                    <input
-                      type="tel"
-                      maxLength={10}
-                      value={newPhone.replace('+91', '').trim()}
-                      onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, ''))}
-                      placeholder="9876543210"
-                      className="flex-1 bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                    />
-                  </div>
-                </div>
-
-                {phoneOtpError && (
-                  <div className="text-xs text-red-500 font-semibold">{phoneOtpError}</div>
-                )}
-
-                <div className="flex items-center justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsChangingPhone(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSendPhoneOtp}
-                    className="px-4 py-2 rounded-xl bg-[#1D1D1F] text-white hover:bg-black text-xs font-semibold cursor-pointer"
-                  >
-                    Send OTP →
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800">
-                  OTP sent to <strong>+91 {newPhone}</strong>. Enter the 6-digit code received via WhatsApp.
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">ENTER 6-DIGIT OTP</label>
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={phoneOtp}
-                    onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="• • • • • •"
-                    className="bg-[#F5F5F7] px-4 py-2.5 text-center text-lg tracking-[0.3em] font-mono font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                  />
-                </div>
-
-                {phoneOtpError && (
-                  <div className="text-xs text-red-500 font-semibold">{phoneOtpError}</div>
-                )}
-
-                <div className="flex items-center justify-between pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setPhoneOtpStep(false)}
-                    className="text-xs font-semibold text-[#86868B] hover:underline cursor-pointer"
-                  >
-                    ← Edit Number
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleVerifyPhoneOtp}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer"
-                  >
-                    Verify &amp; Update Mobile
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: Change Email with Verification Code */}
-      {isChangingEmail && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#E5E5E7] space-y-5 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-3">
-              <div>
-                <h3 className="text-base font-bold text-[#1D1D1F]">Change Registered Email</h3>
-                <p className="text-xs text-[#86868B] mt-0.5">We will dispatch an authentication code to verify your new email</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsChangingEmail(false)}
-                className="text-[#86868B] hover:text-[#1D1D1F] text-lg font-bold cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {!emailOtpStep ? (
-              <div className="space-y-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">NEW EMAIL ADDRESS</label>
-                  <input
-                    type="email"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="creator@studio.com"
-                    className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                  />
-                </div>
-
-                {emailOtpError && (
-                  <div className="text-xs text-red-500 font-semibold">{emailOtpError}</div>
-                )}
-
-                <div className="flex items-center justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsChangingEmail(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSendEmailOtp}
-                    className="px-4 py-2 rounded-xl bg-[#1D1D1F] text-white hover:bg-black text-xs font-semibold cursor-pointer"
-                  >
-                    Send Verification Code →
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-800">
-                  Verification code dispatched to <strong>{newEmail}</strong>. Enter the 6-digit code received via Email.
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">ENTER 6-DIGIT CODE</label>
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={emailOtp}
-                    onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="• • • • • •"
-                    className="bg-[#F5F5F7] px-4 py-2.5 text-center text-lg tracking-[0.3em] font-mono font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                  />
-                </div>
-
-                {emailOtpError && (
-                  <div className="text-xs text-red-500 font-semibold">{emailOtpError}</div>
-                )}
-
-                <div className="flex items-center justify-between pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setEmailOtpStep(false)}
-                    className="text-xs font-semibold text-[#86868B] hover:underline cursor-pointer"
-                  >
-                    ← Edit Email
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleVerifyEmailOtp}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer"
-                  >
-                    Verify &amp; Update Email
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: Change Bank Settlement Credentials */}
-      {isChangingBank && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-[#E5E5E7] space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-3">
-              <div>
-                <h3 className="text-base font-bold text-[#1D1D1F]">Update Direct Bank Settlement</h3>
-                <p className="text-xs text-[#86868B] mt-0.5">256-Bit TLS Encrypted NEFT/RTGS Account Destination</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsChangingBank(false)}
-                className="text-[#86868B] hover:text-[#1D1D1F] text-lg font-bold cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {/* Quick Select Bank */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-semibold text-[#1D1D1F]">BANK NAME *</label>
-                <div className="flex flex-wrap gap-1.5 pb-1">
-                  {['HDFC Bank', 'ICICI Bank', 'State Bank of India', 'Axis Bank', 'Kotak Mahindra', 'Other Bank'].map(
-                    (b) => (
-                      <button
-                        key={b}
-                        type="button"
-                        onClick={() => {
-                          if (b === 'Other Bank') {
-                            setTempBankName('');
-                          } else {
-                            setTempBankName(b);
-                          }
-                        }}
-                        className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
-                          tempBankName === b
-                            ? 'bg-[#1D1D1F] text-white border-[#1D1D1F]'
-                            : 'bg-[#F5F5F7] text-[#1D1D1F] border-[#E5E5E7] hover:bg-white'
-                        }`}
-                      >
-                        {b}
-                      </button>
-                    )
-                  )}
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={tempBankName}
-                  onChange={(e) => setTempBankName(e.target.value)}
-                  placeholder="Bank Name"
-                  className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">ACCOUNT NUMBER *</label>
-                  <input
-                    type="text"
-                    required
-                    value={tempAccount}
-                    onChange={(e) => setTempAccount(e.target.value)}
-                    placeholder="Bank Account Number"
-                    className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">IFSC CODE *</label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={11}
-                    value={tempIfsc}
-                    onChange={(e) => setTempIfsc(e.target.value.toUpperCase())}
-                    placeholder="HDFC0001234"
-                    className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">LEGAL NAME (PER PAN) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={tempLegalName}
-                    onChange={(e) => setTempLegalName(e.target.value)}
-                    placeholder="Full Beneficiary Name"
-                    className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-[#1D1D1F]">PAN NUMBER *</label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={10}
-                    value={tempPan}
-                    onChange={(e) => setTempPan(e.target.value.toUpperCase())}
-                    placeholder="ABCDE1234F"
-                    className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
-                  />
-                </div>
-              </div>
-
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800">
-                Direct NEFT automated bank transfers will disburse to this validated account for all completed cuts.
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsChangingBank(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F] cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSaveBankChanges}
-                  className="px-5 py-2.5 rounded-xl bg-[#1D1D1F] text-white hover:bg-black text-xs font-semibold cursor-pointer"
-                >
-                  Confirm &amp; Update Bank
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: Add Public Portfolio Sample Reel */}
-      {showAddSampleModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-[#E5E5E7] space-y-5 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-3">
-              <div>
-                <h3 className="text-base font-bold text-[#1D1D1F]">Add Public Portfolio Sample</h3>
-                <p className="text-xs text-[#86868B] mt-0.5">
-                  Submit a showcase reel for Artsy QA review. Approved reels appear on your public profile.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowAddSampleModal(false)}
-                className="text-xs text-[#86868B] hover:text-[#1D1D1F] p-1 font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            {sampleError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700">
-                {sampleError}
-              </div>
-            )}
-
-            <form onSubmit={handleAddSampleSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1D1D1F]">
-                  Reel Title * <span className="text-[10px] text-[#86868B] font-normal">(Max 100 chars)</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={100}
-                  value={sampleTitle}
-                  onChange={(e) => setSampleTitle(e.target.value)}
-                  placeholder="e.g. Udaipur Royal Heritage Wedding 4K Highlight"
-                  className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1D1D1F]">
-                  Category *
-                </label>
-                <select
-                  value={sampleCategory}
-                  onChange={(e) => setSampleCategory(e.target.value)}
-                  className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-medium text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
-                >
-                  <option value="Wedding">Wedding</option>
-                  <option value="Brand">Brand</option>
-                  <option value="Corporate">Corporate</option>
-                  <option value="Personal">Personal</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1D1D1F]">
-                  Video URL (Bunny Stream / Embed URL) *
-                </label>
-                <input
-                  type="url"
-                  required
-                  value={sampleVideoUrl}
-                  onChange={(e) => setSampleVideoUrl(e.target.value)}
-                  placeholder="https://iframe.mediadelivery.net/embed/..."
-                  className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-mono text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1D1D1F]">
-                  Thumbnail URL *
-                </label>
-                <input
-                  type="url"
-                  required
-                  value={sampleThumbnailUrl}
-                  onChange={(e) => setSampleThumbnailUrl(e.target.value)}
-                  placeholder="https://vz-xxxx.b-cdn.net/.../thumbnail.jpg or image URL"
-                  className="w-full bg-[#F5F5F7] px-3.5 py-2.5 text-xs font-mono text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-[#1D1D1F]">
-                  Description <span className="text-[10px] text-[#86868B] font-normal">(Optional, max 500 chars)</span>
-                </label>
-                <textarea
-                  rows={3}
-                  maxLength={500}
-                  value={sampleDescription}
-                  onChange={(e) => setSampleDescription(e.target.value)}
-                  placeholder="Explain pacing, camera setup, color grading pass, or sound design choices..."
-                  className="w-full bg-[#F5F5F7] p-3 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#F5F5F7]">
-                <button
-                  type="button"
-                  onClick={() => setShowAddSampleModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-[#86868B] hover:text-[#1D1D1F]"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingSample}
-                  className="px-5 py-2.5 rounded-xl bg-[#1D1D1F] text-white hover:bg-black text-xs font-bold transition-all shadow-xs disabled:opacity-50"
-                >
-                  {submittingSample ? 'Submitting Reel...' : 'Submit for Studio Review'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

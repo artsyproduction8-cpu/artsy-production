@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'creatorId is required' }, { status: 400 });
     }
 
-    const recipientEmail = email || '';
-    const recipientPhone = phone || '';
+    let resolvedRecipientEmail = email || '';
+    let resolvedRecipientPhone = phone || '';
     const creatorName = name || 'Creator';
     const dbClient = supabaseAdmin || supabase;
 
@@ -56,9 +56,12 @@ export async function POST(req: NextRequest) {
           let rawName = existingCp?.public_display_name;
           const { data: userData } = await dbClient
             .from('users')
-            .select('full_name, display_name')
+            .select('full_name, display_name, phone, email')
             .eq('id', creatorId)
             .maybeSingle();
+
+          if (!resolvedRecipientEmail && userData?.email) resolvedRecipientEmail = userData.email;
+          if (!resolvedRecipientPhone && userData?.phone) resolvedRecipientPhone = userData.phone;
 
           if (!rawName || rawName === 'Creator Partner' || rawName.trim() === '') {
             rawName = userData?.full_name?.trim() || (creatorName !== 'Creator' ? creatorName : null) || 'Artsy Creator';
@@ -116,8 +119,8 @@ export async function POST(req: NextRequest) {
         await dispatchNotification({
           eventNumber: 3,
           userId: creatorId,
-          recipientEmail,
-          recipientPhone,
+          recipientEmail: resolvedRecipientEmail,
+          recipientPhone: resolvedRecipientPhone,
           variables: { name: creatorName },
           actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/freelancer`,
         });
@@ -186,8 +189,8 @@ export async function POST(req: NextRequest) {
         await dispatchNotification({
           eventNumber: 4,
           userId: creatorId,
-          recipientEmail,
-          recipientPhone,
+          recipientEmail: resolvedRecipientEmail,
+          recipientPhone: resolvedRecipientPhone,
           variables: { name: creatorName },
         });
       } catch (notifErr) {

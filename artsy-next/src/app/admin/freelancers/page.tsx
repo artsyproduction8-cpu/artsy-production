@@ -567,24 +567,38 @@ export default function AdminFreelancersPage() {
 
                   {/* Hardware Rig Specs */}
                   <div className="bg-white p-3.5 rounded-xl border border-[#E5E5E7]/70 space-y-2">
-                    <span className="font-bold text-[#86868B] block text-[10px] uppercase">Studio Hardware &amp; Editing Rig</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div className="p-2.5 bg-[#F5F5F7] rounded-lg">
-                        <div className="text-[10px] text-[#86868B] font-bold">WORKSTATION RIG</div>
-                        <div className="font-medium text-[#1D1D1F] mt-0.5">{creatorDetail.studio_details?.workstationRig || 'Apple Mac Studio M2 Ultra / High-Performance PC'}</div>
-                      </div>
-                      <div className="p-2.5 bg-[#F5F5F7] rounded-lg">
-                        <div className="text-[10px] text-[#86868B] font-bold">CALIBRATED MONITORING</div>
-                        <div className="font-medium text-[#1D1D1F] mt-0.5">{creatorDetail.studio_details?.monitoringSpec || 'P3-D65 / Rec.709 Color Reference Display'}</div>
-                      </div>
-                      <div className="p-2.5 bg-[#F5F5F7] rounded-lg">
-                        <div className="text-[10px] text-[#86868B] font-bold">STORAGE &amp; SCRATCH</div>
-                        <div className="font-medium text-[#1D1D1F] mt-0.5">{creatorDetail.studio_details?.storageSpec || '10GbE Synology RAID / Internal NVMe Scratch'}</div>
-                      </div>
-                      <div className="p-2.5 bg-[#F5F5F7] rounded-lg">
-                        <div className="text-[10px] text-[#86868B] font-bold">AUDIO REFERENCE</div>
-                        <div className="font-medium text-[#1D1D1F] mt-0.5">{creatorDetail.studio_details?.audioSpec || 'Yamaha HS7 Studio Monitors / Open-Back Headphones'}</div>
-                      </div>
+                    <span className="font-bold text-[#86868B] block text-[10px] uppercase">Workstation Specs &amp; Hardware Rig</span>
+                    <div className="p-3 bg-[#F5F5F7] rounded-xl text-xs font-mono text-[#1D1D1F] whitespace-pre-line leading-relaxed">
+                      {creatorDetail.profile?.hardware_config || creatorDetail.studio_details?.workstationRig || 'No hardware configuration declared.'}
+                    </div>
+                  </div>
+
+                  {/* 3 Portfolio Samples */}
+                  <div className="bg-white p-3.5 rounded-xl border border-[#E5E5E7]/70 space-y-2">
+                    <span className="font-bold text-[#86868B] block text-[10px] uppercase">Portfolio Sample Cuts (Ingest Proof)</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {[
+                        { label: 'Sample 01', url: creatorDetail.profile?.sample_url_1 },
+                        { label: 'Sample 02', url: creatorDetail.profile?.sample_url_2 },
+                        { label: 'Sample 03', url: creatorDetail.profile?.sample_url_3 },
+                      ].map((s, idx) => (
+                        s.url ? (
+                          <a
+                            key={idx}
+                            href={s.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2.5 rounded-lg bg-[#0A0A0A] border border-[#262626] text-white hover:border-[#3B82F6] transition-all flex flex-col justify-between truncate"
+                          >
+                            <span className="text-[9px] uppercase tracking-wider text-blue-400 font-bold">▶ {s.label}</span>
+                            <span className="text-[10px] text-[#86868B] truncate mt-1">{s.url.replace(/^https?:\/\/(www\.)?/, '')} ↗</span>
+                          </a>
+                        ) : (
+                          <div key={idx} className="p-2 bg-[#F5F5F7] rounded-lg text-[10px] text-[#86868B] text-center">
+                            {s.label}: N/A
+                          </div>
+                        )
+                      ))}
                     </div>
                   </div>
 
@@ -609,19 +623,29 @@ export default function AdminFreelancersPage() {
                     </div>
                   </div>
 
-                  {/* External Reel & Showreel */}
-                  {(creatorDetail.profile?.portfolio_url || creatorDetail.studio_details?.showreelUrl) && (
-                    <div className="pt-1">
+                  {/* NDA Digital Signature & External Reel */}
+                  <div className="p-3 bg-white rounded-xl border border-[#E5E5E7]/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div>
+                      <span className="text-[10px] font-bold text-[#86868B] uppercase block">NDA &amp; Service Agreement:</span>
+                      {creatorDetail.profile?.agreement_signed_at ? (
+                        <span className="font-semibold text-emerald-600">
+                          ✓ Digitally Signed on {new Date(creatorDetail.profile.agreement_signed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      ) : (
+                        <span className="text-amber-600 font-semibold">Pending Digital Execution</span>
+                      )}
+                    </div>
+                    {(creatorDetail.profile?.portfolio_url || creatorDetail.studio_details?.showreelUrl) && (
                       <a
                         href={creatorDetail.profile?.portfolio_url || creatorDetail.studio_details?.showreelUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-xl"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-xl shrink-0"
                       >
-                        Watch External Showreel / Portfolio ↗
+                        Watch Master Reel ↗
                       </a>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* Assignments */}

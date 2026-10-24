@@ -358,6 +358,30 @@ export async function POST(request: NextRequest) {
       const finalRole: 'client' | 'freelancer' | 'admin' | 'super_admin' =
         isSuperAdminIdentifier ? 'super_admin' : (resolvedUser.role || (isFreelancerRequest ? 'freelancer' : 'client'));
 
+      // Non-blocking welcome notification for new users
+      if (isNewUser) {
+        try {
+          const { dispatchNotification } = await import('@/lib/whatsapp/dispatcher');
+          const isCreatorNew = finalRole === 'freelancer' || isFreelancerRequest;
+          await dispatchNotification({
+            eventNumber: isCreatorNew ? 2 : 3,
+            userId: resolvedUser.id,
+            recipientPhone: cleanPhone ? `+91${cleanPhone}` : undefined,
+            recipientEmail: cleanEmail || undefined,
+            variables: {
+              name: resolvedUser.full_name || (isCreatorNew ? 'Creator Partner' : 'Client'),
+              role: isCreatorNew ? 'freelancer' : 'client',
+              accountId: resolvedUser.id,
+            },
+            actionUrl: isCreatorNew
+              ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/freelancer/onboarding`
+              : `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/client`,
+          });
+        } catch (notifErr) {
+          console.warn('[OTP Route] Non-fatal welcome notification dispatch warning:', notifErr);
+        }
+      }
+
       let onboarding_status: 'pending' | 'approved' | 'rejected' | 'pending_review' | null = null;
       let tracking_id: string | null = null;
       let rejection_reason: string | null = null;

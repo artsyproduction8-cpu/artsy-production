@@ -130,9 +130,9 @@ export async function POST(request: NextRequest) {
           })
           .eq('razorpay_order_id', order_id);
 
+        let finalClientId: string = orderRecord?.client_id || '';
         if (orderRecord && orderRecord.id) {
           // Resolve client_id if missing from order
-          let finalClientId = orderRecord.client_id;
           if (!finalClientId && orderRecord.client_phone) {
             const rawDigits = orderRecord.client_phone.replace(/\D/g, '').slice(-10);
             const { data: matchedUser } = await supabaseAdmin
@@ -186,6 +186,25 @@ export async function POST(request: NextRequest) {
               ]);
             }
           }
+        }
+
+        // Non-blocking Event #6: PAYMENT_SUCCESSFUL dispatch via WhatsApp and Email
+        try {
+          const { dispatchNotification } = await import('@/lib/whatsapp/dispatcher');
+          const grossInr = Math.round((orderRecord?.gross_amount || 800000) / 100);
+          await dispatchNotification({
+            eventNumber: 6,
+            userId: finalClientId || orderRecord?.client_id || '',
+            recipientPhone: orderRecord?.client_phone || '',
+            recipientEmail: orderRecord?.client_email || '',
+            variables: {
+              amount: grossInr,
+              orderId: orderRecord?.order_number || order_id,
+            },
+            actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/client/projects`,
+          });
+        } catch (notifErr) {
+          console.warn('[Verify Payment] Notification dispatch non-fatal error:', notifErr);
         }
       } catch (dbErr) {
         console.warn('[Verify Payment DB update warning]:', dbErr);

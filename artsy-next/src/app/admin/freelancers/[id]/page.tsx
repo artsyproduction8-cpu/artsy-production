@@ -47,6 +47,11 @@ export default function AdminFreelancerDetail() {
 
   // Hardware Rig and Studio Setup
   const [workstationRig, setWorkstationRig] = useState('');
+  const [hardwareConfig, setHardwareConfig] = useState('');
+  const [sampleUrl1, setSampleUrl1] = useState('');
+  const [sampleUrl2, setSampleUrl2] = useState('');
+  const [sampleUrl3, setSampleUrl3] = useState('');
+  const [agreementSignedAt, setAgreementSignedAt] = useState<string | null>(null);
   const [monitoringSpec, setMonitoringSpec] = useState('');
   const [storageSpec, setStorageSpec] = useState('');
   const [audioSpec, setAudioSpec] = useState('');
@@ -111,6 +116,11 @@ export default function AdminFreelancerDetail() {
 
       const sd = c.studio_details || {};
       setWorkstationRig(sd.workstationRig || '');
+      setHardwareConfig(p.hardware_config || sd.hardware_config || sd.workstationRig || '');
+      setSampleUrl1(p.sample_url_1 || sd.sample_url_1 || '');
+      setSampleUrl2(p.sample_url_2 || sd.sample_url_2 || '');
+      setSampleUrl3(p.sample_url_3 || sd.sample_url_3 || '');
+      setAgreementSignedAt(p.agreement_signed_at || sd.agreement_signed_at || null);
       setMonitoringSpec(sd.monitoringSpec || '');
       setStorageSpec(sd.storageSpec || '');
       setAudioSpec(sd.audioSpec || '');
@@ -173,6 +183,10 @@ export default function AdminFreelancerDetail() {
           is_accepting_work: isAcceptingWork,
           studio_details: {
             workstationRig,
+            hardware_config: hardwareConfig,
+            sample_url_1: sampleUrl1,
+            sample_url_2: sampleUrl2,
+            sample_url_3: sampleUrl3,
             monitoringSpec,
             storageSpec,
             audioSpec,
@@ -180,6 +194,10 @@ export default function AdminFreelancerDetail() {
             languages: languagesText.split(',').map((l) => l.trim()).filter(Boolean),
             software: softwareArray,
           },
+          hardware_config: hardwareConfig,
+          sample_url_1: sampleUrl1,
+          sample_url_2: sampleUrl2,
+          sample_url_3: sampleUrl3,
         }),
       });
 
@@ -641,9 +659,103 @@ export default function AdminFreelancerDetail() {
           </p>
         </div>
 
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#1D1D1F]">
+              Workstation Hardware Specifications (CPU, GPU, RAM) *
+            </label>
+            <textarea
+              rows={3}
+              value={hardwareConfig}
+              onChange={(e) => setHardwareConfig(e.target.value)}
+              placeholder="e.g. CPU: Apple M2 Max / AMD Ryzen 9; GPU: NVIDIA RTX 4080 (16GB); RAM: 64GB DDR5; Storage: 4TB NVMe SSD"
+              className="w-full bg-[#F5F5F7] p-3 text-xs font-mono text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+            />
+          </div>
+
+          {/* 3 Mandatory Sample URLs */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-[#1D1D1F]">
+              Portfolio Samples (3 Mandatory Video Links)
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-[#86868B] uppercase">Sample 01 URL</span>
+                  {sampleUrl1 && (
+                    <a href={sampleUrl1} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 font-bold hover:underline">
+                      Test Link ↗
+                    </a>
+                  )}
+                </div>
+                <input
+                  type="url"
+                  value={sampleUrl1}
+                  onChange={(e) => setSampleUrl1(e.target.value)}
+                  placeholder="https://youtube.com/..."
+                  className="w-full bg-[#F5F5F7] px-3 py-2 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-[#86868B] uppercase">Sample 02 URL</span>
+                  {sampleUrl2 && (
+                    <a href={sampleUrl2} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 font-bold hover:underline">
+                      Test Link ↗
+                    </a>
+                  )}
+                </div>
+                <input
+                  type="url"
+                  value={sampleUrl2}
+                  onChange={(e) => setSampleUrl2(e.target.value)}
+                  placeholder="https://vimeo.com/..."
+                  className="w-full bg-[#F5F5F7] px-3 py-2 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-[#86868B] uppercase">Sample 03 URL</span>
+                  {sampleUrl3 && (
+                    <a href={sampleUrl3} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 font-bold hover:underline">
+                      Test Link ↗
+                    </a>
+                  )}
+                </div>
+                <input
+                  type="url"
+                  value={sampleUrl3}
+                  onChange={(e) => setSampleUrl3(e.target.value)}
+                  placeholder="https://youtube.com/..."
+                  className="w-full bg-[#F5F5F7] px-3 py-2 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* NDA Signature Status Banner */}
+        <div className="p-3.5 bg-blue-50/50 rounded-2xl border border-blue-200/60 flex items-center justify-between text-xs">
+          <div>
+            <span className="text-[10px] font-bold text-[#86868B] uppercase block">Creator Agreement &amp; Confidentiality NDA:</span>
+            {agreementSignedAt ? (
+              <span className="font-semibold text-emerald-700 flex items-center gap-1 mt-0.5">
+                ✓ Digitally Executed &amp; Legally Binding on {new Date(agreementSignedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              </span>
+            ) : (
+              <span className="font-semibold text-amber-700 mt-0.5">Pending Signature Execution</span>
+            )}
+          </div>
+          <span className="text-[10px] font-mono font-bold text-blue-700 bg-blue-100/60 px-2 py-0.5 rounded">
+            Version 1.0 (Signed at Onboarding)
+          </span>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#1D1D1F]">Workstation Rig</label>
+            <label className="text-xs font-bold text-[#1D1D1F]">Legacy Workstation Rig</label>
             <input
               type="text"
               value={workstationRig}

@@ -51,6 +51,15 @@ const ASPECT_RATIOS = [
   { id: '2.39:1', label: '2.39:1 Anamorphic', desc: 'Widescreen Theatrical Scope' },
 ];
 
+const extractTenDigitPhone = (raw?: string | null): string => {
+  if (!raw) return '';
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) {
+    return digits.slice(2);
+  }
+  return digits.slice(-10);
+};
+
 export default function ClientProfilePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,12 +71,12 @@ export default function ClientProfilePage() {
   const [fullName, setFullName] = useState(user?.full_name || '');
   const [studioName, setStudioName] = useState(user?.display_name || user?.full_name || '');
   const [logoUrl, setLogoUrl] = useState(user?.avatar_url || '');
-  const [whatsapp, setWhatsapp] = useState(user?.phone || '');
+  const [whatsapp, setWhatsapp] = useState(extractTenDigitPhone(user?.phone));
   const [email, setEmail] = useState(user?.email || '');
 
   // Verification & OTP States
   const [whatsappVerified, setWhatsappVerified] = useState<boolean>(true);
-  const [verifiedWhatsappNumber, setVerifiedWhatsappNumber] = useState<string>('+91 99000 00001');
+  const [verifiedWhatsappNumber, setVerifiedWhatsappNumber] = useState<string>(extractTenDigitPhone(user?.phone) || '9900000001');
   const [whatsappOtpSent, setWhatsappOtpSent] = useState<boolean>(false);
   const [whatsappOtpInput, setWhatsappOtpInput] = useState<string>('');
   const [whatsappSending, setWhatsappSending] = useState<boolean>(false);
@@ -202,8 +211,9 @@ export default function ClientProfilePage() {
       if (user.full_name) setFullName(user.full_name);
       if (user.display_name) setStudioName(user.display_name);
       if (user.phone) {
-        setWhatsapp(user.phone);
-        setVerifiedWhatsappNumber(user.phone);
+        const cleanTen = extractTenDigitPhone(user.phone);
+        setWhatsapp(cleanTen);
+        setVerifiedWhatsappNumber(cleanTen);
       }
       if (user.email) {
         setEmail(user.email);
@@ -217,6 +227,11 @@ export default function ClientProfilePage() {
         if (sd.studioName) setStudioName(sd.studioName);
         if (sd.fullName) setFullName(sd.fullName);
         if (sd.logoUrl) setLogoUrl(sd.logoUrl);
+        if (sd.whatsapp || sd.phone) {
+          const num = extractTenDigitPhone(sd.whatsapp || sd.phone);
+          setWhatsapp(num);
+          setVerifiedWhatsappNumber(num);
+        }
         if (sd.billingName) setBillingName(sd.billingName);
         if (sd.gstin) setGstin(sd.gstin);
         if (sd.address) setAddress(sd.address);
@@ -245,7 +260,7 @@ export default function ClientProfilePage() {
           if (p.studioName) setStudioName(p.studioName);
           if (p.logoUrl) setLogoUrl(p.logoUrl);
           if (p.whatsapp || p.phone) {
-            const num = p.whatsapp || p.phone;
+            const num = extractTenDigitPhone(p.whatsapp || p.phone);
             setWhatsapp(num);
             setVerifiedWhatsappNumber(num);
           }
@@ -423,8 +438,7 @@ export default function ClientProfilePage() {
     setWhatsappError('');
 
     try {
-      const rawDigits = whatsapp.replace(/\D/g, '');
-      const cleanPhone = rawDigits.length === 12 && rawDigits.startsWith('91') ? rawDigits.slice(2) : rawDigits;
+      const cleanPhone = extractTenDigitPhone(whatsapp);
 
       const res = await fetch('/api/auth/otp', {
         method: 'POST',
@@ -444,7 +458,7 @@ export default function ClientProfilePage() {
       }
 
       setWhatsappVerified(true);
-      setVerifiedWhatsappNumber(whatsapp.trim());
+      setVerifiedWhatsappNumber(cleanPhone);
       setWhatsappOtpSent(false);
       setWhatsappOtpInput('');
       setWhatsappVerifying(false);
@@ -455,7 +469,7 @@ export default function ClientProfilePage() {
       try {
         const stored = localStorage.getItem('artsy_client_profile');
         const p = stored ? JSON.parse(stored) : {};
-        p.whatsapp = whatsapp.trim();
+        p.whatsapp = `+91${cleanPhone}`;
         p.whatsappVerified = true;
         localStorage.setItem('artsy_client_profile', JSON.stringify(p));
       } catch {}
@@ -562,12 +576,15 @@ export default function ClientProfilePage() {
     setSaving(true);
     setSavedFeedback(false);
 
+    const cleanTenPhone = extractTenDigitPhone(whatsapp);
+    const canonicalPhone = cleanTenPhone ? `+91${cleanTenPhone}` : '';
+
     const updatedProfile: Partial<ClientFullProfile> = {
       accountType,
       fullName: fullName.trim(),
       studioName: studioName.trim(),
       logoUrl,
-      whatsapp: whatsapp.trim(),
+      whatsapp: canonicalPhone,
       whatsappVerified,
       email: email.trim(),
       emailVerified,
@@ -597,7 +614,7 @@ export default function ClientProfilePage() {
         ...user,
         full_name: fullName.trim() || user.full_name,
         display_name: studioName.trim() || user.display_name,
-        phone: whatsapp.trim() || user.phone,
+        phone: canonicalPhone || user.phone,
         email: email.trim() || user.email,
         avatar_url: logoUrl || user.avatar_url,
         studio_details: updatedProfile,
@@ -617,6 +634,7 @@ export default function ClientProfilePage() {
         body: JSON.stringify({
           full_name: fullName.trim() || studioName.trim(),
           display_name: studioName.trim(),
+          phone: canonicalPhone || undefined,
           studio_details: updatedProfile,
           avatar_url: logoUrl || undefined,
           onboarded: true,
@@ -839,23 +857,32 @@ export default function ClientProfilePage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <input
-                        type="tel"
-                        value={whatsapp}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setWhatsapp(val);
-                          if (val.trim() !== verifiedWhatsappNumber.trim()) {
-                            setWhatsappVerified(false);
-                            setWhatsappSuccess('');
-                          } else {
-                            setWhatsappVerified(true);
-                          }
-                        }}
-                        placeholder="+91 99000 00001"
-                        className="flex-1 bg-white border border-[#E5E5E7] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#1D1D1F] focus:outline-none focus:border-[#3B82F6]"
-                        required
-                      />
+                      <div className="flex items-center rounded-xl border border-[#E5E5E7] bg-white focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10 overflow-hidden flex-1 transition-all">
+                        <div className="flex items-center gap-1.5 px-3 py-2 bg-[#F5F5F7] border-r border-[#E5E5E7] text-xs font-bold text-[#1D1D1F] select-none shrink-0">
+                          <span>🇮🇳</span>
+                          <span>+91</span>
+                        </div>
+                        <input
+                          type="tel"
+                          inputMode="numeric"
+                          maxLength={10}
+                          value={whatsapp}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, '');
+                            const val = (raw.length === 12 && raw.startsWith('91')) ? raw.slice(2) : raw.slice(0, 10);
+                            setWhatsapp(val);
+                            if (val !== verifiedWhatsappNumber) {
+                              setWhatsappVerified(false);
+                              setWhatsappSuccess('');
+                            } else {
+                              setWhatsappVerified(true);
+                            }
+                          }}
+                          placeholder="99000 00001"
+                          className="w-full bg-transparent px-3 py-2 text-xs font-semibold text-[#1D1D1F] focus:outline-none placeholder:text-[#86868B]"
+                          required
+                        />
+                      </div>
 
                       {!whatsappVerified && !whatsappOtpSent && (
                         <button

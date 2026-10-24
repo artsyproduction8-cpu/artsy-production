@@ -315,13 +315,19 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
           <span className="text-xl sm:text-2xl font-extrabold uppercase tracking-tight text-white leading-none group-hover:text-blue-400 transition-colors">
             ARTSY
           </span>
-          <span className="hidden md:block font-mono text-[10px] sm:text-xs font-semibold tracking-[1.2px] uppercase text-[#DCDFE3]/80 mt-1 leading-none text-center whitespace-nowrap">
+          <span className="hidden md:block font-mono text-[8px] sm:text-[10px] font-semibold tracking-[1.2px] uppercase text-[#DCDFE3]/80 mt-1 leading-none text-center whitespace-nowrap">
             PLACE FOR PERSPECTIVE
           </span>
         </Link>
 
-        {/* Center Nav Links */}
-        <nav className="hidden md:flex items-center gap-7 lg:gap-8">
+        {/* Center Nav Links: BOOK NOW - SERVICES - PORTFOLIO - CREATORS */}
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8">
+          <Link
+            href="/book"
+            className="text-xs font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
+          >
+            BOOK NOW
+          </Link>
           <Link
             href="/services"
             className="text-xs font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
@@ -466,10 +472,10 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
                 LOGIN
               </Link>
 
-              {/* BOOK NOW Primary CTA Button with adequate mobile touch padding */}
+              {/* BOOK NOW Primary CTA Button: Displayed on mobile viewports (on desktop, Book Now is in center nav) */}
               <Link
                 href="/book"
-                className="inline-flex items-center justify-center h-8 sm:h-9 px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
+                className="md:hidden inline-flex items-center justify-center h-8 sm:h-9 px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
               >
                 BOOK NOW
               </Link>
@@ -478,7 +484,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             <div className="flex items-center gap-4 sm:gap-2">
               <Link
                 href="/book"
-                className="inline-flex items-center justify-center h-8 sm:h-9 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
+                className="md:hidden inline-flex items-center justify-center h-8 sm:h-9 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
               >
                 BOOK NOW
               </Link>
@@ -646,13 +652,6 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             BOOK NOW
           </Link>
           <Link
-            href="/creators"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="block text-sm font-semibold text-white hover:text-blue-400"
-          >
-            CREATORS
-          </Link>
-          <Link
             href="/services"
             onClick={() => setIsMobileMenuOpen(false)}
             className="block text-sm font-semibold text-white hover:text-blue-400"
@@ -665,6 +664,13 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             className="block text-sm font-semibold text-white hover:text-blue-400"
           >
             PORTFOLIO
+          </Link>
+          <Link
+            href="/creators"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="block text-sm font-semibold text-white hover:text-blue-400"
+          >
+            CREATORS
           </Link>
         </div>
       )}

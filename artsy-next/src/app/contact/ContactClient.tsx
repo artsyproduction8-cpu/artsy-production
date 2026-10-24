@@ -120,15 +120,27 @@ export default function ContactClient() {
               <label htmlFor="phone" className="block text-xs font-bold uppercase tracking-wider text-[#1D1D1F] mb-1.5">
                 Phone / WhatsApp Number *
               </label>
-              <input
-                id="phone"
-                type="tel"
-                required
-                placeholder="+91 98765 43210"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-sm text-[#1D1D1F] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] transition-all"
-              />
+              <div className="flex items-center rounded-xl border border-[#E5E5E7] bg-[#F5F5F7] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#3B82F6] overflow-hidden transition-all">
+                <div className="flex items-center gap-1.5 px-3.5 py-3 bg-[#E5E5E7]/70 border-r border-[#E5E5E7] text-xs font-bold text-[#1D1D1F] select-none shrink-0">
+                  <span>🇮🇳</span>
+                  <span>+91</span>
+                </div>
+                <input
+                  id="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  required
+                  placeholder="98765 43210"
+                  value={formData.phone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').slice(-10)}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '');
+                    const val = (raw.length === 12 && raw.startsWith('91')) ? raw.slice(2) : raw.slice(0, 10);
+                    setFormData({ ...formData, phone: val });
+                  }}
+                  className="w-full px-4 py-3 text-sm text-[#1D1D1F] bg-transparent focus:outline-none"
+                />
+              </div>
             </div>
 
             <div>

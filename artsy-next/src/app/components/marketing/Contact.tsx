@@ -169,14 +169,26 @@ export default function Contact() {
                       <label className="block text-xs font-bold text-[#1D1D1F] mb-1.5">
                         WhatsApp / Mobile Number *
                       </label>
-                      <input
-                        type="tel"
-                        required
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="+91 98765 43210"
-                        className="w-full px-4 py-2.5 rounded-xl border border-[#E5E5E7] bg-[#F9F9FB] text-xs font-medium text-[#1D1D1F] placeholder-[#86868B] focus:outline-none focus:border-[#3B82F6] focus:bg-white transition-all"
-                      />
+                      <div className="flex items-center rounded-xl border border-[#E5E5E7] bg-[#F9F9FB] focus-within:bg-white focus-within:border-[#3B82F6] overflow-hidden transition-all">
+                        <div className="flex items-center gap-1.5 px-3 py-2 bg-[#E5E5E7]/70 border-r border-[#E5E5E7] text-xs font-bold text-[#1D1D1F] select-none shrink-0">
+                          <span>🇮🇳</span>
+                          <span>+91</span>
+                        </div>
+                        <input
+                          type="tel"
+                          inputMode="numeric"
+                          maxLength={10}
+                          required
+                          value={formData.phone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').slice(-10)}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, '');
+                            const val = (raw.length === 12 && raw.startsWith('91')) ? raw.slice(2) : raw.slice(0, 10);
+                            setFormData({ ...formData, phone: val });
+                          }}
+                          placeholder="98765 43210"
+                          className="w-full px-3 py-2 text-xs font-medium text-[#1D1D1F] placeholder-[#86868B] bg-transparent focus:outline-none"
+                        />
+                      </div>
                     </div>
 
                     <div>

@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
   }
 
-  const { full_name, display_name, studio_details, avatar_url, creator_profile: creatorPayload } = body;
+  const { full_name, display_name, phone, studio_details, avatar_url, creator_profile: creatorPayload } = body;
 
   const updates: Record<string, any> = {
     updated_at: new Date().toISOString(),
@@ -51,6 +51,16 @@ export async function POST(request: Request) {
       : (updates.full_name ? formatPublicCreatorName(updates.full_name) : null);
   } else if (updates.full_name) {
     updates.display_name = formatPublicCreatorName(updates.full_name);
+  }
+
+  if (phone !== undefined) {
+    if (typeof phone === 'string' && phone.trim().length > 0) {
+      const rawDigits = phone.replace(/\D/g, '');
+      const cleanDigits = (rawDigits.length === 12 && rawDigits.startsWith('91')) ? rawDigits.slice(2) : rawDigits.slice(-10);
+      if (cleanDigits.length === 10) {
+        updates.phone = `+91${cleanDigits}`;
+      }
+    }
   }
 
   if (studio_details !== undefined && typeof studio_details === 'object') {

@@ -318,14 +318,26 @@ function CheckoutContent() {
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
                   WhatsApp Phone Number {isAuthenticated ? '(Optional if on file)' : '(For Status Alerts & OTP)'}
                 </label>
-                <input
-                  type="tel"
-                  required={!isAuthenticated}
-                  value={clientPhone}
-                  onChange={(e) => setClientPhone(e.target.value)}
-                  placeholder="+91 98765 43210"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm text-slate-800 placeholder-slate-400 focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] outline-none transition-all"
-                />
+                <div className="flex items-center rounded-xl border border-slate-200 bg-white focus-within:border-[#2563EB] focus-within:ring-1 focus-within:ring-[#2563EB] overflow-hidden transition-all">
+                  <div className="flex items-center gap-1.5 px-3.5 py-3 bg-slate-50 border-r border-slate-200 text-xs font-bold text-slate-700 select-none shrink-0">
+                    <span>🇮🇳</span>
+                    <span>+91</span>
+                  </div>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    required={!isAuthenticated}
+                    value={clientPhone.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '').slice(-10)}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/\D/g, '');
+                      const val = (raw.length === 12 && raw.startsWith('91')) ? raw.slice(2) : raw.slice(0, 10);
+                      setClientPhone(val);
+                    }}
+                    placeholder="98765 43210"
+                    className="w-full px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div>

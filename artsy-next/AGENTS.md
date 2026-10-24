@@ -257,10 +257,11 @@ The application interface must deliver a flawless, high-performance experience a
 
 ### 5.1 Mobile Header & Navigation Standards (`Navbar.tsx`)
 1. **Header Height:** Fixed navbar container must be compact on mobile (`h-[60px] sm:h-16`) to preserve vertical screen space.
-2. **Logo & Subtitle Wrapping:** The subtitle `"PLACE FOR PERSPECTIVE"` must be hidden on mobile screens using `hidden md:block` to ensure the logo never wraps onto multiple lines.
+2. **Logo & Subtitle Wrapping & Typography:** The subtitle `"PLACE FOR PERSPECTIVE"` uses compact, refined font (`text-[8px] sm:text-[10px]`) and is hidden on mobile screens using `hidden md:block` to ensure the logo never wraps onto multiple lines.
 3. **Action Item Cramping:** The auxiliary text `"LOGIN"` must be hidden on mobile screens (`hidden sm:inline-flex`), preserving breathing room.
 4. **Touch Target Separation:** Right action group must enforce at least 16px separation between items on mobile (`gap-4`) to prevent cramped icons.
-5. **Primary CTA:** The `"BOOK NOW"` button must use proportional mobile padding and typography (`h-8 sm:h-9 px-3 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold`).
+5. **Navigation Sequence & Primary CTA:** Center navigation links enforce the sequence `BOOK NOW - SERVICES - PORTFOLIO - CREATORS` across both desktop and mobile drawer views. On mobile, a dedicated top-right CTA button ensures 1-tap booking.
+6. **Unified +91 Phone Input Standard:** All client and creator phone inputs enforce a locked `🇮🇳 +91` prefix badge, automatic non-digit stripping, and strict 10-digit length constraints.
 
 ### 5.2 Hero Section Typography, Accents & Spacing (`Hero.tsx`)
 1. **Hero Clearance & Top Padding:** Reduce mobile hero top padding (`pt-10 sm:pt-32 pb-12 sm:pb-24`), paired with main container padding (`pt-[60px] sm:pt-16`), ensuring the H1 appears within the initial viewport without massive dead space.

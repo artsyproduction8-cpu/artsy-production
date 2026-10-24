@@ -18,7 +18,7 @@ export default function Footer() {
               <span className="text-2xl font-extrabold uppercase tracking-tight text-white leading-none group-hover:text-white/80 transition-colors">
                 ARTSY
               </span>
-              <span className="font-mono text-xs font-semibold tracking-[1.2px] uppercase text-[#DCDFE3]/80 mt-1 leading-none">
+              <span className="font-mono text-[10px] font-semibold tracking-[1.2px] uppercase text-[#DCDFE3]/80 mt-1 leading-none">
                 PLACE FOR PERSPECTIVE
               </span>
             </Link>

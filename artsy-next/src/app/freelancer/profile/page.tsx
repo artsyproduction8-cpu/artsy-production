@@ -20,11 +20,22 @@ const VERIFIED_ROLES = [
   'Other',
 ];
 
+const extractTenDigitPhone = (raw?: string | null): string => {
+  if (!raw) return '';
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('91')) {
+    return digits.slice(2);
+  }
+  return digits.slice(-10);
+};
+
 export default function FreelancerProfilePage() {
   const { user } = useAuth();
 
   // Section 1: About You & Your Editing Style
   const [alias, setAlias] = useState('');
+  const [phone, setPhone] = useState(extractTenDigitPhone(user?.phone));
+  const [email, setEmail] = useState(user?.email || '');
   const [specialty, setSpecialty] = useState('Commercial & Narrative Film Editor');
   const [customSpecialty, setCustomSpecialty] = useState('');
   const [showreelUrl, setShowreelUrl] = useState('');
@@ -168,6 +179,8 @@ export default function FreelancerProfilePage() {
             if (p.sampleUrl1) setSampleUrl1(p.sampleUrl1);
             if (p.sampleUrl2) setSampleUrl2(p.sampleUrl2);
             if (p.sampleUrl3) setSampleUrl3(p.sampleUrl3);
+            if (p.phone) setPhone(extractTenDigitPhone(p.phone));
+            if (p.email) setEmail(p.email);
             if (p.bankName) setBankName(p.bankName);
             if (p.bankAccount) setBankAccount(p.bankAccount);
             if (p.ifsc) setIfsc(p.ifsc);
@@ -187,6 +200,12 @@ export default function FreelancerProfilePage() {
             const u = data.user;
             const cp = u.creator_profile || {};
             const sd = u.studio_details || {};
+
+            const loadedPhone = u.phone || sd.phone || '';
+            if (loadedPhone) setPhone(extractTenDigitPhone(loadedPhone));
+
+            const loadedEmail = u.email || sd.email || '';
+            if (loadedEmail) setEmail(loadedEmail);
 
             const loadedAlias = cp.public_display_name || u.display_name || u.full_name || '';
             if (loadedAlias) setAlias(loadedAlias);
@@ -329,11 +348,16 @@ export default function FreelancerProfilePage() {
 
     setSaving(true);
 
+    const cleanTenPhone = extractTenDigitPhone(phone);
+    const formattedPhone = cleanTenPhone ? `+91${cleanTenPhone}` : '';
+
     const resolvedSpecialty = specialty === 'Other' ? (customSpecialty.trim() || 'Commercial & Narrative Film Editor') : specialty;
 
-    const studioDetailsPayload = {
+    const studioDetailsPayload: Record<string, any> = {
       alias: cleanAlias,
       legalName: cleanLegal,
+      phone: formattedPhone,
+      email: email.trim(),
       specialty: resolvedSpecialty,
       showreelUrl: showreelUrl || sampleUrl1,
       philosophy,
@@ -395,6 +419,7 @@ export default function FreelancerProfilePage() {
         body: JSON.stringify({
           full_name: cleanLegal,
           display_name: cleanAlias,
+          phone: formattedPhone || undefined,
           studio_details: studioDetailsPayload,
           creator_profile: creatorProfilePayload,
         }),
@@ -632,6 +657,53 @@ export default function FreelancerProfilePage() {
                             className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
                           />
                           <span className="text-[11px] text-[#86868B]">Link to your main showreel or portfolio video (60 to 90 seconds is best).</span>
+                        </div>
+                      </div>
+
+                      {/* Direct Contact: WhatsApp Number (+91 prefix) & Email */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-[#1D1D1F]">
+                            WHATSAPP / MOBILE NUMBER *
+                          </label>
+                          <div className="flex items-center rounded-xl border border-[#E5E5E7] bg-[#F5F5F7] focus-within:bg-white focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10 overflow-hidden transition-all">
+                            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#E5E5E7]/70 border-r border-[#E5E5E7] text-xs font-bold text-[#1D1D1F] select-none shrink-0">
+                              <span>🇮🇳</span>
+                              <span>+91</span>
+                            </div>
+                            <input
+                              type="tel"
+                              inputMode="numeric"
+                              maxLength={10}
+                              value={phone}
+                              onChange={(e) => {
+                                const raw = e.target.value.replace(/\D/g, '');
+                                const val = (raw.length === 12 && raw.startsWith('91')) ? raw.slice(2) : raw.slice(0, 10);
+                                setPhone(val);
+                              }}
+                              placeholder="98765 43210"
+                              className="w-full bg-transparent px-3 py-2 text-sm font-semibold text-[#1D1D1F] placeholder-[#86868B] focus:outline-none"
+                            />
+                          </div>
+                          <span className="text-[11px] text-[#86868B]">
+                            Used for urgent project claim alerts and direct studio communication.
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-xs font-semibold text-[#1D1D1F]">
+                            AUTHENTICATED EMAIL
+                          </label>
+                          <input
+                            type="email"
+                            readOnly
+                            value={email}
+                            placeholder="creator@artsyproduction.com"
+                            className="bg-[#E5E5E7]/50 px-4 py-2.5 text-sm text-[#86868B] rounded-xl border border-[#E5E5E7] outline-none cursor-not-allowed select-none"
+                          />
+                          <span className="text-[11px] text-[#86868B]">
+                            Primary authenticated email linked to your creator account and milestone notifications.
+                          </span>
                         </div>
                       </div>
 

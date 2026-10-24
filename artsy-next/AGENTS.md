@@ -191,7 +191,7 @@ stateDiagram-v2
 ```
 
 #### Creator Onboarding Requirements & Validation Invariants
-1. **Workstation Hardware Configuration (`hardware_config`):** Mandatory CPU, GPU, RAM, and scratch disk specifications. Minimum standard: 6-core processor, dedicated 6GB+ VRAM GPU, 16GB+ RAM.
+1. **Workstation Hardware Configuration (`hardware_config`):** Mandatory workstation specifications across 4 categorized dimensions: Primary Computer / Laptop, Monitor / Display, Storage / Hard Drives, and Headphones / Speakers. Both the pre-approval onboarding form (`/freelancer/onboarding`) and verified profile workstation (`/freelancer/profile`) utilize the unified `HardwareSetupSection` with standard studio preset dropdown menus and full custom specification inputs. Minimum standard: 6-core processor, dedicated 6GB+ VRAM GPU, 16GB+ RAM for 4K ProRes timeline certification.
 2. **Three Mandatory Sample Videos (`sample_url_1`, `sample_url_2`, `sample_url_3`):** Must provide 3 distinct, valid URLs from supported video hosting providers (`youtube.com`, `youtu.be`, `vimeo.com`, `drive.google.com`, `loom.com`).
 3. **Statutory Tax & Banking Validation:**
    - **Permanent Account Number (PAN):** Must strictly match Indian Income Tax regex: `^[A-Z]{5}[0-9]{4}[A-Z]{1}$`.
@@ -409,3 +409,13 @@ flowchart TD
    - Any AI agent executing automated, integration, or E2E tests that generate database rows (Users, Orders, Projects, Creator Profiles) or filesystem scratch files must systematically delete all created records and clean up temporary files immediately upon test completion. Production databases and codebases must remain strictly free of test clutter.
 
 =============================================================================
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

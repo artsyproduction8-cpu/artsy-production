@@ -244,6 +244,7 @@ export async function POST(req: NextRequest) {
           philosophy: philosophy || '',
           showreelUrl: body.showreelUrl || cleanSample1,
           hardware_config: cleanHardwareConfig,
+          hardware: body.hardware || null,
           sample_url_1: cleanSample1,
           sample_url_2: cleanSample2,
           sample_url_3: cleanSample3,

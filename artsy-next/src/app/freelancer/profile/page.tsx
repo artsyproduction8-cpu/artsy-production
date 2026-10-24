@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { useAuth, getCurrentUser, setCurrentUser, logout } from '@/lib/auth';
 import FreelancerHeader from '../components/FreelancerHeader';
 import FreelancerSidebar from '../components/FreelancerSidebar';
+import HardwareSetupSection, {
+  computeHardwareConfigString,
+  parseHardwareConfig,
+} from '@/components/freelancer/HardwareSetupSection';
 
 const VERIFIED_ROLES = [
   'Commercial & Narrative Film Editor',
@@ -31,12 +35,24 @@ export default function FreelancerProfilePage() {
     'DaVinci Resolve Studio',
     'Adobe Premiere Pro',
   ]);
+  const [customSoftwareInput, setCustomSoftwareInput] = useState('');
+  const [showCustomSoftware, setShowCustomSoftware] = useState(false);
   const [experience, setExperience] = useState('2 - 4 Years (Intermediate)');
   const [capacity, setCapacity] = useState('20 - 30 Hours / Week (Part-Time, ~2 projects)');
   const [languages, setLanguages] = useState<string[]>(['Hindi', 'English']);
 
-  // Section 3: Workstation & Hardware Specs
-  const [hardwareConfig, setHardwareConfig] = useState('');
+  // Section 3: Computer & Hardware Setup
+  const [primaryComputer, setPrimaryComputer] = useState('');
+  const [monitorDisplay, setMonitorDisplay] = useState('');
+  const [storageRig, setStorageRig] = useState('');
+  const [audioSetup, setAudioSetup] = useState('');
+
+  const hardwareConfig = computeHardwareConfigString(
+    primaryComputer,
+    monitorDisplay,
+    storageRig,
+    audioSetup
+  );
 
   // Section 4: Portfolio Samples (3 Mandatory Videos)
   const [sampleUrl1, setSampleUrl1] = useState('');
@@ -93,7 +109,7 @@ export default function FreelancerProfilePage() {
   const isPanValid = pan.includes('•') || (pan.trim().length === 10 && panRegex.test(pan.trim()));
   const isIfscValid = ifsc.includes('•') || (ifsc.trim().length === 11 && ifscRegex.test(ifsc.trim()));
   const isBankAccountValid = bankAccount.includes('•') || bankAccountRegex.test(bankAccount.trim());
-  const isHardwareValid = hardwareConfig.trim().length >= 5;
+  const isHardwareValid = primaryComputer.trim().length >= 3 || hardwareConfig.trim().length >= 5;
   const isSample1Valid = isValidVideoUrl(sampleUrl1.trim());
   const isSample2Valid = isValidVideoUrl(sampleUrl2.trim());
   const isSample3Valid = isValidVideoUrl(sampleUrl3.trim());
@@ -136,7 +152,19 @@ export default function FreelancerProfilePage() {
             if (p.experience) setExperience(p.experience);
             if (p.capacity) setCapacity(p.capacity);
             if (Array.isArray(p.languages) && p.languages.length) setLanguages(p.languages);
-            if (p.hardwareConfig) setHardwareConfig(p.hardwareConfig);
+            if (p.hardwareConfig) {
+              const parsed = parseHardwareConfig(p.hardwareConfig);
+              if (parsed.comp) setPrimaryComputer(parsed.comp);
+              if (parsed.mon) setMonitorDisplay(parsed.mon);
+              if (parsed.stor) setStorageRig(parsed.stor);
+              if (parsed.aud) setAudioSetup(parsed.aud);
+            }
+            if (p.hardware) {
+              if (p.hardware.primaryComputer) setPrimaryComputer(p.hardware.primaryComputer);
+              if (p.hardware.monitorDisplay) setMonitorDisplay(p.hardware.monitorDisplay);
+              if (p.hardware.storageRig) setStorageRig(p.hardware.storageRig);
+              if (p.hardware.audioSetup) setAudioSetup(p.hardware.audioSetup);
+            }
             if (p.sampleUrl1) setSampleUrl1(p.sampleUrl1);
             if (p.sampleUrl2) setSampleUrl2(p.sampleUrl2);
             if (p.sampleUrl3) setSampleUrl3(p.sampleUrl3);
@@ -195,7 +223,19 @@ export default function FreelancerProfilePage() {
             if (Array.isArray(loadedLangs) && loadedLangs.length) setLanguages(loadedLangs);
 
             const loadedHw = cp.hardware_config || sd.hardware_config || '';
-            if (loadedHw) setHardwareConfig(loadedHw);
+            if (loadedHw) {
+              const parsed = parseHardwareConfig(loadedHw);
+              if (parsed.comp) setPrimaryComputer(parsed.comp);
+              if (parsed.mon) setMonitorDisplay(parsed.mon);
+              if (parsed.stor) setStorageRig(parsed.stor);
+              if (parsed.aud) setAudioSetup(parsed.aud);
+            }
+            if (sd.hardware) {
+              if (sd.hardware.primaryComputer) setPrimaryComputer(sd.hardware.primaryComputer);
+              if (sd.hardware.monitorDisplay) setMonitorDisplay(sd.hardware.monitorDisplay);
+              if (sd.hardware.storageRig) setStorageRig(sd.hardware.storageRig);
+              if (sd.hardware.audioSetup) setAudioSetup(sd.hardware.audioSetup);
+            }
 
             const loadedS1 = cp.sample_url_1 || sd.sample_url_1 || '';
             const loadedS2 = cp.sample_url_2 || sd.sample_url_2 || '';
@@ -302,6 +342,12 @@ export default function FreelancerProfilePage() {
       capacity,
       languages,
       hardware_config: hardwareConfig,
+      hardware: {
+        primaryComputer,
+        monitorDisplay,
+        storageRig,
+        audioSetup,
+      },
       sample_url_1: sampleUrl1,
       sample_url_2: sampleUrl2,
       sample_url_3: sampleUrl3,
@@ -317,6 +363,12 @@ export default function FreelancerProfilePage() {
       software,
       languages,
       hardware_config: hardwareConfig,
+      hardware: {
+        primaryComputer,
+        monitorDisplay,
+        storageRig,
+        audioSetup,
+      },
       sample_url_1: sampleUrl1,
       sample_url_2: sampleUrl2,
       sample_url_3: sampleUrl3,
@@ -664,7 +716,11 @@ export default function FreelancerProfilePage() {
                             'Adobe After Effects',
                             'Final Cut Pro',
                             'Blender (3D / VFX)',
-                            'CapCut Pro'
+                            'CapCut Pro',
+                            'Avid Media Composer',
+                            'Cinema 4D',
+                            'Pro Tools',
+                            'Unreal Engine 5',
                           ].map((tool) => (
                             <button
                               key={tool}
@@ -679,7 +735,52 @@ export default function FreelancerProfilePage() {
                               {tool}
                             </button>
                           ))}
+                          <button
+                            type="button"
+                            onClick={() => setShowCustomSoftware(!showCustomSoftware)}
+                            className={`px-3.5 py-2 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
+                              showCustomSoftware
+                                ? 'bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]'
+                                : 'bg-[#F5F5F7] text-[#3B82F6] border-[#E5E5E7] hover:bg-white'
+                            }`}
+                          >
+                            + Other / Custom Tool
+                          </button>
                         </div>
+                        {showCustomSoftware && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <input
+                              type="text"
+                              value={customSoftwareInput}
+                              onChange={(e) => setCustomSoftwareInput(e.target.value)}
+                              placeholder="e.g. Houdini, Fusion Studio, Logic Pro, Nuke..."
+                              className="bg-[#F5F5F7] px-4 py-2 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] flex-1"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  const trimmed = customSoftwareInput.trim();
+                                  if (trimmed && !software.includes(trimmed)) {
+                                    setSoftware((prev) => [...prev, trimmed]);
+                                    setCustomSoftwareInput('');
+                                  }
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const trimmed = customSoftwareInput.trim();
+                                if (trimmed && !software.includes(trimmed)) {
+                                  setSoftware((prev) => [...prev, trimmed]);
+                                  setCustomSoftwareInput('');
+                                }
+                              }}
+                              className="px-3.5 py-2 text-xs font-bold rounded-xl bg-[#1D1D1F] text-white cursor-pointer hover:bg-[#333]"
+                            >
+                              Add Tool
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
@@ -744,38 +845,19 @@ export default function FreelancerProfilePage() {
                       </div>
                     </div>
 
-                    {/* 03 Workstation & Hardware */}
-                    <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
-                      <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
-                        <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
-                            3
-                          </span>
-                          Workstation &amp; Hardware Specifications
-                        </span>
-                        <span className="text-xs text-red-600 uppercase font-semibold">* Mandatory</span>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-[#1D1D1F]">
-                          WORKSTATION HARDWARE SPECS (CPU, GPU, RAM) *
-                        </label>
-                        <textarea
-                          required
-                          rows={3}
-                          value={hardwareConfig}
-                          onChange={(e) => setHardwareConfig(e.target.value)}
-                          placeholder="e.g. CPU: Apple M2 Max / AMD Ryzen 9 7900X&#10;GPU: NVIDIA RTX 4080 (16GB VRAM)&#10;RAM: 64GB DDR5&#10;Storage: 4TB NVMe SSD scratch disk"
-                          className="bg-[#F5F5F7] p-3.5 text-sm font-mono text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all resize-none"
-                        />
-                        <div className="flex justify-between items-center text-[11px] text-[#86868B] mt-1">
-                          <span>Required for 4K ProRes timeline render eligibility.</span>
-                          {hardwareConfig && !isHardwareValid && (
-                            <span className="text-red-500 font-semibold">Min 5 characters required</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    {/* 03 Computer & Hardware Setup */}
+                    <HardwareSetupSection
+                      primaryComputer={primaryComputer}
+                      setPrimaryComputer={setPrimaryComputer}
+                      monitorDisplay={monitorDisplay}
+                      setMonitorDisplay={setMonitorDisplay}
+                      storageRig={storageRig}
+                      setStorageRig={setStorageRig}
+                      audioSetup={audioSetup}
+                      setAudioSetup={setAudioSetup}
+                      stepNumber={3}
+                      required={true}
+                    />
 
                     {/* 04 Portfolio Samples */}
                     <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">

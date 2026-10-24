@@ -292,50 +292,61 @@ The static analyzer `scripts/regression-guard` is the definitive automated firew
 
 ---
 
-## 7. THE AUTONOMOUS SELF-AUDITING LOOP
+## 7. THE AUTONOMOUS MULTI-AGENT EXECUTION & CONTINUOUS AUDITING FRAMEWORK
 
-Every AI agent operating in this repository is strictly bound to execute the three-phase autonomous development loop.
+Whenever any AI agent works on any user prompt, it MUST adhere strictly to the following 6-step lifecycle without exception:
 
 ```mermaid
 flowchart TD
-    Start([User Request Received]) --> PhaseA[PHASE A: THE BUILDER<br/>Read AGENTS.md & files<br/>Implement requested task<br/>Run TS & Production Build]
-    
-    PhaseA --> PhaseB[PHASE B: THE AUDITOR<br/>Switch to Ruthless QA Lead<br/>Audit against prompt & rules<br/>Inspect all diffs for regressions]
-    
-    PhaseB --> Decision{Remediation Gaps Found?}
-    
-    Decision -- Yes --> PhaseC[PHASE C: THE IMPROVER<br/>Fix all identified gaps<br/>Run scripts/regression-guard<br/>Rebuild production build]
-    PhaseC --> PhaseB
-    
-    Decision -- No (0 Gaps) --> Firewall[Run No-Regression Firewall<br/>scripts/regression-guard]
-    Firewall --> FinalVerify{Firewall Passes?}
-    FinalVerify -- Fail --> PhaseC
-    FinalVerify -- Pass --> Done([Commit & Deliver Report])
+    Step1([1. User Prompt Received]) --> Step2[2. Lead Orchestration & Multi-Agent Delegation<br/>Decompose task & spawn parallel subagents if needed]
+    Step2 --> Step3[3. Build & Implementation Phase<br/>Clean code adhering strictly to AGENTS.md]
+    Step3 --> Step4[4. Audit & Verification By Actual Use<br/>Test against original prompt, verify in browser/APIs/mobile]
+    Step4 --> Decision{Meets Goal & High Standard?}
+    Decision -- No / Improvements Needed --> Step5[5. Autonomous Improver Loop<br/>Analyze issues, elevate quality, iterate until perfect]
+    Step5 --> Step4
+    Decision -- Yes (0 Gaps & Verified) --> Step6[6. Record in Memory Bank (AGENTS.md)<br/>Commit documentation & produce detailed user report]
 ```
 
-### 7.1 Phase A: The Builder (Execution)
-1. Read `AGENTS.md` and all related files before touching any code.
-2. Formulate a precise implementation plan adhering to architectural patterns.
-3. Make the necessary code modifications cleanly and minimally.
-4. Execute TypeScript checks (`npx tsc --noEmit`) and the Next.js Production Build (`npm run build`).
+### 7.1 Multi-Agent Team Formation & Delegation
+- The primary AI Agent operates as the Lead Architect and Orchestrator.
+- To maximize velocity, quality, and rigorous verification, the lead agent is authorized and encouraged to spawn a small team of specialized subagents working in parallel:
+  - **Feature Builder Agent:** Focused on minimal, clean code implementation adhering strictly to `AGENTS.md`.
+  - **QA / Security Auditor Agent:** Conducts adversarial audits, checks state machine invariants, verifies zero-trust RLS, and executes regression guards.
+  - **Browser & UI Verification Agent:** Interacts with the live or local interface using browser automation, inspecting mobile (< 768px) and desktop (>= 1024px) viewports, verifying visual aesthetics, touch padding, responsive transitions, and real interaction flows.
 
-### 7.2 Phase B: The Auditor (Self-Reflection)
-1. Halt coding. Adopt the mindset of a ruthless, adversarial Staff QA & Security Engineer.
-2. Re-read the user's ORIGINAL prompt line by line.
-3. Review `git diff` against the repository baseline.
-4. Scrutinize the work against the five foundational audit questions:
-   - **Adherence:** Did I solve exactly what was requested without adding unnecessary bloat?
-   - **Edge Cases:** Did I account for all edge cases (e.g., null states, unauthenticated sessions, mobile screens)?
-   - **Rule Compliance:** Did I violate any invariant in `AGENTS.md`?
-   - **Regression Risk:** Did I introduce any regression into pricing, auth, or state machines?
-   - **Quality Standard:** Can this implementation be made more secure, performant, or elegant?
+### 7.2 Phase A: The Builder (Implementation)
+1. Read `AGENTS.md` and related source files in their entirety before modifying or generating code.
+2. Formulate a precise implementation plan matching architectural and state machine standards.
+3. Implement the necessary code changes cleanly and minimally without bloat.
+4. Verify TypeScript compiler clean pass (`npx tsc --noEmit`) and Next.js production build (`npm run build`).
 
-### 7.3 Phase C: The Improver (Auto-Correction)
-1. If ANY gap, vulnerability, or violation is uncovered in Phase B, compile a concrete "Remediation List."
-2. Immediately execute the necessary corrections.
-3. Run the No-Regression Firewall (`node scripts/regression-guard`).
-4. Re-run TypeScript and the Next.js production build.
-5. Loop back to Phase B until the Auditor certifies ZERO gaps and ZERO regressions.
+### 7.3 Phase B: The Auditor (Adversarial Verification by Actual Use)
+1. Halt coding. Adopt the mindset of a ruthless Staff QA & Security Lead.
+2. **Audit Against Original Prompt:** Re-read the user's prompt sentence by sentence to ensure 100% of explicit and implicit requirements have been addressed.
+3. **Verify by Actual Use (Not Just Compiling):**
+   - Use browser automation tools (`browser_subagent`, DevTools) to interact with the rendered interface.
+   - Inspect mobile screens (< 768px) and desktop screens (>= 1024px) to ensure no cramping, clumsy line breaks, or visual glitches.
+   - Test user interaction flows (OTP entry, form submission, checkout redirection, error dialogs).
+   - Review `git diff` against the baseline to ensure zero unintended side effects.
+
+### 7.4 Phase C: The Improver (Autonomous Continuous Refinement)
+1. If ANY defect, discrepancy, clumsy layout, performance bottleneck, or unaddressed requirement is detected:
+   - Identify the exact root cause: *Why is it not working properly or looking premium?*
+   - Determine concrete actions to make the implementation more impressive, robust, and refined.
+   - Apply the fixes immediately and re-verify through actual use.
+   - Keep working autonomously in this loop until the main goal is completely met and certified defect-free.
+
+### 7.5 Phase D: Memory Bank Persistence
+1. Record all architectural additions, schema modifications, responsive standards, and invariant changes in the Master Memory Bank (`AGENTS.md`).
+2. Keep both root `AGENTS.md` and `artsy-next/AGENTS.md` completely in sync.
+
+### 7.6 Phase E: Detailed Final Report
+1. Deliver a comprehensive, transparent report to the user summarizing:
+   - What was implemented.
+   - How it was audited and verified (including browser testing and mobile/desktop checks).
+   - What autonomous improvements were made.
+   - What was logged in the Memory Bank.
+   - Git commit hashes and live deployment IDs.
 
 ---
 

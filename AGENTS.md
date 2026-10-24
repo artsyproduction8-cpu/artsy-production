@@ -256,20 +256,24 @@ $$\text{Creator Net Payout} = \text{Creator Share} - \text{TDS} = 453,310 - 9,06
 The application interface must deliver a flawless, high-performance experience across all viewports, adhering strictly to mobile-first responsive design principles.
 
 ### 5.1 Mobile Header & Navigation Standards (`Navbar.tsx`)
-1. **Logo & Subtitle Wrapping:** The subtitle `"PLACE FOR PERSPECTIVE"` must be hidden on mobile screens using `hidden md:block` to ensure the logo never wraps onto multiple lines and the navbar maintains a strict 64px height.
-2. **Action Item Cramping:** The text `"LOGIN"` must be hidden on mobile screens (`hidden sm:inline-flex`), preserving breathing room for the search trigger and the primary CTA.
-3. **Primary CTA:** The `"BOOK NOW"` button must have adequate touch targets and padding on mobile (`h-8 sm:h-9 px-3.5 sm:px-4 text-xs font-bold`).
+1. **Header Height:** Fixed navbar container must be compact on mobile (`h-[60px] sm:h-16`) to preserve vertical screen space.
+2. **Logo & Subtitle Wrapping:** The subtitle `"PLACE FOR PERSPECTIVE"` must be hidden on mobile screens using `hidden md:block` to ensure the logo never wraps onto multiple lines.
+3. **Action Item Cramping:** The auxiliary text `"LOGIN"` must be hidden on mobile screens (`hidden sm:inline-flex`), preserving breathing room.
+4. **Touch Target Separation:** Right action group must enforce at least 16px separation between items on mobile (`gap-4`) to prevent cramped icons.
+5. **Primary CTA:** The `"BOOK NOW"` button must use proportional mobile padding and typography (`h-8 sm:h-9 px-3 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold`).
 
-### 5.2 Hero Section Typography & Spacing (`Hero.tsx`)
-1. **Fluid Responsive H1:** The main heading must scale gracefully (`text-3xl sm:text-5xl lg:text-6xl`) with balanced line height (`leading-[1.15] sm:leading-tight`).
-2. **No Text Overflow:** Long sub-headings must avoid `whitespace-nowrap` on mobile viewports.
-3. **Accent Underline:** The blue underline on `"Modern Creative Teams"` must never render as a thick, clumsy block. It must use a relative container with an absolute curved bottom accent bar (`h-[3px] sm:h-1 bg-[#3B82F6] rounded-full`) with comfortable vertical padding (`pb-1.5 sm:pb-2`).
-4. **Ghost Watermark:** The giant background watermark (`POST // 24FPS`) must be hidden on mobile screens using `hidden md:block` to prevent text overlap.
-5. **Metrics Grid:** The statistics strip must use a 2-column grid on mobile (`grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-8`), with the 3rd metric spanning the bottom row (`col-span-2 sm:col-span-1`).
+### 5.2 Hero Section Typography, Accents & Spacing (`Hero.tsx`)
+1. **Hero Clearance & Top Padding:** Reduce mobile hero top padding (`pt-10 sm:pt-32 pb-12 sm:pb-24`), paired with main container padding (`pt-[60px] sm:pt-16`), ensuring the H1 appears within the initial viewport without massive dead space.
+2. **Fluid Responsive H1:** The main heading must scale gracefully (`text-2xl sm:text-5xl lg:text-6xl`) with tight line height (`leading-tight sm:leading-tight`) to avoid clumsy word wraps.
+3. **Thinner Accent Underline:** The blue underline on `"Modern Creative Teams"` must be an elegant, razor-sharp 2px translucent accent bar (`h-[2px] bg-[#3B82F6]/80 rounded-full`) instead of a thick glitchy block.
+4. **Ghost Watermark:** The background watermark (`POST // 24FPS`) must be hidden on mobile screens using `hidden md:block` to eliminate visual noise behind text.
+5. **Horizontal Breathing Room:** Hero container and editorial body text must enforce horizontal gutter padding (`px-6 sm:px-8`) with lighter color (`text-[#6E6E73]`) and relaxed line height (`leading-relaxed`) so text never touches screen edges.
+6. **Card-Based Metrics Grid:** Metrics must be styled in rounded cards (`bg-[#F9F9FB] sm:bg-transparent border border-[#E5E5E7]/70 sm:border-0 rounded-2xl p-4 sm:p-0 shadow-[0_2px_8px_rgba(0,0,0,0.02)] sm:shadow-none`). Uses a 2-column grid on mobile (`grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-8`), with the 3rd metric (`1,400+ Commercial Revisions`) centered across both columns below (`col-span-2 sm:col-span-1 text-center sm:text-left`). Statistical numbers must be bold (`font-black text-2xl sm:text-3xl`) with small uppercase tracking labels (`text-[10px] sm:text-xs uppercase tracking-wider font-semibold`).
 
-### 5.3 Category Cards & Footer Responsiveness
-1. **Catalog Cards (`Services.tsx`):** Category cards must span full width on mobile viewports (`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`) with standard 24px internal padding (`px-6 py-5`).
-2. **Footer Alignment (`Footer.tsx`):** Copyright text and compliance links must be centered on mobile viewports (`text-center sm:text-left`, `justify-center sm:justify-end`).
+### 5.3 Section Transitions & Card Elevation (`Services.tsx`)
+1. **Curved Sheet Transition:** The transition into the gray `"Select category"` section must feature a curved top border (`rounded-t-[32px] sm:rounded-none`) with negative top margin (`-mt-4 sm:mt-0 relative z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] sm:shadow-none border-t border-[#E5E5E7]/60 sm:border-0`) to create an authentic native iOS card sheet sliding over the hero.
+2. **Catalog Card Spacing:** Category cards must span full width on mobile viewports (`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4`) with standard 24px horizontal container padding (`px-6 sm:px-8`) so cards never collide with screen edges.
+3. **Footer Alignment (`Footer.tsx`):** Copyright text and compliance links must be centered on mobile viewports (`text-center sm:text-left`, `justify-center sm:justify-end`).
 
 ---
 

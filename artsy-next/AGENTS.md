@@ -1,87 +1,71 @@
 # ARTSY PRODUCTION — CANONICAL AGENTS MEMORY BANK & AUTONOMOUS SYSTEM
 =============================================================================
-**Document Version:** 3.0 (Master Plan v2.1 & Production Parity Locked)  
-**Target Environment:** Node.js, Next.js App Router, Supabase PostgreSQL, Vercel Edge  
+**Document Version:** 4.0 (Enterprise Security, Strict Auth & Mobile-First Production Standard)  
+**Target Environment:** Node.js v20+, Next.js 16.4.0 (App Router), Supabase PostgreSQL (Mumbai), Vercel Edge, Razorpay Live  
 **Primary Source of Truth:** `AGENTS.md`  
 
 > [!IMPORTANT]
 > **MANDATORY DIRECTIVE FOR ALL FUTURE AI AGENTS:**
 > You MUST read this document in its entirety before analyzing, modifying, or creating any code in this repository.
-> Every engineering action must strictly uphold the state machines, zero-trust security invariants, financial formulas, and autonomous self-auditing loop defined below.
+> Every engineering action must strictly uphold the state machines, zero-trust security invariants, financial formulas, mobile-first design system, and the autonomous self-auditing loop defined below.
+> Never bypass these invariants for convenience or development velocity.
 
 ---
 
-## 1. EXACT ARCHITECTURE & SYSTEM TOPOLOGY
+## 1. EXACT ARCHITECTURE & DATABASE TOPOLOGY
 
 Artsy Production operates an enterprise-grade video post-production platform connecting elite creative clients with vetted freelance editors and colorists under studio oversight.
 
 ### 1.1 Technical Stack & Infrastructure Components
-| Layer | Technology | Configuration & Specifics |
+| Layer | Technology | Configuration & Invariants |
 | :--- | :--- | :--- |
-| **Framework** | Next.js 16.4.0 (App Router) | React 19.2.8, Tailwind CSS v4, Webpack compiler (`next build --webpack`) |
-| **Language Runtime** | Node.js v20+ / TypeScript 5 | Strict typing enabled (`noEmit: true`, `strict: true`) |
+| **Framework** | Next.js 16.4.0 (App Router) | React 19.2.8, Tailwind CSS v4, Webpack compiler (`next build --webpack`). |
+| **Language Runtime** | Node.js v20+ / TypeScript 5 | Strict typing enforced (`noEmit: true`, `strict: true`). Zero implicit `any`. |
 | **Database** | Supabase PostgreSQL | Hosted on AWS `ap-south-1` (Mumbai). TLS 1.3 enforced. |
-| **RLS Mode** | Zero-Trust Server Lockdown | Public/anon access revoked across public schema. All mutations through server API routes with `service_role` and `x-artsy-server-auth` header. |
-| **Edge Middleware** | Next.js Edge Middleware (`src/middleware.ts`) | Distributed IP rate limiting, CORS strict origin matching, payload size caps (2MB API, 10MB storage), route authorization. |
-| **Payment Gateway** | Razorpay | Standard 2.0% gateway fee + 18% GST on fee. SHA256 HMAC webhook verification with 5-minute replay guard and unique idempotency keys. |
-| **Raw File Storage** | Backblaze B2 (S3-compatible) | Bucket: `artsy-production-raw-footage`, Endpoint: `s3.us-west-004.backblazeb2.com`, Region: `us-west-004`. Direct browser PUT via 15-minute presigned URLs with mediainfo container validation. |
-| **Review Video CDN** | Bunny Stream / Bunny CDN | Pull zones and stream endpoints: `video.bunnycdn.com`, `*.b-cdn.net`. HLS 1080p proxies with watermarking. |
-| **Messaging & Notifications** | Meta WhatsApp Cloud API & Resend | WhatsApp HSM transactional templates (`graph.facebook.com/v23.0`) + transactional email dispatcher via Resend. |
+| **RLS Mode** | Zero-Trust Server Lockdown | Public/anon access revoked across public schema. Direct client queries forbidden. Backend operations use `service_role` paired with `x-artsy-server-auth` internal header. |
+| **Edge Middleware** | Next.js Edge Middleware (`src/middleware.ts`) | Distributed IP rate limiting, strict CORS origin validation, payload caps (2MB API, 10MB storage), route protection. |
+| **Payment Gateway** | Razorpay | 2.0% gateway fee + 18% GST on fee. SHA256 HMAC webhook verification with 5-minute replay guard and unique idempotency keys. |
+| **Raw File Storage** | Backblaze B2 (S3-compatible) | Bucket: `artsy-production-raw-footage`, Endpoint: `s3.us-west-004.backblazeb2.com`, Region: `us-west-004`. 15-minute presigned upload URLs with mediainfo container validation. |
+| **Review Video CDN** | Bunny Stream / Bunny CDN | Pull zones: `video.bunnycdn.com`, `*.b-cdn.net`. Transcoded HLS 1080p proxies with burnt-in timecodes and dynamic client watermarking. |
+| **Notifications** | Meta WhatsApp Cloud API & Resend | WhatsApp HSM transactional templates (`graph.facebook.com/v23.0`) using registered `artsy_otp_verification` template + Resend transactional email dispatcher. |
 | **PII Encryption** | Node `crypto` & PostgreSQL `pgcrypto` | AES-256-GCM authenticated encryption for sensitive banking and tax data (PAN, Bank Account, IFSC). |
 
-### 1.2 Monorepo Directory Structure
-```text
-ARTSY WEB/
-├── AGENTS.md                       # Canonical Memory Bank & Agent Rules (Root Source of Truth)
-├── package.json                    # Root workspace package orchestrating artsy-next
-├── scripts/
-│   └── regression-guard            # Autonomous No-Regression Firewall static analyzer
-└── artsy-next/                     # Core Next.js Application Root
-    ├── next.config.ts              # Next.js configuration, security headers & CSP
-    ├── package.json                # Application dependencies, scripts, and build targets
-    ├── tsconfig.json               # TypeScript compiler configuration & path aliases (@/*, @/lib/*)
-    ├── scripts/
-    │   ├── regression-guard        # Mirrored firewall runner for subproject execution
-    │   ├── test-e2e-suite.ts       # 20/20 End-to-End automated integration test suite
-    │   ├── test-no-dev-bypass.sh   # Dev bypass regression test
-    │   └── verify-rls-lockdown.mjs # RLS enforcement & anon rejection verification
-    ├── supabase/
-    │   └── migrations/             # Idempotent SQL migrations (000_canonical through 012_fix_rls)
-    ├── lib/                        # Core shared modules (auth, supabase, auth-utils)
-    └── src/
-        ├── middleware.ts           # Global Edge Route Guard, Rate Limiter & Sanity Firewall
-        ├── components/             # Reusable UI components (strictly client/server isolated)
-        │   ├── RazorpayCheckoutButton.tsx
-        │   ├── YouTubePlayerModal.tsx
-        │   ├── LiteYouTubeEmbed.tsx
-        │   ├── FontLoader.tsx
-        │   └── [admin|booking|dashboard|freelancer|marketing|preview|project]/
-        ├── lib/                    # Domain logic & engines
-        │   ├── financial/engine.ts # Canonical GST, TDS, and 70/30 waterfall math
-        │   ├── pricing/engine.ts   # Dynamic pricing calculator & quote generator
-        │   ├── pricing/catalog-matrix.ts # Live catalog matrix & product specs
-        │   ├── auth-cookie.ts      # Server-side HMAC cookie creation and verification
-        │   ├── auth-cookie-edge.ts # Edge runtime Web Crypto HMAC parsing
-        │   ├── crypto/pii.ts       # AES-256-GCM encryption & format masking
-        │   ├── rateLimit.ts        # Upstash Redis & in-memory sliding window rate limiter
-        │   ├── invoices/           # GST tax invoice generation & vault storage
-        │   ├── storage/            # Backblaze B2 presigned ingest & header validator
-        │   └── whatsapp/           # Meta Cloud API template dispatchers
-        └── app/                    # Next.js App Router endpoints & page views
-            ├── (client)/           # Client portal routes
-            ├── admin/              # Studio Ops Administration Portal
-            ├── freelancer/         # Creator workstation & application portal
-            ├── api/                # Secure server-side REST API handlers
-            └── auth/               # Unified authentication pages (login, verify)
-```
+### 1.2 Core Database Tables & Schema Invariants
+| Table Name | Primary Key | Key Invariants, Security Rules & Columns |
+| :--- | :--- | :--- |
+| `public.users` | `UUID` | Master directory. Enforces unique email and phone. Contains `role` (`client`, `freelancer`, `admin`, `super_admin`), `status`, `token_version` ($\ge 2$), and soft-delete marker `deleted_at`. |
+| `public.creator_profiles` | `UUID (FK users.id)` | Freelancer vetting profile. Contains encrypted banking details (`pan_encrypted`, `bank_account_encrypted`, `ifsc_encrypted`), `skills`, `software`, `portfolio_url`, `approval_status`, plus Migration 014 columns: `hardware_config TEXT`, `sample_url_1 TEXT`, `sample_url_2 TEXT`, `sample_url_3 TEXT`, and `agreement_signed_at TIMESTAMPTZ`. |
+| `public.creator_agreements` | `UUID` | Master Service Agreement & Non-Disclosure Agreement ledger. Tracks `user_id`, `legal_name TEXT`, `agreement_signed_at TIMESTAMPTZ`, IP address, and agreement version. |
+| `public.services` | `UUID` | Master service catalog (Wedding, Brand, Corporate, Personal). Stores canonical base prices in paise. |
+| `public.pricing_rules` | `UUID` | Structured pricing rules for camera angles, turnaround SLA tiers, and 4K master rendering. |
+| `public.quotes` | `UUID` | Immutable snapshot of client order configurations with a strict 7-day validity limit. |
+| `public.orders` | `UUID` | Primary commerce record. Tracks gross amount, GST liability, net amount, Razorpay order references, and `client_id` strictly bound to the authenticated user. |
+| `public.payments` | `UUID` | **WORM Immutable Table.** Captures gateway transaction receipts. Updates and deletes are blocked by PostgreSQL triggers. |
+| `public.projects` | `UUID` | Production workstation lifecycle with a 32-status state machine. |
+| `public.assignments` | `UUID` | Work dispatch ledger linking vetted creators to approved projects. |
+| `public.file_records` | `UUID` | Ingested footage metadata, presigned B2 storage keys, and BunnyCDN video IDs. |
+| `public.creator_payouts` | `UUID` | Creator compensation ledger. Tracks gross share (70%), statutory TDS deductions (2%), and NEFT payment states. |
+| `public.credit_notes` | `UUID` | Append-only corrective ledger for refunds, price adjustments, and cancellations. |
+| `public.audit_logs` | `UUID` | Append-only security audit trail recording all administrative disclosures, PAN reveals, and status alterations. |
+
+### 1.3 Write-Once-Read-Many (WORM) Immutability Trigger
+To guarantee financial integrity and regulatory compliance under Indian financial laws, `public.payments` is protected by database triggers `trg_block_payments_update` and `trg_block_payments_delete`:
+- Any `UPDATE` or `DELETE` executed against `public.payments` raises an immediate PostgreSQL exception with error code `23514` (`check_violation`).
+- Financial corrections, chargebacks, reversals, or adjustments MUST be written to `public.credit_notes` or `public.creator_payouts` as append-only records.
+
+### 1.4 Zero-Trust Row Level Security (RLS) Policy
+- All public tables have `ENABLE ROW LEVEL SECURITY` enforced.
+- Direct table access permissions (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) are strictly **REVOKED** from `anon`, `authenticated`, and untrusted roles.
+- Backend server operations utilize `service_role` paired with the internal authorization function `is_server_authorized()` checking header `x-artsy-server-auth`.
+- **Absolute Rule:** React Client Components (`'use client'`) are strictly forbidden from importing `@supabase/supabase-js` or querying the database directly. All mutations and data fetches must traverse authenticated server API routes.
 
 ---
 
-## 2. AUTHENTICATION & SESSION STATE MACHINE
+## 2. STRICT AUTHENTICATION, RATE LIMITING & SECURITY GATES
 
-Authentication in Artsy Production is completely decoupled from vulnerable client-side magic links or raw third-party session tokens. It is powered by a proprietary, cryptographically signed HTTP-only HMAC session system.
+Authentication is completely decoupled from vulnerable client-side magic links or raw third-party tokens. It is powered by a proprietary, cryptographically signed HTTP-only HMAC session system.
 
-### 2.1 The Authentication Flow
+### 2.1 Dual-Credential Verification Flow
 ```mermaid
 sequenceDiagram
     autonumber
@@ -92,17 +76,31 @@ sequenceDiagram
     participant DB as Supabase PostgreSQL
     participant Browser as Browser Cookie Jar
 
-    User->>UI: Enters Phone (+91) or Email
-    UI->>OTP_API: action='send', identifier, role
-    Note over OTP_API: Rate Limit Check (5 requests/10 min/ID)
-    OTP_API->>OTP_API: crypto.randomInt(100000, 1000000)
-    OTP_API->>OTP_API: bcrypt.hash(otp, 10)
-    OTP_API->>DB: Store hashed OTP with 5-minute TTL
-    OTP_API->>WA_Email: Dispatch OTP via Meta WhatsApp Cloud & Resend
-    OTP_API-->>UI: 200 OK (OTP Sent, dev code never leaked in prod)
+    User->>UI: Enters Phone (+91) AND Email
+    UI->>OTP_API: action='send', phone, email, role
+    Note over OTP_API: Rate Limit Check (5 requests/10 min/ID & IP)
+    
+    alt Existing Account
+        Note over OTP_API: Strict Credential Matching: Phone & Email must match the same user record!
+        alt Credentials Mismatch
+            OTP_API-->>UI: 400 Bad Request ("Credentials mismatch")
+        else Credentials Match
+            OTP_API->>OTP_API: crypto.randomInt(100000, 1000000)
+            OTP_API->>OTP_API: bcrypt.hash(otp, 10)
+            OTP_API->>DB: Store hashed OTP with 5-minute TTL
+            OTP_API->>WA_Email: Dispatch OTP to WhatsApp (+91) and Email
+            OTP_API-->>UI: 200 OK (OTP Sent)
+        end
+    else Brand New Account
+        OTP_API->>OTP_API: crypto.randomInt(100000, 1000000)
+        OTP_API->>OTP_API: bcrypt.hash(otp, 10)
+        OTP_API->>DB: Store hashed OTP with 5-minute TTL
+        OTP_API->>WA_Email: Dispatch OTP to BOTH WhatsApp (+91) AND Email
+        OTP_API-->>UI: 200 OK (OTP Sent)
+    end
 
     User->>UI: Enters 6-digit OTP
-    UI->>OTP_API: action='verify', code, identifier
+    UI->>OTP_API: action='verify', code, phone, email, role
     Note over OTP_API: Verify Rate Limit (5 attempts/10 min)
     OTP_API->>OTP_API: bcrypt.compare(code, storedHash)
     alt OTP Invalid or Expired
@@ -116,74 +114,120 @@ sequenceDiagram
     end
 ```
 
-### 2.2 Token Structure & HMAC Signatures
-1. **Cookie Format:** `<payloadBase64>.<signatureHex>`
-2. **Payload Fields:**
-   - `id`: Canonical UUID string of the user.
-   - `role`: `'client' | 'freelancer' | 'admin' | 'super_admin'`.
-   - `token_version`: Monotonically increasing integer (revocation guard, must be $\ge 2$).
-   - `exp`: Epoch millisecond expiration timestamp (24-hour lifetime).
-3. **Cryptographic Signing:**
-   - Node Environment: `crypto.createHmac('sha256', secret).update(payloadBase64).digest('hex')`.
-   - Edge Runtime: Web Crypto API `SubtleCrypto.sign('HMAC', key, data)`.
-   - Constant-time verification prevents timing attacks (`crypto.timingSafeEqual` or bitwise XOR accumulator).
-4. **Instant Revocation via `token_version`:**
-   - Every user table row has a `token_version` integer column.
-   - When a user logs out everywhere, changes credentials, or is terminated by an admin, `token_version` is incremented in PostgreSQL.
-   - Any cookie bearing an older `token_version` is rejected immediately by `verifyAndParseAuthCookie`.
+### 2.2 Strict Credential Matching Rules
+1. **Existing Users:** When an existing user enters their credentials, the system verifies that the submitted phone and email belong to the exact same account row in `public.users`. If a phone number is registered to User A but the email belongs to User B (or does not match User A), the API rejects the request with an HTTP 400 error.
+2. **New Users:** New users must provide both a valid 10-digit Indian mobile number (+91) and a valid email address. The OTP is dispatched to both channels simultaneously.
+3. **No Premature DB Row Creation:** Initial OTP generation or login for a new creator must NOT insert a premature row with `approval_status: 'pending'` into `creator_profiles`. The creator profile is instantiated strictly upon submitting the onboarding form.
 
-### 2.3 Strict Route Guard Invariants
-- **Public Routes:** `/`, `/work`, `/services`, `/services/*`, `/pricing`, `/about`, `/contact`, `/book`, `/cookies`, `/terms`, `/privacy`, `/refund-policy`.  
-  *Rule:* Must NEVER be blocked by route guards. Cross-portal navigation from public pages must NEVER strip or overwrite authenticated session cookies.
-- **Admin Portal (`/admin/*`):**  
-  *Rule:* Accessible ONLY to `role: 'admin'` or `role: 'super_admin'`. Unauthorized visits must be redirected to `/admin/login` or `/auth/login` WITHOUT clearing non-admin cookies.
-- **Client Portal (`/client/*`, `/client-dashboard`):**  
-  *Rule:* Accessible to `client`, `admin`, `super_admin`. If `client` has not completed profile setup (`onboarded === false`), all internal pages redirect to `/client/profile?setup=true`.
-- **Creator Portal (`/freelancer/*`):**  
-  *Rule:* Accessible to `freelancer`, `admin`, `super_admin`. Strict onboarding state machine applies (see Section 4).
+### 2.3 Strict Rate Limiting & Abuse Prevention
+- **Send OTP Limit:** Maximum 5 OTP send requests per 10 minutes per identifier (phone or email) and per IP address.
+- **Verify OTP Limit:** Maximum 5 verification attempts per 10 minutes per identifier. On the 5th failed attempt, the identifier is locked for 10 minutes.
+- **Payload Limits:** Edge Middleware enforces a strict 2MB ceiling on standard API payloads and a 10MB ceiling on presigned storage endpoints.
 
 ### 2.4 Absolute Security Mandates
-- **NO Hardcoded OTPs:** No `'123456'`, `"123456"`, `'4210'`, or default codes may exist anywhere in the codebase.
-- **NO Mock Admin Logins:** Admin authentication requires authentic phone/email OTP verification matching privileged credentials.
-- **Zero Client Database Queries:** React client components (`'use client'`) are strictly forbidden from importing `@supabase/supabase-js` or querying the database.
+- **NO Hardcoded OTPs:** Under no circumstances may `'123456'`, `"123456"`, `'4210'`, or any static fallback code exist in the codebase.
+- **NO Mock Admin Logins:** Admin authentication requires authentic phone/email verification matching registered administrative credentials.
+- **Guest Checkout BAN:** Unauthenticated users can NEVER access the Razorpay payment gateway or trigger `/api/orders/create`. Clicking "Proceed to Checkout" requires a valid session; unauthenticated guests are routed to `/auth/login?redirect=/book/checkout`.
 
 ---
 
-## 3. DATABASE SCHEMA, RLS & FINANCIAL MATH
+## 3. WORKFLOW STATE MACHINES
 
-### 3.1 Core Database Tables
-| Table Name | Primary Key | Key Invariants & Purpose |
-| :--- | :--- | :--- |
-| `public.users` | `UUID` | Master user directory. Enforces unique email and phone. Contains `role`, `status`, `token_version`, and soft-delete marker `deleted_at`. |
-| `public.creator_profiles` | `UUID (FK users.id)` | Freelancer vetting and talent profile. Contains AES-256 encrypted banking details, skills, software, portfolio links, and approval statuses. |
-| `public.services` | `UUID` | Active services catalog across wedding, brand, corporate, and personal video production. Stores base prices in paise. |
-| `public.pricing_rules` | `UUID` | Structured pricing rules for multi-cam, rush delivery, 4K rendering, and revisions. |
-| `public.quotes` | `UUID` | Immutable snapshot of client order configurations with a strict 7-day validity limit. |
-| `public.orders` | `UUID` | Primary commerce record. 14 lifecycle statuses. Tracks gross amount, GST, net amount, and Razorpay references. |
-| `public.payments` | `UUID` | **WORM Immutable Table.** Captures gateway transaction receipts. Updates and deletes are blocked by PostgreSQL triggers. |
-| `public.projects` | `UUID` | Production workstation lifecycle with a 32-status state machine. |
-| `public.assignments` | `UUID` | Matches approved creators with active projects. |
-| `public.file_records` | `UUID` | Ingested camera footage metadata, presigned B2 storage keys, and BunnyCDN video IDs. |
-| `public.creator_payouts` | `UUID` | Creator compensation ledger. Tracks gross share, statutory TDS deductions, and NEFT payment states. |
-| `public.credit_notes` | `UUID` | Append-only corrective ledger for refunds, price adjustments, and cancellations. |
-| `public.audit_logs` | `UUID` | Append-only security audit trail recording all administrative disclosures, PAN reveals, and status alterations. |
+### 3.1 Client Workflow State Machine
+```mermaid
+stateDiagram-v2
+    [*] --> Unauthenticated: User visits /book
+    Unauthenticated --> AuthenticatedClient: Login via OTP (/auth/login?redirect=/book/checkout)
+    
+    AuthenticatedClient --> ProfileSetup: onboarded === false
+    ProfileSetup --> CheckoutPage: Completes /client/profile?setup=true -> routes to artsy_redirect
+    
+    AuthenticatedClient --> CheckoutPage: onboarded === true
+    
+    CheckoutPage --> ServerOrderCreation: Clicks "Pay & Confirm"
+    Note right of ServerOrderCreation: /api/orders/create validates authUser and binds client_id
+    
+    ServerOrderCreation --> RazorpayModal: Canonical price in paise
+    RazorpayModal --> WebhookVerification: Razorpay captures payment
+    
+    WebhookVerification --> OrderConfirmation: /book/confirmation
+    OrderConfirmation --> ClientDashboard: Auto-redirects (5s timer) to /client?payment_success=true
+    
+    ClientDashboard --> ActiveProject: Client views active order & project card
+```
 
-### 3.2 Write-Once-Read-Many (WORM) Immutability Trigger
-To guarantee financial integrity and regulatory compliance under Indian financial laws, `public.payments` is protected by trigger `trg_block_payments_update` and `trg_block_payments_delete`:
-- Any `UPDATE` or `DELETE` attempt executed against `public.payments` immediately raises an exception with error code `23514` (`check_violation`).
-- Corrections, refunds, or reversals must be written to `public.credit_notes` or `public.creator_payouts` as append-only events.
+#### Client Routing & Redirection Rules
+1. If an unauthenticated user configures a project on `/book` and clicks "Proceed to Checkout", the booking state is saved to `sessionStorage` and `localStorage` (`artsy_active_booking`), `artsy_redirect` is set to `/book/checkout`, and the user is redirected to `/auth/login?redirect=/book/checkout`.
+2. Existing clients who verify OTP are immediately routed to `artsy_redirect` (`/book/checkout`).
+3. New clients who verify OTP (`onboarded: false`) are routed to `/client/profile?setup=true`. Upon saving their mandatory studio profile details, `handleSaveProfile` inspects `sessionStorage.getItem('artsy_redirect')` and returns them directly to `/book/checkout`.
+4. Order creation via `/api/orders/create` strictly checks `getAuthenticatedUser(request)` and returns `HTTP 401` if unauthenticated. The order's `client_id` is bound authoritatively to `authUser.id`.
+5. Post-payment confirmation at `/book/confirmation` displays a countdown banner and redirects to `/client?payment_success=true&orderId=${orderId}`, where a green confirmation alert confirms payment capture and the new project appears in their project list.
 
-### 3.3 Zero-Trust Row Level Security (RLS) Policy
-- All public tables have `ENABLE ROW LEVEL SECURITY` turned on.
-- Direct table access permissions (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) are **REVOKED** from `anon` and untrusted roles.
-- Backend server operations utilize `service_role` paired with the internal authorization function `is_server_authorized()` checking header `x-artsy-server-auth`.
+---
 
-### 3.4 Exact Financial Waterfall & Statutory Math
-All monetary transactions are calculated and stored as **PAISE** (integers, where $1\text{ INR} = 100\text{ paise}$) to eliminate floating-point rounding errors.
+### 3.2 Creator (Freelancer) Workflow State Machine
+A creator must never bypass the rigorous onboarding vetting and agreement execution process.
 
-Given a client payment $P$ (e.g., ₹8,000 package = 800,000 paise):
+```mermaid
+stateDiagram-v2
+    [*] --> NewCreator: Login via OTP (/auth/login?intent=freelancer)
+    
+    state "Onboarding Gate" as Gate {
+        NewCreator --> OnboardingForm: onboarding_status === null
+        OnboardingForm --> FormSubmission: Fills Workstation Specs, 3 Samples, PAN/Bank, Signs NDA
+        FormSubmission --> PendingApproval: approval_status = 'pending_review'
+    }
+    
+    PendingApproval --> StudioVetting: Studio Lead audits portfolio & hardware (/admin/vetting)
+    
+    StudioVetting --> Approved: Studio Lead approves creator
+    StudioVetting --> Rejected: Portfolio/hardware fails standards
+    
+    Rejected --> ReapplyAllowed: Routed to /freelancer/rejected with feedback
+    
+    Approved --> CreatorWorkstation: Access granted to /freelancer dashboard
+    CreatorWorkstation --> ProjectClaim: Accepts assigned project
+    ProjectClaim --> DraftDelivery: Ingests raw B2 files -> Submits review proxy
+```
 
-$$\text{Pre-GST Revenue } (R) = \text{round}\left(\frac{P}{1 + \text{GST Rate}}\right) = \text{round}\left(\frac{800,000}{1.18}\right) = 677,966\text{ paise } (₹6,779.66)$$
+#### Creator Onboarding Requirements & Validation Invariants
+1. **Workstation Hardware Configuration (`hardware_config`):** Mandatory CPU, GPU, RAM, and scratch disk specifications. Minimum standard: 6-core processor, dedicated 6GB+ VRAM GPU, 16GB+ RAM.
+2. **Three Mandatory Sample Videos (`sample_url_1`, `sample_url_2`, `sample_url_3`):** Must provide 3 distinct, valid URLs from supported video hosting providers (`youtube.com`, `youtu.be`, `vimeo.com`, `drive.google.com`, `loom.com`).
+3. **Statutory Tax & Banking Validation:**
+   - **Permanent Account Number (PAN):** Must strictly match Indian Income Tax regex: `^[A-Z]{5}[0-9]{4}[A-Z]{1}$`.
+   - **Bank Account Number:** Must be numeric with length between 9 and 18 digits (`^\d{9,18}$`).
+   - **IFSC Code:** Must strictly match RBI IFSC regex: `^[A-Z]{4}0[A-Z0-9]{6}$`.
+   - All banking credentials are encrypted using AES-256-GCM before database insertion.
+4. **Mandatory NDA & Master Service Agreement Execution:**
+   - Must enter Full Legal Name (`legal_name`).
+   - Must explicitly accept the non-disclosure terms (`nda_accepted: true`).
+   - The permanent timestamp is persisted to `creator_profiles.agreement_signed_at` and logged in `creator_agreements`.
+5. **Strict Navigation Guards:**
+   - Visiting `/freelancer/pending-approval` with `onboarding_status === null` immediately redirects to `/freelancer/onboarding`.
+   - Visiting any `/freelancer/*` workstation route while `rejected` redirects to `/freelancer/rejected`.
+   - Visiting `/freelancer/pending-approval` while `approved` redirects to `/freelancer`.
+
+---
+
+### 3.3 Admin Workflow & Session Integrity
+- **Restricted Access:** The administrative suite (`/admin/*`) is restricted strictly to users with `role: 'admin'` or `role: 'super_admin'`.
+- **Zero Phantom Logouts:** Navigating between public marketing pages (`/`, `/work`, `/services`, `/book`) and protected admin pages must NEVER delete the session cookie, drop privileged credentials, or overwrite `artsy_auth_token`. Public routes are strictly exempted from session-stripping guards in `src/middleware.ts`.
+
+---
+
+## 4. DYNAMIC PRICING ENGINE & FINANCIAL WATERFALL
+
+### 4.1 Server-Side Authoritative Pricing
+- **Backend Calculation:** All package prices are calculated exclusively on the server via `src/lib/pricing/engine.ts`. Any client-supplied amount parameter in order creation payloads is completely discarded.
+- **Fail-Closed Principle:** If a client requests a service, category, angle count, or SLA turnaround tier that does not exist in `src/lib/pricing/catalog-matrix.ts`, the engine MUST throw `new Error('Unable to calculate price for this configuration')`, and the endpoint MUST return `HTTP 400 Bad Request`.
+- **Zero Silent Fallback:** Under no circumstances may an unrecognized product silently default to ₹6,000 or any arbitrary constant.
+
+### 4.2 Exact Statutory Waterfall Math (Paise Integer Precision)
+All monetary transactions are calculated and stored as **PAISE** ($1\text{ INR} = 100\text{ paise}$) to prevent floating-point rounding errors.
+
+Given a client package payment $P$ (e.g., ₹8,000 package = 800,000 paise):
+
+$$\text{Pre-GST Revenue } (R) = \text{round}\left(\frac{P}{1 + 0.18}\right) = \text{round}\left(\frac{800,000}{1.18}\right) = 677,966\text{ paise } (₹6,779.66)$$
 
 $$\text{GST Liability } (G) = P - R = 800,000 - 677,966 = 122,034\text{ paise } (₹1,220.34)$$
 
@@ -207,90 +251,50 @@ $$\text{Creator Net Payout} = \text{Creator Share} - \text{TDS} = 453,310 - 9,06
 
 ---
 
-## 4. WORKFLOW STATE MACHINES
+## 5. UI/UX & MOBILE-FIRST DESIGN ARCHITECTURE
 
-### 4.1 Client Workflow State Machine
-```mermaid
-stateDiagram-v2
-    [*] --> Unauthenticated: User visits site
-    Unauthenticated --> AuthenticatedClient: Login via OTP (/auth/login)
-    
-    AuthenticatedClient --> ProfileSetup: onboarded === false
-    ProfileSetup --> ClientDashboard: Completes /client/profile
-    
-    AuthenticatedClient --> ClientDashboard: onboarded === true
-    
-    ClientDashboard --> OrderDrafting: Configure video package (/book)
-    OrderDrafting --> PaymentProcessing: Razorpay Checkout
-    PaymentProcessing --> ProjectActive: Webhook captures payment
-    
-    ProjectActive --> FootageUpload: Direct B2 Presigned Upload
-    FootageUpload --> InProduction: Upload validated
-    InProduction --> ClientReview: Watermarked proxy generated
-    
-    ClientReview --> ClientApproved: Client approves cut
-    ClientReview --> RevisionRequested: Complimentary or paid revision
-    RevisionRequested --> InProduction: Editor applies fixes
-    
-    ClientApproved --> MasterDelivery: Clean 4K files released
-    MasterDelivery --> RetentionPeriod: 14-day cold storage countdown
-    RetentionPeriod --> Archived: Footage purged or extended
-```
+The application interface must deliver a flawless, high-performance experience across all viewports, adhering strictly to mobile-first responsive design principles.
 
-### 4.2 Creator (Freelancer) Workflow State Machine
-A brand new creator MUST NEVER bypass the onboarding application form.
+### 5.1 Mobile Header & Navigation Standards (`Navbar.tsx`)
+1. **Header Height:** Fixed navbar container must be compact on mobile (`h-[60px] sm:h-16`) to preserve vertical screen space.
+2. **Logo & Subtitle Wrapping:** The subtitle `"PLACE FOR PERSPECTIVE"` must be hidden on mobile screens using `hidden md:block` to ensure the logo never wraps onto multiple lines.
+3. **Action Item Cramping:** The auxiliary text `"LOGIN"` must be hidden on mobile screens (`hidden sm:inline-flex`), preserving breathing room.
+4. **Touch Target Separation:** Right action group must enforce at least 16px separation between items on mobile (`gap-4`) to prevent cramped icons.
+5. **Primary CTA:** The `"BOOK NOW"` button must use proportional mobile padding and typography (`h-8 sm:h-9 px-3 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-bold`).
 
-```mermaid
-stateDiagram-v2
-    [*] --> NewCreator: Login via OTP (/auth/login?role=freelancer)
-    
-    state "Onboarding Gate" as Gate {
-        NewCreator --> OnboardingForm: onboarding_status === null
-        OnboardingForm --> PendingApproval: Submits application form
-    }
-    
-    PendingApproval --> UnderReview: Studio lead reviews portfolio & sample reels
-    
-    UnderReview --> Approved: Studio approves creator
-    UnderReview --> Rejected: Portfolio does not meet criteria
-    
-    Rejected --> ReapplyAllowed: Rejected page with feedback (/freelancer/rejected)
-    
-    Approved --> AgreementSigning: Must sign NDA & Service Agreement
-    AgreementSigning --> CreatorDashboard: Access granted to /freelancer
-    
-    CreatorDashboard --> ProjectAssigned: Accepts matched job
-    ProjectAssigned --> InEdit: Downloads raw footage via presigned GET
-    InEdit --> SubmitDraft: Uploads review proxy
-    SubmitDraft --> CreatorDashboard: QA passed & client approved -> Payout dispatched
-```
+### 5.2 Hero Section Typography, Accents & Spacing (`Hero.tsx`)
+1. **Hero Clearance & Top Padding:** Reduce mobile hero top padding (`pt-10 sm:pt-32 pb-12 sm:pb-24`), paired with main container padding (`pt-[60px] sm:pt-16`), ensuring the H1 appears within the initial viewport without massive dead space.
+2. **Fluid Responsive H1:** The main heading must scale gracefully (`text-2xl sm:text-5xl lg:text-6xl`) with tight line height (`leading-tight sm:leading-tight`) to avoid clumsy word wraps.
+3. **Thinner Accent Underline:** The blue underline on `"Modern Creative Teams"` must be an elegant, razor-sharp 2px translucent accent bar (`h-[2px] bg-[#3B82F6]/80 rounded-full`) instead of a thick glitchy block.
+4. **Ghost Watermark:** The background watermark (`POST // 24FPS`) must be hidden on mobile screens using `hidden md:block` to eliminate visual noise behind text.
+5. **Horizontal Breathing Room:** Hero container and editorial body text must enforce horizontal gutter padding (`px-6 sm:px-8`) with lighter color (`text-[#6E6E73]`) and relaxed line height (`leading-relaxed`) so text never touches screen edges.
+6. **Card-Based Metrics Grid:** Metrics must be styled in rounded cards (`bg-[#F9F9FB] sm:bg-transparent border border-[#E5E5E7]/70 sm:border-0 rounded-2xl p-4 sm:p-0 shadow-[0_2px_8px_rgba(0,0,0,0.02)] sm:shadow-none`). Uses a 2-column grid on mobile (`grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-8`), with the 3rd metric (`1,400+ Commercial Revisions`) centered across both columns below (`col-span-2 sm:col-span-1 text-center sm:text-left`). Statistical numbers must be bold (`font-black text-2xl sm:text-3xl`) with small uppercase tracking labels (`text-[10px] sm:text-xs uppercase tracking-wider font-semibold`).
 
-#### Creator Routing Invariants
-1. If a creator visits `/freelancer/pending-approval` directly but has NOT submitted an application (`onboarding_status === null`), they MUST immediately be redirected to `/freelancer/onboarding`.
-2. Initial OTP login for a new creator must NOT insert a premature pending profile row into `creator_profiles`. The profile row is created only upon valid form submission via `/api/freelancer/onboard`.
-3. If approved, visiting `/freelancer/pending-approval` automatically redirects to `/freelancer`.
-4. If rejected, visiting any workstation page redirects to `/freelancer/rejected`.
+### 5.3 Section Transitions & Card Elevation (`Services.tsx`)
+1. **Curved Sheet Transition:** The transition into the gray `"Select category"` section must feature a curved top border (`rounded-t-[32px] sm:rounded-none`) with negative top margin (`-mt-4 sm:mt-0 relative z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] sm:shadow-none border-t border-[#E5E5E7]/60 sm:border-0`) to create an authentic native iOS card sheet sliding over the hero.
+2. **Catalog Card Spacing:** Category cards must span full width on mobile viewports (`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4`) with standard 24px horizontal container padding (`px-6 sm:px-8`) so cards never collide with screen edges.
+3. **Footer Alignment (`Footer.tsx`):** Copyright text and compliance links must be centered on mobile viewports (`text-center sm:text-left`, `justify-center sm:justify-end`).
 
 ---
 
-## 5. DYNAMIC PRICING ENGINE
+## 6. THE NO-REGRESSION FIREWALL (`scripts/regression-guard`)
 
-### 5.1 Architecture & Principles
-- **Server-Side Authoritative:** All order prices are computed strictly on the backend via `src/lib/pricing/engine.ts`. Any client-supplied price or amount parameter in API payloads is discarded and logged as a potential tampering attempt.
-- **Fail-Closed on Unrecognized Services:** If a client requests a service, category, or subcategory that does not match the canonical matrix (`src/lib/pricing/catalog-matrix.ts`) or rules, the engine MUST throw an error (`throw new Error('Unable to calculate price for this configuration')`), and the API endpoint MUST return an HTTP 400 Bad Request.
-- **NEVER Fallback to a Silent Default:** Under no circumstances may an unrecognized product silently default to ₹6,000 or any arbitrary constant.
+The static analyzer `scripts/regression-guard` is the definitive automated firewall protecting the codebase against regressions. It MUST be executed and pass cleanly before declaring any task complete.
 
-### 5.2 Dynamic Adjustments Model
-Base price is determined by the selected service package, then adjusted by:
-1. **Camera Angles:** Single shooter (+₹0), Multi-cam 2–3 angles (+₹800 to +₹1,200), Full multi-cam & drone (+₹1,600 to +₹2,400).
-2. **Turnaround SLA:** Standard 7–10 days (+₹0), Priority 4–5 days (+₹2,000), Rush 48 hours (+₹4,000).
-3. **Master Quality & Raw Footage:** 1080p Rec.709 (+₹0), 4K Master Export (+₹1,000), RAW Camera Footage Retention (+₹1,500).
+### The 7 Core Firewall Checks
+1. **Check 1 (AUTH BYPASS):** Scans all auth files (`api/auth/otp`, `api/auth/session`, `lib/supabase`, `src/lib/auth-cookie`) to guarantee that no hardcoded OTP (`'123456'`, `'4210'`) or unauthenticated mock admin bypass exists. Verifies that OTP verification enforces cryptographic hashing.
+2. **Check 2 (WORKFLOW SKIP):** Inspects `/freelancer/pending-approval`, `FreelancerLayoutClient`, and auth routes to ensure that creators with `onboarding_status === null` cannot view pending approval and are redirected to the onboarding form.
+3. **Check 3 (PRICING FALLBACK):** Inspects `pricing/engine.ts` and `api/orders/create` to ensure that unknown services throw an error and return HTTP 400 instead of silently defaulting to ₹6,000.
+4. **Check 4 (PHANTOM LOGOUT):** Inspects `api/user/me`, `middleware.ts`, and `AdminLayoutClient` to ensure that cross-portal navigation does not delete session cookies or drop valid admin credentials.
+5. **Check 5 (RLS VIOLATION):** Scans all React Client Components (`'use client'`) across `src/components` and `src/app` to ensure zero direct client imports of `@supabase/supabase-js` or client-side database queries.
+6. **Check 6 (GUEST CHECKOUT BAN):** Scans booking and checkout components to ensure that guest users are intercepted by an auth gate before reaching Razorpay, and that `/api/orders/create` requires an authenticated session.
+7. **Check 7 (PII VALIDATION & HARDWARE VETTING):** Verifies that creator onboarding strictly validates Indian PAN regex, RBI IFSC regex, 3 sample URLs, hardware configuration, and permanent NDA acceptance.
 
 ---
 
-## 6. THE AUTONOMOUS SELF-AUDITING LOOP
+## 7. THE AUTONOMOUS SELF-AUDITING LOOP
 
-Inspired by autonomous engineering frameworks like `Selfix`, `evolve-ai`, and `brave-dev-loop`, every AI agent operating in this repository is strictly bound to execute the three-phase autonomous development loop.
+Every AI agent operating in this repository is strictly bound to execute the three-phase autonomous development loop.
 
 ```mermaid
 flowchart TD
@@ -309,25 +313,24 @@ flowchart TD
     FinalVerify -- Pass --> Done([Commit & Deliver Report])
 ```
 
-### 6.1 Phase A: The Builder (Execution)
-1. Read `AGENTS.md` and all related files before typing any code.
+### 7.1 Phase A: The Builder (Execution)
+1. Read `AGENTS.md` and all related files before touching any code.
 2. Formulate a precise implementation plan adhering to architectural patterns.
 3. Make the necessary code modifications cleanly and minimally.
-4. Execute TypeScript checks (`npx tsc --noEmit`) and the Next.js Production Build (`next build --webpack`).
-5. Announce internal transition: *"Task implementation complete. Entering Self-Audit Phase."*
+4. Execute TypeScript checks (`npx tsc --noEmit`) and the Next.js Production Build (`npm run build`).
 
-### 6.2 Phase B: The Auditor (Self-Reflection)
+### 7.2 Phase B: The Auditor (Self-Reflection)
 1. Halt coding. Adopt the mindset of a ruthless, adversarial Staff QA & Security Engineer.
 2. Re-read the user's ORIGINAL prompt line by line.
 3. Review `git diff` against the repository baseline.
 4. Scrutinize the work against the five foundational audit questions:
    - **Adherence:** Did I solve exactly what was requested without adding unnecessary bloat?
-   - **Edge Cases:** Did I account for all edge cases mentioned in the prompt (e.g., null states, network blips, unauthenticated requests)?
+   - **Edge Cases:** Did I account for all edge cases (e.g., null states, unauthenticated sessions, mobile screens)?
    - **Rule Compliance:** Did I violate any invariant in `AGENTS.md`?
    - **Regression Risk:** Did I introduce any regression into pricing, auth, or state machines?
    - **Quality Standard:** Can this implementation be made more secure, performant, or elegant?
 
-### 6.3 Phase C: The Improver (Auto-Correction)
+### 7.3 Phase C: The Improver (Auto-Correction)
 1. If ANY gap, vulnerability, or violation is uncovered in Phase B, compile a concrete "Remediation List."
 2. Immediately execute the necessary corrections.
 3. Run the No-Regression Firewall (`node scripts/regression-guard`).
@@ -336,32 +339,50 @@ flowchart TD
 
 ---
 
-## 7. THE NO-REGRESSION FIREWALL (`scripts/regression-guard`)
-
-The script `scripts/regression-guard` is the definitive automated firewall protecting the codebase against historical vulnerabilities. It MUST be executed and pass cleanly before declaring any task complete.
-
-### The 5 Historical Bug Checks
-1. **Check 1 (AUTH BYPASS):** Scans all auth files (`api/auth/otp`, `api/auth/session`, `lib/supabase`, `src/lib/auth-cookie`) to guarantee that no hardcoded OTP (`'123456'`, `'4210'`) or unauthenticated mock admin bypass exists. Verifies that OTP verification enforces cryptographic hashing.
-2. **Check 2 (WORKFLOW SKIP):** Inspects `/freelancer/pending-approval`, `FreelancerLayoutClient`, and auth routes to ensure that creators with `onboarding_status === null` cannot view pending approval and are redirected to the onboarding form.
-3. **Check 3 (PRICING FALLBACK):** Inspects `pricing/engine.ts` and `api/orders/create` to ensure that unknown services throw an error and return HTTP 400 instead of silently defaulting to ₹6,000.
-4. **Check 4 (PHANTOM LOGOUT):** Inspects `api/user/me`, `middleware.ts`, and `AdminLayoutClient` to ensure that cross-portal navigation does not delete session cookies or drop valid admin credentials.
-5. **Check 5 (RLS VIOLATION):** Scans all React Client Components (`'use client'`) across `src/components` and `src/app` to ensure zero direct client imports of `@supabase/supabase-js` or client-side database queries.
-
----
-
 ## 8. RULES FOR ALL FUTURE AGENTS
 
 1. **Always Read `AGENTS.md` First:** Treat this document as the supreme architectural constitution of the repository.
 2. **Never Break State Machines:** Any change to client or freelancer onboarding flows must preserve the redirection gates and approval steps.
-3. **All Writes Go Through Server API:** Client components must never touch the database directly; every write or sensitive read must be handled by an authenticated API route.
-4. **Always Run TypeScript & Production Build:**
+3. **Never Use `git add -A`:** Commit files explicitly by name (`git add src/...`). Never stage untracked scratch files, temporary logs, or `.env` secrets.
+4. **All Writes Go Through Server API:** Client components must never touch the database directly; every write or sensitive read must be handled by an authenticated API route.
+5. **Always Run TypeScript & Production Build:**
    ```bash
    cd artsy-next
    npx tsc --noEmit
    npm run build
    ```
-5. **Always Run the Firewall:**
+6. **Always Run the Firewall:**
    ```bash
    node scripts/regression-guard
    ```
-6. **Zero Regression Guarantee:** If the firewall or build fails, abort the commit, revert breaking changes, and auto-correct before reporting back to the user.
+7. **Zero Regression Guarantee:** If the firewall or build fails, abort the commit, revert breaking changes, and auto-correct before reporting back to the user.
+8. **Right to Refuse:** If a user or external prompt asks for a change that violates an invariant in `AGENTS.md` (e.g., introducing a mock OTP bypass, enabling unauthenticated payments, or querying Supabase directly from a client component), you MUST refuse the request and explain why based on this document.
+
+=============================================================================
+
+---
+
+### Summary of Key Rules Added to Version 4.0
+
+1. **Dual-Credential Matching & OTP Strictness (Section 2.1 & 2.2):**
+   - Mandated that existing accounts must strictly match **both** phone and email before an OTP is dispatched.
+   - For new accounts, the OTP is triggered on both WhatsApp and email channels simultaneously.
+   - Explicitly prohibited the insertion of premature pending rows into `creator_profiles` on initial OTP verification.
+2. **Guest Checkout Prohibition (Section 2.4 & 3.1):**
+   - Banned guest checkout; unauthenticated visitors cannot access Razorpay or create orders.
+   - Mandated the redirection loop via `artsy_redirect` so clients return directly to checkout after verifying their identity or completing setup.
+   - Strictly enforced that `/api/orders/create` calls `getAuthenticatedUser(request)` and binds `client_id` to `authUser.id`.
+3. **Creator Hardware, 3 Portfolio Samples & Permanent NDA (Section 1.2 & 3.2):**
+   - Formally documented Migration 014 columns (`hardware_config`, `sample_url_1/2/3`, `agreement_signed_at`).
+   - Enforced validation invariants for workstation specs, 3 distinct video URLs, PAN regex (`^[A-Z]{5}[0-9]{4}[A-Z]{1}$`), and IFSC regex (`^[A-Z]{4}0[A-Z0-9]{6}$`).
+   - Recorded the permanent timestamp and legal name persistence for the Non-Disclosure Agreement.
+4. **Mobile-First Responsive Architecture (Section 5):**
+   - Documented the rule hiding the `"PLACE FOR PERSPECTIVE"` subtitle on mobile (`hidden md:block`) to preserve the 64px header.
+   - Documented hiding `"LOGIN"` text on mobile screens to prevent crowding.
+   - Documented responsive typography, custom bottom accent underlines, watermark hiding on mobile, and 2-column metrics grids.
+5. **Firewall Check Expansion (Section 6):**
+   - Expanded the No-Regression Firewall mandates from 5 to 7 historical checks, incorporating guest checkout prevention and PII/hardware validation.
+6. **Explicit Git Commit Rule (Section 8, Rule 3):**
+   - Added an explicit ban against `git add -A`, requiring specific file staging to prevent accidental leakage of sensitive files or scratch scripts.
+
+=============================================================================

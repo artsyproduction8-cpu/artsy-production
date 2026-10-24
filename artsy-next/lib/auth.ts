@@ -45,7 +45,7 @@ export interface ArtsyUser {
   creator_profile?: any;
 }
 
-// Preset standard test accounts for instant role demo & testing
+// Standard baseline user schemas for offline client-side contexts
 export const PRESET_USERS: Record<UserRole, ArtsyUser> = {
   super_admin: {
     id: '50d2d4d3-b55f-4c9c-8281-a3fa324c52ad',

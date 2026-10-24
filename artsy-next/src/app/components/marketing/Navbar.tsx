@@ -88,7 +88,7 @@ const STATIC_NAVIGATION_ENTRIES: SearchEntry[] = [
     title: 'Official Video Showcase & Lightbox',
     category: 'Portfolio',
     href: '/work',
-    keywords: ['portfolio', 'work', 'sample', 'demo', 'video', 'watch', 'cinematic'],
+    keywords: ['portfolio', 'work', 'sample', 'showcase', 'video', 'watch', 'cinematic'],
   },
   {
     id: 'portal-dash',

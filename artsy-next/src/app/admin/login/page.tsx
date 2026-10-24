@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { setCurrentUser, ArtsyUser } from '@/lib/auth';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -171,39 +170,6 @@ export default function AdminLoginPage() {
               <path d="M5 12h14"/>
               <path d="m12 5 7 7-7 7"/>
             </svg>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              const adminUser = {
-                id: 'admin-karan-001',
-                email: 'admin@artsyprod.studio',
-                full_name: 'Studio Director',
-                role: 'admin' as const,
-                status: 'active' as const,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              };
-              setCurrentUser(adminUser);
-              router.push('/admin');
-            }}
-            style={{
-              padding: '10px',
-              background: 'rgba(255, 255, 255, 0.08)',
-              color: '#9CA3AF',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              borderRadius: '8px',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px'
-            }}
-          >
-            ⚡ Instant Admin Demo Access
           </button>
         </form>
 

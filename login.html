@@ -228,16 +228,6 @@
       border-color: var(--color-primary);
       box-shadow: 0 0 0 3px rgba(0, 191, 99, 0.15);
     }
-    .demo-hint-box {
-      background: #F0FDF4;
-      border-left: 3px solid var(--color-primary);
-      padding: 10px 12px;
-      font-size: 12px;
-      color: #166534;
-      border-radius: 0 4px 4px 0;
-      margin: 14px 0;
-      line-height: 1.5;
-    }
   </style>
 </head>
 <body>
@@ -302,12 +292,8 @@
               <option value="+44">🇬🇧 +44</option>
               <option value="+971">🇦🇪 +971</option>
             </select>
-            <input type="tel" id="login-phone" class="phone-number-field" placeholder="98765 43210" value="9876543210" required>
+            <input type="tel" id="login-phone" class="phone-number-field" placeholder="98765 43210" value="" required>
           </div>
-        </div>
-
-        <div class="demo-hint-box">
-          💬 Instant WhatsApp Verification: A test 6-digit code (<strong>123456</strong>) will be simulated for fast testing.
         </div>
 
         <button class="btn-auth-submit" id="btn-send-otp" onclick="handleSendOtp()">
@@ -320,10 +306,6 @@
       <div id="step-otp-section" style="display: none;">
         <h1 class="auth-h1">Enter WhatsApp Code</h1>
         <p class="auth-sub" id="otp-sent-to-text">Code sent to +91 98765 43210</p>
-
-        <div class="demo-hint-box">
-          🔑 Test OTP Code: <strong>123456</strong> (Auto-filled below for one-click access)
-        </div>
 
         <div class="otp-inputs-grid">
           <input type="text" maxlength="1" class="otp-digit-box" id="otp-1" autofocus>
@@ -414,14 +396,7 @@
       document.getElementById('step-otp-section').style.display = 'block';
       document.getElementById('otp-sent-to-text').textContent = `Code sent to ${fullPhone} (${selectedRole.toUpperCase()} Portal)`;
 
-      // Auto prefill demo OTP 123456
-      document.getElementById('otp-1').value = '1';
-      document.getElementById('otp-2').value = '2';
-      document.getElementById('otp-3').value = '3';
-      document.getElementById('otp-4').value = '4';
-      document.getElementById('otp-5').value = '5';
-      document.getElementById('otp-6').value = '6';
-      document.getElementById('otp-6').focus();
+      document.getElementById('otp-1').focus();
     }
 
     function resetOtpStep() {

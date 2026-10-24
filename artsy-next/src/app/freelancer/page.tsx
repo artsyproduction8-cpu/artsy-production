@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth, logout, hasAcceptedAgreement, recordAgreementAcceptance, setCurrentUser, PRESET_USERS } from '@/lib/auth';
+import { useAuth, logout, hasAcceptedAgreement, recordAgreementAcceptance } from '@/lib/auth';
 import FreelancerHeader from './components/FreelancerHeader';
 import FreelancerSidebar from './components/FreelancerSidebar';
 
@@ -141,17 +141,6 @@ export default function FreelancerDashboard() {
               >
                 Start Creator Onboarding →
               </Link>
-              {process.env.NODE_ENV !== 'production' && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCurrentUser(PRESET_USERS.freelancer);
-                  }}
-                  className="px-6 py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl border border-blue-200 transition-all cursor-pointer"
-                >
-                  Access Vetted Station (Demo) →
-                </button>
-              )}
               <button
                 type="button"
                 onClick={() => logout()}

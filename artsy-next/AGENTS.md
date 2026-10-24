@@ -395,5 +395,10 @@ flowchart TD
    - Expanded the No-Regression Firewall mandates from 5 to 7 historical checks, incorporating guest checkout prevention and PII/hardware validation.
 6. **Explicit Git Commit Rule (Section 8, Rule 3):**
    - Added an explicit ban against `git add -A`, requiring specific file staging to prevent accidental leakage of sensitive files or scratch scripts.
+7. **Creator Application Flow & Button Routing (Section 2.5 & 3.2):**
+   - The public `/creators` page "Apply as a Creator" button (and `CreatorsClient` empty-state button) MUST link to `/auth/login?intent=freelancer&redirect=/freelancer/onboarding` rather than directly to `/freelancer/onboarding`.
+   - When an unauthenticated user applies, this URL parameter ensures the login page sets `isFreelancerIntent` and preserves `artsy_redirect`.
+   - When sending and verifying OTP, `/api/auth/otp` strictly respects `role: 'freelancer'` and `intent: 'freelancer'`, creating new users in `public.users` with `role: 'freelancer'`. Existing users with `role: 'client'` applying as creators are upgraded to `role: 'freelancer'`.
+   - On successful OTP verification for new creators (`onboarding_status === null`), users are routed to the `redirect` parameter (`/freelancer/onboarding`). Approved creators (`onboarding_status === 'approved'`) route directly to the `/freelancer` workstation dashboard.
 
 =============================================================================

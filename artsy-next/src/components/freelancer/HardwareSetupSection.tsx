@@ -168,53 +168,55 @@ export default function HardwareSetupSection({
     const isPresetMatch = presets.includes(value);
 
     return (
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2 p-4 bg-[#F9F9FB] rounded-xl border border-[#E5E5E7]/80">
         <div className="flex items-center justify-between">
-          <label className="text-[11px] font-bold text-[#1D1D1F] tracking-wider uppercase">
+          <label className="text-xs font-bold text-[#1D1D1F] tracking-wide uppercase">
             {label} {isRequired && <span className="text-red-500">*</span>}
           </label>
-          <div className="flex items-center gap-1.5">
-            <select
-              aria-label={`${label} Presets`}
-              value={isPresetMatch ? value : (value ? '__custom__' : '')}
-              onChange={(e) => {
-                if (e.target.value === '__custom__') {
-                  // Keep current value and let user edit
-                } else if (e.target.value) {
-                  onChange(e.target.value);
-                }
-              }}
-              className="text-[11px] font-semibold text-[#3B82F6] bg-[#F5F5F7] hover:bg-white hover:border-[#3B82F6] px-2.5 py-1 rounded-lg border border-[#E5E5E7] transition-all cursor-pointer outline-none"
-            >
-              <option value="" disabled>
-                ⚡ Choose Preset ▾
+        </div>
+
+        {/* Preset Selector Dropdown */}
+        <div className="relative">
+          <select
+            aria-label={`${label} Presets`}
+            value={isPresetMatch ? value : (value ? '__custom__' : '')}
+            onChange={(e) => {
+              const selected = e.target.value;
+              if (selected === '__custom__') {
+                if (presets.includes(value)) onChange('');
+              } else if (selected) {
+                onChange(selected);
+              }
+            }}
+            className="w-full bg-white px-3.5 py-2.5 text-xs font-semibold text-[#1D1D1F] rounded-lg border border-[#E5E5E7] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/10 outline-none transition-all cursor-pointer appearance-none pr-8 truncate shadow-xs"
+          >
+            <option value="">⚡ Select standard configuration from dropdown...</option>
+            {presets.map((preset) => (
+              <option key={preset} value={preset}>
+                {preset}
               </option>
-              {presets.map((preset) => (
-                <option key={preset} value={preset}>
-                  {preset}
-                </option>
-              ))}
-              <option value="__custom__">✏️ Custom (Type my own)</option>
-            </select>
+            ))}
+            <option value="__custom__">✏️ Custom / Type my own specification</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5 text-[#86868B]">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
         </div>
 
-        <div className="relative">
-          <input
-            type="text"
-            required={isRequired}
-            list={listId}
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            className="w-full bg-[#F5F5F7] px-4 py-3 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all font-medium placeholder:text-[#A1A1A6]"
-          />
-          <datalist id={listId}>
-            {presets.map((preset) => (
-              <option key={preset} value={preset} />
-            ))}
-          </datalist>
-        </div>
+        {/* Direct Editable Spec Input */}
+        <input
+          type="text"
+          required={isRequired}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full bg-white px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/10 outline-none transition-all font-medium placeholder:text-[#86868B]/70 shadow-xs"
+        />
+        <span className="text-[10px] text-[#86868B]">
+          Choose from the preset dropdown above or freely edit your custom workstation specs.
+        </span>
       </div>
     );
   };
@@ -228,9 +230,6 @@ export default function HardwareSetupSection({
             {stepNumber}
           </span>
           Computer &amp; Hardware Setup
-        </span>
-        <span className="text-[11px] uppercase font-bold tracking-wider text-[#86868B] bg-[#F5F5F7] px-2.5 py-1 rounded-md border border-[#E5E5E7]/60">
-          EDITING SETUP
         </span>
       </div>
 

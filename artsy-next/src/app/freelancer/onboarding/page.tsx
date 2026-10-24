@@ -634,7 +634,6 @@ export default function FreelancerOnboarding() {
                       </span>
                       Portfolio Samples (3 Mandatory Videos)
                     </span>
-                    <span className="text-xs text-red-600 uppercase font-semibold">Exactly 3 Required (YouTube / Vimeo)</span>
                   </div>
 
                   <p className="text-xs text-[#86868B] leading-relaxed">
@@ -719,7 +718,6 @@ export default function FreelancerOnboarding() {
                       </span>
                       Bank Details for Direct Payouts
                     </span>
-                    <span className="text-xs text-[#86868B] uppercase font-semibold">Safe &amp; Encrypted</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -877,7 +875,6 @@ export default function FreelancerOnboarding() {
                       </span>
                       Creator Agreement &amp; Non-Disclosure Agreement (NDA)
                     </span>
-                    <span className="text-xs text-blue-600 uppercase font-semibold">Legally Binding</span>
                   </div>
 
                   <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex flex-col gap-3 text-xs text-[#1D1D1F] leading-relaxed max-h-48 overflow-y-auto">

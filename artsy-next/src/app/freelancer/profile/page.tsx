@@ -940,7 +940,6 @@ export default function FreelancerProfilePage() {
                           </span>
                           Portfolio Samples (3 Mandatory Videos)
                         </span>
-                        <span className="text-xs text-red-600 uppercase font-semibold">Exactly 3 Required (YouTube / Vimeo)</span>
                       </div>
 
                       <p className="text-xs text-[#86868B] leading-relaxed">
@@ -1052,26 +1051,23 @@ export default function FreelancerProfilePage() {
                           </span>
                           Bank Details for Direct Payouts
                         </span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-[#86868B] uppercase font-semibold">Safe &amp; Encrypted</span>
-                          {isBankMasked && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditBankDetails(!editBankDetails);
-                                if (!editBankDetails) {
-                                  // Clear masked placeholder values so user can type fresh details
-                                  if (pan.includes('•')) setPan('');
-                                  if (bankAccount.includes('•')) setBankAccount('');
-                                  if (ifsc.includes('•')) setIfsc('');
-                                }
-                              }}
-                              className="text-xs text-[#3B82F6] font-bold hover:underline cursor-pointer ml-2"
-                            >
-                              {editBankDetails ? 'Cancel Edit' : 'Edit Bank Details'}
-                            </button>
-                          )}
-                        </div>
+                        {isBankMasked && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditBankDetails(!editBankDetails);
+                              if (!editBankDetails) {
+                                // Clear masked placeholder values so user can type fresh details
+                                if (pan.includes('•')) setPan('');
+                                if (bankAccount.includes('•')) setBankAccount('');
+                                if (ifsc.includes('•')) setIfsc('');
+                              }
+                            }}
+                            className="text-xs text-[#3B82F6] font-bold hover:underline cursor-pointer ml-2"
+                          >
+                            {editBankDetails ? 'Cancel Edit' : 'Edit Bank Details'}
+                          </button>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1227,7 +1223,6 @@ export default function FreelancerProfilePage() {
                           </span>
                           Creator Agreement &amp; Non-Disclosure Agreement (NDA)
                         </span>
-                        <span className="text-xs text-blue-600 uppercase font-semibold">Legally Executed</span>
                       </div>
 
                       <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex flex-col gap-3 text-xs text-[#1D1D1F] leading-relaxed max-h-48 overflow-y-auto">

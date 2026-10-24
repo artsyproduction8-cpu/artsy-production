@@ -258,10 +258,10 @@ The application interface must deliver a flawless, high-performance experience a
 ### 5.1 Mobile Header & Navigation Standards (`Navbar.tsx`)
 1. **Header Height:** Fixed navbar container must be compact on mobile (`h-[60px] sm:h-16`) to preserve vertical screen space.
 2. **Logo & Subtitle Wrapping & Typography:** The subtitle `"PLACE FOR PERSPECTIVE"` uses compact, refined font (`text-[8px] sm:text-[10px]`) and is hidden on mobile screens using `hidden md:block` to ensure the logo never wraps onto multiple lines.
-3. **Action Item Cramping:** The auxiliary text `"LOGIN"` must be hidden on mobile screens (`hidden sm:inline-flex`), preserving breathing room.
+3. **Primary Action & Highlighting:** The right action group highlights the `"LOGIN"` button with full visual prominence (`rounded-lg`, `text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm`), matching the original primary CTA style, while `"FIND JOB"` remains a secondary link on desktop.
 4. **Touch Target Separation:** Right action group must enforce at least 16px separation between items on mobile (`gap-4`) to prevent cramped icons.
-5. **Navigation Sequence & Primary CTA:** Center navigation links enforce the sequence `BOOK NOW - SERVICES - PORTFOLIO - CREATORS` across both desktop and mobile drawer views. On mobile, a dedicated top-right CTA button ensures 1-tap booking.
-6. **Unified +91 Phone Input Standard:** All client and creator phone inputs enforce a locked `🇮🇳 +91` prefix badge, automatic non-digit stripping, and strict 10-digit length constraints.
+5. **Navigation Sequence:** Center navigation links enforce the sequence `BOOK NOW - SERVICES - PORTFOLIO - CREATORS` across both desktop and mobile drawer views.
+6. **Unified +91 Phone Input Standard:** All client and creator profile forms enforce a locked `🇮🇳 +91` prefix badge, automatic non-digit stripping, and strict 10-digit length constraints. In the initial creator onboarding form, redundant phone/email inputs are omitted since the session credentials are already verified during OTP login.
 
 ### 5.2 Hero Section Typography, Accents & Spacing (`Hero.tsx`)
 1. **Hero Clearance & Top Padding:** Reduce mobile hero top padding (`pt-10 sm:pt-32 pb-12 sm:pb-24`), paired with main container padding (`pt-[60px] sm:pt-16`), ensuring the H1 appears within the initial viewport without massive dead space.
@@ -274,7 +274,7 @@ The application interface must deliver a flawless, high-performance experience a
 ### 5.3 Section Transitions & Card Elevation (`Services.tsx`)
 1. **Curved Sheet Transition:** The transition into the gray `"Select category"` section must feature a curved top border (`rounded-t-[32px] sm:rounded-none`) with negative top margin (`-mt-4 sm:mt-0 relative z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] sm:shadow-none border-t border-[#E5E5E7]/60 sm:border-0`) to create an authentic native iOS card sheet sliding over the hero.
 2. **Catalog Card Spacing:** Category cards must span full width on mobile viewports (`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4`) with standard 24px horizontal container padding (`px-6 sm:px-8`) so cards never collide with screen edges.
-3. **Footer Alignment (`Footer.tsx`):** Copyright text and compliance links must be centered on mobile viewports (`text-center sm:text-left`, `justify-center sm:justify-end`).
+3. **Footer Alignment & Studio Links Sequence (`Footer.tsx`):** Copyright text and compliance links must be centered on mobile viewports (`text-center sm:text-left`, `justify-center sm:justify-end`). Studio & Suites navigation links must strictly adhere to the 6-item order: (1) All Production Suites (`/services`), (2) Cinematic Portfolio Archive (`/work`), (3) Pricing & Package Matrix (`/pricing`), (4) Vetted Creators Roster (`/creators`), (5) Contact & Inquiries (`/contact`), (6) About Us (`/about`).
 
 ---
 

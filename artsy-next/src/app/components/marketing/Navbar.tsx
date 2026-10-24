@@ -464,20 +464,12 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
                 FIND JOB
               </Link>
 
-              {/* LOGIN Secondary Link: Hidden on mobile to prevent cramping */}
+              {/* LOGIN Highlighted Primary CTA Button */}
               <Link
                 href="/auth/login"
-                className="hidden sm:inline-flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-white/80 hover:text-white px-2.5 py-1 transition-colors whitespace-nowrap"
+                className="inline-flex items-center justify-center h-8 sm:h-9 px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
               >
                 LOGIN
-              </Link>
-
-              {/* BOOK NOW Primary CTA Button: Displayed on mobile viewports (on desktop, Book Now is in center nav) */}
-              <Link
-                href="/book"
-                className="md:hidden inline-flex items-center justify-center h-8 sm:h-9 px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
-              >
-                BOOK NOW
               </Link>
             </>
           ) : (
@@ -672,6 +664,22 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
           >
             CREATORS
           </Link>
+          <Link
+            href="/auth/login?intent=freelancer&redirect=/freelancer/onboarding"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="block text-sm font-semibold text-white/70 hover:text-white"
+          >
+            FIND JOB
+          </Link>
+          {!isAuthenticated && (
+            <Link
+              href="/auth/login"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block text-sm font-semibold text-blue-400 hover:text-blue-300"
+            >
+              LOGIN
+            </Link>
+          )}
         </div>
       )}
     </header>

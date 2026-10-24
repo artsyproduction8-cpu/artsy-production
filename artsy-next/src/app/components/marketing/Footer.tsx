@@ -71,18 +71,13 @@ export default function Footer() {
             </h3>
             <ul className="flex flex-col gap-2 text-xs font-medium text-[#DCDFE3]">
               <li>
-                <Link href="/work" className="hover:text-white transition-colors">
-                  Cinematic Portfolio Archive
-                </Link>
-              </li>
-              <li>
                 <Link href="/services" className="hover:text-white transition-colors">
                   All Production Suites
                 </Link>
               </li>
               <li>
-                <Link href="/creators" className="hover:text-white transition-colors">
-                  Vetted Creators Roster
+                <Link href="/work" className="hover:text-white transition-colors">
+                  Cinematic Portfolio Archive
                 </Link>
               </li>
               <li>
@@ -91,13 +86,18 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="hover:text-white transition-colors">
-                  About
+                <Link href="/creators" className="hover:text-white transition-colors">
+                  Vetted Creators Roster
                 </Link>
               </li>
               <li>
                 <Link href="/contact" className="hover:text-white transition-colors">
                   Contact &amp; Inquiries
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-white transition-colors">
+                  About Us
                 </Link>
               </li>
             </ul>

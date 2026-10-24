@@ -401,54 +401,6 @@ export default function FreelancerOnboarding() {
                     </div>
                   </div>
 
-                  {/* Direct Contact: WhatsApp Number (+91 prefix) & Email */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">
-                        WHATSAPP / MOBILE NUMBER *
-                      </label>
-                      <div className="flex items-center rounded-xl border border-[#E5E5E7] bg-[#F5F5F7] focus-within:bg-white focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10 overflow-hidden transition-all">
-                        <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#E5E5E7]/70 border-r border-[#E5E5E7] text-xs font-bold text-[#1D1D1F] select-none shrink-0">
-                          <span>🇮🇳</span>
-                          <span>+91</span>
-                        </div>
-                        <input
-                          type="tel"
-                          inputMode="numeric"
-                          maxLength={10}
-                          value={phone}
-                          onChange={(e) => {
-                            const raw = e.target.value.replace(/\D/g, '');
-                            const val = (raw.length === 12 && raw.startsWith('91')) ? raw.slice(2) : raw.slice(0, 10);
-                            setPhone(val);
-                          }}
-                          placeholder="98765 43210"
-                          className="w-full bg-transparent px-3 py-2 text-sm font-semibold text-[#1D1D1F] placeholder-[#86868B] focus:outline-none"
-                          required
-                        />
-                      </div>
-                      <span className="text-[11px] text-[#86868B]">
-                        Used for urgent project claim alerts and direct studio communication.
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">
-                        REGISTERED EMAIL ADDRESS
-                      </label>
-                      <input
-                        type="email"
-                        readOnly
-                        value={user?.email || ''}
-                        placeholder="creator@gmail.com"
-                        className="bg-[#E5E5E7]/50 px-4 py-2.5 text-sm text-[#86868B] rounded-xl border border-[#E5E5E7] outline-none cursor-not-allowed select-none"
-                      />
-                      <span className="text-[11px] text-[#86868B]">
-                        Authenticated email tied to your verified creator profile.
-                      </span>
-                    </div>
-                  </div>
-
                   {/* Verified Role / Creative Discipline */}
                   <div className="flex flex-col gap-2 pt-1">
                     <label className="text-xs font-semibold text-[#1D1D1F]">

@@ -452,7 +452,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             <>
               {/* FIND JOB Secondary Link */}
               <Link
-                href="/auth/login?intent=freelancer"
+                href="/auth/login?intent=freelancer&redirect=/freelancer/onboarding"
                 className="hidden sm:inline-flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-white/70 hover:text-white px-2 py-1 transition-colors whitespace-nowrap"
               >
                 FIND JOB

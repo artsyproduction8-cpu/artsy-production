@@ -385,9 +385,11 @@ function LoginFormContent() {
     try {
       if (intent) {
         sessionStorage.setItem('artsy_signup_intent', 'freelancer');
-        router.replace('/auth/login?intent=freelancer');
+        sessionStorage.setItem('artsy_redirect', '/freelancer/onboarding');
+        router.replace('/auth/login?intent=freelancer&redirect=/freelancer/onboarding');
       } else {
         sessionStorage.removeItem('artsy_signup_intent');
+        sessionStorage.removeItem('artsy_redirect');
         router.replace('/auth/login');
       }
     } catch {}
@@ -431,6 +433,7 @@ function LoginFormContent() {
         phone: cleanDigits,
         email: cleanEmail.toLowerCase(),
         role: isFreelancerIntent ? 'freelancer' : 'client',
+        intent: isFreelancerIntent ? 'freelancer' : 'client',
         action: 'send',
       };
 
@@ -508,6 +511,7 @@ function LoginFormContent() {
           code: cleanOtp,
           action: 'verify',
           role: isFreelancerIntent ? 'freelancer' : 'client',
+          intent: isFreelancerIntent ? 'freelancer' : 'client',
         }),
         signal: controller.signal,
       });
@@ -561,10 +565,25 @@ function LoginFormContent() {
         const uStatus = data.user?.onboarding_status;
         const isOnboarded = Boolean(data.user?.onboarded);
 
+        // Resolve redirect parameter for creator flow
+        let redirectTarget = '/freelancer/onboarding';
+        try {
+          const stored = sessionStorage.getItem('artsy_redirect');
+          const paramRedirect = searchParams.get('redirect');
+          const target = paramRedirect || stored;
+          if (target) {
+            const sanitized = sanitizeInternalRedirect(target);
+            if (sanitized && (sanitized.startsWith('/freelancer') || sanitized === '/freelancer')) {
+              redirectTarget = sanitized;
+            }
+            sessionStorage.removeItem('artsy_redirect');
+          }
+        } catch {}
+
         // Strict state machine order for freelancers:
-        // 1. If not onboarded or onboarding_status is null -> Force to onboarding form
+        // 1. If not onboarded or onboarding_status is null -> Route to redirect parameter (/freelancer/onboarding)
         if (!isOnboarded || uStatus === null || uStatus === undefined) {
-          router.push('/freelancer/onboarding');
+          router.push(redirectTarget || '/freelancer/onboarding');
         } else if (uStatus === 'pending' || uStatus === 'pending_review') {
           router.push('/freelancer/pending-approval');
         } else if (uStatus === 'approved') {
@@ -572,7 +591,7 @@ function LoginFormContent() {
         } else if (uStatus === 'rejected') {
           router.push('/freelancer/rejected');
         } else {
-          router.push('/freelancer/onboarding');
+          router.push(redirectTarget || '/freelancer/onboarding');
         }
       } else {
         // Client
@@ -623,6 +642,7 @@ function LoginFormContent() {
           phone: cleanDigits,
           email: cleanEmail,
           role: isFreelancerIntent ? 'freelancer' : 'client',
+          intent: isFreelancerIntent ? 'freelancer' : 'client',
           action: 'send',
         }),
         signal: controller.signal,

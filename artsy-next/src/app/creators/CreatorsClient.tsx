@@ -200,7 +200,7 @@ export default function CreatorsClient() {
               </button>
             ) : (
               <Link
-                href="/freelancer/onboarding"
+                href="/auth/login?intent=freelancer&redirect=/freelancer/onboarding"
                 className="px-5 py-2.5 bg-[#1D1D1F] text-white rounded-xl text-xs font-semibold hover:bg-black transition-all cursor-pointer inline-flex items-center gap-2"
               >
                 <span>Apply as Creator</span>

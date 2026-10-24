@@ -70,7 +70,7 @@ export default function PublicCreatorsPage() {
             </p>
           </div>
           <Link
-            href="/freelancer/onboarding"
+            href="/auth/login?intent=freelancer&redirect=/freelancer/onboarding"
             className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs"
           >
             <span>Apply as a Creator</span>

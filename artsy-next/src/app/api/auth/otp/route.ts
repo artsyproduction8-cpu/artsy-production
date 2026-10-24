@@ -37,7 +37,25 @@ export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
     const body = await request.json().catch(() => ({}));
-    const { email, phone, identifier: inputIdentifier, action = 'send', code, role = 'client', consentGiven = true } = body;
+    const { email, phone, identifier: inputIdentifier, action = 'send', code, consentGiven = true } = body;
+
+    // Phase 3: Robust Role & Intent Extraction (Prevent client fallback bug)
+    const rawRole = (body.role || body.intent || body.signup_intent || body.requestedRole || '')
+      .toString()
+      .trim()
+      .toLowerCase();
+    const isFreelancerRoleOrIntent = rawRole === 'freelancer' || rawRole === 'creator';
+    const isSuperAdminRoleOrIntent = rawRole === 'super_admin';
+    const isAdminRoleOrIntent = rawRole === 'admin';
+    const parsedRole: 'client' | 'freelancer' | 'admin' | 'super_admin' =
+      isFreelancerRoleOrIntent
+        ? 'freelancer'
+        : isSuperAdminRoleOrIntent
+        ? 'super_admin'
+        : isAdminRoleOrIntent
+        ? 'admin'
+        : 'client';
+    const role = parsedRole;
 
     // Security Fix #4: Return generic response for lookup without user enumeration
     if (action === 'lookup') {
@@ -131,15 +149,24 @@ export async function POST(request: NextRequest) {
         let dbMatched = false;
         if (isSupabaseConfigured && supabase) {
           try {
-            const { data: dbSession } = await supabase
+            let sessionQuery = supabase
               .from('otp_sessions')
-              .select('id, phone, otp_hash, expires_at, verified, role')
-              .eq('phone', cleanPhone || identifier)
+              .select('id, phone, email, otp_hash, expires_at, verified, role')
               .eq('verified', false)
               .gt('expires_at', new Date().toISOString())
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle();
+              .order('created_at', { ascending: false });
+
+            if (cleanPhone && cleanEmail) {
+              sessionQuery = sessionQuery.or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone},email.eq.${cleanEmail}`);
+            } else if (cleanPhone) {
+              sessionQuery = sessionQuery.or(`phone.eq.${cleanPhone},phone.eq.+91${cleanPhone}`);
+            } else if (cleanEmail) {
+              sessionQuery = sessionQuery.eq('email', cleanEmail);
+            } else {
+              sessionQuery = sessionQuery.eq('phone', identifier);
+            }
+
+            const { data: dbSession } = await sessionQuery.limit(1).maybeSingle();
 
             if (dbSession) {
               if (dbSession.role) {
@@ -237,10 +264,28 @@ export async function POST(request: NextRequest) {
       let resolvedUser: any;
       let isNewUser = false;
 
+      const isFreelancerRequest =
+        isFreelancerRoleOrIntent ||
+        role === 'freelancer' ||
+        sessionRole === 'freelancer' ||
+        sessionRole === 'creator' ||
+        memSession?.role === 'freelancer' ||
+        memSession?.role === 'creator';
+
       if (existingUser) {
         resolvedUser = existingUser;
         if (isSuperAdminIdentifier) {
           resolvedUser.role = 'super_admin';
+        } else if (existingUser.role === 'client' && isFreelancerRequest) {
+          // If an existing client logs in with creator intent, update their role to freelancer
+          resolvedUser.role = 'freelancer';
+          if (isSupabaseConfigured && dbClient) {
+            try {
+              await dbClient.from('users').update({ role: 'freelancer', updated_at: new Date().toISOString() }).eq('id', existingUser.id);
+            } catch (rErr) {
+              console.warn('[OTP Route] Error updating user role to freelancer:', rErr);
+            }
+          }
         }
         if (isSupabaseConfigured && dbClient) {
           try {
@@ -254,7 +299,7 @@ export async function POST(request: NextRequest) {
         }
       } else {
         isNewUser = true;
-        const requestedRole: 'client' | 'freelancer' = (role === 'freelancer' || sessionRole === 'freelancer') ? 'freelancer' : 'client';
+        const requestedRole: 'client' | 'freelancer' = isFreelancerRequest ? 'freelancer' : 'client';
         const defaultRole = isSuperAdminIdentifier ? 'super_admin' : requestedRole;
         const dbRole = isSuperAdminIdentifier ? 'admin' : requestedRole;
         const generatedUserId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `usr_${cleanPhone || Date.now()}`;
@@ -311,7 +356,7 @@ export async function POST(request: NextRequest) {
       }
 
       const finalRole: 'client' | 'freelancer' | 'admin' | 'super_admin' =
-        isSuperAdminIdentifier ? 'super_admin' : (resolvedUser.role || 'client');
+        isSuperAdminIdentifier ? 'super_admin' : (resolvedUser.role || (isFreelancerRequest ? 'freelancer' : 'client'));
 
       let onboarding_status: 'pending' | 'approved' | 'rejected' | 'pending_review' | null = null;
       let tracking_id: string | null = null;

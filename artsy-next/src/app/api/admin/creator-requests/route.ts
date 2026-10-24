@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { checkRateLimit } from '@/lib/rateLimit';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
 import { createErrorResponse } from '@/lib/api-response';
@@ -8,6 +9,11 @@ export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+  }
+
+  const limitGet = await checkRateLimit(`admin_cr_req_get_${authUser.id}`, 'admin', 30, 60);
+  if (!limitGet.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Please retry shortly.' }, { status: 429 });
   }
 
   const dbClient = supabaseAdmin || anonSupabase;
@@ -62,6 +68,11 @@ export async function POST(request: Request) {
   const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+  }
+
+  const limitPost = await checkRateLimit(`admin_cr_req_post_${authUser.id}`, 'admin', 20, 60);
+  if (!limitPost.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Please retry shortly.' }, { status: 429 });
   }
 
   const dbClient = supabaseAdmin || anonSupabase;

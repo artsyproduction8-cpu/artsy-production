@@ -258,6 +258,27 @@ function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
   );
 }
 
+/**
+ * Strict internal URL sanitizer to prevent Open Redirect attacks (CWE-601).
+ * Accepts only relative paths starting with a single '/' and rejects external,
+ * protocol-relative ('//'), backslash ('/\'), data:, and javascript: URIs.
+ */
+function sanitizeInternalRedirect(target?: string | null): string {
+  if (!target || typeof target !== 'string') return '/client';
+  const clean = target.trim();
+  if (
+    clean.startsWith('/') &&
+    !clean.startsWith('//') &&
+    !clean.startsWith('/\\') &&
+    !clean.includes('://') &&
+    !clean.toLowerCase().startsWith('/javascript:') &&
+    !clean.toLowerCase().startsWith('/data:')
+  ) {
+    return clean;
+  }
+  return '/client';
+}
+
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -297,7 +318,10 @@ function LoginFormContent() {
     const redirectParam = searchParams.get('redirect');
     if (redirectParam) {
       try {
-        sessionStorage.setItem('artsy_redirect', redirectParam);
+        const safeRedirect = sanitizeInternalRedirect(redirectParam);
+        if (safeRedirect !== '/client') {
+          sessionStorage.setItem('artsy_redirect', safeRedirect);
+        }
       } catch {}
     }
 
@@ -552,10 +576,18 @@ function LoginFormContent() {
         }
       } else {
         // Client
-        if (data.user?.onboarded === false) {
+        if (!data.user?.onboarded) {
           router.push('/client/profile?setup=true');
         } else {
-          router.push(sessionStorage.getItem('artsy_redirect') || '/client');
+          let redirectTarget = '/client';
+          try {
+            const stored = sessionStorage.getItem('artsy_redirect');
+            if (stored) {
+              redirectTarget = sanitizeInternalRedirect(stored);
+              sessionStorage.removeItem('artsy_redirect');
+            }
+          } catch {}
+          router.push(redirectTarget);
         }
       }
     } catch (err: unknown) {

@@ -7,6 +7,7 @@ const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const serverAuthSecret = process.env.SERVER_AUTH_SECRET || 'ArtsyServerSubmissionAuth2026'
 
 export let supabase: any
 export let supabaseAdmin: any = null
@@ -63,7 +64,7 @@ if (isSupabaseConfigured && supabaseUrl && supabaseAnonKey) {
       auth: { persistSession: false, autoRefreshToken: false },
       global: {
         headers: {
-          'x-artsy-server-auth': 'ArtsyServerSubmissionAuth2026',
+          'x-artsy-server-auth': serverAuthSecret,
         },
       },
     });
@@ -72,7 +73,7 @@ if (isSupabaseConfigured && supabaseUrl && supabaseAnonKey) {
       auth: { persistSession: false, autoRefreshToken: false },
       global: {
         headers: {
-          'x-artsy-server-auth': 'ArtsyServerSubmissionAuth2026',
+          'x-artsy-server-auth': serverAuthSecret,
         },
       },
     });

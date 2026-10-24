@@ -5,24 +5,26 @@ import { useAuth, hasAcceptedAgreement, recordAgreementAcceptance } from '@/lib/
 import FreelancerHeader from '../components/FreelancerHeader';
 import FreelancerSidebar from '../components/FreelancerSidebar';
 
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
 export default function FreelancerAgreementPage() {
-  const { user } = useAuth();
-  const [signed, setSigned] = useState<boolean>(hasAcceptedAgreement(user));
-  const [ndaChecked, setNdaChecked] = useState(false);
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const signed = Boolean(user?.agreement_signed_at || user?.agreement_accepted || hasAcceptedAgreement(user));
 
-  const creatorName = user?.full_name || '';
+  const creatorName = user?.full_name || 'Creator Partner';
+  const signedTimestamp = user?.agreement_signed_at || user?.agreement_accepted_at || 'Verified';
 
-  const handleSign = () => {
-    if (!ndaChecked) {
-      alert('Please check the confirmation box to execute the agreement.');
-      return;
+  useEffect(() => {
+    if (!loading && user) {
+      const hasSigned = Boolean(user.agreement_signed_at || user.agreement_accepted || hasAcceptedAgreement(user));
+      if (!hasSigned) {
+        router.replace('/freelancer/onboarding');
+      }
     }
-    recordAgreementAcceptance('both', '1.0');
-    setSigned(true);
-    setToastMessage('✓ Creator Agreement & NDA signed successfully.');
-    setTimeout(() => setToastMessage(null), 5000);
-  };
+  }, [user, loading, router]);
 
   return (
     <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans">
@@ -106,9 +108,12 @@ export default function FreelancerAgreementPage() {
             {signed ? (
               <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="font-bold">Signed &amp; Verified</div>
-                  <div className="text-[11px] text-emerald-700 mt-0.5 font-mono">
-                    Signatory: {creatorName} • Agreement Version: 1.0 • Timestamp Verified
+                  <div className="font-bold flex items-center gap-1.5">
+                    <span>✓</span>
+                    <span>Legally Executed &amp; Recorded</span>
+                  </div>
+                  <div className="text-[11px] text-emerald-700 mt-1 font-mono">
+                    Signatory: {creatorName} • Agreement Version: 1.0 • Executed: {signedTimestamp}
                   </div>
                 </div>
                 <button
@@ -119,26 +124,13 @@ export default function FreelancerAgreementPage() {
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={ndaChecked}
-                    onChange={(e) => setNdaChecked(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 accent-[#3B82F6] rounded cursor-pointer"
-                  />
-                  <span className="text-xs text-[#86868B] leading-snug">
-                    I, <strong>{creatorName}</strong>, confirm that I have read and agree to the Creator Agreement and Non-Disclosure terms.
-                  </span>
-                </label>
-
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between">
+                <span>The Creator Agreement &amp; NDA must be executed during onboarding. Redirecting...</span>
                 <button
-                  type="button"
-                  onClick={handleSign}
-                  disabled={!ndaChecked}
-                  className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                  onClick={() => router.push('/freelancer/onboarding')}
+                  className="px-3 py-1 rounded-lg bg-amber-600 text-white font-bold"
                 >
-                  Sign Agreement →
+                  Go to Onboarding &rarr;
                 </button>
               </div>
             )}

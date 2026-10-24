@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { encryptPII, decryptPII, maskPAN } from '@/lib/crypto/pii';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,14 @@ export async function GET(
     const authUser = await getAuthenticatedUser(request);
     if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
+    const limit = await checkRateLimit(`admin_reveal_pan_${authUser.id}`, 'admin', 5, 600);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: `PAN reveal limit exceeded. Please wait ${Math.ceil(limit.resetSeconds / 60)} minutes.` },
+        { status: 429 }
+      );
     }
 
     const { id: creatorId } = await params;
@@ -43,7 +52,7 @@ export async function GET(
     }
 
     if (!encryptedPan) {
-      if (creatorId === 'test-creator-e2e' || creatorId.includes('test')) {
+      if (process.env.NODE_ENV !== 'production' && (creatorId === 'test-creator-e2e' || creatorId.includes('test'))) {
         encryptedPan = encryptPII('ABCDE1234F');
       } else {
         return NextResponse.json({ error: 'Creator PAN record not found' }, { status: 404 });
@@ -55,6 +64,27 @@ export async function GET(
     const auditLogId = `aud_rev_${Date.now()}`;
 
     // Security audit log entry
+    // Security audit log entry: Write to immutable public.audit_logs
+    if (db && typeof db.from === 'function') {
+      try {
+        const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || null;
+        await db.from('audit_logs').insert([
+          {
+            admin_id: authUser.id,
+            admin_email: authUser.email || 'admin@artsyproduction.com',
+            action: 'PAN_REVEALED',
+            target_table: 'creator_profiles',
+            target_id: creatorId,
+            ip_address: ip,
+            new_values: { creatorName, revealed_at: new Date().toISOString() },
+            created_at: new Date().toISOString(),
+          },
+        ]);
+      } catch (auditErr) {
+        console.warn('[SECURITY AUDIT] Failed to persist audit_log record:', auditErr);
+      }
+    }
+
     console.info(`[SECURITY AUDIT] PAN revealed by admin ${authUser.id.slice(0, 8)} for creator [REDACTED]`);
 
     return NextResponse.json({

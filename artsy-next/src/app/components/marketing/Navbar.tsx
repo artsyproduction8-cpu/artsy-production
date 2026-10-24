@@ -304,7 +304,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
 
   return (
     <header className="fixed top-0 left-0 w-full z-50 bg-[#0A0A0A]/95 backdrop-blur-md border-b border-white/10 transition-all">
-      <div className="h-16 max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between relative">
+      <div className="h-[60px] sm:h-16 max-w-[1200px] mx-auto px-4 sm:px-6 md:px-8 flex items-center justify-between relative">
         
         {/* Top-Left Brand Logo -> Direct link to Landing Page */}
         <Link
@@ -315,7 +315,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
           <span className="text-xl sm:text-2xl font-extrabold uppercase tracking-tight text-white leading-none group-hover:text-blue-400 transition-colors">
             ARTSY
           </span>
-          <span className="font-mono text-xs font-semibold tracking-[1.2px] uppercase text-[#DCDFE3]/80 mt-1 leading-none text-center">
+          <span className="hidden md:block font-mono text-[10px] sm:text-xs font-semibold tracking-[1.2px] uppercase text-[#DCDFE3]/80 mt-1 leading-none text-center whitespace-nowrap">
             PLACE FOR PERSPECTIVE
           </span>
         </Link>
@@ -343,7 +343,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
         </nav>
 
         {/* Right Action Group */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-4">
           
           {/* Reworked Search Button: Icon Symbol with Small Expanding Input Toggle */}
           <div className="relative flex items-center" ref={searchContainerRef}>
@@ -458,27 +458,27 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
                 FIND JOB
               </Link>
 
-              {/* LOGIN Secondary Link */}
+              {/* LOGIN Secondary Link: Hidden on mobile to prevent cramping */}
               <Link
                 href="/auth/login"
-                className="inline-flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-white/80 hover:text-white px-2.5 py-1 transition-colors whitespace-nowrap"
+                className="hidden sm:inline-flex items-center justify-center text-xs font-semibold uppercase tracking-wider text-white/80 hover:text-white px-2.5 py-1 transition-colors whitespace-nowrap"
               >
                 LOGIN
               </Link>
 
-              {/* BOOK NOW Primary CTA Button */}
+              {/* BOOK NOW Primary CTA Button with adequate mobile touch padding */}
               <Link
                 href="/book"
-                className="inline-flex items-center justify-center h-8 px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
+                className="inline-flex items-center justify-center h-8 sm:h-9 px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
               >
                 BOOK NOW
               </Link>
             </>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4 sm:gap-2">
               <Link
                 href="/book"
-                className="hidden sm:inline-flex items-center justify-center h-8 px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
+                className="inline-flex items-center justify-center h-8 sm:h-9 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white bg-[#3B82F6] hover:bg-[#2563EB] shadow-sm transition-all whitespace-nowrap"
               >
                 BOOK NOW
               </Link>

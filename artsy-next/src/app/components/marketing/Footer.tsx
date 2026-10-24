@@ -136,8 +136,8 @@ export default function Footer() {
 
         {/* Bottom Copyright & Compliance Links */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 text-xs text-[#DCDFE3]/70 font-sans">
-          <div>© 2026 ARTSY PRODUCTION. ALL RIGHTS RESERVED.</div>
-          <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <div className="text-center sm:text-left">© 2026 ARTSY PRODUCTION. ALL RIGHTS RESERVED.</div>
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-4 sm:gap-6">
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy (DPDP)</Link>
             <Link href="/refund-policy" className="hover:text-white transition-colors">Refund Policy</Link>

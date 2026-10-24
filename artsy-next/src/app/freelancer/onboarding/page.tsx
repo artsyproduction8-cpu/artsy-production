@@ -37,6 +37,10 @@ export default function FreelancerOnboarding() {
     { type: 'Wedding Films & Teasers', url: '' },
     { type: 'Product Videos & Reels', url: '' }
   ]);
+  const [hardwareConfig, setHardwareConfig] = useState('');
+  const [sampleUrl1, setSampleUrl1] = useState('');
+  const [sampleUrl2, setSampleUrl2] = useState('');
+  const [sampleUrl3, setSampleUrl3] = useState('');
   const [pan, setPan] = useState('');
   const [bankName, setBankName] = useState('HDFC Bank');
   const [bankAccount, setBankAccount] = useState('');
@@ -47,6 +51,45 @@ export default function FreelancerOnboarding() {
   const [submitting, setSubmitting] = useState(false);
 
   const [trackingId, setTrackingId] = useState('ART-2026-VET-982');
+
+  // Strict Validation RegExes
+  const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+  const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+  const bankAccountRegex = /^\d{9,18}$/;
+
+  const isValidVideoUrl = (urlStr: string): boolean => {
+    try {
+      const u = new URL(urlStr);
+      if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+      const host = u.hostname.toLowerCase();
+      return (
+        host.includes('youtube.com') ||
+        host.includes('youtu.be') ||
+        host.includes('vimeo.com')
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  const isPanValid = pan.trim().length === 10 && panRegex.test(pan.trim());
+  const isIfscValid = ifsc.trim().length === 11 && ifscRegex.test(ifsc.trim());
+  const isBankAccountValid = bankAccountRegex.test(bankAccount.trim());
+  const isHardwareValid = hardwareConfig.trim().length >= 5;
+  const isSample1Valid = isValidVideoUrl(sampleUrl1.trim());
+  const isSample2Valid = isValidVideoUrl(sampleUrl2.trim());
+  const isSample3Valid = isValidVideoUrl(sampleUrl3.trim());
+  const isLegalNameValid = legalName.trim().length >= 2;
+  const isFormValid =
+    isPanValid &&
+    isIfscValid &&
+    isBankAccountValid &&
+    isHardwareValid &&
+    isSample1Valid &&
+    isSample2Valid &&
+    isSample3Valid &&
+    isLegalNameValid &&
+    ndaAccepted;
 
   // Pre-fill or redirect based on persistent server onboarding status
   useEffect(() => {
@@ -100,10 +143,35 @@ export default function FreelancerOnboarding() {
       alert('Please enter your actual personal name or studio alias rather than a placeholder.');
       return;
     }
+    if (!cleanLegal || cleanLegal.length < 2) {
+      alert('Please enter your full legal name as your digital signature to execute the NDA.');
+      return;
+    }
     if (!ndaAccepted) {
       alert('Please accept the Creator Agreement & Confidentiality NDA');
       return;
     }
+    if (!isHardwareValid) {
+      alert('Please specify your Workstation & Hardware specs (CPU, GPU, RAM).');
+      return;
+    }
+    if (!isSample1Valid || !isSample2Valid || !isSample3Valid) {
+      alert('All 3 Portfolio Sample video links are mandatory and must be valid YouTube or Vimeo URLs.');
+      return;
+    }
+    if (!isPanValid) {
+      alert('Invalid PAN Card format. Must match standard Indian 10-character PAN format (e.g., ABCDE1234F).');
+      return;
+    }
+    if (!isBankAccountValid) {
+      alert('Invalid Bank Account number. Must be a numeric string between 9 and 18 digits.');
+      return;
+    }
+    if (!isIfscValid) {
+      alert('Invalid IFSC Code format. Must match standard 11-character Indian IFSC format (e.g., SBIN0001234).');
+      return;
+    }
+
     setSubmitting(true);
     // Record legal agreement acceptance
     recordAgreementAcceptance('both', '1.0');
@@ -112,6 +180,8 @@ export default function FreelancerOnboarding() {
     const candidateUserId = currentUser?.id || `usr-creator-${Date.now().toString().slice(-6)}`;
     const candidateEmail = currentUser?.email || '';
     const candidatePhone = currentUser?.phone || '';
+
+    let agreementSignedAt = new Date().toISOString();
 
     try {
       const res = await fetch('/api/freelancer/onboard', {
@@ -125,18 +195,27 @@ export default function FreelancerOnboarding() {
           specialty: specialty === 'Other' ? (customSpecialty.trim() || 'Commercial & Narrative Film Editor') : specialty,
           email: candidateEmail,
           phone: candidatePhone,
-          showreelUrl,
+          showreelUrl: showreelUrl || sampleUrl1,
           philosophy,
           software,
           experience,
           capacity,
           languages,
-          reels,
+          hardwareConfig,
+          sampleUrl1,
+          sampleUrl2,
+          sampleUrl3,
+          reels: [
+            { type: 'Commercial & Brand Ads', url: sampleUrl1 },
+            { type: 'Wedding Films & Teasers', url: sampleUrl2 },
+            { type: 'Product Videos & Reels', url: sampleUrl3 }
+          ],
           pan,
           bankName,
           bankAccount,
           ifsc,
           agreementAccepted: true,
+          ndaAccepted: true,
         }),
       });
 
@@ -151,24 +230,33 @@ export default function FreelancerOnboarding() {
           sessionStorage.setItem('artsy_tracking_id', data.trackingId);
         } catch {}
       }
-    } catch (err) {
-      console.warn('Onboarding dispatch non-fatal fallback:', err);
+      if (data.agreement_signed_at) {
+        agreementSignedAt = data.agreement_signed_at;
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to submit onboarding. Please verify all fields and retry.');
+      setSubmitting(false);
+      return;
     }
 
     // Safe display payload without sensitive financial PII for client-side state
     const creatorPayload = {
       alias,
-      showreelUrl,
+      showreelUrl: showreelUrl || sampleUrl1,
       philosophy,
       software,
       experience,
       capacity,
       languages,
-      reels,
+      hardwareConfig,
+      sampleUrl1,
+      sampleUrl2,
+      sampleUrl3,
       agreementAccepted: true,
+      agreement_signed_at: agreementSignedAt,
       agreementVersion: '1.0',
-      status: 'approved',
-      submittedAt: new Date().toISOString(),
+      status: 'pending_review',
+      submittedAt: agreementSignedAt,
       trackingId: trackingId || 'ART-2026-VET-4115',
     };
 
@@ -191,7 +279,8 @@ export default function FreelancerOnboarding() {
       onboarding_status: 'pending_review' as const,
       tracking_id: trackingId || 'ART-2026-VET-4115',
       agreement_accepted: true,
-      agreement_accepted_at: new Date().toISOString(),
+      agreement_accepted_at: agreementSignedAt,
+      agreement_signed_at: agreementSignedAt,
       agreement_version: '1.0',
       created_at: currentUser?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -431,72 +520,130 @@ export default function FreelancerOnboarding() {
                   </div>
                 </div>
 
-                {/* 03 Categorical Cut Samples */}
+                {/* 03 Workstation & Hardware */}
                 <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
                   <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
                     <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
                       <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                         3
                       </span>
-                      Sample Videos You Have Edited
+                      Workstation &amp; Hardware Specifications
                     </span>
-                    <span className="text-xs text-[#86868B] uppercase font-semibold">Min 2 • Max 4 Videos</span>
+                    <span className="text-xs text-red-600 uppercase font-semibold">* Mandatory</span>
                   </div>
 
-                  <div className="space-y-3">
-                    {reels.map((reel, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] flex flex-col md:flex-row gap-3 items-center"
-                      >
-                        <span className="text-xs font-bold text-[#1D1D1F] bg-white px-2.5 py-1 rounded-md border border-[#E5E5E7] shrink-0">
-                          VIDEO 0{idx + 1}
-                        </span>
-                        <div className="w-full md:w-1/3">
-                          <select
-                            value={reel.type}
-                            onChange={(e) => {
-                              const next = [...reels];
-                              next[idx].type = e.target.value;
-                              setReels(next);
-                            }}
-                            className="w-full bg-white px-3 py-2 text-xs font-semibold rounded-lg border border-[#E5E5E7] outline-none"
-                          >
-                            <option>Commercial &amp; Brand Ads</option>
-                            <option>Wedding Films &amp; Teasers</option>
-                            <option>Product Videos &amp; Reels</option>
-                            <option>Documentary &amp; Corporate</option>
-                          </select>
-                        </div>
-                        <div className="w-full md:w-2/3">
-                          <input
-                            type="url"
-                            required={idx < 2}
-                            value={reel.url}
-                            onChange={(e) => {
-                              const next = [...reels];
-                              next[idx].url = e.target.value;
-                              setReels(next);
-                            }}
-                            placeholder={
-                              idx < 2
-                                ? 'https://youtube.com/... or Google Drive link'
-                                : 'Optional 3rd video link (YouTube, Drive, etc.)'
-                            }
-                            className="w-full bg-white px-3.5 py-2 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] outline-none"
-                          />
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-[#1D1D1F]">
+                      WORKSTATION HARDWARE SPECS (CPU, GPU, RAM) *
+                    </label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={hardwareConfig}
+                      onChange={(e) => setHardwareConfig(e.target.value)}
+                      placeholder="e.g. CPU: Apple M2 Max / AMD Ryzen 9 7900X&#10;GPU: NVIDIA RTX 4080 (16GB VRAM)&#10;RAM: 64GB DDR5&#10;Storage: 4TB NVMe SSD scratch disk"
+                      className="bg-[#F5F5F7] p-3.5 text-sm font-mono text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all resize-none"
+                    />
+                    <div className="flex justify-between items-center text-[11px] text-[#86868B] mt-1">
+                      <span>Please specify your system processor, graphics card, and RAM capacity for 4K timeline compatibility.</span>
+                      {hardwareConfig && !isHardwareValid && (
+                        <span className="text-red-500 font-semibold">Min 5 characters required</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* 04 Compliance & Direct Disbursement */}
+                {/* 04 Portfolio Samples */}
                 <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
                   <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
                     <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
                       <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
                         4
+                      </span>
+                      Portfolio Samples (3 Mandatory Videos)
+                    </span>
+                    <span className="text-xs text-red-600 uppercase font-semibold">Exactly 3 Required (YouTube / Vimeo)</span>
+                  </div>
+
+                  <p className="text-xs text-[#86868B] leading-relaxed">
+                    To maintain premium quality standards on Artsy, all applicants must submit 3 separate links to completed video projects hosted on YouTube or Vimeo.
+                  </p>
+
+                  <div className="space-y-4">
+                    {/* Sample 1 */}
+                    <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-[#1D1D1F]">
+                          SAMPLE VIDEO 01 (YOUTUBE / VIMEO) *
+                        </label>
+                        {sampleUrl1 && (
+                          isSample1Valid
+                            ? <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">✓ Valid Video URL</span>
+                            : <span className="text-xs text-red-500 font-semibold">Must be YouTube or Vimeo URL</span>
+                        )}
+                      </div>
+                      <input
+                        type="url"
+                        required
+                        value={sampleUrl1}
+                        onChange={(e) => setSampleUrl1(e.target.value)}
+                        placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
+                        className="w-full bg-white px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] outline-none focus:border-[#3B82F6] transition-all"
+                      />
+                    </div>
+
+                    {/* Sample 2 */}
+                    <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-[#1D1D1F]">
+                          SAMPLE VIDEO 02 (YOUTUBE / VIMEO) *
+                        </label>
+                        {sampleUrl2 && (
+                          isSample2Valid
+                            ? <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">✓ Valid Video URL</span>
+                            : <span className="text-xs text-red-500 font-semibold">Must be YouTube or Vimeo URL</span>
+                        )}
+                      </div>
+                      <input
+                        type="url"
+                        required
+                        value={sampleUrl2}
+                        onChange={(e) => setSampleUrl2(e.target.value)}
+                        placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
+                        className="w-full bg-white px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] outline-none focus:border-[#3B82F6] transition-all"
+                      />
+                    </div>
+
+                    {/* Sample 3 */}
+                    <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-[#1D1D1F]">
+                          SAMPLE VIDEO 03 (YOUTUBE / VIMEO) *
+                        </label>
+                        {sampleUrl3 && (
+                          isSample3Valid
+                            ? <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">✓ Valid Video URL</span>
+                            : <span className="text-xs text-red-500 font-semibold">Must be YouTube or Vimeo URL</span>
+                        )}
+                      </div>
+                      <input
+                        type="url"
+                        required
+                        value={sampleUrl3}
+                        onChange={(e) => setSampleUrl3(e.target.value)}
+                        placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
+                        className="w-full bg-white px-3.5 py-2.5 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] outline-none focus:border-[#3B82F6] transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 05 Compliance & Direct Disbursement */}
+                <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+                  <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
+                    <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
+                        5
                       </span>
                       Bank Details for Direct Payouts
                     </span>
@@ -505,9 +652,16 @@ export default function FreelancerOnboarding() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">
-                        PAN CARD NUMBER *
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-[#1D1D1F]">
+                          PAN CARD NUMBER *
+                        </label>
+                        {pan && (
+                          isPanValid
+                            ? <span className="text-[11px] text-emerald-600 font-semibold">✓ Valid PAN</span>
+                            : <span className="text-[11px] text-red-500 font-semibold">Format: ABCDE1234F</span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         required
@@ -515,21 +669,23 @@ export default function FreelancerOnboarding() {
                         value={pan}
                         onChange={(e) => setPan(e.target.value.toUpperCase())}
                         placeholder="ABCDE1234F"
-                        className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
+                        className={`uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border outline-none transition-all ${
+                          pan && !isPanValid ? 'border-red-400 focus:border-red-500' : 'border-[#E5E5E7] focus:bg-white focus:border-[#3B82F6]'
+                        }`}
                       />
-                      <span className="text-[11px] text-[#86868B]">Required for tax deduction (TDS) as per government rules.</span>
+                      <span className="text-[11px] text-[#86868B]">10-character alphanumeric PAN required for statutory TDS deductions (Section 194J).</span>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-semibold text-[#1D1D1F]">
-                        FULL NAME (AS PRINTED ON PAN CARD) *
+                        NAME AS PER PAN CARD *
                       </label>
                       <input
                         type="text"
                         required
                         value={legalName}
                         onChange={(e) => setLegalName(e.target.value)}
-                        placeholder="Name as per PAN and bank account"
+                        placeholder="Name as printed on PAN card"
                         className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
                       />
                       <span className="text-[11px] text-[#86868B]">
@@ -593,21 +749,38 @@ export default function FreelancerOnboarding() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">
-                        BANK ACCOUNT NUMBER *
-                      </label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-[#1D1D1F]">
+                          BANK ACCOUNT NUMBER *
+                        </label>
+                        {bankAccount && (
+                          isBankAccountValid
+                            ? <span className="text-[11px] text-emerald-600 font-semibold">✓ Valid Account</span>
+                            : <span className="text-[11px] text-red-500 font-semibold">9–18 digits required</span>
+                        )}
+                      </div>
                       <input
-                        type="password"
+                        type="text"
                         required
                         value={bankAccount}
-                        onChange={(e) => setBankAccount(e.target.value)}
-                        placeholder="Enter your bank account number"
-                        className="bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
+                        onChange={(e) => setBankAccount(e.target.value.replace(/\D/g, ''))}
+                        placeholder="Enter 9 to 18 digit account number"
+                        maxLength={18}
+                        className={`bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono text-[#1D1D1F] rounded-xl border outline-none transition-all ${
+                          bankAccount && !isBankAccountValid ? 'border-red-400 focus:border-red-500' : 'border-[#E5E5E7] focus:bg-white focus:border-[#3B82F6]'
+                        }`}
                       />
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-[#1D1D1F]">IFSC CODE *</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold text-[#1D1D1F]">IFSC CODE *</label>
+                        {ifsc && (
+                          isIfscValid
+                            ? <span className="text-[11px] text-emerald-600 font-semibold">✓ Valid IFSC</span>
+                            : <span className="text-[11px] text-red-500 font-semibold">Format: SBIN0001234</span>
+                        )}
+                      </div>
                       <input
                         type="text"
                         required
@@ -615,40 +788,102 @@ export default function FreelancerOnboarding() {
                         value={ifsc}
                         onChange={(e) => setIfsc(e.target.value.toUpperCase())}
                         placeholder="e.g. HDFC0001234"
-                        className="uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6]"
+                        className={`uppercase bg-[#F5F5F7] px-4 py-2.5 text-sm font-mono tracking-wider text-[#1D1D1F] rounded-xl border outline-none transition-all ${
+                          ifsc && !isIfscValid ? 'border-red-400 focus:border-red-500' : 'border-[#E5E5E7] focus:bg-white focus:border-[#3B82F6]'
+                        }`}
                       />
                     </div>
                   </div>
+                </div>
 
-                  {/* NDA Checkbox */}
-                  <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex flex-col gap-2 mt-2">
+                {/* 06 Permanent NDA & Digital Signature */}
+                <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col gap-5">
+                  <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-4">
+                    <span className="text-base font-bold text-[#1D1D1F] flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center text-xs font-bold">
+                        6
+                      </span>
+                      Creator Agreement &amp; Non-Disclosure Agreement (NDA)
+                    </span>
+                    <span className="text-xs text-blue-600 uppercase font-semibold">Legally Binding</span>
+                  </div>
+
+                  <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex flex-col gap-3 text-xs text-[#1D1D1F] leading-relaxed max-h-48 overflow-y-auto">
+                    <p className="font-bold text-xs">CONFIDENTIALITY &amp; SERVICE AGREEMENT SUMMARY:</p>
+                    <p>
+                      1. <strong>Confidential Footage &amp; Project Assets:</strong> All raw camera footage, audio stems, client branding assets, scripts, and rough cuts delivered via Artsy are strictly confidential. You shall not upload, publicly stream, publish, or leak any materials without explicit prior written consent from Artsy.
+                    </p>
+                    <p>
+                      2. <strong>Non-Circumvention:</strong> You agree not to solicit, contact, or accept direct private compensation from Artsy clients outside of the platform for 90 days following project completion.
+                    </p>
+                    <p>
+                      3. <strong>Quality &amp; Hardware Standard:</strong> You represent that your declared workstation meets the technical threshold for 4K video editing, color grading, and lossless master rendering.
+                    </p>
+                    <p>
+                      4. <strong>Permanent Execution:</strong> Upon submission of this application with your digital signature, this agreement is permanently executed and registered on your creator ledger.
+                    </p>
+                  </div>
+
+                  {/* Digital Signature Full Legal Name */}
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-[#1D1D1F]">
+                        DIGITAL SIGNATURE (FULL LEGAL NAME) *
+                      </label>
+                      {legalName && (
+                        isLegalNameValid
+                          ? <span className="text-[11px] text-emerald-600 font-semibold">✓ Signature Entered</span>
+                          : <span className="text-[11px] text-red-500 font-semibold">Full legal name required</span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      value={legalName}
+                      onChange={(e) => setLegalName(e.target.value)}
+                      placeholder="Type your full legal name as digital signature (e.g., Rahul Sharma)"
+                      className={`bg-[#F5F5F7] px-4 py-2.5 text-sm text-[#1D1D1F] rounded-xl border outline-none transition-all ${
+                        legalName && !isLegalNameValid ? 'border-red-400' : 'border-[#E5E5E7] focus:bg-white focus:border-[#3B82F6]'
+                      }`}
+                    />
+                    <span className="text-[11px] text-[#86868B]">
+                      Must match your government-issued ID and bank account name. Typing your legal name acts as a legally binding electronic signature.
+                    </span>
+                  </div>
+
+                  {/* Agreement Checkbox */}
+                  <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-200/60 flex flex-col gap-2">
                     <label className="flex items-start gap-3 cursor-pointer">
                       <input
                         type="checkbox"
+                        required
                         checked={ndaAccepted}
                         onChange={(e) => setNdaAccepted(e.target.checked)}
                         className="w-4 h-4 mt-0.5 accent-[#3B82F6] cursor-pointer shrink-0"
                       />
                       <span className="text-xs text-[#1D1D1F] leading-relaxed">
-                        <strong>CREATOR AGREEMENT &amp; CONFIDENTIALITY:</strong>
-                        <br />
-                        • <strong>Keep Footage Private:</strong> All raw videos, audio tracks, and client project files are strictly confidential. You agree not to upload, publicly share, or distribute client footage without written permission from Artsy.
-                        <br /><br />
-                        • <strong>Work Through Artsy:</strong> You agree not to contact or take direct payments from Artsy clients outside the platform for 90 days after finishing a project.
+                        <strong>I agree and digitally execute:</strong> I confirm that I have reviewed the Artsy Creator Services Agreement, NDA, and Non-Circumvention Policy. I affirm that all hardware specifications, portfolio sample links, and banking details submitted above are accurate and true.
                       </span>
                     </label>
                   </div>
                 </div>
 
                 {/* Submit CTA */}
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 shadow-sm"
-                >
-                  <span>{submitting ? 'Submitting Application...' : 'Submit Application for Review'}</span>
-                  <span>→</span>
-                </button>
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="submit"
+                    disabled={submitting || !isFormValid}
+                    className="w-full bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#9CA3AF] disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                  >
+                    <span>{submitting ? 'Submitting Application & Executing NDA...' : 'Submit Application & Sign Agreement'}</span>
+                    <span>→</span>
+                  </button>
+                  {!isFormValid && (
+                    <p className="text-center text-xs text-amber-700 font-medium">
+                      * Please complete all mandatory fields with valid formats (Hardware specs, 3 Sample URLs, valid PAN, Bank Account, IFSC, Legal Name signature, and NDA agreement) to enable submission.
+                    </p>
+                  )}
+                </div>
               </form>
             </div>
 

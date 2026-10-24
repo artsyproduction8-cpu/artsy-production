@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized: Admin access required for statutory GSTR-1 exports' },
         { status: 401 }
+      );
+    }
+
+    const exportLimit = await checkRateLimit(`gstr1_export_${authUser.id}`, 'admin', 10, 3600);
+    if (!exportLimit.allowed) {
+      return NextResponse.json(
+        { error: `Export rate limit exceeded. Please wait ${Math.ceil(exportLimit.resetSeconds / 60)} minutes.` },
+        { status: 429 }
       );
     }
 

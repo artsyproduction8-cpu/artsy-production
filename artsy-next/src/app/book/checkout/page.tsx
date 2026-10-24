@@ -24,13 +24,22 @@ function loadRazorpayScript(): Promise<boolean> {
 
 function CheckoutContent() {
   const router = useRouter();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
 
   const [bookingData, setBookingData] = useState<any>(null);
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
   const [clientEmail, setClientEmail] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('artsy_redirect', '/book/checkout');
+      }
+      router.replace('/auth/login?redirect=/book/checkout');
+    }
+  }, [loading, isAuthenticated, router]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -61,6 +70,14 @@ function CheckoutContent() {
 
   const handlePayAndConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      alert('Authentication required. Please sign in before proceeding to payment.');
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('artsy_redirect', '/book/checkout');
+      }
+      router.push('/auth/login?redirect=/book/checkout');
+      return;
+    }
     setIsProcessing(true);
 
     try {

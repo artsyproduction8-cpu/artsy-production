@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState, Suspense } from 'react';
 import Navbar from '../../components/marketing/Navbar';
@@ -8,11 +8,28 @@ import Footer from '../../components/marketing/Footer';
 import { getCurrentUser, setCurrentUser, PRESET_USERS } from '@/lib/auth';
 
 function ConfirmationContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId') || 'ARTSY-892410';
   const [confirmedOrder, setConfirmedOrder] = useState<any>(null);
   const [emailSent, setEmailSent] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          router.push(`/client?payment_success=true&orderId=${orderId}`);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [orderId, router]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -80,6 +97,21 @@ function ConfirmationContent() {
             <p className="text-xs sm:text-sm text-[#86868B] max-w-md mx-auto leading-relaxed">
               Order <span className="font-mono font-bold text-[#1D1D1F]">{orderId}</span> has been confirmed. Your project is now entering the Creator Dispatch Queue.
             </p>
+
+            {/* Auto-redirect countdown banner */}
+            <div className="mt-5 p-3 sm:p-4 rounded-xl bg-blue-50/80 border border-blue-200/80 flex items-center justify-between gap-3 text-left">
+              <div className="flex items-center gap-2.5 text-xs text-[#1D1D1F]">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6] animate-ping" />
+                <span>Redirecting to your active project workspace in <strong className="font-mono text-[#3B82F6]">{countdown}s</strong>...</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push(`/client?payment_success=true&orderId=${orderId}`)}
+                className="text-xs font-bold text-[#3B82F6] hover:underline whitespace-nowrap cursor-pointer shrink-0"
+              >
+                Go Now →
+              </button>
+            </div>
           </div>
 
           {/* Order Details Grid */}
@@ -176,7 +208,7 @@ function ConfirmationContent() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <Link
-              href="/client"
+              href={`/client?payment_success=true&orderId=${orderId}`}
               className="w-full sm:flex-1 py-3.5 px-6 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold uppercase tracking-wider rounded-xl text-center transition-all shadow-sm"
             >
               Open Client Dashboard →

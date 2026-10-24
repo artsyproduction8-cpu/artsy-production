@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateHeaderBytesServer } from '@/lib/storage/validator';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
   // Fix H: Require authenticated user
   const authUser = await getAuthenticatedUser(request);
   if (!authUser) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const rateKey = authUser ? `storage_val_${authUser.id}` : `storage_val_ip_${getClientIp(request)}`;
+  const limit = await checkRateLimit(rateKey, 'storage', 30, 60);
+  if (!limit.allowed) {
+    return NextResponse.json({ error: 'Validation rate limit exceeded. Please wait.' }, { status: 429 });
   }
 
   // M9: Safe JSON parsing

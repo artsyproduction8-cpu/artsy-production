@@ -45,6 +45,17 @@ export default function ClientDashboardPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [approvedNotice, setApprovedNotice] = useState(false);
   const [retakeNotice, setRetakeNotice] = useState(false);
+  const [paymentSuccessNotice, setPaymentSuccessNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('payment_success') === 'true') {
+        const orderId = params.get('orderId') || '';
+        setPaymentSuccessNotice(orderId ? `Order #${orderId}` : 'Your project');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -97,6 +108,33 @@ export default function ClientDashboardPage() {
         {/* Main Content Dashboard */}
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
           <div className="p-4 sm:p-6 lg:p-8 w-full max-w-[1600px] mx-auto space-y-8">
+
+          {/* Payment Success Celebratory Alert Banner */}
+          {paymentSuccessNotice && (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5 flex items-center justify-between gap-4 animate-fadeIn">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center font-black text-lg shrink-0">
+                  ✓
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#1D1D1F]">
+                    Payment Confirmed &amp; Project Initialized!
+                  </h3>
+                  <p className="text-xs text-[#86868B] mt-0.5">
+                    {paymentSuccessNotice} has been captured and bound to your account. Your footage is in the queue and your active project appears below.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPaymentSuccessNotice(null)}
+                className="text-xs text-[#86868B] hover:text-[#1D1D1F] p-1.5 cursor-pointer font-bold"
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {/* Top Banner: Welcome */}
           <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-6">

@@ -31,8 +31,8 @@ export default function FreelancerDashboard() {
   const [ndaChecked, setNdaChecked] = useState<boolean>(false);
   const [pendingJobToAccept, setPendingJobToAccept] = useState<string | null>(null);
 
-  const isApproved = user?.onboarding_status === 'approved' || user?.role === 'freelancer';
-  const isPending = !isApproved && (user?.onboarding_status === 'pending_review' || !!profileData);
+  const isApproved = user?.role === 'freelancer' && user?.onboarding_status === 'approved';
+  const isPending = user?.role === 'freelancer' && (user?.onboarding_status === 'pending' || user?.onboarding_status === 'pending_review');
   const isIncomplete = !isApproved && !isPending;
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 

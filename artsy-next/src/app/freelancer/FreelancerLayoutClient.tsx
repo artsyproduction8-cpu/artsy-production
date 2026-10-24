@@ -32,7 +32,8 @@ export default function FreelancerLayoutClient({ children }: { children: React.R
               role: data.user.role || user?.role || 'freelancer',
               status: data.user.status || user?.status || 'active',
               onboarding_status: data.user.onboarding_status !== undefined ? data.user.onboarding_status : (user?.onboarding_status ?? null),
-              agreement_accepted: data.user.agreement_accepted !== undefined ? data.user.agreement_accepted : (user?.agreement_accepted !== false),
+              agreement_signed_at: data.user.agreement_signed_at || user?.agreement_signed_at || null,
+              agreement_accepted: Boolean(data.user.agreement_signed_at || data.user.agreement_accepted || user?.agreement_signed_at || user?.agreement_accepted),
               onboarded: data.user.onboarded !== undefined ? data.user.onboarded : (user?.onboarded !== false),
             };
             setCurrentUser(u);
@@ -78,6 +79,30 @@ export default function FreelancerLayoutClient({ children }: { children: React.R
       const isOnboardingPage = currentPath.startsWith('/freelancer/onboarding');
       const isPendingPage = currentPath.startsWith('/freelancer/pending-approval');
       const isRejectedPage = currentPath.startsWith('/freelancer/rejected');
+      const isContractPage = currentPath.startsWith('/freelancer/contract');
+      const isAgreementPage = currentPath.startsWith('/freelancer/agreement');
+
+      const hasSignedAgreement = Boolean(
+        user.agreement_signed_at ||
+        user.agreement_accepted ||
+        (user.creator_profile && (user.creator_profile.agreement_signed_at || user.creator_profile.agreement_accepted_at))
+      );
+
+      // Phase 4: Contract route redirects: to onboarding if unsigned, or to dashboard if signed
+      if (isContractPage) {
+        if (!hasSignedAgreement) {
+          router.push('/freelancer/onboarding');
+          return;
+        } else {
+          router.push('/freelancer');
+          return;
+        }
+      }
+
+      if (isAgreementPage && !hasSignedAgreement) {
+        router.push('/freelancer/onboarding');
+        return;
+      }
 
       // Rule 1: If user with onboarding_status === null (or not onboarded) accesses /freelancer/onboarding, they MUST be allowed
       // If they try to access /freelancer/pending-approval or /freelancer, forcefully redirect back to /freelancer/onboarding
@@ -112,10 +137,11 @@ export default function FreelancerLayoutClient({ children }: { children: React.R
 
       // Rule 4: If onboarding_status === 'approved'
       if (status === 'approved') {
-        if (isOnboardingPage || isPendingPage) {
+        if (isOnboardingPage || isPendingPage || isContractPage) {
           router.push('/freelancer');
           return;
         }
+        // Permanently skip NDA step for approved creators with agreement_signed_at
         setAuthorized(true);
         return;
       }

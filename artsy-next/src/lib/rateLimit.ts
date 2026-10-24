@@ -121,3 +121,19 @@ export async function checkRateLimit(
     mode: 'in-memory-fallback',
   };
 }
+
+/**
+ * Extracts trusted client IP preventing X-Forwarded-For spoofing.
+ * Matches Next.js Edge Middleware trusted edge IP resolution.
+ */
+export function getClientIp(request: Request | any): string {
+  if (!request) return '127.0.0.1';
+  const xRealIp = typeof request.headers?.get === 'function' ? request.headers.get('x-real-ip') : null;
+  const forwardedFor = typeof request.headers?.get === 'function' ? request.headers.get('x-forwarded-for') || '' : '';
+  const forwardedIps = forwardedFor.split(',').map((s: string) => s.trim()).filter(Boolean);
+  return (
+    request.ip ||
+    xRealIp ||
+    (forwardedIps.length > 0 ? forwardedIps[forwardedIps.length - 1] : '127.0.0.1')
+  );
+}

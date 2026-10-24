@@ -56,7 +56,15 @@ async function computeWebHmac(secret: string, data: string): Promise<string> {
     .join('');
 }
 
-export function verifyAndParseAuthCookieSync(cookieValue?: string | null): AuthUserPayload | null {
+/**
+ * Decodes the base64 JSON payload of the auth cookie WITHOUT verifying the cryptographic HMAC signature.
+ * 
+ * SECURITY WARNING:
+ * Never use this function for authentication, authorization, role guards, or access decisions.
+ * Web Crypto HMAC in Edge is asynchronous — always use `await verifyAndParseAuthCookie(cookieValue)`
+ * for cryptographic verification.
+ */
+export function decodeAuthCookiePayloadUnsafeSync(cookieValue?: string | null): AuthUserPayload | null {
   if (!cookieValue) return null;
   try {
     let raw = cookieValue;
@@ -80,6 +88,11 @@ export function verifyAndParseAuthCookieSync(cookieValue?: string | null): AuthU
     return null;
   }
 }
+
+/**
+ * @deprecated Use decodeAuthCookiePayloadUnsafeSync or await verifyAndParseAuthCookie()
+ */
+export const verifyAndParseAuthCookieSync = decodeAuthCookiePayloadUnsafeSync;
 
 export async function verifyAndParseAuthCookie(cookieValue?: string | null): Promise<AuthUserPayload | null> {
   if (!cookieValue) return null;

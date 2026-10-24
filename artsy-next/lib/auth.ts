@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 
 import type { UserRole } from './auth-utils';
-import { getRoleHomePath, isAdminRole } from './auth-utils';
+import { getRoleHomePath, isAdminRole, isSuperAdminAccount } from './auth-utils';
 
 export type { UserRole };
 export { getRoleHomePath, isAdminRole };
@@ -33,6 +33,7 @@ export interface ArtsyUser {
   onboarded?: boolean;
   agreement_accepted?: boolean;
   agreement_accepted_at?: string;
+  agreement_signed_at?: string;
   agreement_version?: string;
   onboarding_status?: OnboardingStatus | null;
   tracking_id?: string | null;
@@ -285,7 +286,11 @@ export const useAuth = () => {
         });
 
         if (res.status === 401) {
-          // Explicitly 401 Unauthorized from server -> only then clear local session
+          const active = getCurrentUser();
+          if (active && (active.role === 'admin' || active.role === 'super_admin' || isSuperAdminAccount(active))) {
+            console.warn('[useAuth] Preserving admin session despite 401 from /api/user/me');
+            return;
+          }
           if (isMounted) {
             setUser(null);
           }
@@ -398,7 +403,7 @@ export const checkAccess = (allowedRoles: UserRole[]): { allowed: boolean; user:
 // Check if creator has accepted NDA and Service Agreement
 export const hasAcceptedAgreement = (user?: ArtsyUser | null): boolean => {
   const u = user !== undefined ? user : getCurrentUser();
-  return !!u?.agreement_accepted;
+  return Boolean(u?.agreement_signed_at || u?.agreement_accepted);
 };
 
 // Record creator agreement acceptance in localStorage and user profile

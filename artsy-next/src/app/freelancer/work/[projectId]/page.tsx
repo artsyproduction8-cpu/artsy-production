@@ -48,7 +48,7 @@ export default function FreelancerWorkView() {
   const [project, setProject] = useState<any>(() => getInitialWorkData(projectId).mockProj);
   const [order, setOrder] = useState<any>(() => getInitialWorkData(projectId).mockOrder);
   const [service, setService] = useState<any>(() => getInitialWorkData(projectId).mockService);
-  const [user] = useState<ArtsyUser | null>(() => getInitialWorkData(projectId).currentUser);
+  const [user, setUser] = useState<ArtsyUser | null>(() => getInitialWorkData(projectId).currentUser);
   const [checkInStatus, setCheckInStatus] = useState<'on_track' | 'missed' | 'escalated' | 'blocked'>('on_track');
   const [checkInMessage, setCheckInMessage] = useState('');
   const [deliverableUploaded, setDeliverableUploaded] = useState(false);
@@ -65,6 +65,7 @@ export default function FreelancerWorkView() {
       router.push(`/auth/login?redirect=/freelancer/work/${encodeURIComponent(projectId || '')}`);
       return;
     }
+    setUser(currentUser);
 
     // 2. Fetch project details via secure server API
     const syncProjectData = async () => {

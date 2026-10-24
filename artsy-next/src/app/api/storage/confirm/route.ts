@@ -2,12 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { validateHeaderBytesServer } from '@/lib/storage/validator';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
   // Security Fix #7: Authenticate user
   const authUser = await getAuthenticatedUser(request);
   if (!authUser) {
     return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
+  }
+
+  const rateKey = authUser ? `storage_confirm_${authUser.id}` : `storage_confirm_ip_${getClientIp(request)}`;
+  const limit = await checkRateLimit(rateKey, 'storage', 30, 60);
+  if (!limit.allowed) {
+    return NextResponse.json({ error: 'Too many upload confirmations. Please wait.' }, { status: 429 });
   }
 
   // M9: Safe JSON parsing

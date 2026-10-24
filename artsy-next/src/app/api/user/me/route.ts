@@ -66,33 +66,18 @@ export async function GET(request: NextRequest) {
 
         const { data, error } = await userQuery.maybeSingle();
 
+        const isPrivilegedAdmin = isSuperAdminAccount(authUser) || authUser.role === 'admin' || authUser.role === 'super_admin';
         if (!error && data) {
           dbUser = data;
-        } else if (!error && !data && isUuid && !authUser.id.startsWith('usr-')) {
-          const isPrivilegedAdmin = isSuperAdminAccount(authUser) || authUser.role === 'admin' || authUser.role === 'super_admin';
-          if (isPrivilegedAdmin) {
-            dbUser = {
-              id: authUser.id,
-              role: authUser.role || 'super_admin',
-              status: 'active',
-              full_name: authUser.full_name || 'Studio Owner (Super Admin)',
-              email: authUser.email || CANONICAL_SUPER_ADMIN_EMAIL,
-              phone: authUser.phone || `+91${CANONICAL_SUPER_ADMIN_PHONE}`,
-            };
-          } else {
-            // Account was purged from database. Cleanly invalidate cookie and session.
-            const res = NextResponse.json(
-              { authenticated: false, user: null, error: 'User account not found' },
-              {
-                status: 401,
-                headers: {
-                  'Cache-Control': 'no-store, no-cache, must-revalidate',
-                },
-              }
-            );
-            res.cookies.delete('artsy_auth_token');
-            return res;
-          }
+        } else if (isPrivilegedAdmin) {
+          dbUser = {
+            id: authUser.id,
+            role: authUser.role || 'super_admin',
+            status: 'active',
+            full_name: authUser.full_name || 'Studio Owner (Super Admin)',
+            email: authUser.email || CANONICAL_SUPER_ADMIN_EMAIL,
+            phone: authUser.phone || `+91${CANONICAL_SUPER_ADMIN_PHONE}`,
+          };
         }
       } catch (err) {
         console.warn('[api/user/me] DB query warning:', err);
@@ -127,7 +112,7 @@ export async function GET(request: NextRequest) {
         try {
           const { data: creatorProfile } = await dbClient
             .from('creator_profiles')
-            .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, public_specialty, bank_account_name, bank_account_number, bank_ifsc_code, pan_number')
+            .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, public_specialty, bank_account_name, bank_account_number, bank_ifsc_code, pan_number, agreement_signed_at, agreement_accepted, agreement_accepted_at, hardware_config, sample_url_1, sample_url_2, sample_url_3')
             .eq('id', resolvedUser.id)
             .maybeSingle();
 
@@ -140,18 +125,11 @@ export async function GET(request: NextRequest) {
             };
             resolvedUser.creator_profile = safeCreatorProfile;
 
-            const hasSubmitted = Boolean(
-              creatorProfile.onboarding_status === 'pending_review' ||
-              creatorProfile.tracking_id ||
-              creatorProfile.portfolio_url ||
-              creatorProfile.public_specialty
-            );
-
             if (creatorProfile.approval_status === 'approved' || creatorProfile.onboarding_status === 'approved') {
               resolvedStatus = 'approved';
             } else if (creatorProfile.approval_status === 'rejected' || creatorProfile.onboarding_status === 'rejected') {
               resolvedStatus = 'rejected';
-            } else if (hasSubmitted && (creatorProfile.approval_status === 'pending' || creatorProfile.onboarding_status === 'pending_review')) {
+            } else if (creatorProfile.onboarding_status === 'pending_review' || (creatorProfile.onboarding_status === 'pending' && creatorProfile.tracking_id)) {
               resolvedStatus = 'pending_review';
             } else {
               resolvedStatus = null;
@@ -166,12 +144,21 @@ export async function GET(request: NextRequest) {
             resolvedUser.portfolio_url = creatorProfile.portfolio_url || null;
             resolvedUser.public_display_name = creatorProfile.public_display_name || null;
             resolvedUser.public_specialty = creatorProfile.public_specialty || resolvedUser.studio_details?.specialty || null;
+            resolvedUser.agreement_signed_at = creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || null;
+            resolvedUser.agreement_accepted = Boolean(creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || creatorProfile.agreement_accepted);
+            resolvedUser.hardware_config = creatorProfile.hardware_config || null;
+            resolvedUser.sample_url_1 = creatorProfile.sample_url_1 || null;
+            resolvedUser.sample_url_2 = creatorProfile.sample_url_2 || null;
+            resolvedUser.sample_url_3 = creatorProfile.sample_url_3 || null;
+
             if (!resolvedUser.full_name && creatorProfile.public_display_name) {
               resolvedUser.full_name = creatorProfile.public_display_name;
             }
           } else {
             // Strict rule: No creator profile row -> onboarding_status MUST be null
             resolvedUser.creator_profile = null;
+            resolvedUser.agreement_signed_at = null;
+            resolvedUser.agreement_accepted = false;
           }
         } catch (pErr) {
           console.warn('[api/user/me] Creator profile lookup warning:', pErr);

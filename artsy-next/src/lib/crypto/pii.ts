@@ -42,11 +42,22 @@ export function encryptPII(plainText: string): string {
 export function decryptPII(cipherTextBase64: string): string {
   if (!cipherTextBase64) return '';
   try {
-    const combined = Buffer.from(cipherTextBase64, 'base64').toString('utf8');
-    const [ivHex, authTagHex, encryptedHex] = combined.split(':');
+    let combined = '';
+    try {
+      combined = Buffer.from(cipherTextBase64, 'base64').toString('utf8');
+    } catch {
+      return cipherTextBase64;
+    }
 
-    if (!ivHex || !authTagHex || !encryptedHex) {
-      // If data is already plain text (legacy records before migration), return as is
+    const parts = combined.split(':');
+    if (parts.length !== 3) {
+      // Legacy unencrypted records prior to AES-GCM migration
+      return cipherTextBase64;
+    }
+
+    const [ivHex, authTagHex, encryptedHex] = parts;
+    const isHex = /^[0-9a-fA-F]+$/;
+    if (!ivHex || !authTagHex || !encryptedHex || !isHex.test(ivHex) || !isHex.test(authTagHex) || !isHex.test(encryptedHex)) {
       return cipherTextBase64;
     }
 
@@ -59,9 +70,9 @@ export function decryptPII(cipherTextBase64: string): string {
     decrypted += decipher.final('utf8');
 
     return decrypted;
-  } catch {
-    console.warn('PII Decryption fallback (treating as unencrypted or legacy text)');
-    return cipherTextBase64;
+  } catch (err) {
+    console.error('[SECURITY WARNING] PII decryption tag verification failed (tampering or corrupted key):', err);
+    return '';
   }
 }
 

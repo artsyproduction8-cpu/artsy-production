@@ -40,7 +40,7 @@ export default function Home() {
       {/* 00. Top Navigation */}
       <Navbar />
 
-      <main className="w-full pt-16 bg-white min-h-screen max-w-full overflow-x-clip flex flex-col">
+      <main className="w-full pt-[60px] sm:pt-16 bg-white min-h-screen max-w-full overflow-x-clip flex flex-col">
         {/* 01. Hero Section (White Background) */}
         <Hero />
 

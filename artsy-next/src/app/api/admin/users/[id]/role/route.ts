@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { checkRateLimit } from '@/lib/rateLimit';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { isSuperAdminAccount, PUBLIC_SUPPORT_PHONE_RAW } from '@/lib/auth-utils';
 
@@ -8,8 +9,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
 
   const isCallerSuperAdmin = Boolean(authUser && (authUser.role === 'super_admin' || isSuperAdminAccount(authUser)));
-  if (!isCallerSuperAdmin) {
+  if (!authUser || !isCallerSuperAdmin) {
     return NextResponse.json({ error: 'Only Super Admin can manage user roles' }, { status: 403 });
+  }
+
+  const limit = await checkRateLimit(`admin_role_patch_${authUser.id}`, 'admin', 10, 600);
+  if (!limit.allowed) {
+    return NextResponse.json({ error: 'Role modification limit reached. Please wait.' }, { status: 429 });
   }
 
   const body = await request.json().catch(() => ({}));

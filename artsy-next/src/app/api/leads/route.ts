@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
-import { checkRateLimit } from '@/lib/rateLimit';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
   // L3: Rate limit leads submission per IP (3 per hour)
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anon';
+  const ip = getClientIp(request);
   const limit = await checkRateLimit(`lead_${ip}`, 'api', 3, 3600);
   if (!limit.allowed) {
     return NextResponse.json(

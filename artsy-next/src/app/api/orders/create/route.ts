@@ -4,7 +4,7 @@ import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 import { calculateFinancialWaterfall } from '@/lib/financial/engine';
 import { calculateLivePrice, ConfiguratorSelections } from '@/lib/pricing/engine';
 import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
-import { checkRateLimit } from '@/lib/rateLimit';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 
 function resolveServiceKey(serviceId?: string): string {
@@ -55,10 +55,17 @@ function resolveServiceKey(serviceId?: string): string {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Fix M8: Rate limiting per user or IP (10 orders per 10 minutes)
+    // Fix M8: Strict Server-Side Authentication Guard
     const authUser = await getAuthenticatedUser(request);
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anon';
-    const rateKey = authUser ? `order_${authUser.id}` : `order_ip_${ip}`;
+    if (!authUser || !authUser.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Authentication required to create booking order. Please log in.' },
+        { status: 401 }
+      );
+    }
+
+    const ip = getClientIp(request);
+    const rateKey = `order_${authUser.id}`;
     const limit = await checkRateLimit(rateKey, 'api', 10, 600);
     if (!limit.allowed) {
       return NextResponse.json(
@@ -234,10 +241,10 @@ export async function POST(request: NextRequest) {
         const { error: dbError } = await dbClient.from('orders').insert([
           {
             order_number: internalOrderNumber,
-            client_id: authUser?.id && isUUID(authUser.id) ? authUser.id : null,
-            client_phone: clientPhone || null,
-            client_name: clientName || null,
-            client_email: clientEmail || null,
+            client_id: isUUID(authUser.id) ? authUser.id : null,
+            client_phone: authUser.phone || clientPhone || null,
+            client_name: authUser.full_name || clientName || 'Client',
+            client_email: authUser.email || clientEmail || null,
             service_key: serviceKey,
             service_id: isUUID(serviceId) ? serviceId : null,
             quote_id: isUUID(quoteId) ? quoteId : null,

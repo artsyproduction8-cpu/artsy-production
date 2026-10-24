@@ -38,3 +38,4 @@ ALTER TABLE IF EXISTS public.creator_profiles
 -- Ensure users.onboarded defaults strictly to FALSE
 ALTER TABLE IF EXISTS public.users 
     ALTER COLUMN onboarded SET DEFAULT false;
+

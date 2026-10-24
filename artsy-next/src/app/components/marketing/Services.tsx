@@ -39,7 +39,10 @@ export default function Services() {
   }, []);
 
   return (
-    <section className="w-full py-14 sm:py-20 bg-[#F5F5F7]" id="services-catalog">
+    <section
+      className="w-full py-12 sm:py-20 bg-[#F5F5F7] rounded-t-[32px] sm:rounded-none -mt-4 sm:mt-0 relative z-20 shadow-[0_-8px_30px_rgba(0,0,0,0.04)] sm:shadow-none border-t border-[#E5E5E7]/60 sm:border-0"
+      id="services-catalog"
+    >
       <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
         
         {/* Section Header */}
@@ -53,7 +56,7 @@ export default function Services() {
         </div>
 
         {/* Clean Rectangular Category Cards Showing Category Names */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
           {categories.map((cat) => (
             <Link
               key={cat.id}

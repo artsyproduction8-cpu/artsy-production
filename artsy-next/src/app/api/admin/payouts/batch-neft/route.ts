@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 interface NeftBatchRecord {
   transactionRef: string;
@@ -24,6 +25,14 @@ export async function GET(request: NextRequest) {
     const authUser = await getAuthenticatedUser(request);
     if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
+    const limitGet = await checkRateLimit(`admin_batch_neft_get_${authUser.id}`, 'admin', 10, 600);
+    if (!limitGet.allowed) {
+      return NextResponse.json(
+        { error: `Rate limit exceeded. Please wait ${Math.ceil(limitGet.resetSeconds / 60)} minutes.` },
+        { status: 429 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -193,6 +202,14 @@ export async function POST(request: NextRequest) {
     const authUser = await getAuthenticatedUser(request);
     if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
+    const limitPost = await checkRateLimit(`admin_batch_neft_post_${authUser.id}`, 'admin', 10, 600);
+    if (!limitPost.allowed) {
+      return NextResponse.json(
+        { error: `Batch dispatch rate limit exceeded. Please wait ${Math.ceil(limitPost.resetSeconds / 60)} minutes.` },
+        { status: 429 }
+      );
     }
 
     const body = await request.json().catch(() => ({}));

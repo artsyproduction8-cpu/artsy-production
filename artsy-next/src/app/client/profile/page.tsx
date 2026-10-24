@@ -638,8 +638,16 @@ export default function ClientProfilePage() {
 
     const isSetupMode = searchParams?.get('setup') === 'true' || searchParams?.get('onboarding') === 'true' || !user?.onboarded;
     if (isSetupMode) {
+      let target = '/client';
+      try {
+        const stored = sessionStorage.getItem('artsy_redirect');
+        if (stored && stored.startsWith('/') && !stored.startsWith('//')) {
+          target = stored;
+          sessionStorage.removeItem('artsy_redirect');
+        }
+      } catch {}
       setTimeout(() => {
-        router.push('/client');
+        router.push(target);
       }, 600);
     } else {
       setTimeout(() => setSavedFeedback(false), 4000);

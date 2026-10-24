@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { checkRateLimit } from '@/lib/rateLimit';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,11 @@ export async function POST(
   const authUser = await getAuthenticatedUser(request);
   if (!authUser || !['admin', 'super_admin'].includes(authUser.role)) {
     return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+  }
+
+  const limit = await checkRateLimit(`admin_sub_convert_${authUser.id}`, 'admin', 15, 600);
+  if (!limit.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Please wait.' }, { status: 429 });
   }
 
   const dbClient = supabaseAdmin || anonSupabase;

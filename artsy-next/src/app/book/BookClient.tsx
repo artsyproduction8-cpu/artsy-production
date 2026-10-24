@@ -89,9 +89,6 @@ export default function BookClient() {
   const [rawFootageUrl, setRawFootageUrl] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [mobile, setMobile] = useState<string>('');
-  const [otpSent, setOtpSent] = useState<boolean>(false);
-  const [resendTimer, setResendTimer] = useState<number>(42);
-  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   useEffect(() => {
@@ -248,15 +245,7 @@ export default function BookClient() {
     }
   }, [category, turnaround]);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (otpSent && resendTimer > 0) {
-      interval = setInterval(() => {
-        setResendTimer((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [otpSent, resendTimer]);
+
 
   // Selected sub-category details
   const activeSubs = subCategoriesDict[category] || subCategoriesDict['wedding'] || Object.values(subCategoriesDict)[0] || [];
@@ -280,21 +269,6 @@ export default function BookClient() {
     : 0;
 
   const totalPayable = baseServiceCost + angleCost + turnaroundCost;
-
-  const handleSendOtp = () => {
-    if (!audioUrl || !audioUrl.trim()) {
-      alert('Please provide a Music Reference or Video Link (Mandatory)');
-      document.getElementById('music-reference-input')?.focus();
-      return;
-    }
-    if (!mobile || mobile.length < 10) {
-      alert('Please enter a valid 10-digit mobile number');
-      return;
-    }
-    setOtpSent(true);
-    setResendTimer(42);
-    setOtp(['1', '2', '3', '4', '5', '6']);
-  };
 
   const handleProceedToCheckout = () => {
     if (!audioUrl || !audioUrl.trim()) {
@@ -352,6 +326,13 @@ export default function BookClient() {
       localStorage.setItem('artsy_active_booking', JSON.stringify(bookingPayload));
     }
     setIsProcessing(false);
+    if (!isAuthenticated) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('artsy_redirect', '/book/checkout');
+      }
+      router.push('/auth/login?redirect=/book/checkout');
+      return;
+    }
     router.push('/book/checkout');
   };
 
@@ -835,83 +816,30 @@ export default function BookClient() {
                       </button>
                     </div>
                   ) : (
-                    <>
-                      <label htmlFor="mobile-number-checkout" className="text-xs font-semibold text-[#1D1D1F] block mb-1.5">
-                        Mobile Number for WhatsApp Delivery Link
-                      </label>
-                      
-                      {!otpSent ? (
-                        <div className="flex gap-2">
-                          <div className="relative flex-1">
-                            <span className="absolute left-3.5 top-2.5 text-xs text-[#86868B] font-mono select-none">
-                              +91
-                            </span>
-                            <input
-                              id="mobile-number-checkout"
-                              type="tel"
-                              inputMode="numeric"
-                              autoComplete="tel-national"
-                              maxLength={10}
-                              value={mobile}
-                              onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-                              placeholder="9876543210"
-                              className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-[#E5E5E7] text-xs font-mono focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6]"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleSendOtp}
-                            className="px-4 py-2.5 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer shrink-0"
-                          >
-                            Send OTP
-                          </button>
+                    <div className="space-y-3">
+                      <div className="p-3.5 bg-blue-50/70 rounded-xl border border-blue-200/70 text-left space-y-1">
+                        <div className="flex items-center gap-2 text-xs font-bold text-[#1D1D1F]">
+                          <span className="w-2 h-2 rounded-full bg-[#3B82F6] animate-pulse" />
+                          <span>Strict Authentication Required</span>
                         </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between text-[11px] text-[#86868B]">
-                            <span>OTP sent to +91 {mobile}</span>
-                            <button
-                              type="button"
-                              onClick={() => setOtpSent(false)}
-                              className="text-[#3B82F6] hover:underline"
-                            >
-                              Change
-                            </button>
-                          </div>
+                        <p className="text-[11px] text-[#86868B] leading-relaxed">
+                          To protect project confidentiality and generate your GST invoice, you must verify your identity via secure WhatsApp OTP before proceeding to checkout.
+                        </p>
+                      </div>
 
-                          <div className="flex gap-2">
-                            {otp.map((digit, i) => (
-                              <input
-                                key={i}
-                                id={`otp-${i}`}
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={1}
-                                value={digit}
-                                onChange={(e) => {
-                                  const newOtp = [...otp];
-                                  newOtp[i] = e.target.value;
-                                  setOtp(newOtp);
-                                  if (e.target.value && i < 5) {
-                                    document.getElementById(`otp-${i + 1}`)?.focus();
-                                  }
-                                }}
-                                className="w-10 h-10 text-center font-bold text-sm rounded-lg border border-[#E5E5E7] focus:outline-none focus:border-[#3B82F6]"
-                              />
-                            ))}
-                          </div>
-
-                          <button
-                            type="button"
-                            disabled={isProcessing}
-                            onClick={handleProceedToCheckout}
-                            className="w-full py-3 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50 mt-2"
-                          >
-                            {isProcessing ? 'Proceeding...' : 'Proceed to Checkout →'}
-                          </button>
-                        </div>
-                      )}
-                    </>
+                      <button
+                        type="button"
+                        id="auth-gate-checkout-btn"
+                        disabled={isProcessing}
+                        onClick={handleProceedToCheckout}
+                        className="w-full py-3.5 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm cursor-pointer disabled:opacity-50 mt-1 flex items-center justify-center gap-2"
+                      >
+                        {isProcessing ? 'Proceeding...' : 'Sign In to Proceed →'}
+                      </button>
+                      <p className="text-[10px] text-center text-[#86868B]">
+                        Instant 6-digit WhatsApp verification • No password needed
+                      </p>
+                    </div>
                   )}
                 </div>
 
@@ -935,17 +863,10 @@ export default function BookClient() {
           <button
             type="button"
             disabled={isProcessing}
-            onClick={() => {
-              if (isAuthenticated) {
-                handleProceedToCheckout();
-              } else {
-                const el = document.getElementById('booking-mobile-input');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
+            onClick={handleProceedToCheckout}
             className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50 cursor-pointer"
           >
-            {isProcessing ? 'Proceeding...' : isAuthenticated ? 'Proceed to Checkout →' : 'Checkout Details ↓'}
+            {isProcessing ? 'Proceeding...' : isAuthenticated ? 'Proceed to Checkout →' : 'Sign In to Proceed →'}
           </button>
         </div>
 

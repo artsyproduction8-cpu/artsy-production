@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
-import { checkRateLimit } from '@/lib/rateLimit';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 const ALLOWED_MIME_TYPES = [
   'video/mp4',
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Rate Limiting: Max 20 presigned uploads per 10 minutes per user/IP
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'anon';
+  const ip = getClientIp(request);
   const rateKey = `presign_${authUser.id || ip}`;
   const limit = await checkRateLimit(rateKey, 'storage', 20, 600);
   if (!limit.allowed) {

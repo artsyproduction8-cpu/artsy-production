@@ -135,7 +135,9 @@ export async function POST(request: NextRequest) {
       phone: user.phone,
       full_name: user.full_name,
       display_name: user.display_name,
-      onboarded: user.onboarded !== false,
+      onboarded: Boolean(user.onboarded ?? (dbUser as any)?.onboarded),
+      onboarding_status: user.onboarding_status || null,
+      tracking_id: user.tracking_id || null,
       token_version: effectiveTokenVersion,
     });
 
@@ -206,17 +208,11 @@ export async function GET(request: NextRequest) {
             .maybeSingle();
 
           if (creatorProfile) {
-            const hasSubmitted = Boolean(
-              creatorProfile.onboarding_status === 'pending_review' ||
-              creatorProfile.tracking_id ||
-              creatorProfile.portfolio_url ||
-              creatorProfile.public_specialty
-            );
             if (creatorProfile.onboarding_status === 'approved' || creatorProfile.approval_status === 'approved') {
               resolvedUser.onboarding_status = 'approved';
             } else if (creatorProfile.onboarding_status === 'rejected' || creatorProfile.approval_status === 'rejected') {
               resolvedUser.onboarding_status = 'rejected';
-            } else if (hasSubmitted && (creatorProfile.onboarding_status === 'pending_review' || creatorProfile.approval_status === 'pending')) {
+            } else if (creatorProfile.onboarding_status === 'pending_review' || (creatorProfile.onboarding_status === 'pending' && creatorProfile.tracking_id)) {
               resolvedUser.onboarding_status = 'pending_review';
             } else {
               resolvedUser.onboarding_status = null;
@@ -224,9 +220,13 @@ export async function GET(request: NextRequest) {
             resolvedUser.tracking_id = creatorProfile.tracking_id || null;
             resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
             resolvedUser.rejected_at = creatorProfile.rejected_at || null;
+            resolvedUser.agreement_signed_at = creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || null;
+            resolvedUser.agreement_accepted = Boolean(creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || creatorProfile.agreement_accepted);
             resolvedUser.creator_profile = creatorProfile;
           } else {
             resolvedUser.onboarding_status = null;
+            resolvedUser.agreement_signed_at = null;
+            resolvedUser.agreement_accepted = false;
           }
         }
       }

@@ -17,11 +17,14 @@ function legacyHashOtp(otp: string, identifier: string): string {
 
 interface LocalOtpSession {
   identifier: string;
+  phone?: string | null;
+  email?: string | null;
   otpHash: string;
   expiresAt: number;
   attempts: number;
   verified: boolean;
   role?: string;
+  isNewUser?: boolean;
 }
 
 declare global {
@@ -210,6 +213,17 @@ export async function POST(request: NextRequest) {
           const { data, error } = await userQuery.maybeSingle();
           if (!error && data) {
             existingUser = data;
+            // Phase 1: Verify phone and email strictly match for existing user
+            if (cleanEmail && cleanPhone) {
+              const recEmail = (existingUser.email || '').toLowerCase().trim();
+              const recPhone = (existingUser.phone || '').replace(/\D/g, '').slice(-10);
+              if ((recEmail && recEmail !== cleanEmail) || (recPhone && recPhone !== cleanPhone)) {
+                return NextResponse.json(
+                  { error: 'Invalid credentials. Phone and email do not match account records.' },
+                  { status: 401 }
+                );
+              }
+            }
           }
         } catch (uErr) {
           console.warn('User query error:', uErr);
@@ -303,6 +317,8 @@ export async function POST(request: NextRequest) {
       let tracking_id: string | null = null;
       let rejection_reason: string | null = null;
       let rejected_at: string | null = null;
+      let agreement_signed_at: string | null = null;
+      let agreement_accepted: boolean = false;
 
       if (finalRole === 'freelancer') {
         let profileFound = false;
@@ -316,26 +332,21 @@ export async function POST(request: NextRequest) {
 
             if (profile) {
               profileFound = true;
-              const hasSubmittedApplication = Boolean(
-                profile.onboarding_status === 'pending_review' ||
-                profile.tracking_id ||
-                profile.portfolio_url ||
-                profile.public_specialty
-              );
-
               if (profile.approval_status === 'approved' || profile.onboarding_status === 'approved') {
                 onboarding_status = 'approved';
               } else if (profile.approval_status === 'rejected' || profile.onboarding_status === 'rejected') {
                 onboarding_status = 'rejected';
                 rejection_reason = profile.rejection_reason || null;
                 rejected_at = profile.rejected_at || profile.updated_at || new Date().toISOString();
-              } else if (hasSubmittedApplication && (profile.approval_status === 'pending' || profile.onboarding_status === 'pending_review')) {
+              } else if (profile.onboarding_status === 'pending_review' || (profile.onboarding_status === 'pending' && profile.tracking_id)) {
                 onboarding_status = 'pending_review';
               } else {
                 // Application form has not been submitted yet
                 onboarding_status = null;
               }
               tracking_id = profile.tracking_id || (profile as any).trackingId || (resolvedUser as any).tracking_id || null;
+              agreement_signed_at = profile.agreement_signed_at || profile.agreement_accepted_at || null;
+              agreement_accepted = Boolean(profile.agreement_signed_at || profile.agreement_accepted_at || profile.agreement_accepted);
               if (!resolvedUser.full_name && profile.public_display_name) {
                 resolvedUser.full_name = profile.public_display_name;
               }
@@ -351,6 +362,8 @@ export async function POST(request: NextRequest) {
           tracking_id = null;
           rejection_reason = null;
           rejected_at = null;
+          agreement_signed_at = null;
+          agreement_accepted = false;
         }
       }
 
@@ -370,6 +383,8 @@ export async function POST(request: NextRequest) {
         userPayload.tracking_id = tracking_id;
         userPayload.rejection_reason = rejection_reason;
         userPayload.rejected_at = rejected_at;
+        userPayload.agreement_signed_at = agreement_signed_at;
+        userPayload.agreement_accepted = agreement_accepted;
       }
 
       // Security Fix J: Record DPDP Consent with valid user_id
@@ -408,16 +423,24 @@ export async function POST(request: NextRequest) {
           tracking_id: userPayload.tracking_id,
           rejection_reason: userPayload.rejection_reason,
           rejected_at: userPayload.rejected_at,
+          agreement_signed_at: userPayload.agreement_signed_at || null,
+          agreement_accepted: userPayload.agreement_accepted || false,
           created_at: resolvedUser.created_at || new Date().toISOString(),
           updated_at: resolvedUser.updated_at || new Date().toISOString(),
         },
       });
 
-      // Issue minimal JWT auth cookie containing ONLY id, role, token_version, and exp
+      // Issue HMAC auth cookie containing id, role, token_version, and state machine fields
       const signedCookie = signAuthCookieValue({
         id: String(resolvedUser.id),
         role: finalRole,
         token_version: Number(resolvedUser.token_version && Number(resolvedUser.token_version) >= 2 ? resolvedUser.token_version : 2),
+        onboarded: Boolean(userPayload.onboarded),
+        onboarding_status: userPayload.onboarding_status || null,
+        tracking_id: userPayload.tracking_id || null,
+        email: userPayload.email,
+        phone: userPayload.phone,
+        full_name: userPayload.full_name,
       });
       response.cookies.set(AUTH_COOKIE_NAME, signedCookie, {
         httpOnly: true,
@@ -466,6 +489,97 @@ export async function POST(request: NextRequest) {
       return resp;
     };
 
+    // ────────────────────────────────────────────────────────
+    // PHASE 1: STRICT AUTHENTICATION (CREDENTIAL MATCHING)
+    // ────────────────────────────────────────────────────────
+    const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : null;
+
+    let isExistingUser = false;
+    let isNewUser = false;
+
+    if (isSupabaseConfigured && dbClient) {
+      try {
+        let userByPhone: any = null;
+        let userByEmail: any = null;
+
+        if (cleanPhone) {
+          const { data: phoneUser } = await dbClient
+            .from('users')
+            .select('*')
+            .or(`phone.eq.+91${cleanPhone},phone.eq.91${cleanPhone},phone.eq.${cleanPhone}`)
+            .maybeSingle();
+          userByPhone = phoneUser;
+        }
+
+        if (cleanEmail) {
+          const { data: emailUser } = await dbClient
+            .from('users')
+            .select('*')
+            .eq('email', cleanEmail)
+            .maybeSingle();
+          userByEmail = emailUser;
+        }
+
+        // Canonical Super Admin Credentials Check
+        const isSuperAdminPhone = cleanPhone && (CANONICAL_SUPER_ADMIN_PHONE.includes(cleanPhone) || cleanPhone === '7777078742');
+        const isSuperAdminEmail = cleanEmail && cleanEmail.toLowerCase() === CANONICAL_SUPER_ADMIN_EMAIL.toLowerCase();
+
+        if (isSuperAdminPhone || isSuperAdminEmail) {
+          if (!isSuperAdminPhone || !isSuperAdminEmail) {
+            return NextResponse.json(
+              { error: 'Invalid credentials. Phone and email do not match our records.' },
+              { status: 401 }
+            );
+          }
+        }
+
+        if (userByPhone || userByEmail) {
+          isExistingUser = true;
+
+          // If found by phone, verify cleanEmail strictly matches the user's stored email
+          if (userByPhone) {
+            const recordedEmail = (userByPhone.email || '').toLowerCase().trim();
+            if (cleanEmail && recordedEmail && recordedEmail !== cleanEmail) {
+              return NextResponse.json(
+                { error: 'Invalid credentials. Phone and email do not match our records.' },
+                { status: 401 }
+              );
+            }
+          }
+
+          // If found by email, verify cleanPhone strictly matches the user's stored phone
+          if (userByEmail) {
+            const recordedPhone = (userByEmail.phone || '').replace(/\D/g, '').slice(-10);
+            if (cleanPhone && recordedPhone && recordedPhone !== cleanPhone) {
+              return NextResponse.json(
+                { error: 'Invalid credentials. Phone and email do not match our records.' },
+                { status: 401 }
+              );
+            }
+          }
+
+          // If found by both, they MUST reference the exact same user record
+          if (userByPhone && userByEmail && userByPhone.id !== userByEmail.id) {
+            return NextResponse.json(
+              { error: 'Invalid credentials. Phone and email do not match our records.' },
+              { status: 401 }
+            );
+          }
+        } else {
+          isNewUser = true;
+          // First-Time User Signup: both phone number and email are required
+          if (!cleanPhone || !cleanEmail) {
+            return NextResponse.json(
+              { error: 'Both a valid 10-digit Indian phone number and email address are required for registration.' },
+              { status: 400 }
+            );
+          }
+        }
+      } catch (authMatchErr) {
+        console.warn('[OTP Route] Auth match lookup warning:', authMatchErr);
+      }
+    }
+
     // 2. Cryptographically Secure 6-digit OTP generation (Fix 3B)
     const otpCode = crypto.randomInt(100000, 1000000).toString();
 
@@ -477,11 +591,14 @@ export async function POST(request: NextRequest) {
     // Save in memory for instant verification and attempt tracking
     const sessionObj: LocalOtpSession = {
       identifier,
+      phone: cleanPhone,
+      email: cleanEmail,
       otpHash,
       expiresAt: expiresAtMs,
       attempts: 0,
       verified: false,
       role: role || 'client',
+      isNewUser,
     };
     memoryOtpSessions.set(identifier, sessionObj);
     if (cleanPhone) {
@@ -492,9 +609,8 @@ export async function POST(request: NextRequest) {
       memoryOtpSessions.set(cleanEmail, sessionObj);
     }
 
-    // 3. Prepare Database Session Storage Promise
-    const insertDbSessionPromise = (async () => {
-      const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : null;
+    // Database session storage helper
+    const persistDbSession = async () => {
       if (isSupabaseConfigured && dbClient && typeof dbClient.from === 'function') {
         try {
           const updateQuery = cleanPhone
@@ -518,9 +634,8 @@ export async function POST(request: NextRequest) {
           console.warn('OTP session DB insert warning:', dbErr);
         }
       }
-    })();
+    };
 
-    // 4. Dispatch Chain (Option B: Parallel Execution of DB Storage + WhatsApp + Email)
     const hasMetaWA = Boolean(
       process.env.WHATSAPP_ACCESS_TOKEN &&
       process.env.WHATSAPP_PHONE_NUMBER_ID &&
@@ -532,22 +647,93 @@ export async function POST(request: NextRequest) {
       !process.env.RESEND_API_KEY.includes('YOUR_RESEND_KEY')
     );
 
+    // ────────────────────────────────────────────────────────
+    // 1.2 First-Time User Signup: Simultaneous Delivery & Dual-Channel Requirement
+    // ────────────────────────────────────────────────────────
+    if (isNewUser) {
+      const [waResult, emailResult] = await Promise.all([
+        cleanPhone ? sendMetaOTP(cleanPhone, otpCode) : Promise.resolve({ success: false, error: 'Phone missing' }),
+        cleanEmail ? sendOtpEmail(cleanEmail, otpCode) : Promise.resolve({ success: false, error: 'Email missing' }),
+      ]);
+
+      const waOk = Boolean(waResult?.success);
+      const emailOk = Boolean(emailResult?.success);
+
+      // If WhatsApp delivery fails OR Email delivery fails: invalidate OTP & block login
+      if (!waOk || !emailOk) {
+        memoryOtpSessions.delete(identifier);
+        if (cleanPhone) {
+          memoryOtpSessions.delete(cleanPhone);
+          memoryOtpSessions.delete(`+91${cleanPhone}`);
+        }
+        if (cleanEmail) {
+          memoryOtpSessions.delete(cleanEmail);
+        }
+
+        const failDetails = [];
+        if (!waOk) failDetails.push(`WhatsApp (${waResult?.error || 'failed'})`);
+        if (!emailOk) failDetails.push(`Email (${emailResult?.error || 'failed'})`);
+
+        console.error(`[OTP Route] Signup dual-delivery requirement failed for ${identifier}: ${failDetails.join(', ')}`);
+        return sendResponse(
+          {
+            error: `Registration verification delivery failed: ${failDetails.join(' and ')}. Both WhatsApp and Email delivery must succeed. Please check your phone number and email address.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      await persistDbSession();
+
+      after(async () => {
+        if (!dbClient || typeof dbClient.from !== 'function') return;
+        try {
+          await dbClient.from('notification_delivery_log').insert([
+            {
+              channel: 'whatsapp_otp',
+              recipient: cleanPhone,
+              event_number: 1,
+              provider_message_id: ('messageId' in waResult && typeof waResult.messageId === 'string') ? waResult.messageId : null,
+              status: 'sent',
+              created_at: new Date().toISOString(),
+            },
+            {
+              channel: 'email',
+              recipient: cleanEmail,
+              event_number: 1,
+              provider_message_id: ('id' in emailResult && typeof emailResult.id === 'string') ? emailResult.id : null,
+              status: 'sent',
+              created_at: new Date().toISOString(),
+            },
+          ]);
+        } catch {}
+      });
+
+      return sendResponse({
+        success: true,
+        message: 'OTP sent via WhatsApp and Email',
+        channel: 'all',
+        channels: ['whatsapp', 'email'],
+        remainingAttempts,
+        ...(shouldExposeDevOtp && { devOtp: otpCode }),
+      });
+    }
+
+    // ────────────────────────────────────────────────────────
+    // 1.1 Existing User Login: Send to Verified Channels
+    // ────────────────────────────────────────────────────────
     const requestedChannel = (body.channel || body.preferredChannel) as string | undefined;
     const shouldSendWhatsApp = Boolean(cleanPhone && hasMetaWA && process.env.WHATSAPP_OTP_TEMPLATE_NAME && requestedChannel !== 'email');
     const shouldSendEmail = Boolean(cleanEmail && hasResend && requestedChannel !== 'whatsapp');
 
-    // Run DB session storage, WhatsApp dispatch, and Email dispatch concurrently
     const [_, waResult, emailResult] = await Promise.all([
-      insertDbSessionPromise,
+      persistDbSession(),
       shouldSendWhatsApp ? sendMetaOTP(cleanPhone!, otpCode) : Promise.resolve(null),
       shouldSendEmail ? sendOtpEmail(cleanEmail!, otpCode) : Promise.resolve(null),
     ]);
 
-    // Non-blocking asynchronous audit logging via Next.js after() (zero latency penalty)
     after(async () => {
-      const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : null;
       if (!dbClient || typeof dbClient.from !== 'function') return;
-
       const logRows: any[] = [];
       if (waResult) {
         logRows.push({
@@ -571,20 +757,16 @@ export async function POST(request: NextRequest) {
           created_at: new Date().toISOString(),
         });
       }
-
       if (logRows.length > 0) {
         try {
           await dbClient.from('notification_delivery_log').insert(logRows);
-        } catch (err: any) {
-          console.warn('[OTP Route] notification_delivery_log background insert warning:', err);
-        }
+        } catch {}
       }
     });
 
     const waOk = waResult?.success;
     const emailOk = emailResult?.success;
 
-    // Both WhatsApp and Email succeeded
     if (waOk && emailOk) {
       return sendResponse({
         success: true,
@@ -597,7 +779,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Only WhatsApp succeeded
     if (waOk) {
       return sendResponse({
         success: true,
@@ -610,7 +791,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Only Email succeeded
     if (emailOk) {
       return sendResponse({
         success: true,
@@ -622,11 +802,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Development fallback
     if (isDev) {
-      if (process.env.OTP_DEBUG === 'true') {
-        console.log('[DEV OTP Dispatch] Identifier: [REDACTED], Generated OTP: [REDACTED]');
-      }
       return sendResponse({
         success: true,
         message: 'OTP dispatched (development testing mode)',
@@ -636,13 +812,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Delivery failure handling
     const errorDetails = [
       waResult && !waResult.success ? `WhatsApp: ${waResult.error}` : null,
       emailResult && !emailResult.success ? `Email: ${emailResult.error}` : null,
     ].filter(Boolean).join(' | ');
 
-    console.error(`[OTP Route] All delivery channels failed for ${identifier}: ${errorDetails}`);
     return sendResponse(
       {
         error: errorDetails

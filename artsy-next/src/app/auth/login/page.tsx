@@ -546,7 +546,11 @@ function LoginFormContent() {
       if (data.user?.studio_details) {
         (verifiedUser as any).studio_details = data.user.studio_details;
         try {
-          localStorage.setItem('artsy_client_profile', JSON.stringify(data.user.studio_details));
+          if (serverRole === 'freelancer') {
+            localStorage.setItem('artsy_creator_profile', JSON.stringify(data.user.studio_details));
+          } else {
+            localStorage.setItem('artsy_client_profile', JSON.stringify(data.user.studio_details));
+          }
         } catch {}
       }
 

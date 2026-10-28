@@ -61,6 +61,11 @@ export function decryptPII(cipherTextBase64: string): string {
       return cipherTextBase64;
     }
 
+    // Exact length check for GCM parameters: 12-byte IV = 24 hex chars, 16-byte AuthTag = 32 hex chars
+    if (ivHex.length !== 24 || authTagHex.length !== 32) {
+      return cipherTextBase64;
+    }
+
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
     const decipher = crypto.createDecipheriv(ALGORITHM, getKey(), iv);
@@ -76,6 +81,10 @@ export function decryptPII(cipherTextBase64: string): string {
   }
 }
 
+const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+const BANK_ACCOUNT_REGEX = /^\d{9,18}$/;
+const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+
 /**
  * Mask PAN number for secure display: e.g. "ABCDE1234F" -> "XXXXX1234F"
  * Automatically decrypts if an AES-256-GCM encrypted string is passed.
@@ -85,14 +94,18 @@ export function maskPAN(pan: string): string {
   let clean = pan.trim().toUpperCase();
   if (clean.length > 15 || clean.includes(':') || clean.includes('=')) {
     const decrypted = decryptPII(pan);
-    if (decrypted && decrypted.trim().length === 10) {
-      clean = decrypted.trim().toUpperCase();
+    const candidate = decrypted ? decrypted.trim().toUpperCase() : '';
+    if (candidate && PAN_REGEX.test(candidate)) {
+      clean = candidate;
+    } else {
+      // Decryption failed or unrecognized ciphertext: never leak ciphertext fragment
+      return '••••••••••';
     }
   }
   if (clean.includes('X') || clean.includes('•') || clean.includes('*')) {
     return clean;
   }
-  if (clean.length < 10) return 'XXXXXXXXXX';
+  if (!PAN_REGEX.test(clean) && clean.length !== 10) return 'XXXXXXXXXX';
   return `XXXXX${clean.slice(5)}`;
 }
 
@@ -105,8 +118,12 @@ export function maskBankAccount(account: string): string {
   let clean = account.trim();
   if (clean.length > 25 || clean.includes(':') || clean.includes('=')) {
     const decrypted = decryptPII(account);
-    if (decrypted && decrypted.trim().length >= 9) {
-      clean = decrypted.trim();
+    const candidate = decrypted ? decrypted.trim() : '';
+    if (candidate && BANK_ACCOUNT_REGEX.test(candidate)) {
+      clean = candidate;
+    } else {
+      // Decryption failed or unrecognized ciphertext: never leak ciphertext fragment
+      return '••••••••••••';
     }
   }
   if (clean.includes('X') || clean.includes('•') || clean.includes('*')) {
@@ -126,8 +143,12 @@ export function maskIFSC(ifsc: string): string {
   let clean = ifsc.trim().toUpperCase();
   if (clean.length > 20 || clean.includes(':') || clean.includes('=')) {
     const decrypted = decryptPII(ifsc);
-    if (decrypted && decrypted.trim().length === 11) {
-      clean = decrypted.trim().toUpperCase();
+    const candidate = decrypted ? decrypted.trim().toUpperCase() : '';
+    if (candidate && IFSC_REGEX.test(candidate)) {
+      clean = candidate;
+    } else {
+      // Decryption failed or unrecognized ciphertext: never leak ciphertext fragment
+      return '•••••••••••';
     }
   }
   if (clean.includes('•') || clean.includes('X') || clean.includes('*')) {

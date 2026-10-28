@@ -51,6 +51,18 @@ export async function GET(
       }
     }
 
+    if (!encryptedPan && db && typeof db.from === 'function') {
+      try {
+        const { data: uData } = await db.from('users').select('full_name, studio_details').eq('id', creatorId).maybeSingle();
+        if (uData?.studio_details?.pan) {
+          encryptedPan = uData.studio_details.pan;
+          creatorName = uData.full_name || creatorName;
+        }
+      } catch (uErr) {
+        console.warn('User studio_details pan fallback error:', uErr);
+      }
+    }
+
     if (!encryptedPan) {
       if (process.env.NODE_ENV !== 'production' && (creatorId === 'test-creator-e2e' || creatorId.includes('test'))) {
         encryptedPan = encryptPII('ABCDE1234F');
@@ -63,7 +75,6 @@ export async function GET(
     const masked = maskPAN(decryptedPan);
     const auditLogId = `aud_rev_${Date.now()}`;
 
-    // Security audit log entry
     // Security audit log entry: Write to immutable public.audit_logs
     if (db && typeof db.from === 'function') {
       try {

@@ -542,8 +542,11 @@ export async function PATCH(request: Request) {
         ...profileUpdate,
         updated_at: new Date().toISOString(),
       };
-      await dbClient.from('creator_profiles').delete().eq('id', id);
-      await dbClient.from('creator_profiles').insert(mergedCp);
+      const { error: updErr } = await dbClient.from('creator_profiles').update(profileUpdate).eq('id', id);
+      if (updErr) {
+        console.warn('[Admin Creators] Update error, falling back to upsert:', updErr);
+        await dbClient.from('creator_profiles').upsert(mergedCp);
+      }
     } else {
       await dbClient.from('creator_profiles').insert({
         id,

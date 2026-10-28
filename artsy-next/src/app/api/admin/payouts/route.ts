@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,13 +37,13 @@ export async function GET(request: NextRequest) {
               bank_account_name,
               bank_account_number,
               bank_ifsc_code,
-              bank_name,
               pan_number
             ),
             users:creator_id (
               full_name,
               email,
-              phone
+              phone,
+              studio_details
             )
           `)
           .order('created_at', { ascending: false });
@@ -61,10 +62,16 @@ export async function GET(request: NextRequest) {
             creatorEmail: p.users?.email || '',
             creatorPhone: p.users?.phone || '',
             bankAccountName: p.creator_profiles?.bank_account_name || p.users?.full_name || 'Creator',
-            bankAccountNumber: p.creator_profiles?.bank_account_number || '',
-            bankIfsc: p.creator_profiles?.bank_ifsc_code || '',
-            bankName: p.creator_profiles?.bank_name || 'HDFC Bank',
-            panNumber: p.creator_profiles?.pan_number || '',
+            bankAccountNumber: p.creator_profiles?.bank_account_number
+              ? maskBankAccount(p.creator_profiles.bank_account_number)
+              : (p.users?.studio_details?.bankAccount ? maskBankAccount(p.users.studio_details.bankAccount) : ''),
+            bankIfsc: p.creator_profiles?.bank_ifsc_code
+              ? maskIFSC(p.creator_profiles.bank_ifsc_code)
+              : (p.users?.studio_details?.ifsc ? maskIFSC(p.users.studio_details.ifsc) : ''),
+            bankName: p.users?.studio_details?.bankName || p.users?.studio_details?.bank_name || 'HDFC Bank',
+            panNumber: p.creator_profiles?.pan_number
+              ? maskPAN(p.creator_profiles.pan_number)
+              : (p.users?.studio_details?.pan ? maskPAN(p.users.studio_details.pan) : ''),
             grossAmount: (p.gross_amount || 0) > 1000 ? p.gross_amount / 100 : p.gross_amount || 0,
             tdsRate: Number(p.tds_rate) || 0.1,
             tdsAmount: (p.tds_amount || 0) > 100 ? p.tds_amount / 100 : p.tds_amount || 0,

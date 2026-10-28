@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
         try {
           const { data: creatorProfile } = await dbClient
             .from('creator_profiles')
-            .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, public_specialty, bank_name, bank_account_name, bank_account_number, bank_ifsc_code, pan_number, agreement_signed_at, agreement_accepted, agreement_accepted_at, hardware_config, sample_url_1, sample_url_2, sample_url_3')
+            .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, public_specialty, bank_account_name, bank_account_number, bank_ifsc_code, pan_number, agreement_signed_at, agreement_accepted, agreement_accepted_at, hardware_config, sample_url_1, sample_url_2, sample_url_3')
             .eq('id', resolvedUser.id)
             .maybeSingle();
 
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
             const sd = resolvedUser.studio_details || {};
             const safeCreatorProfile = {
               ...creatorProfile,
-              bank_name: creatorProfile.bank_name || sd.bankName || sd.bank_name || 'HDFC Bank',
+              bank_name: sd.bankName || sd.bank_name || 'HDFC Bank',
               bank_account_name: creatorProfile.bank_account_name || sd.legalName || resolvedUser.full_name || null,
               pan_number: creatorProfile.pan_number ? maskPAN(creatorProfile.pan_number) : (sd.pan ? maskPAN(sd.pan) : null),
               bank_account_number: creatorProfile.bank_account_number ? maskBankAccount(creatorProfile.bank_account_number) : (sd.bankAccount ? maskBankAccount(sd.bankAccount) : null),

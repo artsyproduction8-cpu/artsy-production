@@ -59,10 +59,7 @@ export function maskPhone(phone?: string | null): string {
   return '•••• ••••••';
 }
 
-/**
- * Masks PAN numbers (e.g., "ABCDE1234F" -> "ABCDE****F")
- */
-export function maskPAN(pan?: string | null): string {
-  if (!pan || pan.length < 10) return '••••••••••';
-  return `${pan.slice(0, 5)}****${pan.slice(-1)}`;
-}
+import { maskPAN, maskBankAccount, maskIFSC } from './crypto/pii';
+
+export { maskPAN, maskBankAccount, maskIFSC };
+

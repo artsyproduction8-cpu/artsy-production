@@ -1,7 +1,7 @@
 # ARTSY PRODUCTION — CANONICAL AGENTS MEMORY BANK & AUTONOMOUS SYSTEM
 =============================================================================
 **Document Version:** 4.0 (Enterprise Security, Strict Auth & Mobile-First Production Standard)  
-**Target Environment:** Node.js v20+, Next.js 16.4.0 (App Router), Supabase PostgreSQL (Mumbai), Vercel Edge, Razorpay Live  
+**Target Environment:** Node.js v20+, Next.js 16.4.3 (App Router), Supabase PostgreSQL (Mumbai), Vercel Edge, Razorpay Live  
 **Primary Source of Truth:** `AGENTS.md`  
 
 > [!IMPORTANT]
@@ -19,7 +19,7 @@ Artsy Production operates an enterprise-grade video post-production platform con
 ### 1.1 Technical Stack & Infrastructure Components
 | Layer | Technology | Configuration & Invariants |
 | :--- | :--- | :--- |
-| **Framework** | Next.js 16.4.0 (App Router) | React 19.2.8, Tailwind CSS v4, Webpack compiler (`next build --webpack`). |
+| **Framework** | Next.js 16.4.3 (App Router) | React 19.2.8, Tailwind CSS v4, Webpack compiler (`next build --webpack`). |
 | **Language Runtime** | Node.js v20+ / TypeScript 5 | Strict typing enforced (`noEmit: true`, `strict: true`). Zero implicit `any`. |
 | **Database** | Supabase PostgreSQL | Hosted on AWS `ap-south-1` (Mumbai). TLS 1.3 enforced. |
 | **RLS Mode** | Zero-Trust Server Lockdown | Public/anon access revoked across public schema. Direct client queries forbidden. Backend operations use `service_role` paired with `x-artsy-server-auth` internal header. |

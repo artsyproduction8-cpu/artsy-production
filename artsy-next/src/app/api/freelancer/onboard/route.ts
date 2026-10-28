@@ -259,13 +259,15 @@ export async function POST(req: NextRequest) {
 
         const legalFullName = cleanLegalName || cleanAlias || resolvedName;
 
+        const userDisplayName = cleanAlias || cleanLegalName || resolvedName;
+
         if (!existingUser) {
           await dbClient.from('users').insert({
             id: candidateUserId,
             email: candidateEmail,
             phone: candidatePhone,
             full_name: legalFullName,
-            display_name: publicDisplayName,
+            display_name: userDisplayName,
             role: 'freelancer',
             status: 'active',
             onboarded: true,
@@ -275,7 +277,7 @@ export async function POST(req: NextRequest) {
         } else {
           await dbClient.from('users').update({
             full_name: legalFullName,
-            display_name: publicDisplayName,
+            display_name: userDisplayName,
             role: 'freelancer',
             onboarded: true,
             studio_details: studioDetails,
@@ -283,14 +285,19 @@ export async function POST(req: NextRequest) {
           }).eq('id', candidateUserId);
         }
 
+        const editorialSkills = Array.isArray(body.skills) && body.skills.length > 0
+          ? body.skills
+          : [cleanSpecialty, 'Color Grading', 'Sound Design', '4K Mastering'];
+
         const profilePayload: Record<string, any> = {
           id: candidateUserId,
           user_id: candidateUserId,
           tracking_id: trackingId,
           bio: philosophy || 'Creative Editor',
           public_specialty: cleanSpecialty,
-          skills: Array.isArray(languages) ? languages : ['4K Color Grading'],
-          software: Array.isArray(software) ? software : ['DaVinci Resolve Studio'],
+          skills: editorialSkills,
+          software: Array.isArray(software) && software.length > 0 ? software : ['DaVinci Resolve Studio', 'Adobe Premiere Pro'],
+          languages: Array.isArray(languages) && languages.length > 0 ? languages : ['Hindi', 'English'],
           approval_status: 'pending',
           onboarding_status: 'pending_review',
           portfolio_url: body.showreelUrl || cleanSample1 || null,
@@ -367,8 +374,8 @@ export async function POST(req: NextRequest) {
             role: 'freelancer',
             email: candidateEmail,
             phone: candidatePhone,
-            full_name: publicDisplayName || authUser.full_name,
-            display_name: cleanAlias || publicDisplayName || authUser.display_name,
+            full_name: legalFullName,
+            display_name: userDisplayName,
             onboarded: true,
             onboarding_status: 'pending_review',
             tracking_id: trackingId,
@@ -416,7 +423,7 @@ export async function POST(req: NextRequest) {
       tracking_id: trackingId,
       email: candidateEmail,
       phone: candidatePhone,
-      full_name: publicDisplayName || authUser.full_name,
+      full_name: cleanLegalName || resolvedName || authUser.full_name,
     });
 
     response.cookies.set(AUTH_COOKIE_NAME, signedCookie, {

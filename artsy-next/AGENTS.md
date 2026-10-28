@@ -408,6 +408,13 @@ flowchart TD
    - Search indices and metadata must never index demo bypasses or placeholder terms.
 9. **Test Data Cleanup Invariant (Section 8, Rule 9):**
    - Any AI agent executing automated, integration, or E2E tests that generate database rows (Users, Orders, Projects, Creator Profiles) or filesystem scratch files must systematically delete all created records and clean up temporary files immediately upon test completion. Production databases and codebases must remain strictly free of test clutter.
+10. **Creator & Client Data Lifecycle & Anti-Mutilation Invariants (Section 3.4):**
+   - **Strict Decrypt-Before-Masking:** Financial PII (PAN, Bank Account, IFSC) encrypted with AES-256-GCM in PostgreSQL MUST be decrypted via `decryptPII` before passing to masking functions (`maskPAN`, `maskBankAccount`, `maskIFSC`), completely preventing base64 ciphertext gibberish (`XXXXX2Y1OGEz...`) in admin views, creator profile workstations, and API responses.
+   - **Display Name Integrity (Zero Mutilation):** `formatPublicCreatorName` is strictly reserved for public-facing client cards and directories (`creator_profiles.public_display_name`). It must NEVER be applied to `users.display_name` or `users.full_name`. Client studio names (e.g., "Apex Studios") and creator aliases (e.g., "Deepak VFX") must be preserved exactly as entered by the user.
+   - **Editorial Skills vs. Spoken Languages Separation:** Form submission (`POST /api/freelancer/onboard`) and profile synchronization must never overwrite editorial skills (`creator_profiles.skills`) with spoken languages (`creator_profiles.languages`).
+   - **Database Schema Fidelity:** `creator_profiles` has columns `bank_account_name`, `bank_account_number`, `bank_ifsc_code`, `pan_number`. It does NOT have a `bank_name` column (bank name is stored in `users.studio_details.bankName`). Writing non-existent columns to `creator_profiles` causes silent PostgreSQL failures and is strictly forbidden.
+   - **Atomic Cache & Approval State Synchronization:** On creator approval (`/api/admin/freelancers/approve` or `PATCH /api/admin/creators`), `creator_profiles` merges existing `users.studio_details` to preserve hardware configurations, sample video URLs, and banking details. Approval handlers must call both `invalidateCreatorCache` and `invalidateUserCache` to prevent stale profile reads.
+   - **Role-Gated LocalStorage Hygiene:** In `auth.ts`, `data.user.studio_details` is persisted to `artsy_client_profile` ONLY when `user.role === 'client'`, and to `artsy_creator_profile` when `user.role === 'freelancer'`, preventing cross-role profile contamination.
 
 =============================================================================
 

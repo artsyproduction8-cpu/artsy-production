@@ -207,10 +207,10 @@ export default function FreelancerProfilePage() {
             const loadedEmail = u.email || sd.email || '';
             if (loadedEmail) setEmail(loadedEmail);
 
-            const loadedAlias = cp.public_display_name || u.display_name || u.full_name || '';
+            const loadedAlias = sd.alias || u.display_name || u.full_name || cp.public_display_name || '';
             if (loadedAlias) setAlias(loadedAlias);
 
-            const loadedLegal = cp.bank_account_name || u.full_name || '';
+            const loadedLegal = sd.legalName || cp.bank_account_name || u.full_name || '';
             if (loadedLegal) setLegalName(loadedLegal);
 
             const loadedSpecialty = cp.public_specialty || cp.specialty || sd.specialty;

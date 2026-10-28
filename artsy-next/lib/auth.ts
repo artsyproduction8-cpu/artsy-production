@@ -336,7 +336,11 @@ export const useAuth = () => {
             };
             if (data.user.studio_details) {
               (sanitizedUser as any).studio_details = data.user.studio_details;
-              localStorage.setItem('artsy_client_profile', JSON.stringify(data.user.studio_details));
+              if (data.user.role === 'client') {
+                localStorage.setItem('artsy_client_profile', JSON.stringify(data.user.studio_details));
+              } else if (data.user.role === 'freelancer') {
+                localStorage.setItem('artsy_creator_profile', JSON.stringify(data.user.studio_details));
+              }
             }
             localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sanitizedUser));
             window.dispatchEvent(new Event('artsy_profile_updated'));

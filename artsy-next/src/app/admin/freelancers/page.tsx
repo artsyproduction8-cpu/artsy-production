@@ -6,6 +6,7 @@ import Link from 'next/link';
 interface CreatorItem {
   id: string;
   display_name: string;
+  full_name?: string;
   phone: string;
   email: string;
   skills: string[];
@@ -335,7 +336,9 @@ export default function AdminFreelancersPage() {
                     className="hover:bg-[#F5F5F7]/70 transition-colors"
                   >
                     <td className="py-3.5 px-4">
-                      <div className="font-bold text-[#1D1D1F] whitespace-nowrap">{creator.display_name}</div>
+                      <div className="font-bold text-[#1D1D1F] whitespace-nowrap">
+                        {creator.full_name ? (creator.display_name && creator.display_name !== creator.full_name ? `${creator.full_name} (${creator.display_name})` : creator.full_name) : creator.display_name}
+                      </div>
                       {creator.public_specialty && (
                         <div className="text-[11px] font-semibold text-[#3B82F6] whitespace-nowrap">{creator.public_specialty}</div>
                       )}
@@ -556,7 +559,7 @@ export default function AdminFreelancersPage() {
                     <div className="bg-white p-3 rounded-xl border border-[#E5E5E7]/70 space-y-1.5">
                       <span className="font-bold text-[#86868B] block text-[10px] uppercase">Languages &amp; Subtitles</span>
                       <div className="flex flex-wrap gap-1.5">
-                        {((creatorDetail.studio_details?.languages || creatorDetail.profile?.skills || ['Hindi', 'English']) as string[]).map((lang, i) => (
+                        {((creatorDetail.profile?.languages || creatorDetail.studio_details?.languages || ['Hindi', 'English']) as string[]).map((lang, i) => (
                           <span key={i} className="px-2 py-0.5 bg-[#F5F5F7] text-[#1D1D1F] rounded-md text-[11px] font-semibold border border-[#E5E5E7]/50">
                             {lang}
                           </span>

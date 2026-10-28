@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
-import { invalidateCreatorCache } from '@/lib/cache';
+import { invalidateCreatorCache, invalidateUserCache } from '@/lib/cache';
 import { formatPublicCreatorName } from '@/lib/masking';
 import { checkRateLimit } from '@/lib/rateLimit';
 
@@ -52,29 +52,39 @@ export async function POST(req: NextRequest) {
             .eq('id', creatorId)
             .maybeSingle();
 
-          // Ensure public_display_name is populated and formatted with surname initial
-          let rawName = existingCp?.public_display_name;
           const { data: userData } = await dbClient
             .from('users')
-            .select('full_name, display_name, phone, email')
+            .select('full_name, display_name, phone, email, studio_details')
             .eq('id', creatorId)
             .maybeSingle();
 
           if (!resolvedRecipientEmail && userData?.email) resolvedRecipientEmail = userData.email;
           if (!resolvedRecipientPhone && userData?.phone) resolvedRecipientPhone = userData.phone;
 
+          const sd = userData?.studio_details || {};
+          let rawName = existingCp?.public_display_name;
           if (!rawName || rawName === 'Creator Partner' || rawName.trim() === '') {
-            rawName = userData?.full_name?.trim() || (creatorName !== 'Creator' ? creatorName : null) || 'Artsy Creator';
+            rawName = userData?.full_name?.trim() || userData?.display_name?.trim() || (creatorName !== 'Creator' ? creatorName : null) || 'Artsy Creator';
           }
 
           const publicDisplayName = formatPublicCreatorName(rawName) || 'Artsy Creator';
+          const userDisplayName = userData?.display_name || userData?.full_name || rawName;
 
-          const approvalData = {
+          const approvalData: Record<string, any> = {
             approval_status: 'approved',
             onboarding_status: 'approved',
             is_public: true,
             public_display_name: publicDisplayName,
-            public_specialty: existingCp?.public_specialty || userData?.studio_details?.specialty || 'Commercial & Narrative Film Editor',
+            public_specialty: existingCp?.public_specialty || sd.specialty || 'Commercial & Narrative Film Editor',
+            skills: (existingCp?.skills && existingCp.skills.length > 0) ? existingCp.skills : (sd.skills || ['Commercial & Narrative Film Editor', 'Color Grading', 'Sound Design', '4K Mastering']),
+            software: (existingCp?.software && existingCp.software.length > 0) ? existingCp.software : (sd.software || ['DaVinci Resolve Studio', 'Adobe Premiere Pro']),
+            languages: (existingCp?.languages && existingCp.languages.length > 0) ? existingCp.languages : (sd.languages || ['Hindi', 'English']),
+            hardware_config: existingCp?.hardware_config || sd.hardware_config || '',
+            sample_url_1: existingCp?.sample_url_1 || sd.sample_url_1 || '',
+            sample_url_2: existingCp?.sample_url_2 || sd.sample_url_2 || '',
+            sample_url_3: existingCp?.sample_url_3 || sd.sample_url_3 || '',
+            portfolio_url: existingCp?.portfolio_url || sd.showreelUrl || existingCp?.sample_url_1 || '',
+            bank_account_name: existingCp?.bank_account_name || sd.legalName || userData?.full_name || '',
             approved_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };
@@ -95,7 +105,7 @@ export async function POST(req: NextRequest) {
             .update({
               status: 'active',
               full_name: userData?.full_name || rawName,
-              display_name: publicDisplayName,
+              display_name: userDisplayName,
               updated_at: new Date().toISOString(),
             })
             .eq('id', creatorId);
@@ -129,7 +139,10 @@ export async function POST(req: NextRequest) {
       }
 
       // 3. Instant Cache Invalidation (Sub-20ms)
-      await invalidateCreatorCache(creatorId);
+      await Promise.all([
+        invalidateCreatorCache(creatorId),
+        invalidateUserCache(creatorId),
+      ]);
 
       return NextResponse.json({
         success: true,

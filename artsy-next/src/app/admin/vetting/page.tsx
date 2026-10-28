@@ -42,14 +42,14 @@ export default function AdminVettingPage() {
         const data = await res.json();
         const apiCreators = (data.creators || []).map((c: any) => ({
           ref: c.id,
-          name: c.display_name || c.public_display_name || 'Creator Candidate',
+          name: c.full_name ? (c.display_name && c.display_name !== c.full_name ? `${c.full_name} (${c.display_name})` : c.full_name) : (c.display_name || c.public_display_name || 'Creator Candidate'),
           location: 'Remote / India',
           exp: c.experience || (c.creator_tier === 'senior' ? '5+ Years' : '2 - 4 Years'),
           score: 95,
           type: (c.skills || []).some((s: string) => s.toLowerCase().includes('color')) ? 'colorist' : 'editor',
           specialty: c.public_specialty || 'Commercial & Narrative Film Editor',
-          software: Array.isArray(c.software) && c.software.length ? c.software : (c.skills?.length ? c.skills : ['DaVinci Resolve Studio', 'Adobe Premiere Pro']),
-          languages: Array.isArray(c.languages) ? c.languages : ['Hindi', 'English'],
+          software: Array.isArray(c.software) && c.software.length ? c.software : (c.studio_details?.software || ['DaVinci Resolve Studio', 'Adobe Premiere Pro']),
+          languages: Array.isArray(c.languages) && c.languages.length ? c.languages : (c.studio_details?.languages || ['Hindi', 'English']),
           hardwareConfig: c.hardware_config || '',
           sampleUrl1: c.sample_url_1 || '',
           sampleUrl2: c.sample_url_2 || '',

@@ -59,9 +59,10 @@ export default function ClientDashboardPage() {
 
   useEffect(() => {
     if (user) {
+      const clientName = user.display_name || user.full_name || (user as any).studio_details?.studioName || 'Client';
       setProfile((prev) => ({
         ...prev,
-        displayName: user.full_name || '',
+        displayName: clientName,
       }));
     }
   }, [user]);

@@ -4,7 +4,7 @@ import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { randomUUID } from 'crypto';
 import { maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
 import { createErrorResponse } from '@/lib/api-response';
-import { getCachedData, setCachedData, invalidateCreatorCache } from '@/lib/cache';
+import { getCachedData, setCachedData, invalidateCreatorCache, invalidateUserCache } from '@/lib/cache';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function GET(request: Request) {
@@ -85,11 +85,21 @@ export async function GET(request: Request) {
         .in('status', ['creator_assigned', 'in_production', 'review_ready', 'revision_requested']);
 
       // Apply field-level masking to sensitive financial PII
+      const sd = creatorUser?.studio_details || {};
       const safeProfile = profile ? {
         ...profile,
-        pan_number: profile.pan_number ? maskPAN(profile.pan_number) : null,
-        bank_account_number: profile.bank_account_number ? maskBankAccount(profile.bank_account_number) : null,
-        bank_ifsc_code: profile.bank_ifsc_code ? maskIFSC(profile.bank_ifsc_code) : null,
+        skills: (profile.skills && profile.skills.length > 0) ? profile.skills : (sd.skills || ['Commercial & Narrative Film Editor', 'Color Grading', 'Sound Design', '4K Mastering']),
+        software: (profile.software && profile.software.length > 0) ? profile.software : (sd.software || ['DaVinci Resolve Studio', 'Adobe Premiere Pro']),
+        languages: (profile.languages && profile.languages.length > 0) ? profile.languages : (sd.languages || ['Hindi', 'English']),
+        hardware_config: profile.hardware_config || sd.hardware_config || '',
+        sample_url_1: profile.sample_url_1 || sd.sample_url_1 || '',
+        sample_url_2: profile.sample_url_2 || sd.sample_url_2 || '',
+        sample_url_3: profile.sample_url_3 || sd.sample_url_3 || '',
+        bank_name: profile.bank_name || sd.bankName || sd.bank_name || 'HDFC Bank',
+        bank_account_name: profile.bank_account_name || sd.legalName || creatorUser?.full_name || '',
+        pan_number: profile.pan_number ? maskPAN(profile.pan_number) : (sd.pan ? maskPAN(sd.pan) : null),
+        bank_account_number: profile.bank_account_number ? maskBankAccount(profile.bank_account_number) : (sd.bankAccount ? maskBankAccount(sd.bankAccount) : null),
+        bank_ifsc_code: profile.bank_ifsc_code ? maskIFSC(profile.bank_ifsc_code) : (sd.ifsc ? maskIFSC(sd.ifsc) : null),
       } : {};
 
       const responsePayload = {
@@ -172,14 +182,14 @@ export async function GET(request: Request) {
       return {
         id: u.id,
         display_name: u.display_name || u.full_name || 'Creator',
-        full_name: u.full_name || '',
+        full_name: u.full_name || u.studio_details?.legalName || '',
         phone: u.phone || '',
         email: u.email || '',
         avatar_url: u.avatar_url || '',
         studio_details: u.studio_details || null,
-        skills: p.skills || ['Video Editing', 'Color Grading'],
-        software: p.software || u.studio_details?.software || p.skills || ['DaVinci Resolve Studio', 'Adobe Premiere Pro'],
-        languages: p.languages || u.studio_details?.languages || ['Hindi', 'English'],
+        skills: (p.skills && p.skills.length > 0) ? p.skills : (u.studio_details?.skills || ['Commercial & Narrative Film Editor', 'Color Grading', 'Sound Design', '4K Mastering']),
+        software: (p.software && p.software.length > 0) ? p.software : (u.studio_details?.software || ['DaVinci Resolve Studio', 'Adobe Premiere Pro']),
+        languages: (p.languages && p.languages.length > 0) ? p.languages : (u.studio_details?.languages || ['Hindi', 'English']),
         hardware_config: p.hardware_config || u.studio_details?.hardware_config || '',
         sample_url_1: p.sample_url_1 || u.studio_details?.sample_url_1 || '',
         sample_url_2: p.sample_url_2 || u.studio_details?.sample_url_2 || '',
@@ -191,10 +201,11 @@ export async function GET(request: Request) {
         bio: p.bio || u.studio_details?.philosophy || '',
         onboarding_status: p.onboarding_status || u.onboarding_status || 'pending',
         tracking_id: p.tracking_id || u.tracking_id || '',
-        bank_name: p.bank_name || u.studio_details?.bank_name || '',
-        pan_number: p.pan_number ? maskPAN(p.pan_number) : null,
-        bank_account_number: p.bank_account_number ? maskBankAccount(p.bank_account_number) : null,
-        bank_ifsc_code: p.bank_ifsc_code ? maskIFSC(p.bank_ifsc_code) : null,
+        bank_name: p.bank_name || u.studio_details?.bankName || u.studio_details?.bank_name || 'HDFC Bank',
+        bank_account_name: p.bank_account_name || u.studio_details?.legalName || u.full_name || '',
+        pan_number: p.pan_number ? maskPAN(p.pan_number) : (u.studio_details?.pan ? maskPAN(u.studio_details.pan) : null),
+        bank_account_number: p.bank_account_number ? maskBankAccount(p.bank_account_number) : (u.studio_details?.bankAccount ? maskBankAccount(u.studio_details.bankAccount) : null),
+        bank_ifsc_code: p.bank_ifsc_code ? maskIFSC(p.bank_ifsc_code) : (u.studio_details?.ifsc ? maskIFSC(u.studio_details.ifsc) : null),
         approval_status: p.approval_status || 'pending',
         is_suspended: p.is_suspended || u.status === 'suspended',
         rating: p.avg_rating || 4.9,
@@ -404,6 +415,22 @@ export async function PATCH(request: Request) {
       profileUpdate.approved_at = new Date().toISOString();
       userUpdate.status = 'active';
 
+      const { data: userData } = await dbClient
+        .from('users')
+        .select('full_name, display_name, studio_details')
+        .eq('id', id)
+        .maybeSingle();
+
+      const sd = userData?.studio_details || {};
+      if (sd.specialty && !profileUpdate.public_specialty) profileUpdate.public_specialty = sd.specialty;
+      if (sd.hardware_config && !profileUpdate.hardware_config) profileUpdate.hardware_config = sd.hardware_config;
+      if (sd.sample_url_1 && !profileUpdate.sample_url_1) profileUpdate.sample_url_1 = sd.sample_url_1;
+      if (sd.sample_url_2 && !profileUpdate.sample_url_2) profileUpdate.sample_url_2 = sd.sample_url_2;
+      if (sd.sample_url_3 && !profileUpdate.sample_url_3) profileUpdate.sample_url_3 = sd.sample_url_3;
+      if (sd.languages && !profileUpdate.languages) profileUpdate.languages = sd.languages;
+      if (sd.software && !profileUpdate.software) profileUpdate.software = sd.software;
+      if (sd.legalName && !profileUpdate.bank_account_name) profileUpdate.bank_account_name = sd.legalName;
+
       // Ensure public_display_name is populated if missing/empty
       const { data: currentCp } = await dbClient
         .from('creator_profiles')
@@ -412,11 +439,6 @@ export async function PATCH(request: Request) {
         .maybeSingle();
 
       if (!currentCp?.public_display_name || currentCp.public_display_name === 'Creator Partner' || currentCp.public_display_name.trim() === '') {
-        const { data: userData } = await dbClient
-          .from('users')
-          .select('full_name')
-          .eq('id', id)
-          .maybeSingle();
         if (userData?.full_name?.trim()) {
           profileUpdate.public_display_name = userData.full_name.trim();
         }
@@ -548,7 +570,10 @@ export async function PATCH(request: Request) {
     ]);
 
     // Instant Cache Invalidation across Admin, Public directory, and Session (Sub-20ms)
-    await invalidateCreatorCache(id);
+    await Promise.all([
+      invalidateCreatorCache(id),
+      invalidateUserCache(id),
+    ]);
 
     return NextResponse.json({ success: true, creatorId: id, action });
   } catch (err: any) {

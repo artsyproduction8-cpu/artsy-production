@@ -275,9 +275,12 @@ export default function FreelancerOnboarding() {
       return;
     }
 
-    // Safe display payload without sensitive financial PII for client-side state
+    const resolvedSpecialty = specialty === 'Other' ? (customSpecialty.trim() || 'Commercial & Narrative Film Editor') : specialty;
+
     const creatorPayload = {
       alias,
+      legalName,
+      specialty: resolvedSpecialty,
       showreelUrl: showreelUrl || sampleUrl1,
       philosophy,
       software,
@@ -294,6 +297,10 @@ export default function FreelancerOnboarding() {
       sampleUrl1,
       sampleUrl2,
       sampleUrl3,
+      pan: pan ? `••••••${pan.slice(-4)}` : '',
+      bankName,
+      bankAccount: bankAccount ? `•••• ${bankAccount.slice(-4)}` : '',
+      ifsc: ifsc ? `${ifsc.slice(0, 4)}••••${ifsc.slice(-3)}` : '',
       agreementAccepted: true,
       agreement_signed_at: agreementSignedAt,
       agreementVersion: '1.0',
@@ -315,11 +322,13 @@ export default function FreelancerOnboarding() {
       id: candidateUserId,
       email: candidateEmail,
       full_name: legalName || alias || null,
+      display_name: alias || legalName || null,
       phone: candidatePhone,
       role: 'freelancer' as const,
       status: 'active' as const,
       onboarding_status: 'pending_review' as const,
       tracking_id: trackingId || 'ART-2026-VET-4115',
+      studio_details: creatorPayload,
       agreement_accepted: true,
       agreement_accepted_at: agreementSignedAt,
       agreement_signed_at: agreementSignedAt,

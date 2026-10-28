@@ -23,6 +23,7 @@ export default function AdminFreelancerDetail() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Core Account & Personal Details
+  const [existingStudioDetails, setExistingStudioDetails] = useState<any>({});
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -88,7 +89,7 @@ export default function AdminFreelancerDetail() {
       const c = data.creator;
       const p = c.profile || {};
 
-      setFullName(c.display_name || '');
+      setFullName(c.full_name || c.display_name || '');
       setEmail(c.email || '');
       setPhone(c.phone || '');
       setStatus(c.status || 'active');
@@ -115,6 +116,7 @@ export default function AdminFreelancerDetail() {
       setIsAcceptingWork(p.is_accepting_work !== false);
 
       const sd = c.studio_details || {};
+      setExistingStudioDetails(sd);
       setWorkstationRig(sd.workstationRig || '');
       setHardwareConfig(p.hardware_config || sd.hardware_config || sd.workstationRig || '');
       setSampleUrl1(p.sample_url_1 || sd.sample_url_1 || '');
@@ -128,7 +130,7 @@ export default function AdminFreelancerDetail() {
       const langs = Array.isArray(sd.languages) ? sd.languages : (Array.isArray(p.languages) ? p.languages : ['Hindi', 'English']);
       setLanguagesText(langs.join(', '));
 
-      setBankAccountName(p.bank_account_name || sd.legalName || c.display_name || '');
+      setBankAccountName(p.bank_account_name || sd.legalName || c.full_name || c.display_name || '');
       setBankAccountNumber(p.bank_account_number || (sd.bankAccount ? `•••• ${sd.bankAccount.slice(-4)}` : ''));
       setBankIfscCode(p.bank_ifsc_code || sd.ifsc || '');
       setPanNumber(p.pan_number || (sd.pan ? `••••••${sd.pan.slice(-4)}` : ''));
@@ -182,6 +184,7 @@ export default function AdminFreelancerDetail() {
           creator_tier: creatorTier,
           is_accepting_work: isAcceptingWork,
           studio_details: {
+            ...existingStudioDetails,
             workstationRig,
             hardware_config: hardwareConfig,
             sample_url_1: sampleUrl1,

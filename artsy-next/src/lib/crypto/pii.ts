@@ -78,20 +78,40 @@ export function decryptPII(cipherTextBase64: string): string {
 
 /**
  * Mask PAN number for secure display: e.g. "ABCDE1234F" -> "XXXXX1234F"
+ * Automatically decrypts if an AES-256-GCM encrypted string is passed.
  */
 export function maskPAN(pan: string): string {
   if (!pan) return '—';
-  const clean = pan.trim().toUpperCase();
+  let clean = pan.trim().toUpperCase();
+  if (clean.length > 15 || clean.includes(':') || clean.includes('=')) {
+    const decrypted = decryptPII(pan);
+    if (decrypted && decrypted.trim().length === 10) {
+      clean = decrypted.trim().toUpperCase();
+    }
+  }
+  if (clean.includes('X') || clean.includes('•') || clean.includes('*')) {
+    return clean;
+  }
   if (clean.length < 10) return 'XXXXXXXXXX';
   return `XXXXX${clean.slice(5)}`;
 }
 
 /**
  * Mask Bank Account Number: e.g. "50100239481234" -> "XXXXXXXXXX1234"
+ * Automatically decrypts if an AES-256-GCM encrypted string is passed.
  */
 export function maskBankAccount(account: string): string {
   if (!account) return '—';
-  const clean = account.trim();
+  let clean = account.trim();
+  if (clean.length > 25 || clean.includes(':') || clean.includes('=')) {
+    const decrypted = decryptPII(account);
+    if (decrypted && decrypted.trim().length >= 9) {
+      clean = decrypted.trim();
+    }
+  }
+  if (clean.includes('X') || clean.includes('•') || clean.includes('*')) {
+    return clean;
+  }
   if (clean.length <= 4) return 'XXXX';
   const lastFour = clean.slice(-4);
   return `${'X'.repeat(clean.length - 4)}${lastFour}`;
@@ -99,10 +119,20 @@ export function maskBankAccount(account: string): string {
 
 /**
  * Mask IFSC Code: e.g. "HDFC0000128" -> "HDFC••••128"
+ * Automatically decrypts if an AES-256-GCM encrypted string is passed.
  */
 export function maskIFSC(ifsc: string): string {
   if (!ifsc) return '—';
-  const clean = ifsc.trim().toUpperCase();
+  let clean = ifsc.trim().toUpperCase();
+  if (clean.length > 20 || clean.includes(':') || clean.includes('=')) {
+    const decrypted = decryptPII(ifsc);
+    if (decrypted && decrypted.trim().length === 11) {
+      clean = decrypted.trim().toUpperCase();
+    }
+  }
+  if (clean.includes('•') || clean.includes('X') || clean.includes('*')) {
+    return clean;
+  }
   if (clean.length < 11) return 'HDFC•••••••';
   return `${clean.slice(0, 4)}••••${clean.slice(8)}`;
 }

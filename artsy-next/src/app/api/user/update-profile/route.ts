@@ -3,6 +3,7 @@ import { getAuthenticatedUser, signAuthCookieValue, AUTH_COOKIE_NAME, AuthUserPa
 import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { setCachedUser, invalidateUserCache, invalidateCache, invalidateCreatorCache } from '@/lib/cache';
 import { formatPublicCreatorName } from '@/lib/masking';
+import { encryptPII } from '@/lib/crypto/pii';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: Request) {
@@ -47,10 +48,10 @@ export async function POST(request: Request) {
 
   if (display_name !== undefined) {
     updates.display_name = typeof display_name === 'string' && display_name.trim().length > 0
-      ? formatPublicCreatorName(display_name.trim())
-      : (updates.full_name ? formatPublicCreatorName(updates.full_name) : null);
+      ? display_name.trim()
+      : (updates.full_name ? updates.full_name : null);
   } else if (updates.full_name) {
-    updates.display_name = formatPublicCreatorName(updates.full_name);
+    updates.display_name = updates.full_name;
   }
 
   if (phone !== undefined) {
@@ -147,9 +148,6 @@ export async function POST(request: Request) {
         if (creatorPayload.sample_url_3 || creatorPayload.sampleUrl3) {
           cpUpdates.sample_url_3 = String(creatorPayload.sample_url_3 || creatorPayload.sampleUrl3).trim();
         }
-        if (creatorPayload.bank_name || creatorPayload.bankName) {
-          cpUpdates.bank_name = String(creatorPayload.bank_name || creatorPayload.bankName).trim();
-        }
         if (creatorPayload.bank_account_name) cpUpdates.bank_account_name = String(creatorPayload.bank_account_name).trim();
         if (creatorPayload.bank_account_number && !/[•*X]/.test(String(creatorPayload.bank_account_number))) {
           cpUpdates.bank_account_number = String(creatorPayload.bank_account_number).trim();
@@ -158,7 +156,10 @@ export async function POST(request: Request) {
           cpUpdates.bank_ifsc_code = String(creatorPayload.bank_ifsc_code).trim().toUpperCase();
         }
         if (creatorPayload.pan_number && !/[•*X]/.test(String(creatorPayload.pan_number))) {
-          cpUpdates.pan_number = String(creatorPayload.pan_number).trim().toUpperCase();
+          const rawPan = String(creatorPayload.pan_number).trim().toUpperCase();
+          if (/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(rawPan)) {
+            cpUpdates.pan_number = encryptPII(rawPan);
+          }
         }
 
         const { data: existingCp } = await dbClient

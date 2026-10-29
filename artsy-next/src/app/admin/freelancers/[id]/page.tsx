@@ -131,9 +131,9 @@ export default function AdminFreelancerDetail() {
       setLanguagesText(langs.join(', '));
 
       setBankAccountName(p.bank_account_name || sd.legalName || c.full_name || c.display_name || '');
-      setBankAccountNumber(p.bank_account_number || (sd.bankAccount ? `•••• ${sd.bankAccount.slice(-4)}` : ''));
+      setBankAccountNumber(p.bank_account_number || sd.bankAccount || '');
       setBankIfscCode(p.bank_ifsc_code || sd.ifsc || '');
-      setPanNumber(p.pan_number || (sd.pan ? `••••••${sd.pan.slice(-4)}` : ''));
+      setPanNumber(p.pan_number || sd.pan || '');
 
       setSamples(c.samples || []);
       setAssignments(c.assignments || []);
@@ -201,6 +201,10 @@ export default function AdminFreelancerDetail() {
           sample_url_1: sampleUrl1,
           sample_url_2: sampleUrl2,
           sample_url_3: sampleUrl3,
+          bank_account_name: bankAccountName,
+          bank_account_number: bankAccountNumber,
+          bank_ifsc_code: bankIfscCode,
+          pan_number: panNumber,
         }),
       });
 
@@ -230,7 +234,17 @@ export default function AdminFreelancerDetail() {
       const data = await res.json();
       if (res.ok && data.success) {
         setActionNotice(`Creator status updated: ${action.toUpperCase()}`);
-        fetchCreatorData();
+        if (action === 'approve') {
+          setApprovalStatus('approved');
+          setIsSuspended(false);
+        } else if (action === 'reject') {
+          setApprovalStatus('rejected');
+        } else if (action === 'suspend') {
+          setIsSuspended(true);
+        } else if (action === 'reactivate') {
+          setIsSuspended(false);
+        }
+        await fetchCreatorData();
       } else {
         setErrorMessage(data.error || 'Action failed.');
       }
@@ -824,30 +838,57 @@ export default function AdminFreelancerDetail() {
           </div>
         </div>
 
-        {/* Masked Banking & Compliance Sub-box */}
-        <div className="p-4 bg-[#F5F5F7] rounded-2xl border border-[#E5E5E7] space-y-3">
+        {/* Verified Compliance & Bank Settlement (Unmasked Admin View) */}
+        <div className="p-4 bg-white rounded-2xl border border-[#E5E5E7] space-y-3 shadow-2xs">
           <div className="flex items-center justify-between border-b border-[#E5E5E7] pb-2">
-            <span className="text-xs font-bold text-[#1D1D1F]">Verified Compliance &amp; Bank Settlement (Masked)</span>
-            <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-              DPDP Compliant Masking
+            <div>
+              <span className="text-xs font-bold text-[#1D1D1F]">Verified Compliance &amp; Bank Settlement Details</span>
+              <p className="text-[11px] text-[#86868B] mt-0.5">Full unmasked statutory PAN and banking credentials filled by creator.</p>
+            </div>
+            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              ✓ Full Unmasked Admin View
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-            <div>
-              <span className="text-[10px] text-[#86868B] block font-bold uppercase">Beneficiary Name</span>
-              <span className="font-semibold text-[#1D1D1F] mt-0.5 block">{bankAccountName || fullName || 'Not provided'}</span>
+            <div className="space-y-1">
+              <label className="text-[10px] text-[#86868B] block font-bold uppercase">Beneficiary Name</label>
+              <input
+                type="text"
+                value={bankAccountName}
+                onChange={(e) => setBankAccountName(e.target.value)}
+                placeholder="Beneficiary Legal Name"
+                className="w-full bg-[#F5F5F7] px-3 py-2 text-xs font-semibold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F]"
+              />
             </div>
-            <div>
-              <span className="text-[10px] text-[#86868B] block font-bold uppercase">Bank Account</span>
-              <span className="font-mono text-[#1D1D1F] mt-0.5 block">{bankAccountNumber || '•••• On File'}</span>
+            <div className="space-y-1">
+              <label className="text-[10px] text-[#86868B] block font-bold uppercase">Bank Account</label>
+              <input
+                type="text"
+                value={bankAccountNumber}
+                onChange={(e) => setBankAccountNumber(e.target.value.replace(/\D/g, ''))}
+                placeholder="Account Number"
+                className="w-full bg-[#F5F5F7] px-3 py-2 text-xs font-mono font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F] select-all"
+              />
             </div>
-            <div>
-              <span className="text-[10px] text-[#86868B] block font-bold uppercase">IFSC Code</span>
-              <span className="font-mono text-[#1D1D1F] mt-0.5 block">{bankIfscCode || 'HDFC0001234'}</span>
+            <div className="space-y-1">
+              <label className="text-[10px] text-[#86868B] block font-bold uppercase">IFSC Code</label>
+              <input
+                type="text"
+                value={bankIfscCode}
+                onChange={(e) => setBankIfscCode(e.target.value.toUpperCase())}
+                placeholder="IFSC Code"
+                className="w-full bg-[#F5F5F7] px-3 py-2 text-xs font-mono font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F] select-all"
+              />
             </div>
-            <div>
-              <span className="text-[10px] text-[#86868B] block font-bold uppercase">Income Tax PAN</span>
-              <span className="font-mono text-[#1D1D1F] mt-0.5 block">{panNumber || '•••••• Verified'}</span>
+            <div className="space-y-1">
+              <label className="text-[10px] text-[#86868B] block font-bold uppercase">Income Tax PAN</label>
+              <input
+                type="text"
+                value={panNumber}
+                onChange={(e) => setPanNumber(e.target.value.toUpperCase())}
+                placeholder="PAN Number"
+                className="w-full bg-[#F5F5F7] px-3 py-2 text-xs font-mono font-bold text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#1D1D1F] select-all"
+              />
             </div>
           </div>
         </div>

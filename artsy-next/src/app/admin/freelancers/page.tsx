@@ -616,12 +616,12 @@ export default function AdminFreelancersPage() {
                     </div>
 
                     <div className="bg-white p-3 rounded-xl border border-[#E5E5E7]/70 space-y-1">
-                      <span className="font-bold text-[#86868B] block text-[10px] uppercase">Compliance &amp; Banking (Masked)</span>
+                      <span className="font-bold text-[#86868B] block text-[10px] uppercase">Compliance &amp; Banking Details</span>
                       <div className="text-xs font-mono text-[#1D1D1F] space-y-0.5">
-                        <div><span className="text-[#86868B]">Beneficiary:</span> {creatorDetail.profile?.bank_account_name || creatorDetail.full_name || creatorDetail.display_name}</div>
-                        <div><span className="text-[#86868B]">Account:</span> {creatorDetail.profile?.bank_account_number || (creatorDetail.studio_details?.bankAccount ? '•••• ' + creatorDetail.studio_details.bankAccount.slice(-4) : 'Verified on File')}</div>
-                        <div><span className="text-[#86868B]">IFSC / Bank:</span> {creatorDetail.profile?.bank_ifsc_code || creatorDetail.studio_details?.ifsc || 'HDFC Bank'}</div>
-                        <div><span className="text-[#86868B]">PAN:</span> {creatorDetail.profile?.pan_number || (creatorDetail.studio_details?.pan ? '••••••' + creatorDetail.studio_details.pan.slice(-4) : 'Verified')}</div>
+                        <div><span className="text-[#86868B]">Beneficiary:</span> {creatorDetail.profile?.bank_account_name || creatorDetail.full_name || creatorDetail.display_name || 'Not provided'}</div>
+                        <div><span className="text-[#86868B]">Account:</span> <span className="font-semibold select-all">{creatorDetail.profile?.bank_account_number || creatorDetail.studio_details?.bankAccount || 'Not provided'}</span></div>
+                        <div><span className="text-[#86868B]">IFSC / Bank:</span> <span className="font-semibold select-all">{creatorDetail.profile?.bank_ifsc_code || creatorDetail.studio_details?.ifsc || 'Not provided'}</span></div>
+                        <div><span className="text-[#86868B]">PAN:</span> <span className="font-semibold select-all">{creatorDetail.profile?.pan_number || creatorDetail.studio_details?.pan || 'Not provided'}</span></div>
                       </div>
                     </div>
                   </div>

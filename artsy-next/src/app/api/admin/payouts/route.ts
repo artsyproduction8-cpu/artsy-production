@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { checkRateLimit } from '@/lib/rateLimit';
-import { maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
+import { decryptPII } from '@/lib/crypto/pii';
 
 export async function GET(request: NextRequest) {
   try {
@@ -63,15 +63,15 @@ export async function GET(request: NextRequest) {
             creatorPhone: p.users?.phone || '',
             bankAccountName: p.creator_profiles?.bank_account_name || p.users?.full_name || 'Creator',
             bankAccountNumber: p.creator_profiles?.bank_account_number
-              ? maskBankAccount(p.creator_profiles.bank_account_number)
-              : (p.users?.studio_details?.bankAccount ? maskBankAccount(p.users.studio_details.bankAccount) : ''),
+              ? decryptPII(p.creator_profiles.bank_account_number)
+              : (p.users?.studio_details?.bankAccount ? decryptPII(p.users.studio_details.bankAccount) : ''),
             bankIfsc: p.creator_profiles?.bank_ifsc_code
-              ? maskIFSC(p.creator_profiles.bank_ifsc_code)
-              : (p.users?.studio_details?.ifsc ? maskIFSC(p.users.studio_details.ifsc) : ''),
+              ? decryptPII(p.creator_profiles.bank_ifsc_code)
+              : (p.users?.studio_details?.ifsc ? decryptPII(p.users.studio_details.ifsc) : ''),
             bankName: p.users?.studio_details?.bankName || p.users?.studio_details?.bank_name || 'HDFC Bank',
             panNumber: p.creator_profiles?.pan_number
-              ? maskPAN(p.creator_profiles.pan_number)
-              : (p.users?.studio_details?.pan ? maskPAN(p.users.studio_details.pan) : ''),
+              ? decryptPII(p.creator_profiles.pan_number)
+              : (p.users?.studio_details?.pan ? decryptPII(p.users.studio_details.pan) : ''),
             grossAmount: (p.gross_amount || 0) > 1000 ? p.gross_amount / 100 : p.gross_amount || 0,
             tdsRate: Number(p.tds_rate) || 0.1,
             tdsAmount: (p.tds_amount || 0) > 100 ? p.tds_amount / 100 : p.tds_amount || 0,

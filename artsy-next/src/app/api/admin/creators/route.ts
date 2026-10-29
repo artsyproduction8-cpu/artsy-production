@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
 import { randomUUID } from 'crypto';
-import { maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
+import { encryptPII, decryptPII } from '@/lib/crypto/pii';
 import { createErrorResponse } from '@/lib/api-response';
 import { getCachedData, setCachedData, invalidateCreatorCache, invalidateUserCache } from '@/lib/cache';
 import { checkRateLimit } from '@/lib/rateLimit';
@@ -84,7 +84,7 @@ export async function GET(request: Request) {
         .eq('assigned_creator_id', creatorId)
         .in('status', ['creator_assigned', 'in_production', 'review_ready', 'revision_requested']);
 
-      // Apply field-level masking to sensitive financial PII
+      // Return full unmasked financial PII for authenticated admin inspection
       const sd = creatorUser?.studio_details || {};
       const safeProfile = profile ? {
         ...profile,
@@ -97,9 +97,9 @@ export async function GET(request: Request) {
         sample_url_3: profile.sample_url_3 || sd.sample_url_3 || '',
         bank_name: profile.bank_name || sd.bankName || sd.bank_name || 'HDFC Bank',
         bank_account_name: profile.bank_account_name || sd.legalName || creatorUser?.full_name || '',
-        pan_number: profile.pan_number ? maskPAN(profile.pan_number) : (sd.pan ? maskPAN(sd.pan) : null),
-        bank_account_number: profile.bank_account_number ? maskBankAccount(profile.bank_account_number) : (sd.bankAccount ? maskBankAccount(sd.bankAccount) : null),
-        bank_ifsc_code: profile.bank_ifsc_code ? maskIFSC(profile.bank_ifsc_code) : (sd.ifsc ? maskIFSC(sd.ifsc) : null),
+        pan_number: profile.pan_number ? decryptPII(profile.pan_number) : (sd.pan ? decryptPII(sd.pan) : null),
+        bank_account_number: profile.bank_account_number ? decryptPII(profile.bank_account_number) : (sd.bankAccount ? decryptPII(sd.bankAccount) : null),
+        bank_ifsc_code: profile.bank_ifsc_code ? decryptPII(profile.bank_ifsc_code) : (sd.ifsc ? decryptPII(sd.ifsc) : null),
       } : {};
 
       const responsePayload = {
@@ -203,9 +203,9 @@ export async function GET(request: Request) {
         tracking_id: p.tracking_id || u.tracking_id || '',
         bank_name: p.bank_name || u.studio_details?.bankName || u.studio_details?.bank_name || 'HDFC Bank',
         bank_account_name: p.bank_account_name || u.studio_details?.legalName || u.full_name || '',
-        pan_number: p.pan_number ? maskPAN(p.pan_number) : (u.studio_details?.pan ? maskPAN(u.studio_details.pan) : null),
-        bank_account_number: p.bank_account_number ? maskBankAccount(p.bank_account_number) : (u.studio_details?.bankAccount ? maskBankAccount(u.studio_details.bankAccount) : null),
-        bank_ifsc_code: p.bank_ifsc_code ? maskIFSC(p.bank_ifsc_code) : (u.studio_details?.ifsc ? maskIFSC(u.studio_details.ifsc) : null),
+        pan_number: p.pan_number ? decryptPII(p.pan_number) : (u.studio_details?.pan ? decryptPII(u.studio_details.pan) : null),
+        bank_account_number: p.bank_account_number ? decryptPII(p.bank_account_number) : (u.studio_details?.bankAccount ? decryptPII(u.studio_details.bankAccount) : null),
+        bank_ifsc_code: p.bank_ifsc_code ? decryptPII(p.bank_ifsc_code) : (u.studio_details?.ifsc ? decryptPII(u.studio_details.ifsc) : null),
         approval_status: p.approval_status || 'pending',
         is_suspended: p.is_suspended || u.status === 'suspended',
         rating: p.avg_rating || 4.9,
@@ -527,9 +527,18 @@ export async function PATCH(request: Request) {
           ? software.split(',').map((s: string) => s.trim()).filter(Boolean)
           : [];
       }
+      if (body.bank_account_name !== undefined) profileUpdate.bank_account_name = body.bank_account_name;
+      if (body.bank_account_number !== undefined) profileUpdate.bank_account_number = String(body.bank_account_number).trim();
+      if (body.bank_ifsc_code !== undefined) profileUpdate.bank_ifsc_code = String(body.bank_ifsc_code).trim().toUpperCase();
+      if (body.pan_number !== undefined) {
+        const cleanPan = String(body.pan_number).trim().toUpperCase();
+        if (cleanPan) {
+          profileUpdate.pan_number = encryptPII(cleanPan);
+        }
+      }
     }
 
-    // Safe profile update avoiding PostgreSQL 42P17 infinite recursion
+    // Profile update
     const { data: existingCp } = await dbClient
       .from('creator_profiles')
       .select('*')
@@ -545,20 +554,23 @@ export async function PATCH(request: Request) {
       const { error: updErr } = await dbClient.from('creator_profiles').update(profileUpdate).eq('id', id);
       if (updErr) {
         console.warn('[Admin Creators] Update error, falling back to upsert:', updErr);
-        await dbClient.from('creator_profiles').upsert(mergedCp);
+        const { error: upsertErr } = await dbClient.from('creator_profiles').upsert(mergedCp);
+        if (upsertErr) throw upsertErr;
       }
     } else {
-      await dbClient.from('creator_profiles').insert({
+      const { error: insErr } = await dbClient.from('creator_profiles').insert({
         id,
         user_id: id,
         ...profileUpdate,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
+      if (insErr) throw insErr;
     }
 
     // Update user
-    await dbClient.from('users').update(userUpdate).eq('id', id);
+    const { error: userErr } = await dbClient.from('users').update(userUpdate).eq('id', id);
+    if (userErr) throw userErr;
 
     // Record audit log
     await dbClient.from('audit_logs').insert([

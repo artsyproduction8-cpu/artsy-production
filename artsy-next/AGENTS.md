@@ -58,6 +58,8 @@ To guarantee financial integrity and regulatory compliance under Indian financia
 - Direct table access permissions (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) are strictly **REVOKED** from `anon`, `authenticated`, and untrusted roles.
 - Backend server operations utilize `service_role` paired with the internal authorization function `is_server_authorized()` checking header `x-artsy-server-auth`.
 - **Absolute Rule:** React Client Components (`'use client'`) are strictly forbidden from importing `@supabase/supabase-js` or querying the database directly. All mutations and data fetches must traverse authenticated server API routes.
+- **Creator Profile & Audit Log RLS Invariant:** RLS policies on `creator_profiles` must never execute subqueries against `creator_profiles` itself (which triggers PostgreSQL error `42P17: infinite recursion detected in policy`). Updates and inserts are authorized via `is_server_authorized()` or admin role. `audit_logs` permits inserts via `is_server_authorized()`.
+- **Admin Panel Data Inspection Standard:** The studio owner/admin suite (`/admin/*`) strictly displays full, unmasked details (decrypted PAN, full bank account number, IFSC code, phone, email, hardware configuration, and portfolio links) so administrators can verify creators, reconcile payouts, and settle accounts without redaction or masking.
 
 ---
 

@@ -635,6 +635,7 @@ export default function ClientProfilePage() {
           full_name: fullName.trim() || studioName.trim(),
           display_name: studioName.trim(),
           phone: canonicalPhone || undefined,
+          email: email.trim() || undefined,
           studio_details: updatedProfile,
           avatar_url: logoUrl || undefined,
           onboarded: true,

@@ -309,13 +309,13 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
         {/* Top-Left Brand Logo -> Direct link to Landing Page */}
         <Link
           href="/"
-          className="flex flex-col items-center justify-center leading-none select-none group text-left cursor-pointer"
+          className="flex flex-col items-start justify-center leading-none select-none group text-left cursor-pointer shrink-0"
           title="Artsy — Place for Perspective"
         >
           <span className="text-xl sm:text-2xl font-extrabold uppercase tracking-tight text-white leading-none group-hover:text-blue-400 transition-colors">
             ARTSY
           </span>
-          <span className="hidden md:block font-mono text-[8px] sm:text-[10px] font-semibold tracking-[1.2px] uppercase text-[#DCDFE3]/80 mt-1 leading-none text-center whitespace-nowrap">
+          <span className="block font-mono text-[7px] sm:text-[8px] md:text-[10px] font-semibold tracking-[0.8px] sm:tracking-[1.2px] uppercase text-[#DCDFE3]/80 mt-1 leading-none text-left whitespace-nowrap">
             PLACE FOR PERSPECTIVE
           </span>
         </Link>

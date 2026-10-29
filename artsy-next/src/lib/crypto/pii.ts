@@ -102,10 +102,11 @@ export function maskPAN(pan: string): string {
       return '••••••••••';
     }
   }
-  if (clean.includes('X') || clean.includes('•') || clean.includes('*')) {
+  // Check if ALREADY masked: e.g. "XXXXX1234F", "•••••1234F", or bullet masks
+  if (/^([X•*]{5}[A-Z0-9]{5}|[X•*]{10})$/i.test(clean)) {
     return clean;
   }
-  if (!PAN_REGEX.test(clean) && clean.length !== 10) return 'XXXXXXXXXX';
+  if (!PAN_REGEX.test(clean)) return '••••••••••';
   return `XXXXX${clean.slice(5)}`;
 }
 
@@ -126,10 +127,14 @@ export function maskBankAccount(account: string): string {
       return '••••••••••••';
     }
   }
-  if (clean.includes('X') || clean.includes('•') || clean.includes('*')) {
+  // Check if ALREADY masked: e.g. "XXXXXXXXXX1234", "••••••••1234", or full mask
+  if (/^[X•*]{4,}\d{4}$/.test(clean) || /^[X•*]{9,18}$/.test(clean)) {
     return clean;
   }
-  if (clean.length <= 4) return 'XXXX';
+  if (!BANK_ACCOUNT_REGEX.test(clean)) {
+    if (clean.length <= 4) return '••••';
+    return `${'•'.repeat(clean.length - 4)}${clean.slice(-4)}`;
+  }
   const lastFour = clean.slice(-4);
   return `${'X'.repeat(clean.length - 4)}${lastFour}`;
 }
@@ -151,9 +156,10 @@ export function maskIFSC(ifsc: string): string {
       return '•••••••••••';
     }
   }
-  if (clean.includes('•') || clean.includes('X') || clean.includes('*')) {
+  // Check if ALREADY masked: e.g. "HDFC••••128" or "HDFCXXXX128" or full mask
+  if (/^[A-Z]{4}[•*X]{4}[A-Z0-9]{3}$/.test(clean) || /^[•*X]{11}$/.test(clean)) {
     return clean;
   }
-  if (clean.length < 11) return 'HDFC•••••••';
+  if (!IFSC_REGEX.test(clean)) return '•••••••••••';
   return `${clean.slice(0, 4)}••••${clean.slice(8)}`;
 }

@@ -29,11 +29,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON request body' }, { status: 400 });
   }
 
-  const { full_name, display_name, phone, studio_details, avatar_url, creator_profile: creatorPayload } = body;
+  const { full_name, display_name, phone, email, studio_details, avatar_url, creator_profile: creatorPayload } = body;
 
   const updates: Record<string, any> = {
     updated_at: new Date().toISOString(),
   };
+
+  const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : supabase;
 
   if (full_name !== undefined) {
     if (typeof full_name !== 'string' || full_name.trim().length < 2) {
@@ -54,18 +56,92 @@ export async function POST(request: Request) {
     updates.display_name = updates.full_name;
   }
 
+  if (email !== undefined && typeof email === 'string' && email.trim().length > 0) {
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
+    }
+    if (dbClient && typeof dbClient.from === 'function' && cleanEmail !== (authUser.email || '').toLowerCase()) {
+      const { data: existingUserWithEmail } = await dbClient
+        .from('users')
+        .select('id')
+        .eq('email', cleanEmail)
+        .neq('id', authUser.id)
+        .maybeSingle();
+
+      if (existingUserWithEmail) {
+        return NextResponse.json(
+          { error: 'This email address is already in use by another account.' },
+          { status: 400 }
+        );
+      }
+    }
+    updates.email = cleanEmail;
+  }
+
   if (phone !== undefined) {
     if (typeof phone === 'string' && phone.trim().length > 0) {
       const rawDigits = phone.replace(/\D/g, '');
       const cleanDigits = (rawDigits.length === 12 && rawDigits.startsWith('91')) ? rawDigits.slice(2) : rawDigits.slice(-10);
       if (cleanDigits.length === 10) {
-        updates.phone = `+91${cleanDigits}`;
+        const canonicalPhone = `+91${cleanDigits}`;
+        if (dbClient && typeof dbClient.from === 'function' && canonicalPhone !== authUser.phone) {
+          const { data: existingUserWithPhone } = await dbClient
+            .from('users')
+            .select('id')
+            .eq('phone', canonicalPhone)
+            .neq('id', authUser.id)
+            .maybeSingle();
+
+          if (existingUserWithPhone) {
+            return NextResponse.json(
+              { error: 'This phone number is already registered to another account.' },
+              { status: 400 }
+            );
+          }
+        }
+        updates.phone = canonicalPhone;
       }
     }
   }
 
-  if (studio_details !== undefined && typeof studio_details === 'object') {
-    updates.studio_details = studio_details;
+  if (studio_details !== undefined && typeof studio_details === 'object' && studio_details !== null) {
+    const cleanStudioDetails = { ...studio_details };
+
+    // Prevent masked PII from corrupting studio_details
+    const existingSd = authUser.studio_details || {};
+    if (cleanStudioDetails.pan && /[•*X]/.test(String(cleanStudioDetails.pan))) {
+      if (existingSd.pan && !/[•*X]/.test(String(existingSd.pan))) {
+        cleanStudioDetails.pan = existingSd.pan;
+      } else {
+        delete cleanStudioDetails.pan;
+      }
+    }
+    if (cleanStudioDetails.bankAccount && /[•*X]/.test(String(cleanStudioDetails.bankAccount))) {
+      if (existingSd.bankAccount && !/[•*X]/.test(String(existingSd.bankAccount))) {
+        cleanStudioDetails.bankAccount = existingSd.bankAccount;
+      } else {
+        delete cleanStudioDetails.bankAccount;
+      }
+    }
+    if (cleanStudioDetails.ifsc && /[•*]/.test(String(cleanStudioDetails.ifsc))) {
+      if (existingSd.ifsc && !/[•*]/.test(String(existingSd.ifsc))) {
+        cleanStudioDetails.ifsc = existingSd.ifsc;
+      } else {
+        delete cleanStudioDetails.ifsc;
+      }
+    }
+
+    if (updates.phone) {
+      cleanStudioDetails.phone = updates.phone;
+      cleanStudioDetails.whatsapp = updates.phone;
+    }
+    if (updates.email) {
+      cleanStudioDetails.email = updates.email;
+    }
+
+    updates.studio_details = cleanStudioDetails;
   }
 
   if (avatar_url !== undefined && typeof avatar_url === 'string') {
@@ -77,8 +153,6 @@ export async function POST(request: Request) {
   } else {
     updates.onboarded = true;
   }
-
-  const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : supabase;
 
   if (dbClient && typeof dbClient.from === 'function') {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(authUser.id);
@@ -236,8 +310,8 @@ export async function POST(request: Request) {
   const signedCookie = signAuthCookieValue({
     id: authUser.id,
     role: authUser.role,
-    email: authUser.email,
-    phone: authUser.phone,
+    email: updates.email ?? authUser.email,
+    phone: updates.phone ?? authUser.phone,
     full_name: updates.full_name ?? authUser.full_name,
     display_name: updates.display_name ?? authUser.display_name,
     onboarded: updates.onboarded,

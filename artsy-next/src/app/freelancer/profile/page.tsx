@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth, getCurrentUser, setCurrentUser, logout } from '@/lib/auth';
 import FreelancerHeader from '../components/FreelancerHeader';
@@ -40,6 +40,34 @@ export default function FreelancerProfilePage() {
   const [customSpecialty, setCustomSpecialty] = useState('');
   const [showreelUrl, setShowreelUrl] = useState('');
   const [philosophy, setPhilosophy] = useState('');
+
+  // Contact Channels & OTP Verification States
+  const [phoneVerified, setPhoneVerified] = useState<boolean>(true);
+  const [verifiedPhone, setVerifiedPhone] = useState<string>(extractTenDigitPhone(user?.phone));
+  const [phoneOtpSent, setPhoneOtpSent] = useState<boolean>(false);
+  const [phoneOtpInput, setPhoneOtpInput] = useState<string>('');
+  const [phoneSending, setPhoneSending] = useState<boolean>(false);
+  const [phoneVerifying, setPhoneVerifying] = useState<boolean>(false);
+  const [phoneError, setPhoneError] = useState<string>('');
+  const [phoneSuccess, setPhoneSuccess] = useState<string>('');
+  const [phoneCountdown, setPhoneCountdown] = useState<number>(0);
+  const [phoneDevOtp, setPhoneDevOtp] = useState<string>('');
+
+  const [emailVerified, setEmailVerified] = useState<boolean>(true);
+  const [verifiedEmail, setVerifiedEmail] = useState<string>(user?.email || '');
+  const [emailOtpSent, setEmailOtpSent] = useState<boolean>(false);
+  const [emailOtpInput, setEmailOtpInput] = useState<string>('');
+  const [emailSending, setEmailSending] = useState<boolean>(false);
+  const [emailVerifying, setEmailVerifying] = useState<boolean>(false);
+  const [emailError, setEmailError] = useState<string>('');
+  const [emailSuccess, setEmailSuccess] = useState<string>('');
+  const [emailCountdown, setEmailCountdown] = useState<number>(0);
+  const [emailDevOtp, setEmailDevOtp] = useState<string>('');
+
+  // Loaded bank details refs for cancel edit restoration
+  const loadedPanRef = useRef<string>('');
+  const loadedAccountRef = useRef<string>('');
+  const loadedIfscRef = useRef<string>('');
 
   // Section 2: Software & Weekly Availability
   const [software, setSoftware] = useState<string[]>([
@@ -96,10 +124,27 @@ export default function FreelancerProfilePage() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  // Validation RegExes
+  // Validation RegExes & Masking Checkers
   const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
   const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
   const bankAccountRegex = /^\d{9,18}$/;
+
+  const isPanMasked = (val: string) =>
+    /^[X•*]{5}[A-Z0-9]{5}$/i.test(val.trim()) ||
+    /^[X•*]{10}$/.test(val.trim()) ||
+    val.includes('•') ||
+    val.includes('XXXXX');
+
+  const isBankAccountMasked = (val: string) =>
+    /^[X•*]{4,}\d{4}$/.test(val.trim()) ||
+    /^[X•*]{9,18}$/.test(val.trim()) ||
+    val.includes('•') ||
+    val.includes('XXXX');
+
+  const isIfscMasked = (val: string) =>
+    /^[A-Z]{4}[•*X]{4}[A-Z0-9]{3}$/.test(val.trim()) ||
+    /^[•*X]{11}$/.test(val.trim()) ||
+    val.includes('•');
 
   const isValidVideoUrl = (urlStr: string): boolean => {
     if (!urlStr || urlStr.trim() === '') return false;
@@ -117,9 +162,9 @@ export default function FreelancerProfilePage() {
     }
   };
 
-  const isPanValid = pan.includes('•') || (pan.trim().length === 10 && panRegex.test(pan.trim()));
-  const isIfscValid = ifsc.includes('•') || (ifsc.trim().length === 11 && ifscRegex.test(ifsc.trim()));
-  const isBankAccountValid = bankAccount.includes('•') || bankAccountRegex.test(bankAccount.trim());
+  const isPanValid = isPanMasked(pan) || (pan.trim().length === 10 && panRegex.test(pan.trim()));
+  const isIfscValid = isIfscMasked(ifsc) || (ifsc.trim().length === 11 && ifscRegex.test(ifsc.trim()));
+  const isBankAccountValid = isBankAccountMasked(bankAccount) || bankAccountRegex.test(bankAccount.trim());
   const isHardwareValid = primaryComputer.trim().length >= 3 || hardwareConfig.trim().length >= 5;
   const isSample1Valid = isValidVideoUrl(sampleUrl1.trim());
   const isSample2Valid = isValidVideoUrl(sampleUrl2.trim());
@@ -134,7 +179,192 @@ export default function FreelancerProfilePage() {
     isSample1Valid &&
     isSample2Valid &&
     isSample3Valid &&
-    isLegalNameValid;
+    isLegalNameValid &&
+    phoneVerified &&
+    emailVerified;
+
+  // Resend countdown timers for phone and email OTP
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (phoneCountdown > 0) {
+      timer = setTimeout(() => setPhoneCountdown((c) => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [phoneCountdown]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (emailCountdown > 0) {
+      timer = setTimeout(() => setEmailCountdown((c) => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [emailCountdown]);
+
+  // WhatsApp / Mobile OTP Handlers
+  const handleSendPhoneOtp = async () => {
+    const rawDigits = phone.replace(/\D/g, '');
+    const cleanPhone = rawDigits.length === 12 && rawDigits.startsWith('91') ? rawDigits.slice(2) : rawDigits;
+    if (cleanPhone.length !== 10) {
+      setPhoneError('Please enter a valid 10-digit Indian mobile number.');
+      return;
+    }
+
+    setPhoneSending(true);
+    setPhoneError('');
+    setPhoneSuccess('');
+    setPhoneDevOtp('');
+
+    try {
+      const res = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: cleanPhone,
+          action: 'send',
+          role: 'freelancer',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPhoneError(data.error || 'Failed to send WhatsApp verification code.');
+        setPhoneSending(false);
+        return;
+      }
+
+      setPhoneOtpSent(true);
+      setPhoneSending(false);
+      if (data.devOtp) {
+        setPhoneDevOtp(data.devOtp);
+      }
+      setPhoneCountdown(30);
+    } catch {
+      setPhoneError('Network error while requesting verification code.');
+      setPhoneSending(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (!phoneOtpInput.trim()) {
+      setPhoneError('Please enter the 6-digit OTP code.');
+      return;
+    }
+
+    setPhoneVerifying(true);
+    setPhoneError('');
+
+    try {
+      const cleanPhone = extractTenDigitPhone(phone);
+      const res = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: cleanPhone,
+          code: phoneOtpInput.trim(),
+          action: 'verify',
+          purpose: 'verify_only',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.verified) {
+        setPhoneError(data.error || 'Invalid OTP code. Please try again.');
+        setPhoneVerifying(false);
+        return;
+      }
+
+      setPhoneVerified(true);
+      setVerifiedPhone(cleanPhone);
+      setPhoneOtpSent(false);
+      setPhoneOtpInput('');
+      setPhoneVerifying(false);
+      setPhoneSuccess('Mobile number verified successfully!');
+      setTimeout(() => setPhoneSuccess(''), 4000);
+    } catch {
+      setPhoneError('Network error verifying code.');
+      setPhoneVerifying(false);
+    }
+  };
+
+  // Email OTP Handlers
+  const handleSendEmailOtp = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setEmailError('Please enter a valid email address.');
+      return;
+    }
+
+    setEmailSending(true);
+    setEmailError('');
+    setEmailSuccess('');
+    setEmailDevOtp('');
+
+    try {
+      const res = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          action: 'send',
+          role: 'freelancer',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEmailError(data.error || 'Failed to send email verification code.');
+        setEmailSending(false);
+        return;
+      }
+
+      setEmailOtpSent(true);
+      setEmailSending(false);
+      if (data.devOtp) {
+        setEmailDevOtp(data.devOtp);
+      }
+      setEmailCountdown(30);
+    } catch {
+      setEmailError('Network error while requesting email code.');
+      setEmailSending(false);
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    if (!emailOtpInput.trim()) {
+      setEmailError('Please enter the 6-digit OTP code.');
+      return;
+    }
+
+    setEmailVerifying(true);
+    setEmailError('');
+
+    try {
+      const res = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          code: emailOtpInput.trim(),
+          action: 'verify',
+          purpose: 'verify_only',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.verified) {
+        setEmailError(data.error || 'Invalid OTP code. Please try again.');
+        setEmailVerifying(false);
+        return;
+      }
+
+      setEmailVerified(true);
+      setVerifiedEmail(email.trim().toLowerCase());
+      setEmailOtpSent(false);
+      setEmailOtpInput('');
+      setEmailVerifying(false);
+      setEmailSuccess('Email address verified successfully!');
+      setTimeout(() => setEmailSuccess(''), 4000);
+    } catch {
+      setEmailError('Network error verifying email code.');
+      setEmailVerifying(false);
+    }
+  };
 
   // Load creator data from local storage and server
   useEffect(() => {
@@ -202,10 +432,19 @@ export default function FreelancerProfilePage() {
             const sd = u.studio_details || {};
 
             const loadedPhone = u.phone || sd.phone || '';
-            if (loadedPhone) setPhone(extractTenDigitPhone(loadedPhone));
+            if (loadedPhone) {
+              const cleanTen = extractTenDigitPhone(loadedPhone);
+              setPhone(cleanTen);
+              setVerifiedPhone(cleanTen);
+              setPhoneVerified(true);
+            }
 
             const loadedEmail = u.email || sd.email || '';
-            if (loadedEmail) setEmail(loadedEmail);
+            if (loadedEmail) {
+              setEmail(loadedEmail);
+              setVerifiedEmail(loadedEmail);
+              setEmailVerified(true);
+            }
 
             const loadedAlias = sd.alias || u.display_name || u.full_name || cp.public_display_name || '';
             if (loadedAlias) setAlias(loadedAlias);
@@ -268,12 +507,26 @@ export default function FreelancerProfilePage() {
             const loadedIfsc = cp.bank_ifsc_code || sd.ifsc || '';
             const loadedBankName = cp.bank_name || sd.bankName || 'HDFC Bank';
 
-            if (loadedPan) setPan(loadedPan);
-            if (loadedAccount) setBankAccount(loadedAccount);
-            if (loadedIfsc) setIfsc(loadedIfsc);
+            if (loadedPan) {
+              setPan(loadedPan);
+              loadedPanRef.current = loadedPan;
+            }
+            if (loadedAccount) {
+              setBankAccount(loadedAccount);
+              loadedAccountRef.current = loadedAccount;
+            }
+            if (loadedIfsc) {
+              setIfsc(loadedIfsc);
+              loadedIfscRef.current = loadedIfsc;
+            }
             if (loadedBankName) setBankName(loadedBankName);
 
-            if (loadedPan.includes('•') || loadedAccount.includes('•') || loadedIfsc.includes('•')) {
+            if (
+              isPanMasked(loadedPan) ||
+              isBankAccountMasked(loadedAccount) ||
+              isIfscMasked(loadedIfsc) ||
+              Boolean(loadedPan && loadedAccount)
+            ) {
               setIsBankMasked(true);
             }
 
@@ -346,10 +599,20 @@ export default function FreelancerProfilePage() {
       return;
     }
 
+    if (!phoneVerified) {
+      showToast('Please verify your updated mobile number via OTP before saving.', 'error');
+      return;
+    }
+    if (!emailVerified) {
+      showToast('Please verify your updated email address via OTP before saving.', 'error');
+      return;
+    }
+
     setSaving(true);
 
     const cleanTenPhone = extractTenDigitPhone(phone);
     const formattedPhone = cleanTenPhone ? `+91${cleanTenPhone}` : '';
+    const cleanEmail = email.trim().toLowerCase();
 
     const resolvedSpecialty = specialty === 'Other' ? (customSpecialty.trim() || 'Commercial & Narrative Film Editor') : specialty;
 
@@ -357,7 +620,7 @@ export default function FreelancerProfilePage() {
       alias: cleanAlias,
       legalName: cleanLegal,
       phone: formattedPhone,
-      email: email.trim(),
+      email: cleanEmail,
       specialty: resolvedSpecialty,
       showreelUrl: showreelUrl || sampleUrl1,
       philosophy,
@@ -400,14 +663,14 @@ export default function FreelancerProfilePage() {
       bank_account_name: cleanLegal,
     };
 
-    // Only update bank fields if user unmasked / entered clean numbers
-    if (!pan.includes('•') && pan.trim().length === 10) {
+    // Only update bank fields if user entered fresh, unmasked valid details
+    if (!isPanMasked(pan) && pan.trim().length === 10 && panRegex.test(pan.trim())) {
       creatorProfilePayload.pan_number = pan.trim().toUpperCase();
     }
-    if (!bankAccount.includes('•') && bankAccount.trim().length >= 9) {
+    if (!isBankAccountMasked(bankAccount) && bankAccountRegex.test(bankAccount.trim())) {
       creatorProfilePayload.bank_account_number = bankAccount.trim();
     }
-    if (!ifsc.includes('•') && ifsc.trim().length === 11) {
+    if (!isIfscMasked(ifsc) && ifscRegex.test(ifsc.trim())) {
       creatorProfilePayload.bank_ifsc_code = ifsc.trim().toUpperCase();
     }
 
@@ -420,6 +683,7 @@ export default function FreelancerProfilePage() {
           full_name: cleanLegal,
           display_name: cleanAlias,
           phone: formattedPhone || undefined,
+          email: cleanEmail || undefined,
           studio_details: studioDetailsPayload,
           creator_profile: creatorProfilePayload,
         }),
@@ -436,6 +700,8 @@ export default function FreelancerProfilePage() {
         const localData = {
           alias: cleanAlias,
           legalName: cleanLegal,
+          phone: cleanTenPhone,
+          email: cleanEmail,
           specialty: resolvedSpecialty,
           showreelUrl: showreelUrl || sampleUrl1,
           philosophy,
@@ -461,6 +727,8 @@ export default function FreelancerProfilePage() {
       if (currentUser) {
         setCurrentUser({
           ...currentUser,
+          phone: formattedPhone || currentUser.phone,
+          email: cleanEmail || currentUser.email,
           full_name: cleanLegal,
           display_name: cleanAlias,
           studio_details: studioDetailsPayload,
@@ -469,6 +737,8 @@ export default function FreelancerProfilePage() {
             ...creatorProfilePayload,
           },
         } as any);
+        window.dispatchEvent(new Event('artsy_profile_updated'));
+        window.dispatchEvent(new Event('artsy_auth_change'));
       }
 
       showToast('Creator profile and workstation credentials updated successfully!', 'success');
@@ -660,47 +930,250 @@ export default function FreelancerProfilePage() {
                         </div>
                       </div>
 
-                      {/* Direct Contact: WhatsApp Number (+91 prefix) & Email */}
+                      {/* Direct Contact & OTP Verification: WhatsApp & Email */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-semibold text-[#1D1D1F]">
-                            WHATSAPP / MOBILE NUMBER *
-                          </label>
-                          <div className="flex items-center rounded-xl border border-[#E5E5E7] bg-[#F5F5F7] focus-within:bg-white focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10 overflow-hidden transition-all">
-                            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-[#E5E5E7]/70 border-r border-[#E5E5E7] text-xs font-bold text-[#1D1D1F] select-none shrink-0">
-                              <span>🇮🇳</span>
-                              <span>+91</span>
-                            </div>
-                            <input
-                              type="tel"
-                              inputMode="numeric"
-                              maxLength={10}
-                              value={phone}
-                              onChange={(e) => {
-                                const raw = e.target.value.replace(/\D/g, '');
-                                const val = (raw.length === 12 && raw.startsWith('91')) ? raw.slice(2) : raw.slice(0, 10);
-                                setPhone(val);
-                              }}
-                              placeholder="98765 43210"
-                              className="w-full bg-transparent px-3 py-2 text-sm font-semibold text-[#1D1D1F] placeholder-[#86868B] focus:outline-none"
-                            />
+                        {/* WhatsApp / Mobile Number with OTP */}
+                        <div className="flex flex-col gap-2 p-4 rounded-xl bg-[#FBFBFC] border border-[#E5E5E7]">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-[#1D1D1F]">
+                              WHATSAPP / MOBILE NUMBER *
+                            </label>
+                            {phoneVerified ? (
+                              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                ✓ Verified
+                              </span>
+                            ) : (
+                              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                                Unverified
+                              </span>
+                            )}
                           </div>
+
+                          <div className="flex gap-2">
+                            <div className="flex items-center rounded-xl border border-[#E5E5E7] bg-white focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10 overflow-hidden flex-1 transition-all">
+                              <div className="flex items-center gap-1.5 px-3 py-2 bg-[#F5F5F7] border-r border-[#E5E5E7] text-xs font-bold text-[#1D1D1F] select-none shrink-0">
+                                <span>🇮🇳</span>
+                                <span>+91</span>
+                              </div>
+                              <input
+                                type="tel"
+                                inputMode="numeric"
+                                maxLength={10}
+                                value={phone}
+                                onChange={(e) => {
+                                  const raw = e.target.value.replace(/\D/g, '');
+                                  const val = (raw.length === 12 && raw.startsWith('91')) ? raw.slice(2) : raw.slice(0, 10);
+                                  setPhone(val);
+                                  if (val !== verifiedPhone) {
+                                    setPhoneVerified(false);
+                                    setPhoneSuccess('');
+                                  } else {
+                                    setPhoneVerified(true);
+                                  }
+                                }}
+                                placeholder="98765 43210"
+                                className="w-full bg-transparent px-3 py-2 text-xs font-semibold text-[#1D1D1F] focus:outline-none placeholder:text-[#86868B]"
+                                required
+                              />
+                            </div>
+
+                            {!phoneVerified && !phoneOtpSent && (
+                              <button
+                                type="button"
+                                onClick={handleSendPhoneOtp}
+                                disabled={phoneSending}
+                                className="px-3.5 py-2 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all disabled:opacity-50 shrink-0 cursor-pointer"
+                              >
+                                {phoneSending ? 'Sending...' : 'Verify OTP'}
+                              </button>
+                            )}
+                          </div>
+
+                          {phoneSuccess && (
+                            <p className="text-[11px] text-emerald-600 font-semibold">{phoneSuccess}</p>
+                          )}
+                          {phoneError && (
+                            <p className="text-[11px] text-red-600 font-semibold">{phoneError}</p>
+                          )}
+
+                          {/* Inline OTP Input Box for WhatsApp / Phone */}
+                          {phoneOtpSent && (
+                            <div className="mt-2 p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 space-y-2.5 animate-fade-in">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-blue-900">Enter 6-digit WhatsApp OTP</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPhoneOtpSent(false);
+                                    setPhoneError('');
+                                  }}
+                                  className="text-[#86868B] hover:text-[#1D1D1F] text-xs cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+
+                              {phoneDevOtp && (
+                                <div className="text-[10px] bg-amber-100 text-amber-900 px-2 py-1 rounded font-mono">
+                                  Dev Mode OTP: <strong>{phoneDevOtp}</strong>
+                                </div>
+                              )}
+
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  maxLength={6}
+                                  value={phoneOtpInput}
+                                  onChange={(e) => setPhoneOtpInput(e.target.value)}
+                                  placeholder="Enter 6-digit code"
+                                  className="flex-1 font-mono tracking-widest text-center text-sm font-bold bg-white border border-blue-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-600"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleVerifyPhoneOtp}
+                                  disabled={phoneVerifying}
+                                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                                >
+                                  {phoneVerifying ? 'Checking...' : 'Confirm'}
+                                </button>
+                              </div>
+
+                              <div className="flex items-center justify-between text-[10px] text-[#86868B]">
+                                <span>Code expires in 5 minutes</span>
+                                {phoneCountdown > 0 ? (
+                                  <span>Resend in {phoneCountdown}s</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={handleSendPhoneOtp}
+                                    className="text-blue-600 hover:underline font-semibold cursor-pointer"
+                                  >
+                                    Resend Code
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           <span className="text-[11px] text-[#86868B]">
                             Used for urgent project claim alerts and direct studio communication.
                           </span>
                         </div>
 
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-semibold text-[#1D1D1F]">
-                            AUTHENTICATED EMAIL
-                          </label>
-                          <input
-                            type="email"
-                            readOnly
-                            value={email}
-                            placeholder="creator@artsyproduction.com"
-                            className="bg-[#E5E5E7]/50 px-4 py-2.5 text-sm text-[#86868B] rounded-xl border border-[#E5E5E7] outline-none cursor-not-allowed select-none"
-                          />
+                        {/* Email Address with OTP */}
+                        <div className="flex flex-col gap-2 p-4 rounded-xl bg-[#FBFBFC] border border-[#E5E5E7]">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-[#1D1D1F]">
+                              EMAIL ADDRESS *
+                            </label>
+                            {emailVerified ? (
+                              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                ✓ Verified
+                              </span>
+                            ) : (
+                              <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                                Unverified
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex gap-2">
+                            <input
+                              type="email"
+                              value={email}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEmail(val);
+                                if (val.trim().toLowerCase() !== verifiedEmail.trim().toLowerCase()) {
+                                  setEmailVerified(false);
+                                  setEmailSuccess('');
+                                } else {
+                                  setEmailVerified(true);
+                                }
+                              }}
+                              placeholder="creator@artsyproduction.com"
+                              className="flex-1 bg-white border border-[#E5E5E7] rounded-xl px-3.5 py-2 text-xs font-semibold text-[#1D1D1F] focus:outline-none focus:border-[#3B82F6]"
+                              required
+                            />
+
+                            {!emailVerified && !emailOtpSent && (
+                              <button
+                                type="button"
+                                onClick={handleSendEmailOtp}
+                                disabled={emailSending}
+                                className="px-3.5 py-2 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all disabled:opacity-50 shrink-0 cursor-pointer"
+                              >
+                                {emailSending ? 'Sending...' : 'Verify OTP'}
+                              </button>
+                            )}
+                          </div>
+
+                          {emailSuccess && (
+                            <p className="text-[11px] text-emerald-600 font-semibold">{emailSuccess}</p>
+                          )}
+                          {emailError && (
+                            <p className="text-[11px] text-red-600 font-semibold">{emailError}</p>
+                          )}
+
+                          {/* Inline OTP Input Box for Email */}
+                          {emailOtpSent && (
+                            <div className="mt-2 p-3.5 rounded-xl bg-blue-50/60 border border-blue-200 space-y-2.5 animate-fade-in">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-blue-900">Enter 6-digit Email OTP</span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEmailOtpSent(false);
+                                    setEmailError('');
+                                  }}
+                                  className="text-[#86868B] hover:text-[#1D1D1F] text-xs cursor-pointer"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+
+                              {emailDevOtp && (
+                                <div className="text-[10px] bg-amber-100 text-amber-900 px-2 py-1 rounded font-mono">
+                                  Dev Mode OTP: <strong>{emailDevOtp}</strong>
+                                </div>
+                              )}
+
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  maxLength={6}
+                                  value={emailOtpInput}
+                                  onChange={(e) => setEmailOtpInput(e.target.value)}
+                                  placeholder="Enter 6-digit code"
+                                  className="flex-1 font-mono tracking-widest text-center text-sm font-bold bg-white border border-blue-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-600"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleVerifyEmailOtp}
+                                  disabled={emailVerifying}
+                                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                                >
+                                  {emailVerifying ? 'Checking...' : 'Confirm'}
+                                </button>
+                              </div>
+
+                              <div className="flex items-center justify-between text-[10px] text-[#86868B]">
+                                <span>Code expires in 5 minutes</span>
+                                {emailCountdown > 0 ? (
+                                  <span>Resend in {emailCountdown}s</span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={handleSendEmailOtp}
+                                    className="text-blue-600 hover:underline font-semibold cursor-pointer"
+                                  >
+                                    Resend Code
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           <span className="text-[11px] text-[#86868B]">
                             Primary authenticated email linked to your creator account and milestone notifications.
                           </span>
@@ -1055,12 +1528,16 @@ export default function FreelancerProfilePage() {
                           <button
                             type="button"
                             onClick={() => {
-                              setEditBankDetails(!editBankDetails);
                               if (!editBankDetails) {
-                                // Clear masked placeholder values so user can type fresh details
-                                if (pan.includes('•')) setPan('');
-                                if (bankAccount.includes('•')) setBankAccount('');
-                                if (ifsc.includes('•')) setIfsc('');
+                                setEditBankDetails(true);
+                                setPan('');
+                                setBankAccount('');
+                                setIfsc('');
+                              } else {
+                                setEditBankDetails(false);
+                                setPan(loadedPanRef.current);
+                                setBankAccount(loadedAccountRef.current);
+                                setIfsc(loadedIfscRef.current);
                               }
                             }}
                             className="text-xs text-[#3B82F6] font-bold hover:underline cursor-pointer ml-2"
@@ -1078,7 +1555,7 @@ export default function FreelancerProfilePage() {
                             </label>
                             {pan && (
                               isPanValid
-                                ? <span className="text-[11px] text-emerald-600 font-semibold">✓ Valid PAN</span>
+                                ? <span className="text-[11px] text-emerald-600 font-semibold">{isPanMasked(pan) ? '✓ On File (Masked)' : '✓ Valid PAN'}</span>
                                 : <span className="text-[11px] text-red-500 font-semibold">Format: ABCDE1234F</span>
                             )}
                           </div>
@@ -1171,7 +1648,7 @@ export default function FreelancerProfilePage() {
                             </label>
                             {bankAccount && (
                               isBankAccountValid
-                                ? <span className="text-[11px] text-emerald-600 font-semibold">✓ Valid Account</span>
+                                ? <span className="text-[11px] text-emerald-600 font-semibold">{isBankAccountMasked(bankAccount) ? '✓ On File (Masked)' : '✓ Valid Account'}</span>
                                 : <span className="text-[11px] text-red-500 font-semibold">9–18 digits required</span>
                             )}
                           </div>
@@ -1194,7 +1671,7 @@ export default function FreelancerProfilePage() {
                             <label className="text-xs font-semibold text-[#1D1D1F]">IFSC CODE *</label>
                             {ifsc && (
                               isIfscValid
-                                ? <span className="text-[11px] text-emerald-600 font-semibold">✓ Valid IFSC</span>
+                                ? <span className="text-[11px] text-emerald-600 font-semibold">{isIfscMasked(ifsc) ? '✓ On File (Masked)' : '✓ Valid IFSC'}</span>
                                 : <span className="text-[11px] text-red-500 font-semibold">Format: SBIN0001234</span>
                             )}
                           </div>

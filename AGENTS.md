@@ -419,5 +419,22 @@ flowchart TD
    - **Foreign Key Safe Profile Updates:** Updates to `creator_profiles` must use `update(...).eq('id', id)` with an upsert fallback. Performing destructive `delete().eq('id', id)` followed by `insert(...)` violates foreign keys from `orders.preferred_creator_id` and `portfolio_samples.creator_id` and is banned.
    - **Atomic Cache & Approval State Synchronization:** On creator approval (`/api/admin/freelancers/approve` or `PATCH /api/admin/creators`), `creator_profiles` merges existing `users.studio_details` to preserve hardware configurations, sample video URLs, and banking details. Approval handlers must call both `invalidateCreatorCache` and `invalidateUserCache` to prevent stale profile reads.
    - **Role-Gated LocalStorage Hygiene:** In `auth.ts` and `/auth/login`, `data.user.studio_details` is persisted to `artsy_client_profile` ONLY when `user.role === 'client'`, and to `artsy_creator_profile` when `user.role === 'freelancer'`, preventing cross-role profile contamination.
+11. **Profile Contact Verification Invariant (`purpose: 'verify_only'`):**
+    - Updating email or mobile number in creator or client profile settings triggers `/api/auth/otp` with `action: 'send'` and `purpose: 'verify_only'`.
+    - Single-channel verification bypasses login dual-credential pairing rules (which require both phone and email to match the same account).
+    - It enforces format validation and verifies that the target email or phone is not registered to another account (`id !== authUser.id`).
+    - Dispatches OTP solely to the requested channel (email via Resend, phone via WhatsApp).
+    - On verification (`action: 'verify'`, `purpose: 'verify_only'`), validates OTP without minting login session cookies, permitting the user to save the verified contact details in `/api/user/update-profile`.
+12. **Creator Profile Deletion & Clean Re-Onboarding Lifecycle:**
+    - When a creator deletes their profile via `/api/user/data-deletion`:
+      - Historical PII and financial records (`full_name`, `email`, `phone`, `pan_number`, `bank_account_number`, `hardware_config`, `sample_links`) MUST BE PRESERVED in the database and visible in the admin panel (`/admin/freelancers`) under `DELETED PROFILE / ARCHIVED` status. Destructive nullification or overwriting with dummy anonymized strings is forbidden.
+      - Public visibility is purged immediately: `creator_profiles.is_public = false`, `approval_status = 'pending'`, `is_active = false`, `onboarding_status = null`, `deleted_at = now()`.
+      - User record is marked `status = 'deleted'`, `deleted_at = now()`, `onboarded = false`, `token_version = currentVersion + 1`.
+      - Immediate cache invalidation: `invalidateCreatorCache(userId)`, `invalidateCache('cache:public:creators:list')`, `invalidateUserCache(userId)`.
+      - Auth session cookie is deleted, logging out the user.
+    - If the deleted creator logs in again via OTP:
+      - System recognizes preserved credentials and allows OTP verification.
+      - `api/auth/session` and `api/user/me` treat deleted/reset profiles as `onboarding_status: null` and `onboarded: false`, routing the user to `/freelancer/onboarding` to start a fresh profile.
+      - Upon submitting `/api/freelancer/onboard`, the account is reactivated (`users.status = 'active'`, `deleted_at = null`, `creator_profiles.deleted_at = null`, `approval_status = 'pending'`, `onboarding_status = 'pending_review'`), and updated with the newly submitted workstation specs, samples, and NDA signature for admin review.
 
 ===============================================================================================================

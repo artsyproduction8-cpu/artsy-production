@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
         try {
           const { data: creatorProfile } = await dbClient
             .from('creator_profiles')
-            .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, public_specialty, bank_account_name, bank_account_number, bank_ifsc_code, pan_number, agreement_signed_at, agreement_accepted, agreement_accepted_at, hardware_config, sample_url_1, sample_url_2, sample_url_3')
+            .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, public_specialty, bank_account_name, bank_account_number, bank_ifsc_code, pan_number, agreement_signed_at, agreement_accepted, agreement_accepted_at, hardware_config, sample_url_1, sample_url_2, sample_url_3, deleted_at')
             .eq('id', resolvedUser.id)
             .maybeSingle();
 
@@ -128,7 +128,14 @@ export async function GET(request: NextRequest) {
             };
             resolvedUser.creator_profile = safeCreatorProfile;
 
-            if (creatorProfile.approval_status === 'approved' || creatorProfile.onboarding_status === 'approved') {
+            const isProfileDeleted = Boolean(creatorProfile.deleted_at || dbUser?.status === 'deleted');
+            if (isProfileDeleted || !creatorProfile.onboarding_status) {
+              resolvedStatus = null;
+              resolvedUser.onboarded = false;
+              resolvedTrackingId = null;
+              resolvedUser.agreement_signed_at = null;
+              resolvedUser.agreement_accepted = false;
+            } else if (creatorProfile.approval_status === 'approved' || creatorProfile.onboarding_status === 'approved') {
               resolvedStatus = 'approved';
             } else if (creatorProfile.approval_status === 'rejected' || creatorProfile.onboarding_status === 'rejected') {
               resolvedStatus = 'rejected';
@@ -136,9 +143,13 @@ export async function GET(request: NextRequest) {
               resolvedStatus = 'pending_review';
             } else {
               resolvedStatus = null;
+              resolvedUser.onboarded = false;
+              resolvedTrackingId = null;
+              resolvedUser.agreement_signed_at = null;
+              resolvedUser.agreement_accepted = false;
             }
 
-            resolvedTrackingId = creatorProfile.tracking_id || null;
+            resolvedTrackingId = isProfileDeleted ? null : (creatorProfile.tracking_id || null);
             resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
             resolvedUser.bio = creatorProfile.bio || sd.philosophy || null;
             resolvedUser.skills = (creatorProfile.skills && creatorProfile.skills.length > 0) ? creatorProfile.skills : (sd.skills || ['Commercial & Narrative Film Editor', 'Color Grading', 'Sound Design', '4K Mastering']);

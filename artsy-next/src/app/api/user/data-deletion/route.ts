@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin as supabase } from '@/lib/supabase';
 import { getAuthenticatedUser, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
 import { isSuperAdminAccount } from '@/lib/auth-utils';
+import { invalidateCreatorCache, invalidateCache, invalidateUserCache } from '@/lib/cache';
 
 /**
  * DPDP Act (v2.0) Data Erasure / Deletion Request Route (§4.4, §10.2, §10.3)
@@ -98,43 +99,33 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
 
-      // 4. Anonymize user PII in public.users with UNIQUE phone & email
-      const anonymizedTag = `deleted_${userId.slice(0, 8)}_${Date.now().toString().slice(-4)}`;
-      const uniqueAnonymizedPhone = `+9100${Math.floor(10000000 + Math.random() * 90000000)}`;
-
+      // 4. Update user status in public.users while PRESERVING real data for admin panel & financial records
+      const currentTokenVersion = Number(user.token_version || 2);
       await supabase
         .from('users')
         .update({
-          full_name: 'Anonymized User (DPDP)',
-          email: `${anonymizedTag}@deleted.artsyproduction.in`,
-          phone: uniqueAnonymizedPhone,
-          avatar_url: null,
-          token_version: 999999, // Invalidate all active tokens
+          status: 'deleted',
+          onboarded: false,
+          token_version: currentTokenVersion + 1, // Invalidate active session tokens
           deleted_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);
 
-      // 5. Cascade anonymization to creator_profiles (wipe PAN, bank details, bio)
+      // 5. Deactivate from public roster in creator_profiles while keeping PAN, bank, hardware, and sample records for admin auditing
       await supabase
         .from('creator_profiles')
         .update({
-          pan_number: null,
-          bank_account_name: null,
-          bank_account_number: null,
-          bank_ifsc_code: null,
-          bank_account: null,
-          ifsc: null,
-          upi_id: null,
-          bio: 'Anonymized Creator Profile',
-          portfolio_url: null,
-          sample_links: [],
+          is_public: false,
+          approval_status: 'pending',
+          onboarding_status: null,
           is_active: false,
+          deleted_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .or(`id.eq.${userId},user_id.eq.${userId}`);
 
-      // 6. Delete OTP sessions
+      // 6. Delete active OTP sessions
       if (user.phone) {
         await supabase
           .from('otp_sessions')
@@ -142,22 +133,16 @@ export async function POST(request: NextRequest) {
           .eq('phone', user.phone);
       }
 
-      // 7. Anonymize lead inquiries if any exist
-      if (user.email) {
-        await supabase
-          .from('leads')
-          .update({
-            name: 'Anonymized User',
-            email: 'deleted@deleted.artsyproduction.in',
-            phone: '0000000000',
-            message: '[REDACTED]'
-          })
-          .eq('email', user.email);
-      }
+      // 7. Invalidate all public and private creator caches immediately
+      await invalidateCreatorCache(userId);
+      await invalidateCache('cache:public:creators:list');
+      await invalidateCache(`cache:admin:creator:${userId}`);
+      await invalidateCache('cache:admin:creators:list');
+      await invalidateUserCache(userId);
 
       const response = NextResponse.json({
         success: true,
-        message: 'DPDP Data Erasure request processed. Personal data has been securely anonymized.',
+        message: 'Creator profile has been removed from public directory. Historical account data archived for studio compliance.',
         requestId: deletionRequest?.id || 'req_completed'
       });
 

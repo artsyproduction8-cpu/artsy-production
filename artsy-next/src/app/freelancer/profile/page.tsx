@@ -221,6 +221,7 @@ export default function FreelancerProfilePage() {
         body: JSON.stringify({
           phone: cleanPhone,
           action: 'send',
+          purpose: 'verify_only',
           role: 'freelancer',
         }),
       });
@@ -304,6 +305,7 @@ export default function FreelancerProfilePage() {
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
           action: 'send',
+          purpose: 'verify_only',
           role: 'freelancer',
         }),
       });
@@ -803,7 +805,7 @@ export default function FreelancerProfilePage() {
         throw new Error(errJson.error || 'Failed to complete data deletion');
       }
 
-      alert('Your creator account and personal data have been anonymized in accordance with the DPDP Act.');
+      alert('Your creator profile has been removed from the public roster. You have been safely logged out.');
       logout('/auth/login');
     } catch (err: any) {
       setDeleteError(err.message || 'Deletion failed. Please try again.');

@@ -208,25 +208,48 @@ export async function GET(request: NextRequest) {
             .maybeSingle();
 
           if (creatorProfile) {
-            if (creatorProfile.onboarding_status === 'approved' || creatorProfile.approval_status === 'approved') {
+            const isProfileDeleted = Boolean(creatorProfile.deleted_at || dbUser.status === 'deleted');
+            if (isProfileDeleted || !creatorProfile.onboarding_status) {
+              resolvedUser.onboarding_status = null;
+              resolvedUser.onboarded = false;
+              resolvedUser.agreement_signed_at = null;
+              resolvedUser.agreement_accepted = false;
+              resolvedUser.tracking_id = null;
+            } else if (creatorProfile.onboarding_status === 'approved' || creatorProfile.approval_status === 'approved') {
               resolvedUser.onboarding_status = 'approved';
+              resolvedUser.tracking_id = creatorProfile.tracking_id || null;
+              resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
+              resolvedUser.rejected_at = creatorProfile.rejected_at || null;
+              resolvedUser.agreement_signed_at = creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || null;
+              resolvedUser.agreement_accepted = Boolean(creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || creatorProfile.agreement_accepted);
             } else if (creatorProfile.onboarding_status === 'rejected' || creatorProfile.approval_status === 'rejected') {
               resolvedUser.onboarding_status = 'rejected';
+              resolvedUser.tracking_id = creatorProfile.tracking_id || null;
+              resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
+              resolvedUser.rejected_at = creatorProfile.rejected_at || null;
+              resolvedUser.agreement_signed_at = creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || null;
+              resolvedUser.agreement_accepted = Boolean(creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || creatorProfile.agreement_accepted);
             } else if (creatorProfile.onboarding_status === 'pending_review' || (creatorProfile.onboarding_status === 'pending' && creatorProfile.tracking_id)) {
               resolvedUser.onboarding_status = 'pending_review';
+              resolvedUser.tracking_id = creatorProfile.tracking_id || null;
+              resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
+              resolvedUser.rejected_at = creatorProfile.rejected_at || null;
+              resolvedUser.agreement_signed_at = creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || null;
+              resolvedUser.agreement_accepted = Boolean(creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || creatorProfile.agreement_accepted);
             } else {
               resolvedUser.onboarding_status = null;
+              resolvedUser.onboarded = false;
+              resolvedUser.agreement_signed_at = null;
+              resolvedUser.agreement_accepted = false;
+              resolvedUser.tracking_id = null;
             }
-            resolvedUser.tracking_id = creatorProfile.tracking_id || null;
-            resolvedUser.rejection_reason = creatorProfile.rejection_reason || null;
-            resolvedUser.rejected_at = creatorProfile.rejected_at || null;
-            resolvedUser.agreement_signed_at = creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || null;
-            resolvedUser.agreement_accepted = Boolean(creatorProfile.agreement_signed_at || creatorProfile.agreement_accepted_at || creatorProfile.agreement_accepted);
             resolvedUser.creator_profile = creatorProfile;
           } else {
             resolvedUser.onboarding_status = null;
+            resolvedUser.onboarded = false;
             resolvedUser.agreement_signed_at = null;
             resolvedUser.agreement_accepted = false;
+            resolvedUser.tracking_id = null;
           }
         }
       }

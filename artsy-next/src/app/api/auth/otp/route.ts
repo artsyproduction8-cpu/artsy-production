@@ -6,7 +6,7 @@ import { sendMetaOTP } from '@/lib/whatsapp/meta-cloud-dispatcher';
 import { sendOtpEmail } from '@/lib/email/dispatcher';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 const supabase = supabaseAdmin;
-import { signAuthCookieValue, AUTH_COOKIE_NAME } from '@/lib/auth-cookie';
+import { signAuthCookieValue, AUTH_COOKIE_NAME, getAuthenticatedUser } from '@/lib/auth-cookie';
 import { createErrorResponse } from '@/lib/api-response';
 import { isSuperAdminAccount, CANONICAL_SUPER_ADMIN_PHONE, CANONICAL_SUPER_ADMIN_EMAIL } from '@/lib/auth-utils';
 
@@ -401,21 +401,41 @@ export async function POST(request: NextRequest) {
 
             if (profile) {
               profileFound = true;
-              if (profile.approval_status === 'approved' || profile.onboarding_status === 'approved') {
+              const isProfileDeleted = Boolean(profile.deleted_at || resolvedUser.status === 'deleted');
+              if (isProfileDeleted || !profile.onboarding_status) {
+                // Profile was deleted or reset: creator starts fresh at /freelancer/onboarding
+                onboarding_status = null;
+                tracking_id = null;
+                rejection_reason = null;
+                rejected_at = null;
+                agreement_signed_at = null;
+                agreement_accepted = false;
+              } else if (profile.approval_status === 'approved' || profile.onboarding_status === 'approved') {
                 onboarding_status = 'approved';
+                tracking_id = profile.tracking_id || (profile as any).trackingId || (resolvedUser as any).tracking_id || null;
+                agreement_signed_at = profile.agreement_signed_at || profile.agreement_accepted_at || null;
+                agreement_accepted = Boolean(profile.agreement_signed_at || profile.agreement_accepted_at || profile.agreement_accepted);
               } else if (profile.approval_status === 'rejected' || profile.onboarding_status === 'rejected') {
                 onboarding_status = 'rejected';
                 rejection_reason = profile.rejection_reason || null;
                 rejected_at = profile.rejected_at || profile.updated_at || new Date().toISOString();
+                tracking_id = profile.tracking_id || (profile as any).trackingId || (resolvedUser as any).tracking_id || null;
+                agreement_signed_at = profile.agreement_signed_at || profile.agreement_accepted_at || null;
+                agreement_accepted = Boolean(profile.agreement_signed_at || profile.agreement_accepted_at || profile.agreement_accepted);
               } else if (profile.onboarding_status === 'pending_review' || (profile.onboarding_status === 'pending' && profile.tracking_id)) {
                 onboarding_status = 'pending_review';
+                tracking_id = profile.tracking_id || (profile as any).trackingId || (resolvedUser as any).tracking_id || null;
+                agreement_signed_at = profile.agreement_signed_at || profile.agreement_accepted_at || null;
+                agreement_accepted = Boolean(profile.agreement_signed_at || profile.agreement_accepted_at || profile.agreement_accepted);
               } else {
                 // Application form has not been submitted yet
                 onboarding_status = null;
+                tracking_id = null;
+                rejection_reason = null;
+                rejected_at = null;
+                agreement_signed_at = null;
+                agreement_accepted = false;
               }
-              tracking_id = profile.tracking_id || (profile as any).trackingId || (resolvedUser as any).tracking_id || null;
-              agreement_signed_at = profile.agreement_signed_at || profile.agreement_accepted_at || null;
-              agreement_accepted = Boolean(profile.agreement_signed_at || profile.agreement_accepted_at || profile.agreement_accepted);
               if (!resolvedUser.full_name && profile.public_display_name) {
                 resolvedUser.full_name = profile.public_display_name;
               }
@@ -558,10 +578,174 @@ export async function POST(request: NextRequest) {
       return resp;
     };
 
+    const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : null;
+
+    // ────────────────────────────────────────────────────────
+    // PURPOSE: VERIFY_ONLY — Single-channel verification (Profile Contact Updates)
+    // ────────────────────────────────────────────────────────
+    if (body.purpose === 'verify_only') {
+      const authUser = await getAuthenticatedUser(request);
+
+      // 1. Email Verification Branch
+      if (cleanEmail) {
+        if (dbClient && isSupabaseConfigured) {
+          const { data: conflictUser } = await dbClient
+            .from('users')
+            .select('id')
+            .eq('email', cleanEmail)
+            .maybeSingle();
+
+          if (conflictUser && (!authUser || conflictUser.id !== authUser.id)) {
+            return sendResponse(
+              { error: 'This email address is already associated with another account.' },
+              { status: 400 }
+            );
+          }
+        }
+
+        const otpCode = crypto.randomInt(100000, 1000000).toString();
+        const otpHash = await bcrypt.hash(otpCode, 10);
+        const expiresAtMs = Date.now() + 5 * 60 * 1000;
+        const expiresAtIso = new Date(expiresAtMs).toISOString();
+
+        const sessionObj: LocalOtpSession = {
+          identifier: cleanEmail,
+          phone: null,
+          email: cleanEmail,
+          otpHash,
+          expiresAt: expiresAtMs,
+          attempts: 0,
+          verified: false,
+          role: role || 'freelancer',
+          isNewUser: false,
+        };
+        memoryOtpSessions.set(cleanEmail, sessionObj);
+        memoryOtpSessions.set(identifier, sessionObj);
+
+        if (dbClient && isSupabaseConfigured && typeof dbClient.from === 'function') {
+          try {
+            await dbClient.from('otp_sessions').update({ verified: true }).eq('email', cleanEmail).eq('verified', false);
+            await dbClient.from('otp_sessions').insert([
+              {
+                phone: null,
+                email: cleanEmail,
+                otp_hash: otpHash,
+                expires_at: expiresAtIso,
+                verified: false,
+                ip_address: ip,
+                role: role || 'freelancer',
+                created_at: new Date().toISOString(),
+              },
+            ]);
+          } catch (dbErr) {
+            console.warn('[OTP Route] verify_only DB insert warning:', dbErr);
+          }
+        }
+
+        const emailResult = await sendOtpEmail(cleanEmail, otpCode);
+        if (emailResult && !emailResult.success && !isDev) {
+          return sendResponse(
+            { error: `Failed to deliver email OTP: ${emailResult.error || 'Please check your email address.'}` },
+            { status: 400 }
+          );
+        }
+
+        return sendResponse({
+          success: true,
+          message: 'Verification OTP sent to your email address.',
+          channel: 'email',
+          remainingAttempts,
+          ...(shouldExposeDevOtp && { devOtp: otpCode }),
+        });
+      }
+
+      // 2. WhatsApp / Phone Verification Branch
+      if (cleanPhone) {
+        if (cleanPhone.length !== 10) {
+          return sendResponse(
+            { error: 'Please enter a valid 10-digit Indian phone number.' },
+            { status: 400 }
+          );
+        }
+
+        if (dbClient && isSupabaseConfigured) {
+          const { data: conflictUser } = await dbClient
+            .from('users')
+            .select('id')
+            .or(`phone.eq.+91${cleanPhone},phone.eq.91${cleanPhone},phone.eq.${cleanPhone}`)
+            .maybeSingle();
+
+          if (conflictUser && (!authUser || conflictUser.id !== authUser.id)) {
+            return sendResponse(
+              { error: 'This phone number is already registered to another account.' },
+              { status: 400 }
+            );
+          }
+        }
+
+        const otpCode = crypto.randomInt(100000, 1000000).toString();
+        const otpHash = await bcrypt.hash(otpCode, 10);
+        const expiresAtMs = Date.now() + 5 * 60 * 1000;
+        const expiresAtIso = new Date(expiresAtMs).toISOString();
+
+        const sessionObj: LocalOtpSession = {
+          identifier: cleanPhone,
+          phone: cleanPhone,
+          email: null,
+          otpHash,
+          expiresAt: expiresAtMs,
+          attempts: 0,
+          verified: false,
+          role: role || 'freelancer',
+          isNewUser: false,
+        };
+        memoryOtpSessions.set(cleanPhone, sessionObj);
+        memoryOtpSessions.set(`+91${cleanPhone}`, sessionObj);
+        memoryOtpSessions.set(identifier, sessionObj);
+
+        if (dbClient && isSupabaseConfigured && typeof dbClient.from === 'function') {
+          try {
+            await dbClient.from('otp_sessions').update({ verified: true }).eq('phone', cleanPhone).eq('verified', false);
+            await dbClient.from('otp_sessions').insert([
+              {
+                phone: cleanPhone,
+                email: null,
+                otp_hash: otpHash,
+                expires_at: expiresAtIso,
+                verified: false,
+                ip_address: ip,
+                role: role || 'freelancer',
+                created_at: new Date().toISOString(),
+              },
+            ]);
+          } catch (dbErr) {
+            console.warn('[OTP Route] verify_only DB insert warning:', dbErr);
+          }
+        }
+
+        const waResult = await sendMetaOTP(cleanPhone, otpCode);
+        if (waResult && !waResult.success && !isDev) {
+          return sendResponse(
+            { error: `Failed to deliver WhatsApp OTP: ${waResult.error || 'Please check your phone number.'}` },
+            { status: 400 }
+          );
+        }
+
+        return sendResponse({
+          success: true,
+          message: 'Verification OTP sent to your WhatsApp number.',
+          channel: 'whatsapp',
+          remainingAttempts,
+          ...(shouldExposeDevOtp && { devOtp: otpCode }),
+        });
+      }
+
+      return sendResponse({ error: 'Valid email address or phone number is required.' }, { status: 400 });
+    }
+
     // ────────────────────────────────────────────────────────
     // PHASE 1: STRICT AUTHENTICATION (CREDENTIAL MATCHING)
     // ────────────────────────────────────────────────────────
-    const dbClient = (supabaseAdmin && typeof supabaseAdmin.from === 'function') ? supabaseAdmin : null;
 
     let isExistingUser = false;
     let isNewUser = false;

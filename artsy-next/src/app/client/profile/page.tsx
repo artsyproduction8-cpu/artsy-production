@@ -406,6 +406,7 @@ export default function ClientProfilePage() {
         body: JSON.stringify({
           phone: cleanPhone,
           action: 'send',
+          purpose: 'verify_only',
           role: 'client',
         }),
       });
@@ -499,6 +500,7 @@ export default function ClientProfilePage() {
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
           action: 'send',
+          purpose: 'verify_only',
           role: 'client',
         }),
       });

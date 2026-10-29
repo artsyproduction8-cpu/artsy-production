@@ -19,6 +19,9 @@ interface CreatorItem {
   public_display_name?: string;
   public_specialty?: string;
   creator_tier?: string;
+  is_deleted?: boolean;
+  status?: string;
+  deleted_at?: string | null;
   created_at: string;
 }
 
@@ -29,6 +32,8 @@ interface CreatorDetail {
   phone: string;
   email: string;
   status: string;
+  is_deleted?: boolean;
+  deleted_at?: string | null;
   avatar_url?: string;
   studio_details?: {
     workstationRig?: string;
@@ -203,10 +208,11 @@ export default function AdminFreelancersPage() {
 
     const matchesStatus =
       statusFilter === 'all' ||
-      (statusFilter === 'approved' && c.approval_status === 'approved' && !c.is_suspended) ||
-      (statusFilter === 'pending' && c.approval_status === 'pending') ||
-      (statusFilter === 'rejected' && c.approval_status === 'rejected') ||
-      (statusFilter === 'suspended' && c.is_suspended);
+      (statusFilter === 'approved' && c.approval_status === 'approved' && !c.is_suspended && !c.is_deleted) ||
+      (statusFilter === 'pending' && c.approval_status === 'pending' && !c.is_deleted) ||
+      (statusFilter === 'rejected' && c.approval_status === 'rejected' && !c.is_deleted) ||
+      (statusFilter === 'suspended' && c.is_suspended && !c.is_deleted) ||
+      (statusFilter === 'deleted' && (c.is_deleted || c.status === 'deleted'));
 
     return matchesSearch && matchesStatus;
   });
@@ -287,6 +293,7 @@ export default function AdminFreelancersPage() {
             <option value="pending">Pending Vetting</option>
             <option value="rejected">Rejected</option>
             <option value="suspended">Suspended</option>
+            <option value="deleted">Deleted / Archived</option>
           </select>
         </div>
       </div>
@@ -364,7 +371,9 @@ export default function AdminFreelancersPage() {
                       <div className="flex items-center gap-1.5">
                         <span
                           className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                            creator.is_suspended
+                            creator.is_deleted || creator.status === 'deleted'
+                              ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                              : creator.is_suspended
                               ? 'bg-red-50 text-red-700 border border-red-200'
                               : creator.approval_status === 'approved'
                               ? 'bg-emerald-50 text-emerald-700'
@@ -373,9 +382,9 @@ export default function AdminFreelancersPage() {
                               : 'bg-amber-50 text-amber-700'
                           }`}
                         >
-                          {creator.is_suspended ? 'SUSPENDED' : creator.approval_status.toUpperCase()}
+                          {creator.is_deleted || creator.status === 'deleted' ? 'DELETED PROFILE' : creator.is_suspended ? 'SUSPENDED' : creator.approval_status.toUpperCase()}
                         </span>
-                        {creator.is_public && creator.approval_status === 'approved' && !creator.is_suspended && (
+                        {creator.is_public && creator.approval_status === 'approved' && !creator.is_suspended && !creator.is_deleted && (
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-700">
                             LIVE
                           </span>
@@ -428,14 +437,18 @@ export default function AdminFreelancersPage() {
                   {creatorDetail && (
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        creatorDetail.profile?.is_suspended || creatorDetail.status === 'suspended'
+                        creatorDetail.is_deleted || creatorDetail.status === 'deleted'
+                          ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                          : creatorDetail.profile?.is_suspended || creatorDetail.status === 'suspended'
                           ? 'bg-red-50 text-red-700 border border-red-200'
                           : creatorDetail.profile?.approval_status === 'approved'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : 'bg-amber-50 text-amber-700 border border-amber-200'
                       }`}
                     >
-                      {creatorDetail.profile?.is_suspended || creatorDetail.status === 'suspended'
+                      {creatorDetail.is_deleted || creatorDetail.status === 'deleted'
+                        ? 'Profile Deleted / Archived'
+                        : creatorDetail.profile?.is_suspended || creatorDetail.status === 'suspended'
                         ? 'Suspended'
                         : creatorDetail.profile?.approval_status || 'Pending'}
                     </span>

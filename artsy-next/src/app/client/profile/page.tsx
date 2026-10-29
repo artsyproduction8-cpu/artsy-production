@@ -463,8 +463,25 @@ export default function ClientProfilePage() {
       setWhatsappOtpSent(false);
       setWhatsappOtpInput('');
       setWhatsappVerifying(false);
-      setWhatsappSuccess('WhatsApp number verified successfully!');
-      setTimeout(() => setWhatsappSuccess(''), 4000);
+
+      // Immediately persist the verified phone to public.users and update session
+      try {
+        const updateRes = await fetch('/api/user/update-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: `+91${cleanPhone}` }),
+        });
+        const updateData = await updateRes.json();
+        if (updateRes.ok && updateData.user) {
+          setCurrentUser(updateData.user);
+          setWhatsappSuccess('WhatsApp number verified & saved to your account!');
+        } else {
+          setWhatsappSuccess('WhatsApp number verified successfully!');
+        }
+      } catch {
+        setWhatsappSuccess('WhatsApp number verified successfully!');
+      }
+      setTimeout(() => setWhatsappSuccess(''), 5000);
 
       // Persist verification status
       try {
@@ -550,19 +567,37 @@ export default function ClientProfilePage() {
         return;
       }
 
+      const cleanEmail = email.trim().toLowerCase();
       setEmailVerified(true);
-      setVerifiedEmailAddress(email.trim().toLowerCase());
+      setVerifiedEmailAddress(cleanEmail);
       setEmailOtpSent(false);
       setEmailOtpInput('');
       setEmailVerifying(false);
-      setEmailSuccess('Email address verified successfully!');
-      setTimeout(() => setEmailSuccess(''), 4000);
+
+      // Immediately persist the verified email to public.users and update session
+      try {
+        const updateRes = await fetch('/api/user/update-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail }),
+        });
+        const updateData = await updateRes.json();
+        if (updateRes.ok && updateData.user) {
+          setCurrentUser(updateData.user);
+          setEmailSuccess('Email address verified & saved to your account!');
+        } else {
+          setEmailSuccess('Email address verified successfully!');
+        }
+      } catch {
+        setEmailSuccess('Email address verified successfully!');
+      }
+      setTimeout(() => setEmailSuccess(''), 5000);
 
       // Persist verification status
       try {
         const stored = localStorage.getItem('artsy_client_profile');
         const p = stored ? JSON.parse(stored) : {};
-        p.email = email.trim();
+        p.email = cleanEmail;
         p.emailVerified = true;
         localStorage.setItem('artsy_client_profile', JSON.stringify(p));
       } catch {}

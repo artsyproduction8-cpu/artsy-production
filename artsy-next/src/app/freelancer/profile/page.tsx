@@ -277,8 +277,25 @@ export default function FreelancerProfilePage() {
       setPhoneOtpSent(false);
       setPhoneOtpInput('');
       setPhoneVerifying(false);
-      setPhoneSuccess('Mobile number verified successfully!');
-      setTimeout(() => setPhoneSuccess(''), 4000);
+
+      // Immediately persist the verified phone to public.users and update session
+      try {
+        const updateRes = await fetch('/api/user/update-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: `+91${cleanPhone}` }),
+        });
+        const updateData = await updateRes.json();
+        if (updateRes.ok && updateData.user) {
+          setCurrentUser(updateData.user);
+          setPhoneSuccess('Mobile number verified & saved to your account!');
+        } else {
+          setPhoneSuccess('Mobile number verified successfully!');
+        }
+      } catch {
+        setPhoneSuccess('Mobile number verified successfully!');
+      }
+      setTimeout(() => setPhoneSuccess(''), 5000);
     } catch {
       setPhoneError('Network error verifying code.');
       setPhoneVerifying(false);
@@ -355,13 +372,31 @@ export default function FreelancerProfilePage() {
         return;
       }
 
+      const cleanEmail = email.trim().toLowerCase();
       setEmailVerified(true);
-      setVerifiedEmail(email.trim().toLowerCase());
+      setVerifiedEmail(cleanEmail);
       setEmailOtpSent(false);
       setEmailOtpInput('');
       setEmailVerifying(false);
-      setEmailSuccess('Email address verified successfully!');
-      setTimeout(() => setEmailSuccess(''), 4000);
+
+      // Immediately persist the verified email to public.users and update session
+      try {
+        const updateRes = await fetch('/api/user/update-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail }),
+        });
+        const updateData = await updateRes.json();
+        if (updateRes.ok && updateData.user) {
+          setCurrentUser(updateData.user);
+          setEmailSuccess('Email address verified & saved to your account!');
+        } else {
+          setEmailSuccess('Email address verified successfully!');
+        }
+      } catch {
+        setEmailSuccess('Email address verified successfully!');
+      }
+      setTimeout(() => setEmailSuccess(''), 5000);
     } catch {
       setEmailError('Network error verifying email code.');
       setEmailVerifying(false);
@@ -869,7 +904,7 @@ export default function FreelancerProfilePage() {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={saving || !isFormValid}
+                  disabled={saving}
                   className="px-5 py-2.5 text-xs font-bold rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#9CA3AF] disabled:cursor-not-allowed text-white shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   {saving ? 'Saving...' : 'Save Changes'}
@@ -1746,7 +1781,7 @@ export default function FreelancerProfilePage() {
                     <div className="flex flex-col gap-2 pt-2">
                       <button
                         type="submit"
-                        disabled={saving || !isFormValid}
+                        disabled={saving}
                         className="w-full bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-[#9CA3AF] disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm text-sm"
                       >
                         <span>{saving ? 'Updating Studio Profile...' : 'Save Profile Changes'}</span>
@@ -1754,7 +1789,7 @@ export default function FreelancerProfilePage() {
                       </button>
                       {!isFormValid && (
                         <p className="text-center text-xs text-amber-700 font-medium">
-                          * Please ensure all fields are valid (Workstation specs, 3 Sample URLs, PAN, Bank Account, IFSC, and Legal Name) to save changes.
+                          * Please ensure all required fields (Workstation specs, 3 Sample URLs, PAN, Bank Account, IFSC, and Legal Name) are filled.
                         </p>
                       )}
                     </div>

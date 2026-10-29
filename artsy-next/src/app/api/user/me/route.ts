@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
             resolvedUser.creator_profile = safeCreatorProfile;
 
             const isProfileDeleted = Boolean(creatorProfile.deleted_at || dbUser?.status === 'deleted');
-            if (isProfileDeleted || !creatorProfile.onboarding_status) {
+            if (isProfileDeleted) {
               resolvedStatus = null;
               resolvedUser.onboarded = false;
               resolvedTrackingId = null;
@@ -139,7 +139,12 @@ export async function GET(request: NextRequest) {
               resolvedStatus = 'approved';
             } else if (creatorProfile.approval_status === 'rejected' || creatorProfile.onboarding_status === 'rejected') {
               resolvedStatus = 'rejected';
-            } else if (creatorProfile.onboarding_status === 'pending_review' || (creatorProfile.onboarding_status === 'pending' && creatorProfile.tracking_id)) {
+            } else if (
+              creatorProfile.onboarding_status === 'pending_review' ||
+              creatorProfile.onboarding_status === 'pending' ||
+              creatorProfile.approval_status === 'pending' ||
+              Boolean(creatorProfile.tracking_id)
+            ) {
               resolvedStatus = 'pending_review';
             } else {
               resolvedStatus = null;

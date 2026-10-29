@@ -406,7 +406,7 @@ flowchart TD
    - When sending and verifying OTP, `/api/auth/otp` strictly respects `role: 'freelancer'` and `intent: 'freelancer'`, creating new users in `public.users` with `role: 'freelancer'`. Existing users with `role: 'client'` applying as creators are upgraded to `role: 'freelancer'`.
    - On successful OTP verification for new creators (`onboarding_status === null`), users are routed to the `redirect` parameter (`/freelancer/onboarding`). Approved creators (`onboarding_status === 'approved'`) route directly to the `/freelancer` workstation dashboard.
 8. **Absolute Zero Test/Demo Artifact Invariant:**
-   - No mock/test/demo bypass buttons (e.g., `⚡ Instant Admin Demo Access` on `/admin/login`, `Access Vetted Station (Demo) →` on `/freelancer`) are permitted on public or workstation pages.
+   - No mock/test/demo bypass buttons (e.g., `⚡ Instant Admin Demo Access` on `/admin/login`, `Access Vetted Station (Demo) ➔` on `/freelancer`) are permitted on public or workstation pages.
    - Standalone test routes (e.g., `/checkout-demo`) and orphaned mock components must not exist in production builds.
    - Search indices and metadata must never index demo bypasses or placeholder terms.
 9. **Test Data Cleanup Invariant (Section 8, Rule 9):**
@@ -435,16 +435,12 @@ flowchart TD
     - If the deleted creator logs in again via OTP:
       - System recognizes preserved credentials and allows OTP verification.
       - `api/auth/session` and `api/user/me` treat deleted/reset profiles as `onboarding_status: null` and `onboarded: false`, routing the user to `/freelancer/onboarding` to start a fresh profile.
-      - Upon submitting `/api/freelancer/onboard`, the account is reactivated (`users.status = 'active'`, `deleted_at = null`, `creator_profiles.deleted_at = null`, `approval_status = 'pending'`, `onboarding_status = 'pending_review'`), and updated with the newly submitted workstation specs, samples, and NDA signature for admin review.
+13. **Instant Contact Persistence on OTP Verification:**
+    - In both creator (`/freelancer/profile`) and client (`/client/profile`) settings, verifying an updated email address or mobile number via OTP immediately persists the change to `public.users` via `/api/user/update-profile` and updates the cryptographic session cookie in real time.
+    - Prevents user credentials in the database from becoming desynchronized from the client UI or causing dual-credential mismatches on subsequent logins.
+14. **Strict Creator Status Machine & Profile Hydration:**
+    - In `/api/auth/session`, `/api/user/me`, and `/api/auth/otp`, profile deletion checks strictly evaluate `deleted_at` or `status === 'deleted'`, and never conflate a null or empty `onboarding_status` column with profile deletion.
+    - If `approval_status === 'approved'` or `onboarding_status === 'approved'`, the creator is authoritatively approved.
+    - `FreelancerDashboard` strictly waits for session hydration (`authLoading`) before checking completeness to prevent flashes or premature rendering of the onboarding gate.
 
-=============================================================================
-
-<!-- BEGIN:nextjs-agent-rules -->
-
-## This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
+===============================================================================================================

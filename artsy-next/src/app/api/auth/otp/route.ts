@@ -402,7 +402,7 @@ export async function POST(request: NextRequest) {
             if (profile) {
               profileFound = true;
               const isProfileDeleted = Boolean(profile.deleted_at || resolvedUser.status === 'deleted');
-              if (isProfileDeleted || !profile.onboarding_status) {
+              if (isProfileDeleted) {
                 // Profile was deleted or reset: creator starts fresh at /freelancer/onboarding
                 onboarding_status = null;
                 tracking_id = null;
@@ -422,7 +422,12 @@ export async function POST(request: NextRequest) {
                 tracking_id = profile.tracking_id || (profile as any).trackingId || (resolvedUser as any).tracking_id || null;
                 agreement_signed_at = profile.agreement_signed_at || profile.agreement_accepted_at || null;
                 agreement_accepted = Boolean(profile.agreement_signed_at || profile.agreement_accepted_at || profile.agreement_accepted);
-              } else if (profile.onboarding_status === 'pending_review' || (profile.onboarding_status === 'pending' && profile.tracking_id)) {
+              } else if (
+                profile.onboarding_status === 'pending_review' ||
+                profile.onboarding_status === 'pending' ||
+                profile.approval_status === 'pending' ||
+                Boolean(profile.tracking_id)
+              ) {
                 onboarding_status = 'pending_review';
                 tracking_id = profile.tracking_id || (profile as any).trackingId || (resolvedUser as any).tracking_id || null;
                 agreement_signed_at = profile.agreement_signed_at || profile.agreement_accepted_at || null;

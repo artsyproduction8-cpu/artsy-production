@@ -142,6 +142,16 @@ export async function POST(request: Request) {
     }
 
     updates.studio_details = cleanStudioDetails;
+  } else if ((updates.email || updates.phone) && authUser.studio_details) {
+    const existingSd = { ...authUser.studio_details };
+    if (updates.email) {
+      existingSd.email = updates.email;
+    }
+    if (updates.phone) {
+      existingSd.phone = updates.phone;
+      existingSd.whatsapp = updates.phone;
+    }
+    updates.studio_details = existingSd;
   }
 
   if (avatar_url !== undefined && typeof avatar_url === 'string') {
@@ -150,6 +160,8 @@ export async function POST(request: Request) {
 
   if (body.onboarded !== undefined) {
     updates.onboarded = Boolean(body.onboarded);
+  } else if (authUser.onboarded !== undefined) {
+    updates.onboarded = Boolean(authUser.onboarded);
   } else {
     updates.onboarded = true;
   }

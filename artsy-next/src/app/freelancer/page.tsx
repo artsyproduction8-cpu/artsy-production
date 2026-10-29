@@ -7,7 +7,7 @@ import FreelancerHeader from './components/FreelancerHeader';
 import FreelancerSidebar from './components/FreelancerSidebar';
 
 export default function FreelancerDashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function FreelancerDashboard() {
 
   const isApproved = user?.role === 'freelancer' && user?.onboarding_status === 'approved';
   const isPending = user?.role === 'freelancer' && (user?.onboarding_status === 'pending' || user?.onboarding_status === 'pending_review');
-  const isIncomplete = !isApproved && !isPending;
+  const isIncomplete = !authLoading && !isApproved && !isPending;
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
@@ -92,6 +92,14 @@ export default function FreelancerDashboard() {
 
   const creatorName = user?.full_name || 'Creator Partner';
   const creatorInitials = creatorName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'CP';
+
+  if (authLoading && !user) {
+    return (
+      <div className="bg-[#F5F5F7] min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (isIncomplete) {
     return (

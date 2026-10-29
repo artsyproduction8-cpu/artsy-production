@@ -435,6 +435,12 @@ flowchart TD
     - If the deleted creator logs in again via OTP:
       - System recognizes preserved credentials and allows OTP verification.
       - `api/auth/session` and `api/user/me` treat deleted/reset profiles as `onboarding_status: null` and `onboarded: false`, routing the user to `/freelancer/onboarding` to start a fresh profile.
-      - Upon submitting `/api/freelancer/onboard`, the account is reactivated (`users.status = 'active'`, `deleted_at = null`, `creator_profiles.deleted_at = null`, `approval_status = 'pending'`, `onboarding_status = 'pending_review'`), and updated with the newly submitted workstation specs, samples, and NDA signature for admin review.
+13. **Instant Contact Persistence on OTP Verification:**
+    - In both creator (`/freelancer/profile`) and client (`/client/profile`) settings, verifying an updated email address or mobile number via OTP immediately persists the change to `public.users` via `/api/user/update-profile` and updates the cryptographic session cookie in real time.
+    - Prevents user credentials in the database from becoming desynchronized from the client UI or causing dual-credential mismatches on subsequent logins.
+14. **Strict Creator Status Machine & Profile Hydration:**
+    - In `/api/auth/session`, `/api/user/me`, and `/api/auth/otp`, profile deletion checks strictly evaluate `deleted_at` or `status === 'deleted'`, and never conflate a null or empty `onboarding_status` column with profile deletion.
+    - If `approval_status === 'approved'` or `onboarding_status === 'approved'`, the creator is authoritatively approved.
+    - `FreelancerDashboard` strictly waits for session hydration (`authLoading`) before checking completeness to prevent flashes or premature rendering of the onboarding gate.
 
 ===============================================================================================================

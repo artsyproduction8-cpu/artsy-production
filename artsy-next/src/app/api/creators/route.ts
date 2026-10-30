@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     return NextResponse.json(cached, {
       headers: {
         'X-Cache': 'HIT',
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
       },
     });
   }
@@ -50,7 +50,8 @@ export async function GET(request: Request) {
       `)
       .eq('is_public', true)
       .eq('approval_status', 'approved')
-      .eq('is_suspended', false);
+      .eq('is_suspended', false)
+      .is('deleted_at', null);
 
     if (tier && tier !== 'all') {
       query = query.eq('creator_tier', tier);
@@ -115,7 +116,7 @@ export async function GET(request: Request) {
     return NextResponse.json(payload, {
       headers: {
         'X-Cache': 'MISS',
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
       },
     });
   } catch (err: unknown) {

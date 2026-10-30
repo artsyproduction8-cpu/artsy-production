@@ -467,8 +467,9 @@ export default function ClientProfilePage() {
       // Immediately persist the verified phone to public.users and update session
       try {
         const updateRes = await fetch('/api/user/update-profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
           body: JSON.stringify({ phone: `+91${cleanPhone}` }),
         });
         const updateData = await updateRes.json();
@@ -577,8 +578,9 @@ export default function ClientProfilePage() {
       // Immediately persist the verified email to public.users and update session
       try {
         const updateRes = await fetch('/api/user/update-profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
           body: JSON.stringify({ email: cleanEmail }),
         });
         const updateData = await updateRes.json();
@@ -668,6 +670,7 @@ export default function ClientProfilePage() {
       const res = await fetch('/api/user/update-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           full_name: fullName.trim() || studioName.trim(),
           display_name: studioName.trim(),

@@ -245,8 +245,11 @@ export async function POST(request: NextRequest) {
               const recEmail = (existingUser.email || '').toLowerCase().trim();
               const recPhone = (existingUser.phone || '').replace(/\D/g, '').slice(-10);
               if ((recEmail && recEmail !== cleanEmail) || (recPhone && recPhone !== cleanPhone)) {
+                const hint = recEmail && recEmail.includes('@')
+                  ? `${recEmail.slice(0, 3)}••••@${recEmail.split('@')[1]}`
+                  : 'your registered email';
                 return NextResponse.json(
-                  { error: 'Invalid credentials. Phone and email do not match account records.' },
+                  { error: `Invalid credentials. This mobile number is linked to ${hint}. Please use your registered email to log in.` },
                   { status: 401 }
                 );
               }
@@ -511,7 +514,7 @@ export async function POST(request: NextRequest) {
           display_name: resolvedUser.display_name || null,
           studio_details: resolvedUser.studio_details || null,
           avatar_url: resolvedUser.avatar_url || null,
-          status: resolvedUser.status || 'active',
+          status: (resolvedUser.status === 'deleted' && onboarding_status === null) ? 'active' : (resolvedUser.status || 'active'),
           onboarded: userPayload.onboarded,
           onboarding_status: userPayload.onboarding_status,
           tracking_id: userPayload.tracking_id,
@@ -798,8 +801,11 @@ export async function POST(request: NextRequest) {
           if (userByPhone) {
             const recordedEmail = (userByPhone.email || '').toLowerCase().trim();
             if (cleanEmail && recordedEmail && recordedEmail !== cleanEmail) {
+              const hint = recordedEmail.includes('@')
+                ? `${recordedEmail.slice(0, 3)}••••@${recordedEmail.split('@')[1]}`
+                : 'your registered email';
               return NextResponse.json(
-                { error: 'Invalid credentials. Phone and email do not match our records.' },
+                { error: `Invalid credentials. This mobile number is linked to ${hint}. Please use that email to log in, or update your email from account settings after logging in.` },
                 { status: 401 }
               );
             }
@@ -809,8 +815,9 @@ export async function POST(request: NextRequest) {
           if (userByEmail) {
             const recordedPhone = (userByEmail.phone || '').replace(/\D/g, '').slice(-10);
             if (cleanPhone && recordedPhone && recordedPhone !== cleanPhone) {
+              const hint = recordedPhone ? `••••••${recordedPhone.slice(-4)}` : 'your registered phone';
               return NextResponse.json(
-                { error: 'Invalid credentials. Phone and email do not match our records.' },
+                { error: `Invalid credentials. This email is linked to mobile ending in ${hint}. Please use matching credentials to log in.` },
                 { status: 401 }
               );
             }
@@ -819,7 +826,7 @@ export async function POST(request: NextRequest) {
           // If found by both, they MUST reference the exact same user record
           if (userByPhone && userByEmail && userByPhone.id !== userByEmail.id) {
             return NextResponse.json(
-              { error: 'Invalid credentials. Phone and email do not match our records.' },
+              { error: 'Invalid credentials. This mobile number and email belong to two separate accounts. Please log in with matching credentials.' },
               { status: 401 }
             );
           }

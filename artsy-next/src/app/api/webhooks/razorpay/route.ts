@@ -168,6 +168,7 @@ export async function POST(request: NextRequest) {
               return NextResponse.json({ status: 'order_not_found' }, { status: 200 });
             }
 
+            // 1. Ensure order status is set to paid
             if (order.status !== 'paid') {
               const { error: orderUpdateErr } = await supabaseAdmin
                 .from('orders')
@@ -183,65 +184,74 @@ export async function POST(request: NextRequest) {
                 console.error('[Razorpay Webhook DB Error updating order]:', orderUpdateErr);
                 return NextResponse.json({ error: 'Database error updating order' }, { status: 500 });
               }
+            }
 
-              // Automatically spawn active project if not already created
-              try {
-                let finalClientId = order.client_id;
-                if (!finalClientId && order.client_phone) {
-                  const rawDigits = order.client_phone.replace(/\D/g, '').slice(-10);
-                  const { data: matchedUser } = await supabaseAdmin
-                    .from('users')
-                    .select('id')
-                    .ilike('phone', `%${rawDigits}%`)
-                    .maybeSingle();
-                  if (matchedUser?.id) finalClientId = matchedUser.id;
-                }
-                if (!finalClientId && order.client_email) {
-                  const { data: matchedUser } = await supabaseAdmin
-                    .from('users')
-                    .select('id')
-                    .eq('email', order.client_email.toLowerCase().trim())
-                    .maybeSingle();
-                  if (matchedUser?.id) finalClientId = matchedUser.id;
-                }
-
-                if (finalClientId) {
-                  if (!order.client_id) {
-                    await supabaseAdmin.from('orders').update({ client_id: finalClientId }).eq('id', order.id);
-                  }
-
-                  const { data: existingProject } = await supabaseAdmin
-                    .from('projects')
-                    .select('id')
-                    .eq('order_id', order.id)
-                    .maybeSingle();
-
-                  if (!existingProject) {
-                    const serviceLabel = order.service_key
-                      ? order.service_key.charAt(0).toUpperCase() + order.service_key.slice(1).replace(/_/g, ' ')
-                      : 'Cinematic';
-
-                    const projectNumber = `PRJ-${order.order_number || Date.now().toString(36).toUpperCase()}`;
-
-                    await supabaseAdmin.from('projects').insert([
-                      {
-                        project_number: projectNumber,
-                        order_id: order.id,
-                        client_id: finalClientId,
-                        assigned_creator_id: order.preferred_creator_id || null,
-                        title: `${serviceLabel} Master Edit`,
-                        status: 'awaiting_upload',
-                        priority: 1,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString(),
-                      },
-                    ]);
-                  }
-                }
-              } catch (prjErr) {
-                console.warn('[Webhook Razorpay] Project spawn warning:', prjErr);
+            // 2. Automatically spawn active project if not already created
+            try {
+              let finalClientId = order.client_id;
+              if (!finalClientId && order.client_phone) {
+                const rawDigits = order.client_phone.replace(/\D/g, '').slice(-10);
+                const { data: matchedUser } = await supabaseAdmin
+                  .from('users')
+                  .select('id')
+                  .ilike('phone', `%${rawDigits}%`)
+                  .maybeSingle();
+                if (matchedUser?.id) finalClientId = matchedUser.id;
+              }
+              if (!finalClientId && order.client_email) {
+                const { data: matchedUser } = await supabaseAdmin
+                  .from('users')
+                  .select('id')
+                  .eq('email', order.client_email.toLowerCase().trim())
+                  .maybeSingle();
+                if (matchedUser?.id) finalClientId = matchedUser.id;
               }
 
+              if (finalClientId) {
+                if (!order.client_id) {
+                  await supabaseAdmin.from('orders').update({ client_id: finalClientId }).eq('id', order.id);
+                }
+
+                const { data: existingProject } = await supabaseAdmin
+                  .from('projects')
+                  .select('id')
+                  .eq('order_id', order.id)
+                  .maybeSingle();
+
+                if (!existingProject) {
+                  const serviceLabel = order.service_key
+                    ? order.service_key.charAt(0).toUpperCase() + order.service_key.slice(1).replace(/_/g, ' ')
+                    : 'Cinematic';
+
+                  const projectNumber = `PRJ-${order.order_number || Date.now().toString(36).toUpperCase()}`;
+
+                  await supabaseAdmin.from('projects').insert([
+                    {
+                      project_number: projectNumber,
+                      order_id: order.id,
+                      client_id: finalClientId,
+                      assigned_creator_id: order.preferred_creator_id || null,
+                      title: `${serviceLabel} Master Edit`,
+                      status: 'awaiting_upload',
+                      priority: 1,
+                      created_at: new Date().toISOString(),
+                      updated_at: new Date().toISOString(),
+                    },
+                  ]);
+                }
+              }
+            } catch (prjErr) {
+              console.warn('[Webhook Razorpay] Project spawn warning:', prjErr);
+            }
+
+            // 3. Idempotently write to immutable WORM payments ledger
+            const { data: existingPayment } = await supabaseAdmin
+              .from('payments')
+              .select('id')
+              .eq('gateway_payment_id', razorpayPaymentId)
+              .maybeSingle();
+
+            if (!existingPayment) {
               await supabaseAdmin.from('payments').insert([
                 {
                   order_id: order.id,

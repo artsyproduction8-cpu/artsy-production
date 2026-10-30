@@ -384,6 +384,7 @@ export default function FreelancerProfilePage() {
         const updateRes = await fetch('/api/user/update-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ email: cleanEmail }),
         });
         const updateData = await updateRes.json();

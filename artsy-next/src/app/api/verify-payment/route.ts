@@ -188,6 +188,170 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Idempotently ensure immutable WORM payments record & financial waterfall exist
+        if (orderRecord && orderRecord.id) {
+          const { data: existingPayment } = await supabaseAdmin
+            .from('payments')
+            .select('id')
+            .eq('gateway_payment_id', payment_id)
+            .maybeSingle();
+
+          if (!existingPayment) {
+            await supabaseAdmin.from('payments').insert([
+              {
+                order_id: orderRecord.id,
+                amount: orderRecord.gross_amount,
+                currency: 'INR',
+                gateway: 'razorpay',
+                gateway_payment_id: payment_id,
+                gateway_order_id: order_id,
+                gateway_signature: signature || null,
+                payment_method: 'razorpay',
+                status: 'captured',
+                captured_at: new Date().toISOString(),
+              },
+            ]);
+
+            const { calculateFinancialWaterfall } = await import('@/lib/financial/engine');
+            const waterfall = calculateFinancialWaterfall(orderRecord.gross_amount);
+            await supabaseAdmin.from('financial_events').insert([
+              {
+                order_id: orderRecord.id,
+                event_type: 'client_payment',
+                amount: waterfall.clientPayment,
+                currency: 'INR',
+                reference_id: orderRecord.id,
+                reference_table: 'orders',
+              },
+              {
+                order_id: orderRecord.id,
+                event_type: 'gateway_fee',
+                amount: -waterfall.totalGatewayDeduction,
+                currency: 'INR',
+                reference_id: orderRecord.id,
+                reference_table: 'orders',
+              },
+              {
+                order_id: orderRecord.id,
+                event_type: 'gst_liability',
+                amount: -waterfall.gstAmount,
+                currency: 'INR',
+                reference_id: orderRecord.id,
+                reference_table: 'orders',
+              },
+              {
+                order_id: orderRecord.id,
+                event_type: 'creator_payable',
+                amount: -waterfall.creatorAmount,
+                currency: 'INR',
+                reference_id: orderRecord.id,
+                reference_table: 'orders',
+              },
+            ]);
+
+            if (orderRecord.client_email) {
+              try {
+                const { generateInvoiceData } = await import('@/lib/invoices/generator');
+                const { archiveInvoiceToVault } = await import('@/lib/invoices/vault');
+                const { sendInvoiceEmail } = await import('@/lib/email/dispatcher');
+                const invoice = generateInvoiceData({
+                  orderId: orderRecord.order_number || orderRecord.id,
+                  clientName: orderRecord.client_name || '',
+                  clientPhone: orderRecord.client_phone || '',
+                  clientEmail: orderRecord.client_email,
+                  totalPaise: orderRecord.gross_amount,
+                });
+                await archiveInvoiceToVault(invoice);
+                await sendInvoiceEmail(orderRecord.client_email, invoice);
+              } catch (invErr) {
+                console.warn('[Verify Payment] Invoice archive warning:', invErr);
+              }
+            }
+          }
+        }
+
+        // Idempotently ensure immutable WORM payments record & financial waterfall exist
+        if (orderRecord && orderRecord.id) {
+          const { data: existingPayment } = await supabaseAdmin
+            .from('payments')
+            .select('id')
+            .eq('gateway_payment_id', payment_id)
+            .maybeSingle();
+
+          if (!existingPayment) {
+            await supabaseAdmin.from('payments').insert([
+              {
+                order_id: orderRecord.id,
+                amount: orderRecord.gross_amount,
+                currency: 'INR',
+                gateway: 'razorpay',
+                gateway_payment_id: payment_id,
+                gateway_order_id: order_id,
+                gateway_signature: signature || null,
+                payment_method: 'razorpay',
+                status: 'captured',
+                captured_at: new Date().toISOString(),
+              },
+            ]);
+
+            const { calculateFinancialWaterfall } = await import('@/lib/financial/engine');
+            const waterfall = calculateFinancialWaterfall(orderRecord.gross_amount);
+            await supabaseAdmin.from('financial_events').insert([
+              {
+                order_id: orderRecord.id,
+                event_type: 'client_payment',
+                amount: waterfall.clientPayment,
+                currency: 'INR',
+                reference_id: orderRecord.id,
+                reference_table: 'orders',
+              },
+              {
+                order_id: orderRecord.id,
+                event_type: 'gateway_fee',
+                amount: -waterfall.totalGatewayDeduction,
+                currency: 'INR',
+                reference_id: orderRecord.id,
+                reference_table: 'orders',
+              },
+              {
+                order_id: orderRecord.id,
+                event_type: 'gst_liability',
+                amount: -waterfall.gstAmount,
+                currency: 'INR',
+                reference_id: orderRecord.id,
+                reference_table: 'orders',
+              },
+              {
+                order_id: orderRecord.id,
+                event_type: 'creator_payable',
+                amount: -waterfall.creatorAmount,
+                currency: 'INR',
+                reference_id: orderRecord.id,
+                reference_table: 'orders',
+              },
+            ]);
+
+            if (orderRecord.client_email) {
+              try {
+                const { generateInvoiceData } = await import('@/lib/invoices/generator');
+                const { archiveInvoiceToVault } = await import('@/lib/invoices/vault');
+                const { sendInvoiceEmail } = await import('@/lib/email/dispatcher');
+                const invoice = generateInvoiceData({
+                  orderId: orderRecord.order_number || orderRecord.id,
+                  clientName: orderRecord.client_name || '',
+                  clientPhone: orderRecord.client_phone || '',
+                  clientEmail: orderRecord.client_email,
+                  totalPaise: orderRecord.gross_amount,
+                });
+                await archiveInvoiceToVault(invoice);
+                await sendInvoiceEmail(orderRecord.client_email, invoice);
+              } catch (invErr) {
+                console.warn('[Verify Payment] Invoice archive warning:', invErr);
+              }
+            }
+          }
+        }
+
         // Non-blocking Event #6: PAYMENT_SUCCESSFUL dispatch via WhatsApp and Email
         try {
           const { dispatchNotification } = await import('@/lib/whatsapp/dispatcher');

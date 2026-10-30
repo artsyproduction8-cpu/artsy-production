@@ -34,6 +34,8 @@ const MIGRATION_FILES = [
   '011_instant_data_and_reliable_records.sql',
   '012_fix_creator_profiles_rls.sql',
   '013_fix_creator_signup_trigger.sql',
+  '014_creator_hardware_samples_nda.sql',
+  '015_audit_remediation_fixes.sql',
 ];
 
 export async function verifyAndBundleMigrations() {

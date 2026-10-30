@@ -59,7 +59,7 @@ ALTER TABLE public.invoice_records ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Clients can view their own invoice records"
     ON public.invoice_records FOR SELECT
-    USING (auth.uid() IN (SELECT user_id FROM public.orders WHERE id = invoice_records.order_id));
+    USING (auth.uid() IN (SELECT client_id FROM public.orders WHERE id = invoice_records.order_id));
 
 CREATE POLICY "Admins have full read access to invoice records"
     ON public.invoice_records FOR SELECT
@@ -106,7 +106,7 @@ ALTER TABLE public.credit_notes ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Clients can view their own credit notes"
     ON public.credit_notes FOR SELECT
-    USING (auth.uid() IN (SELECT user_id FROM public.orders WHERE id = credit_notes.order_id));
+    USING (auth.uid() IN (SELECT client_id FROM public.orders WHERE id = credit_notes.order_id));
 
 CREATE POLICY "Admins have full read access to credit notes"
     ON public.credit_notes FOR SELECT

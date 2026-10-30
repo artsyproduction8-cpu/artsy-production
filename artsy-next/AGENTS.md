@@ -444,3 +444,10 @@ flowchart TD
     - `FreelancerDashboard` strictly waits for session hydration (`authLoading`) before checking completeness to prevent flashes or premature rendering of the onboarding gate.
 
 ===============================================================================================================
+15. **Migration 015 & Comprehensive Audit Remediation Invariants:**
+    - **WORM Ledger Decoupling:** In both `/api/webhooks/razorpay` and `/api/verify-payment`, inserting immutable `public.payments` and `public.financial_events` and archiving tax invoices are decoupled from `order.status !== 'paid'` checks. Writes occur idempotently based on `gateway_payment_id`, guaranteeing double redundancy regardless of whether the webhook or client verification arrives first.
+    - **Database RLS Schema Fidelity:** RLS policies on `invoice_records` and `credit_notes` query `public.orders.client_id` (not non-existent `user_id`).
+    - **Super Admin RLS Access:** Database function `public.is_admin()` checks `role IN ('admin', 'super_admin') AND status = 'active'`, granting authoritative access to the platform owner.
+    - **Dual-Credential Hinting:** If a user submits credentials where the phone or email does not match registered account records, the API returns a masked hint (`kan••••@gmail.com` or `••••••4443`) explaining which contact detail is linked without exposing full unauthenticated PII.
+    - **Instant Public Directory Purge:** `/api/creators` enforces `.is('deleted_at', null)` and reduced CDN cache TTL (10s-30s), while `/api/user/data-deletion` triggers `revalidatePath('/creators')` and `revalidatePath('/api/creators')`.
+    - **Profile Contact Update Safeguard:** Forms require OTP verification before saving changed contact details, with explicit amber warnings and `credentials: 'include'` on all update requests.

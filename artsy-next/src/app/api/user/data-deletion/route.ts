@@ -138,6 +138,22 @@ export async function POST(request: NextRequest) {
       await invalidateCache('cache:public:creators:list');
       await invalidateCache(`cache:admin:creator:${userId}`);
       await invalidateCache('cache:admin:creators:list');
+      try {
+        const { revalidatePath } = await import('next/cache');
+        revalidatePath('/creators');
+        revalidatePath('/api/creators');
+        revalidatePath('/admin/creators');
+      } catch (rErr) {
+        console.warn('[Data Deletion] revalidatePath warning:', rErr);
+      }
+      try {
+        const { revalidatePath } = await import('next/cache');
+        revalidatePath('/creators');
+        revalidatePath('/api/creators');
+        revalidatePath('/admin/creators');
+      } catch (rErr) {
+        console.warn('[Data Deletion] revalidatePath warning:', rErr);
+      }
       await invalidateUserCache(userId);
 
       const response = NextResponse.json({

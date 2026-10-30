@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { supabaseAdmin, supabase as anonSupabase } from '@/lib/supabase';
-import { sendMetaTemplate } from '@/lib/whatsapp/meta-cloud-dispatcher';
+import { dispatchCreatorJobOffer } from '@/lib/matching/dispatch-offer';
+import { sendNotificationEmail } from '@/lib/email/dispatcher';
+import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { createErrorResponse } from '@/lib/api-response';
 
 export async function GET(request: Request) {
@@ -22,12 +24,13 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 1. Fetch orders with preferred creator requests pending assignment
+    // 1. Fetch active orders with preferred creator requests pending assignment (exclude cancelled)
     const { data: orders, error: ordersError } = await dbClient
       .from('orders')
-      .select('id, order_number, client_name, client_phone, client_email, service_key, gross_amount, status, preferred_creator_id, preferred_creator_assigned, preferred_creator_rejection_reason, created_at')
+      .select('id, order_number, client_id, client_name, client_phone, client_email, service_key, gross_amount, status, preferred_creator_id, preferred_creator_assigned, preferred_creator_rejection_reason, created_at')
       .not('preferred_creator_id', 'is', null)
       .eq('preferred_creator_assigned', false)
+      .neq('status', 'cancelled')
       .order('created_at', { ascending: false });
 
     if (ordersError) {
@@ -43,16 +46,24 @@ export async function GET(request: Request) {
     // Attach preferred creator details to each order
     const creatorMap = new Map((approvedCreators || []).map((c: any) => [c.id, c]));
 
-    const enrichedOrders = (orders || []).map((ord: any) => ({
-      ...ord,
-      preferredCreator: creatorMap.get(ord.preferred_creator_id) || {
-        id: ord.preferred_creator_id,
-        public_display_name: 'Unknown Creator',
-        public_specialty: 'Video Editor',
-        creator_tier: 'standard',
-        avg_rating: 5.0,
-      },
-    }));
+    const enrichedOrders = (orders || []).map((ord: any) => {
+      let statusLabel = 'Offer Sent to Creator';
+      if (ord.preferred_creator_rejection_reason) {
+        statusLabel = `Declined (${ord.preferred_creator_rejection_reason})`;
+      }
+
+      return {
+        ...ord,
+        statusLabel,
+        preferredCreator: creatorMap.get(ord.preferred_creator_id) || {
+          id: ord.preferred_creator_id,
+          public_display_name: 'Unknown Creator',
+          public_specialty: 'Video Editor',
+          creator_tier: 'standard',
+          avg_rating: 5.0,
+        },
+      };
+    });
 
     return NextResponse.json({
       success: true,
@@ -99,152 +110,166 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
+    const { data: project } = await dbClient
+      .from('projects')
+      .select('id, project_number, title')
+      .eq('order_id', order.id)
+      .maybeSingle();
+
+    const nowIso = new Date().toISOString();
+
     if (action === 'assign_requested') {
-      // 1. Mark order as assigned to preferred creator
+      const creatorId = order.preferred_creator_id;
+      if (!creatorId) {
+        return NextResponse.json({ error: 'No preferred creator specified on this order' }, { status: 400 });
+      }
+
       await dbClient
         .from('orders')
         .update({
           preferred_creator_assigned: true,
           preferred_creator_rejection_reason: null,
-          updated_at: new Date().toISOString(),
+          updated_at: nowIso,
         })
-        .eq('id', orderId);
-
-      // 2. Find corresponding project (if exists) or update assigned creator
-      const { data: project } = await dbClient
-        .from('projects')
-        .select('id')
-        .eq('order_id', orderId)
-        .maybeSingle();
+        .eq('id', order.id);
 
       if (project) {
         await dbClient
           .from('projects')
           .update({
-            assigned_creator_id: order.preferred_creator_id,
-            assigned_editor_id: order.preferred_creator_id,
-            updated_at: new Date().toISOString(),
+            assigned_creator_id: creatorId,
+            status: 'creator_assigned',
+            updated_at: nowIso,
           })
           .eq('id', project.id);
 
-        // Create assignment row
-        await dbClient.from('assignments').insert([
-          {
-            project_id: project.id,
-            creator_id: order.preferred_creator_id,
-            status: 'offered',
-            offered_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-            created_at: new Date().toISOString(),
-          },
-        ]);
-      }
-
-      // Notify client via WhatsApp/in-app if phone available
-      if (order.client_phone) {
-        try {
-          await sendMetaTemplate(order.client_phone, 'artsy_project_status', [
-            order.order_number,
-            'Your requested creator has been confirmed and assigned to your project.',
-          ]).catch(() => null);
-        } catch { /* non-fatal */ }
+        // Dispatch offer to preferred creator
+        await dispatchCreatorJobOffer({
+          projectId: project.id,
+          orderId: order.id,
+          creatorId,
+          grossAmountPaise: order.gross_amount,
+          serviceTitle: project.title,
+          clientName: order.client_name,
+          clientPhone: order.client_phone,
+          clientEmail: order.client_email,
+        });
       }
 
       return NextResponse.json({
         success: true,
-        message: 'Requested creator assigned successfully',
+        message: 'Creator offer confirmed and dispatched.',
       });
-    } else if (action === 'assign_alternate') {
+    }
+
+    if (action === 'assign_alternate') {
       if (!alternateCreatorId) {
-        return NextResponse.json({ error: 'Alternate creator ID is required' }, { status: 400 });
+        return NextResponse.json({ error: 'alternateCreatorId is required' }, { status: 400 });
       }
 
-      // Fetch alternate creator name
-      const { data: altCreator } = await dbClient
-        .from('creator_profiles')
-        .select('public_display_name, public_specialty')
-        .eq('id', alternateCreatorId)
-        .single();
-
-      const altName = altCreator?.public_display_name || 'Senior Editor';
-
-      // Mark order
       await dbClient
         .from('orders')
         .update({
+          preferred_creator_id: alternateCreatorId,
           preferred_creator_assigned: true,
-          preferred_creator_rejection_reason: 'Original creator unavailable',
-          updated_at: new Date().toISOString(),
+          preferred_creator_rejection_reason: 'Assigned by Studio Director',
+          updated_at: nowIso,
         })
-        .eq('id', orderId);
-
-      // Find project and assign alternate
-      const { data: project } = await dbClient
-        .from('projects')
-        .select('id')
-        .eq('order_id', orderId)
-        .maybeSingle();
+        .eq('id', order.id);
 
       if (project) {
         await dbClient
           .from('projects')
           .update({
             assigned_creator_id: alternateCreatorId,
-            assigned_editor_id: alternateCreatorId,
-            updated_at: new Date().toISOString(),
+            status: 'creator_assigned',
+            updated_at: nowIso,
           })
           .eq('id', project.id);
 
-        await dbClient.from('assignments').insert([
-          {
-            project_id: project.id,
-            creator_id: alternateCreatorId,
-            status: 'offered',
-            offered_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-            created_at: new Date().toISOString(),
-          },
-        ]);
-      }
-
-      // Notify client:
-      // "Your requested creator was not available for this project. We have assigned [Alternate Name] who specializes in the same category."
-      const clientNotice = `Your requested creator was not available for this project. We have assigned ${altName} who specializes in the same category.`;
-
-      if (order.client_phone) {
-        try {
-          await sendMetaTemplate(order.client_phone, 'artsy_project_status', [
-            order.order_number,
-            clientNotice,
-          ]).catch(() => null);
-        } catch { /* non-fatal */ }
+        await dispatchCreatorJobOffer({
+          projectId: project.id,
+          orderId: order.id,
+          creatorId: alternateCreatorId,
+          grossAmountPaise: order.gross_amount,
+          serviceTitle: project.title,
+          clientName: order.client_name,
+          clientPhone: order.client_phone,
+          clientEmail: order.client_email,
+        });
       }
 
       return NextResponse.json({
         success: true,
-        message: `Assigned alternate creator: ${altName}`,
-        clientNotice,
+        message: 'Alternate creator assigned and offer dispatched.',
       });
-    } else if (action === 'reject') {
-      const rejectionReason = reason || 'Creator unavailable for requested project dates';
+    }
+
+    if (action === 'reject_request') {
+      const rejectionReason = reason?.trim() || 'Creator unavailable for requested turnaround';
 
       await dbClient
         .from('orders')
         .update({
           preferred_creator_assigned: false,
           preferred_creator_rejection_reason: rejectionReason,
-          updated_at: new Date().toISOString(),
+          updated_at: nowIso,
         })
-        .eq('id', orderId);
+        .eq('id', order.id);
+
+      if (project) {
+        await dbClient
+          .from('projects')
+          .update({
+            status: 'pending_assignment',
+            assigned_creator_id: null,
+            updated_at: nowIso,
+          })
+          .eq('id', project.id);
+      }
+
+      // Notify Client across in-app, WhatsApp, and Email
+      if (order.client_id) {
+        try {
+          await dbClient.from('notifications').insert([
+            {
+              user_id: order.client_id,
+              event_number: 14,
+              title: `Update on Order #${order.order_number}`,
+              message: `Your requested editor was unavailable (${rejectionReason}). Choose another editor or let Artsy Studio assign our top senior talent.`,
+              action_url: '/client/projects',
+              read: false,
+              created_at: nowIso,
+            },
+          ]);
+        } catch {}
+      }
+
+      if (order.client_phone) {
+        try {
+          await dispatchNotification({
+            eventNumber: 14,
+            userId: order.client_id || '',
+            recipientPhone: order.client_phone,
+            recipientEmail: order.client_email || undefined,
+            variables: {
+              userName: order.client_name || 'Client',
+              projectId: order.order_number,
+              reason: rejectionReason,
+            },
+            actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/client/projects`,
+          });
+        } catch {}
+      }
 
       return NextResponse.json({
         success: true,
-        message: 'Preferred creator request rejected',
+        message: 'Request declined. Client notified for reassignment.',
       });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (err: any) {
-    return createErrorResponse(err, 'Failed to process creator assignment action', 500);
+    return createErrorResponse(err, 'Failed to process creator request', 500);
   }
 }

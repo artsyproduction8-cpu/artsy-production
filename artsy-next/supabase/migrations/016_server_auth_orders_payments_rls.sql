@@ -129,3 +129,4 @@ BEGIN
     updated_at = NOW()
   WHERE id = v_dup_order_id AND status = 'payment_pending';
 END $$;
+

@@ -18,95 +18,139 @@ interface ClientProject {
   priceFormatted: string;
   aspectRatios: string;
   cameraAngles: string;
+  creatorName?: string | null;
+  preferredCreatorName?: string | null;
+  isCreatorDeclined?: boolean;
+  declineReason?: string | null;
 }
 
 export default function ClientProjectsPage() {
   const { user } = useAuth();
   const [projects, setProjects] = useState<ClientProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [statusFeedback, setStatusFeedback] = useState<{ id: string; message: string; type: 'success' | 'error' } | null>(null);
+
+  const loadProjects = async () => {
+    try {
+      const res = await fetch('/api/client/projects');
+      const data = await res.json();
+      if (data.projects && Array.isArray(data.projects)) {
+        const mapped: ClientProject[] = data.projects.map((p: any) => {
+          const ord = p.orders || {};
+          const snap = ord.requirements_snapshot || {};
+
+          // Dynamic price calculation from actual order in paise
+          const grossPaise = ord.gross_amount;
+          const priceFormatted = typeof grossPaise === 'number' && grossPaise > 0
+            ? `₹${(grossPaise / 100).toLocaleString('en-IN')} INR`
+            : '₹1,000 INR';
+
+          // Dynamic project title derived from actual booked service
+          let displayTitle = p.title || 'Cinematic Edit';
+          const rawSub = snap.subCategory || snap.serviceId;
+          if (rawSub) {
+            const cleanSub = String(rawSub).replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+            const rawCat = snap.category || ord.service_key || '';
+            const cleanCat = rawCat ? String(rawCat).replace(/\b\w/g, (c: string) => c.toUpperCase()) : '';
+            displayTitle = cleanCat ? `${cleanCat} • ${cleanSub}` : cleanSub;
+          }
+
+          // Dynamic SLA turnaround delivery
+          const turnaround = snap.turnaround || 'standard';
+          const deliveryDate =
+            turnaround === 'rush' || turnaround === 'express'
+              ? '48 Hours Express Delivery'
+              : turnaround === 'priority'
+              ? '4–5 Working Days Priority'
+              : '7–10 Working Days Standard';
+
+          // Dynamic aspect ratio
+          const isReel = (snap.subCategory && String(snap.subCategory).toLowerCase().includes('reel')) ||
+            (snap.category && String(snap.category).toLowerCase() === 'personal');
+          const aspectRatios = snap.aspectRatios || snap.aspectRatio || (
+            isReel ? '9:16 Vertical Reel' : '16:9 Master + 9:16 Reel'
+          );
+
+          // Dynamic camera angles
+          const cameraAngles = snap.angles === 'multi'
+            ? 'Multi-Camera Editing'
+            : 'Single Camera Edit';
+
+          // Dynamic category label
+          const categoryLabel = snap.category
+            ? String(snap.category).replace(/\b\w/g, (c: string) => c.toUpperCase()) + ' Production'
+            : 'Post-Production';
+
+          return {
+            id: p.id,
+            orderId: ord.order_number || p.order_id || `ORD-${p.id?.slice(0, 8)}`,
+            title: displayTitle,
+            category: categoryLabel,
+            status: p.status || 'in_progress',
+            statusLabel:
+              p.status === 'review_ready'
+                ? 'Review Ready'
+                : p.status === 'completed' || p.status === 'approved'
+                ? 'Completed'
+                : 'In Production',
+            statusColor:
+              p.status === 'review_ready'
+                ? 'bg-blue-500/10 text-blue-600 border-blue-200'
+                : p.status === 'completed' || p.status === 'approved'
+                ? 'bg-emerald-500/10 text-emerald-700 border-emerald-200'
+                : 'bg-amber-500/10 text-amber-700 border-amber-200',
+            deliveryDate,
+            priceFormatted,
+            aspectRatios,
+            cameraAngles,
+            creatorName: p.creatorName || null,
+            preferredCreatorName: p.preferredCreatorName || null,
+            isCreatorDeclined: p.isCreatorDeclined || false,
+            declineReason: p.declineReason || null,
+          };
+        });
+        setProjects(mapped);
+      }
+    } catch {
+      setProjects([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadProjects() {
-      try {
-        const res = await fetch('/api/client/projects');
-        const data = await res.json();
-        if (data.projects && Array.isArray(data.projects)) {
-          const mapped: ClientProject[] = data.projects.map((p: any) => {
-            const ord = p.orders || {};
-            const snap = ord.requirements_snapshot || {};
-
-            // Dynamic price calculation from actual order in paise
-            const grossPaise = ord.gross_amount;
-            const priceFormatted = typeof grossPaise === 'number' && grossPaise > 0
-              ? `₹${(grossPaise / 100).toLocaleString('en-IN')} INR`
-              : '₹1,000 INR';
-
-            // Dynamic project title derived from actual booked service
-            let displayTitle = p.title || 'Cinematic Edit';
-            const rawSub = snap.subCategory || snap.serviceId;
-            if (rawSub) {
-              const cleanSub = String(rawSub).replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-              const rawCat = snap.category || ord.service_key || '';
-              const cleanCat = rawCat ? String(rawCat).replace(/\b\w/g, (c: string) => c.toUpperCase()) : '';
-              displayTitle = cleanCat ? `${cleanCat} • ${cleanSub}` : cleanSub;
-            }
-
-            // Dynamic turnaround delivery
-            const deliveryDate = snap.turnaround === 'express'
-              ? 'Fast 24h Express Delivery'
-              : 'Standard 48-72h Delivery';
-
-            // Dynamic aspect ratio
-            const isReel = (snap.subCategory && String(snap.subCategory).toLowerCase().includes('reel')) ||
-              (snap.category && String(snap.category).toLowerCase() === 'personal');
-            const aspectRatios = snap.aspectRatios || snap.aspectRatio || (
-              isReel ? '9:16 Vertical Reel' : '16:9 Master + 9:16 Reel'
-            );
-
-            // Dynamic camera angles
-            const cameraAngles = snap.angles === 'multi'
-              ? 'Multi-Camera Editing'
-              : 'Single Camera Edit';
-
-            // Dynamic category label
-            const categoryLabel = snap.category
-              ? String(snap.category).replace(/\b\w/g, (c: string) => c.toUpperCase()) + ' Production'
-              : 'Post-Production';
-
-            return {
-              id: p.id,
-              orderId: ord.order_number || p.order_id || `ORD-${p.id?.slice(0, 8)}`,
-              title: displayTitle,
-              category: categoryLabel,
-              status: p.status || 'in_progress',
-              statusLabel:
-                p.status === 'review_ready'
-                  ? 'Review Ready'
-                  : p.status === 'completed' || p.status === 'approved'
-                  ? 'Completed'
-                  : 'In Production',
-              statusColor:
-                p.status === 'review_ready'
-                  ? 'bg-blue-500/10 text-blue-600 border-blue-200'
-                  : p.status === 'completed' || p.status === 'approved'
-                  ? 'bg-emerald-500/10 text-emerald-700 border-emerald-200'
-                  : 'bg-amber-500/10 text-amber-700 border-amber-200',
-              deliveryDate,
-              priceFormatted,
-              aspectRatios,
-              cameraAngles,
-            };
-          });
-          setProjects(mapped);
-        }
-      } catch {
-        setProjects([]);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadProjects();
   }, []);
+
+  const handleResolveArtsy = async (projectId: string) => {
+    setResolvingId(projectId);
+    try {
+      const res = await fetch('/api/client/projects/resolve-creator', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, choice: 'artsy_assign' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to request Artsy assignment');
+      }
+      setStatusFeedback({
+        id: projectId,
+        message: data.message || 'Artsy Studio has assigned a senior specialist for your cut.',
+        type: 'success',
+      });
+      await loadProjects();
+    } catch (err: any) {
+      setStatusFeedback({
+        id: projectId,
+        message: err.message || 'Failed to assign editor. Please contact support.',
+        type: 'error',
+      });
+    } finally {
+      setResolvingId(null);
+    }
+  };
 
   const [avatarUrl, setAvatarUrl] = useState<string>('');
 
@@ -148,35 +192,32 @@ export default function ClientProjectsPage() {
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
-                    alt="Client Logo"
-                    className="w-12 h-12 rounded-2xl object-cover border-2 border-white shadow-sm bg-white"
+                    alt={clientName || 'Client'}
+                    className="w-14 h-14 rounded-2xl object-cover border border-[#E5E5E7] shadow-xs"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-2xl bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-sm tracking-wider shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-lg tracking-wider border border-[#E5E5E7] shadow-xs">
                     {clientInitials}
                   </div>
                 )}
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
                     My Projects
                   </h1>
-                  <p className="text-xs text-[#86868B] mt-0.5">
+                  <p className="text-xs sm:text-sm text-[#86868B] mt-0.5">
                     Track your ongoing video edits and review drafts
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/book"
-                  className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-semibold rounded-xl transition-all shadow-xs"
-                >
-                  + Start New Project
-                </Link>
-              </div>
+              <Link
+                href="/book"
+                className="px-5 py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-sm text-center shrink-0"
+              >
+                + Start New Project
+              </Link>
             </div>
 
-            {/* Project Cards List or Empty State */}
             {loading ? (
               <div className="text-center py-12 text-xs text-[#86868B]">
                 Loading projects...
@@ -217,6 +258,11 @@ export default function ClientProjectsPage() {
                           <span className="text-xs text-[#86868B]">
                             • {proj.category}
                           </span>
+                          {proj.creatorName && !proj.isCreatorDeclined && (
+                            <span className="text-[11px] font-semibold text-blue-600 bg-blue-50/80 px-2.5 py-0.5 rounded-md border border-blue-100">
+                              🎬 Editor: {proj.creatorName}
+                            </span>
+                          )}
                         </div>
 
                         <div>
@@ -251,13 +297,58 @@ export default function ClientProjectsPage() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Feedback Toast */}
+                    {statusFeedback && statusFeedback.id === proj.id && (
+                      <div className={`mt-4 p-3 rounded-xl text-xs font-bold border ${
+                        statusFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-red-50 text-red-800 border-red-200'
+                      }`}>
+                        {statusFeedback.message}
+                      </div>
+                    )}
+
+                    {/* Interactive Creator Declined & Reassignment Gate */}
+                    {proj.isCreatorDeclined && (
+                      <div className="mt-5 p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-amber-700 font-extrabold text-xs uppercase tracking-wide">
+                              ⚠️ Requested Editor Unavailable
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#1D1D1F] leading-relaxed">
+                            Your requested editor <strong className="font-semibold text-amber-900">{proj.preferredCreatorName}</strong> is fully booked for this turnaround ({proj.declineReason || 'Schedule conflict'}).
+                          </p>
+                          <p className="text-[11px] text-[#6E6E73]">
+                            Your order and payment are 100% secured. Choose another verified editor from our roster or let Artsy Studio immediately assign our top senior talent.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 shrink-0">
+                          <Link
+                            href={`/creators?reselectFor=${proj.id}`}
+                            className="px-3.5 py-2 bg-white hover:bg-slate-50 border border-[#D2D2D7] text-[#1D1D1F] text-xs font-semibold rounded-xl transition-all shadow-xs"
+                          >
+                            Choose Another Editor
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => handleResolveArtsy(proj.id)}
+                            disabled={resolvingId === proj.id}
+                            className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                          >
+                            {resolvingId === proj.id ? 'Assigning...' : 'Let Artsy Assign (Recommended)'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
+          </div>
+        </main>
       </div>
-    </main>
-  </div>
-</div>
-);
+    </div>
+  );
 }

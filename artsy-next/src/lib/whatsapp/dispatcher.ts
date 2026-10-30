@@ -29,15 +29,15 @@ export const NOTIFICATION_TEMPLATES: Record<number, NotificationTemplate> = {
   3: { eventNumber: 3, name: 'PROFILE_APPROVED', title: 'Application Approved', defaultMessage: 'Welcome to Artsy Production. Your editor profile is approved. You are now eligible to receive project offers.', targetChannels: ['whatsapp'], isCritical: true },
   4: { eventNumber: 4, name: 'PROFILE_REJECTED', title: 'Application Status', defaultMessage: 'Thank you for your interest in Artsy. At this time, our roster does not match your current reel. You may reapply in 60 days.', targetChannels: ['whatsapp'], isCritical: false },
   5: { eventNumber: 5, name: 'QUOTE_READY', title: 'Quote Ready', defaultMessage: 'Your custom production quote is ready for review. View breakdown and lock checkout within 7 days.', targetChannels: ['whatsapp', 'in_app'], isCritical: true },
-  6: { eventNumber: 6, name: 'PAYMENT_SUCCESSFUL', title: 'Payment Confirmed', defaultMessage: 'Payment of ₹{{amount}} confirmed for Order #{{orderId}}. Upload your raw footage to initiate timeline assembly.', targetChannels: ['whatsapp', 'in_app'], isCritical: true },
+  6: { eventNumber: 6, name: 'PAYMENT_SUCCESSFUL', title: 'Payment Confirmed', defaultMessage: 'Payment of ₹{{amount}} confirmed for Order #{{orderId}}. Upload your raw footage to initiate timeline assembly.', targetChannels: ['whatsapp', 'in_app', 'email'], isCritical: true },
   7: { eventNumber: 7, name: 'PAYMENT_FAILED', title: 'Payment Incomplete', defaultMessage: 'Payment transaction failed for Order #{{orderId}}. Tap to retry checkout.', targetChannels: ['whatsapp'], isCritical: true },
   8: { eventNumber: 8, name: 'UPLOAD_REMINDER', title: 'Footage Upload Pending', defaultMessage: 'Friendly reminder: Please upload your project footage for Order #{{orderId}} so our editing team can begin.', targetChannels: ['whatsapp'], isCritical: false },
   9: { eventNumber: 9, name: 'UPLOAD_COMPLETE', title: 'Footage Ingest Verified', defaultMessage: 'Your raw footage has been safely ingested and verified. Project moved to assignment queue.', targetChannels: ['in_app'], isCritical: false },
   10: { eventNumber: 10, name: 'UPLOAD_FAILED', title: 'Upload Incomplete', defaultMessage: 'One or more files failed integrity check. Please re-upload your missing clips.', targetChannels: ['whatsapp', 'in_app'], isCritical: true },
-  11: { eventNumber: 11, name: 'CREATOR_ASSIGNED', title: 'Editor Assigned', defaultMessage: 'Lead editor assigned to Project #{{projectId}}.', targetChannels: ['in_app'], isCritical: false },
-  12: { eventNumber: 12, name: 'JOB_OFFERED', title: 'New Project Offer', defaultMessage: 'New project offered: {{serviceName}} (Net Payout: ₹{{payout}}). Respond within 24 hours to secure assignment.', targetChannels: ['whatsapp', 'in_app'], isCritical: true },
-  13: { eventNumber: 13, name: 'CREATOR_ACCEPTED', title: 'Job Accepted', defaultMessage: 'Creator has accepted Project #{{projectId}}. Ingest credentials issued.', targetChannels: ['in_app'], isCritical: false },
-  14: { eventNumber: 14, name: 'CREATOR_DECLINED', title: 'Job Declined', defaultMessage: 'Creator declined Project #{{projectId}}. Reassigning to reserve editor.', targetChannels: ['in_app', 'whatsapp'], isCritical: true },
+  11: { eventNumber: 11, name: 'CREATOR_ASSIGNED', title: 'Editor Assigned', defaultMessage: 'Lead editor assigned to Project #{{projectId}}.', targetChannels: ['whatsapp', 'in_app', 'email'], isCritical: false },
+  12: { eventNumber: 12, name: 'JOB_OFFERED', title: 'New Project Offer', defaultMessage: 'New project offered: {{serviceName}} (Net Payout: ₹{{payout}}). Respond within 24 hours to secure assignment.', targetChannels: ['whatsapp', 'in_app', 'email'], isCritical: true },
+  13: { eventNumber: 13, name: 'CREATOR_ACCEPTED', title: 'Job Accepted', defaultMessage: 'Creator has accepted Project #{{projectId}}. Ingest credentials issued.', targetChannels: ['whatsapp', 'in_app', 'email'], isCritical: false },
+  14: { eventNumber: 14, name: 'CREATOR_DECLINED', title: 'Job Declined', defaultMessage: 'Creator declined Project #{{projectId}}. Reassigning to reserve editor.', targetChannels: ['whatsapp', 'in_app', 'email'], isCritical: true },
   15: { eventNumber: 15, name: 'ACCEPTANCE_TIMEOUT', title: 'Offer Expired', defaultMessage: '24-hour acceptance window expired for Project #{{projectId}}. Job returned to curation queue.', targetChannels: ['in_app', 'whatsapp'], isCritical: true },
   16: { eventNumber: 16, name: 'DAILY_CHECKIN', title: 'Daily Progress Check', defaultMessage: 'Please submit your daily editing milestone for Project #{{projectId}}.', targetChannels: ['whatsapp'], isCritical: false },
   17: { eventNumber: 17, name: 'CHECKIN_MISSED', title: 'Milestone Alert', defaultMessage: 'Check-in missed for Project #{{projectId}}. Admin attention required.', targetChannels: ['in_app', 'whatsapp'], isCritical: true },
@@ -225,6 +225,22 @@ export async function dispatchNotification(payload: NotificationPayload): Promis
       // Direct Email dispatch if no phone is specified but email channel is available
       if (hasResend && emailToUse && template.targetChannels.includes('email')) {
         await sendEmailFallback('Direct email notification');
+      }
+    }
+
+    // Concurrent Multi-Channel Email Dispatch (Deliver Email whenever email is in targetChannels)
+    if (hasResend && emailToUse && template.targetChannels.includes('email')) {
+      try {
+        const { sendNotificationEmail } = await import('@/lib/email/dispatcher');
+        await sendNotificationEmail({
+          eventNumber: payload.eventNumber,
+          title: template.title,
+          message: formattedMessage,
+          recipientEmail: emailToUse,
+          actionUrl: payload.actionUrl,
+        });
+      } catch (concurrentEmailErr) {
+        console.warn(`[Concurrent Email] Dispatch warning for event #${payload.eventNumber}:`, concurrentEmailErr);
       }
     }
 

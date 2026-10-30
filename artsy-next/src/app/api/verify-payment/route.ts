@@ -164,24 +164,25 @@ export async function POST(request: NextRequest) {
             // Check if project already created
             const { data: existingProject } = await supabaseAdmin
               .from('projects')
-              .select('id')
+              .select('id, title')
               .eq('order_id', orderRecord.id)
               .maybeSingle();
 
-            if (!existingProject) {
-              const snap = orderRecord.requirements_snapshot || {};
-              const rawSub = snap.subCategory || snap.serviceId;
-              const subLabel = rawSub
-                ? String(rawSub).replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-                : 'Master Edit';
-              const serviceLabel = orderRecord.service_key
-                ? orderRecord.service_key.charAt(0).toUpperCase() + orderRecord.service_key.slice(1).replace(/_/g, ' ')
-                : 'Personal';
-              const projectTitle = `${serviceLabel} • ${subLabel}`;
+            let resolvedProjectId: string | undefined;
+            const snap = orderRecord.requirements_snapshot || {};
+            const rawSub = snap.subCategory || snap.serviceId;
+            const subLabel = rawSub
+              ? String(rawSub).replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+              : 'Master Edit';
+            const serviceLabel = orderRecord.service_key
+              ? orderRecord.service_key.charAt(0).toUpperCase() + orderRecord.service_key.slice(1).replace(/_/g, ' ')
+              : 'Personal';
+            const projectTitle = `${serviceLabel} • ${subLabel}`;
 
+            if (!existingProject) {
               const projectNumber = `PRJ-${orderRecord.order_number || Date.now().toString(36).toUpperCase()}`;
 
-              const { error: prjErr } = await supabaseAdmin.from('projects').insert([
+              const { data: newPrj, error: prjErr } = await supabaseAdmin.from('projects').insert([
                 {
                   project_number: projectNumber,
                   order_id: orderRecord.id,
@@ -193,8 +194,36 @@ export async function POST(request: NextRequest) {
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString(),
                 },
-              ]);
+              ]).select('id').single();
               if (prjErr) console.error('[Verify Payment DB Error creating project]:', prjErr);
+              resolvedProjectId = newPrj?.id;
+            } else {
+              resolvedProjectId = existingProject.id;
+            }
+
+            // AUTOMATED PREFERRED CREATOR PUSH (In-App, WhatsApp, Email)
+            if (orderRecord.preferred_creator_id && resolvedProjectId) {
+              try {
+                const snap = orderRecord.requirements_snapshot || {};
+                const { dispatchCreatorJobOffer } = await import('@/lib/matching/dispatch-offer');
+                await dispatchCreatorJobOffer({
+                  projectId: resolvedProjectId,
+                  orderId: orderRecord.id,
+                  creatorId: orderRecord.preferred_creator_id,
+                  grossAmountPaise: orderRecord.gross_amount,
+                  serviceTitle: orderRecord.service_key ? `${orderRecord.service_key} Production` : 'Cinematic Production',
+                  clientName: orderRecord.client_name,
+                  clientPhone: orderRecord.client_phone,
+                  clientEmail: orderRecord.client_email,
+                  turnaroundLabel: snap.turnaround === 'rush' || snap.turnaround === 'express'
+                    ? '48 Hours Express'
+                    : snap.turnaround === 'priority'
+                    ? '4–5 Working Days'
+                    : '7–10 Working Days Standard',
+                });
+              } catch (pushErr) {
+                console.warn('[Verify Payment] Creator offer push non-fatal warning:', pushErr);
+              }
             }
           }
         }

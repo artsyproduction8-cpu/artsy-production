@@ -425,7 +425,7 @@ function CheckoutContent() {
               <div className="flex items-center justify-between text-slate-600">
                 <span>Turnaround</span>
                 <span className="font-medium text-slate-800">
-                  {bookingData?.isRush ? 'Priority Rush (48–72h)' : 'Standard SLA'}
+                  {bookingData?.isRush ? 'Rush 48h Express' : 'Standard 7–10 Working Days'}
                 </span>
               </div>
 

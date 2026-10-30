@@ -26,6 +26,28 @@ export default function FreelancerDashboard() {
   );
   const [acceptedJobs, setAcceptedJobs] = useState<string[]>([]);
   const [declinedJobs, setDeclinedJobs] = useState<string[]>([]);
+  const [offeredJobs, setOfferedJobs] = useState<any[]>([]);
+  const [activeProjects, setActiveProjects] = useState<any[]>([]);
+  const [loadingJobs, setLoadingJobs] = useState<boolean>(true);
+
+  const fetchJobs = async () => {
+    try {
+      const res = await fetch('/api/freelancer/jobs');
+      const data = await res.json();
+      if (data.success) {
+        setOfferedJobs(data.offeredJobs || []);
+        setActiveProjects(data.activeProjects || []);
+      }
+    } catch (err) {
+      console.warn('Failed to load creator jobs:', err);
+    } finally {
+      setLoadingJobs(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, [user]);
   const [pulseSubmitted, setPulseSubmitted] = useState<boolean>(false);
   const [showAgreementModal, setShowAgreementModal] = useState<boolean>(false);
   const [ndaChecked, setNdaChecked] = useState<boolean>(false);
@@ -47,7 +69,6 @@ export default function FreelancerDashboard() {
       setShowAgreementModal(true);
       return;
     }
-    setAcceptedJobs((prev) => [...prev, jobId]);
 
     try {
       const res = await fetch('/api/freelancer/jobs/accept', {
@@ -59,10 +80,10 @@ export default function FreelancerDashboard() {
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Failed to accept job');
       }
-      showToast('Job accepted. Check your workroom.', 'success');
+      showToast('Project offer accepted! Workspace unlocked.', 'success');
+      await fetchJobs();
     } catch (err: any) {
-      setAcceptedJobs((prev) => prev.filter((id) => id !== jobId));
-      showToast(err.message || 'Failed to accept job. Reverting.', 'error');
+      showToast(err.message || 'Failed to accept job.', 'error');
     }
   };
 
@@ -81,8 +102,22 @@ export default function FreelancerDashboard() {
     }
   };
 
-  const handleDeclineJob = (jobId: string) => {
-    setDeclinedJobs((prev) => [...prev, jobId]);
+  const handleDeclineJob = async (jobId: string, reason?: string) => {
+    try {
+      const res = await fetch('/api/freelancer/jobs/decline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: jobId, reason: reason || 'Schedule conflict' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to decline job');
+      }
+      showToast('Job offer declined. Client has been notified for reassignment.', 'success');
+      await fetchJobs();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to decline job.', 'error');
+    }
   };
 
   const handleSubmitPulse = () => {
@@ -415,41 +450,144 @@ export default function FreelancerDashboard() {
                 </div>
               </section>
 
-              {/* 2. ACTIVE WORK & DAILY CHECK-IN PROTOCOL */}
+              {/* 2. INCOMING CLIENT PROJECT OFFERS (HIGH PRIORITY) */}
+              {offeredJobs.length > 0 && (
+                <section className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping"></span>
+                      <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-tight">
+                        New Project Offers ({offeredJobs.length})
+                      </h2>
+                    </div>
+                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+                      24h Response Window
+                    </span>
+                  </div>
+
+                  <div className="space-y-4">
+                    {offeredJobs.map((job) => (
+                      <div
+                        key={job.assignmentId || job.projectId}
+                        className="bg-white rounded-2xl border-2 border-[#3B82F6]/60 p-6 sm:p-7 shadow-[0_8px_30px_rgba(59,130,246,0.08)] flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+                      >
+                        <div className="space-y-2.5 flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded bg-blue-100 text-blue-800">
+                              {job.orderNumber}
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                              Direct Client Request
+                            </span>
+                            <span className="text-xs text-[#86868B]">
+                              • {job.category} Production
+                            </span>
+                          </div>
+
+                          <h3 className="text-xl font-extrabold text-[#1D1D1F] tracking-tight">
+                            {job.title}
+                          </h3>
+
+                          <div className="flex flex-wrap items-center gap-4 text-xs text-[#6E6E73]">
+                            <span>🎥 {job.angles}</span>
+                            <span>⏳ {job.turnaround}</span>
+                            <span>👤 Client: {job.clientName}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-4 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-[#F5F5F7]">
+                          <div className="text-left lg:text-right">
+                            <div className="text-xs uppercase font-bold text-[#86868B]">Net Creator Payout</div>
+                            <div className="font-mono text-2xl font-extrabold text-emerald-600">
+                              ₹{job.payoutInr.toLocaleString('en-IN')} INR
+                            </div>
+                            <div className="text-[11px] text-[#86868B]">70% Available Split (TDS Deducted at Source)</div>
+                          </div>
+
+                          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                            <button
+                              type="button"
+                              onClick={() => handleDeclineJob(job.projectId)}
+                              className="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs"
+                            >
+                              Decline
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAcceptJob(job.projectId)}
+                              className="w-full sm:w-auto px-6 py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm"
+                            >
+                              Accept Project →
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* 3. ACTIVE PROJECTS & WORKROOM */}
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-[-0.03em]">
                     Active Projects &amp; Daily Updates
                   </h2>
-                </div>
-
-                <div className="bg-white rounded-2xl border border-dashed border-[#E5E5E7] p-12 text-center space-y-3 shadow-xs">
-                  <div className="text-3xl">🎬</div>
-                  <h3 className="text-base font-bold text-[#1D1D1F]">No active project assigned yet</h3>
-                  <p className="text-xs text-[#86868B] max-w-md mx-auto leading-relaxed">
-                    When a client order is matched with your skills, our Studio Director will assign it to your queue. You will receive real-time alerts via WhatsApp and email with footage ingest links and turnaround milestones.
-                  </p>
-                </div>
-              </section>
-
-              {/* 3. ANONYMIZED JOB DISPATCH SLATE */}
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-[-0.03em]">
-                    Available Projects
-                  </h2>
                   <span className="text-xs font-semibold text-[#86868B]">
-                    0 Available Projects
+                    {activeProjects.length} Active {activeProjects.length === 1 ? 'Project' : 'Projects'}
                   </span>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-dashed border-[#E5E5E7] p-12 text-center space-y-3 shadow-xs">
-                  <div className="text-3xl">📥</div>
-                  <h3 className="text-base font-bold text-[#1D1D1F]">No open project broadcasts right now</h3>
-                  <p className="text-xs text-[#86868B] max-w-md mx-auto leading-relaxed">
-                    New incoming projects matching your editing suite and color specialties will broadcast here in real-time as soon as clients place orders.
-                  </p>
-                </div>
+                {activeProjects.length === 0 ? (
+                  <div className="bg-white rounded-2xl border border-dashed border-[#E5E5E7] p-12 text-center space-y-3 shadow-xs">
+                    <div className="text-3xl">🎬</div>
+                    <h3 className="text-base font-bold text-[#1D1D1F]">No active project assigned yet</h3>
+                    <p className="text-xs text-[#86868B] max-w-md mx-auto leading-relaxed">
+                      When a client order is matched with your skills, our Studio Director will assign it to your queue. You will receive real-time alerts via WhatsApp and email with footage ingest links and turnaround milestones.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {activeProjects.map((proj) => (
+                      <div
+                        key={proj.projectId}
+                        className="bg-white rounded-2xl border border-[#E5E5E7] p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      >
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                              {proj.orderNumber}
+                            </span>
+                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 uppercase">
+                              In Production
+                            </span>
+                          </div>
+                          <h3 className="text-lg font-bold text-[#1D1D1F]">{proj.title}</h3>
+                          <div className="text-xs text-[#86868B] flex items-center gap-3">
+                            <span>Client: {proj.clientName}</span>
+                            <span>•</span>
+                            <span>SLA: {proj.turnaround}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 shrink-0">
+                          <div className="text-right">
+                            <div className="text-xs text-[#86868B]">Payout</div>
+                            <div className="font-mono text-base font-bold text-[#1D1D1F]">
+                              ₹{proj.payoutInr.toLocaleString('en-IN')}
+                            </div>
+                          </div>
+                          <Link
+                            href={`/freelancer/work/${proj.projectId}`}
+                            className="px-4 py-2 bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                          >
+                            Open Workstation →
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
             </div>

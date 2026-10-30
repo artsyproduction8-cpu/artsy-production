@@ -165,7 +165,7 @@ export default function UnifiedAdminDashboard() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch('/api/admin/orders');
+      const res = await fetch('/api/admin/orders?excludeCancelled=true');
       const data = await res.json();
       if (data.success && Array.isArray(data.orders)) {
         setOrders(data.orders);
@@ -1068,7 +1068,7 @@ export default function UnifiedAdminDashboard() {
                       <span>•</span>
                       <span><strong>Ingest:</strong> {order.cameraProfile}</span>
                       <span>•</span>
-                      <span><strong>Turnaround:</strong> {order.hoursRemaining}h window</span>
+                      <span><strong>Turnaround:</strong> {(order as any).turnaroundLabel || `${order.hoursRemaining}h window`}</span>
                     </div>
                   </div>
 
@@ -1078,7 +1078,7 @@ export default function UnifiedAdminDashboard() {
                         ₹{order.amount.toLocaleString('en-IN')}
                       </div>
                       <div className="text-[10px] text-[#86868B]">
-                        {order.assignedEditor ? `Editor: ${order.assignedEditor}` : 'Unassigned'}
+                        {order.assignedEditor || 'Unassigned'}
                       </div>
                     </div>
 

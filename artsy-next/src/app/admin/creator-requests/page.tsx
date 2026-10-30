@@ -286,7 +286,7 @@ export default function AdminCreatorRequestsPage() {
 
                     <td className="py-4 px-4">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                        Awaiting Admin Confirmation
+                        {(req as any).statusLabel || 'Awaiting Confirmation'}
                       </span>
                     </td>
 

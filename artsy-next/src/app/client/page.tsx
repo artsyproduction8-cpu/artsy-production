@@ -276,6 +276,11 @@ export default function ClientDashboardPage() {
                           <span className="text-[10px] font-bold text-blue-700 bg-blue-100/70 border border-blue-300 px-2 py-0.5 rounded-full uppercase">
                             {project.status?.replace('_', ' ') || 'ACTIVE'}
                           </span>
+                          {(project as any).isCreatorDeclined && (
+                            <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full uppercase">
+                              Editor Unavailable — Choose Replacement
+                            </span>
+                          )}
                         </div>
                         <h3 className="text-base font-bold text-[#1D1D1F]">
                           {displayTitle}

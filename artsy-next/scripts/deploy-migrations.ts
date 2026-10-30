@@ -36,6 +36,7 @@ const MIGRATION_FILES = [
   '013_fix_creator_signup_trigger.sql',
   '014_creator_hardware_samples_nda.sql',
   '015_audit_remediation_fixes.sql',
+  '016_server_auth_orders_payments_rls.sql',
 ];
 
 export async function verifyAndBundleMigrations() {

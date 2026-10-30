@@ -31,27 +31,72 @@ export default function ClientProjectsPage() {
         const res = await fetch('/api/client/projects');
         const data = await res.json();
         if (data.projects && Array.isArray(data.projects)) {
-          const mapped: ClientProject[] = data.projects.map((p: any) => ({
-            id: p.id,
-            orderId: p.order_id || `ORD-${p.id?.slice(0, 8)}`,
-            title: p.title || 'Cinematic Edit',
-            category: 'Post-Production',
-            status: p.status || 'in_progress',
-            statusLabel:
-              p.status === 'review_ready'
-                ? 'Review Ready'
-                : p.status === 'completed'
-                ? 'Completed'
-                : 'In Production',
-            statusColor:
-              p.status === 'review_ready'
-                ? 'bg-blue-500/10 text-blue-600 border-blue-200'
-                : 'bg-amber-500/10 text-amber-700 border-amber-200',
-            deliveryDate: 'Fast 48h Delivery',
-            priceFormatted: '₹8,000 INR',
-            aspectRatios: '16:9 Master + 9:16 Reel',
-            cameraAngles: 'Multi-Camera Editing',
-          }));
+          const mapped: ClientProject[] = data.projects.map((p: any) => {
+            const ord = p.orders || {};
+            const snap = ord.requirements_snapshot || {};
+
+            // Dynamic price calculation from actual order in paise
+            const grossPaise = ord.gross_amount;
+            const priceFormatted = typeof grossPaise === 'number' && grossPaise > 0
+              ? `₹${(grossPaise / 100).toLocaleString('en-IN')} INR`
+              : '₹1,000 INR';
+
+            // Dynamic project title derived from actual booked service
+            let displayTitle = p.title || 'Cinematic Edit';
+            const rawSub = snap.subCategory || snap.serviceId;
+            if (rawSub) {
+              const cleanSub = String(rawSub).replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+              const rawCat = snap.category || ord.service_key || '';
+              const cleanCat = rawCat ? String(rawCat).replace(/\b\w/g, (c: string) => c.toUpperCase()) : '';
+              displayTitle = cleanCat ? `${cleanCat} • ${cleanSub}` : cleanSub;
+            }
+
+            // Dynamic turnaround delivery
+            const deliveryDate = snap.turnaround === 'express'
+              ? 'Fast 24h Express Delivery'
+              : 'Standard 48-72h Delivery';
+
+            // Dynamic aspect ratio
+            const isReel = (snap.subCategory && String(snap.subCategory).toLowerCase().includes('reel')) ||
+              (snap.category && String(snap.category).toLowerCase() === 'personal');
+            const aspectRatios = snap.aspectRatios || snap.aspectRatio || (
+              isReel ? '9:16 Vertical Reel' : '16:9 Master + 9:16 Reel'
+            );
+
+            // Dynamic camera angles
+            const cameraAngles = snap.angles === 'multi'
+              ? 'Multi-Camera Editing'
+              : 'Single Camera Edit';
+
+            // Dynamic category label
+            const categoryLabel = snap.category
+              ? String(snap.category).replace(/\b\w/g, (c: string) => c.toUpperCase()) + ' Production'
+              : 'Post-Production';
+
+            return {
+              id: p.id,
+              orderId: ord.order_number || p.order_id || `ORD-${p.id?.slice(0, 8)}`,
+              title: displayTitle,
+              category: categoryLabel,
+              status: p.status || 'in_progress',
+              statusLabel:
+                p.status === 'review_ready'
+                  ? 'Review Ready'
+                  : p.status === 'completed' || p.status === 'approved'
+                  ? 'Completed'
+                  : 'In Production',
+              statusColor:
+                p.status === 'review_ready'
+                  ? 'bg-blue-500/10 text-blue-600 border-blue-200'
+                  : p.status === 'completed' || p.status === 'approved'
+                  ? 'bg-emerald-500/10 text-emerald-700 border-emerald-200'
+                  : 'bg-amber-500/10 text-amber-700 border-amber-200',
+              deliveryDate,
+              priceFormatted,
+              aspectRatios,
+              cameraAngles,
+            };
+          });
           setProjects(mapped);
         }
       } catch {

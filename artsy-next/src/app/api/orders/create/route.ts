@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
       clientPhone,
       clientName,
       clientEmail,
+      pendingOrderId,
     } = body;
 
     console.log('SERVER RECEIVED:', { serviceId, requirements });
@@ -236,34 +237,75 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    let orderRecordId: string | null = null;
+    let finalOrderNum = internalOrderNumber;
+
     if (isSupabaseConfigured && dbClient) {
       try {
-        const { error: dbError } = await dbClient.from('orders').insert([
-          {
-            order_number: internalOrderNumber,
-            client_id: isUUID(authUser.id) ? authUser.id : null,
-            client_phone: authUser.phone || clientPhone || null,
-            client_name: authUser.full_name || clientName || 'Client',
-            client_email: authUser.email || clientEmail || null,
-            service_key: serviceKey,
-            service_id: isUUID(serviceId) ? serviceId : null,
-            quote_id: isUUID(quoteId) ? quoteId : null,
-            currency,
-            gross_amount: canonicalAmount,
-            gst_amount: waterfall.gstAmount,
-            gateway_fee: waterfall.totalGatewayDeduction,
-            net_amount: waterfall.availableForSplit,
-            status: 'payment_pending',
-            razorpay_order_id: razorpayOrderId,
-            requirements_snapshot: requirements || {},
-            preferred_creator_id: isUUID(preferredCreatorId) ? preferredCreatorId : null,
-            preferred_creator_assigned: false,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ]);
-        if (dbError) {
-          console.warn('[Order DB Insert Warning]', dbError);
+        if (pendingOrderId && isUUID(pendingOrderId)) {
+          const { data: existingOrd } = await dbClient
+            .from('orders')
+            .select('id, order_number, status')
+            .eq('id', pendingOrderId)
+            .eq('client_id', authUser.id)
+            .eq('status', 'payment_pending')
+            .maybeSingle();
+
+          if (existingOrd) {
+            orderRecordId = existingOrd.id;
+            finalOrderNum = existingOrd.order_number;
+            await dbClient
+              .from('orders')
+              .update({
+                gross_amount: canonicalAmount,
+                gst_amount: waterfall.gstAmount,
+                gateway_fee: waterfall.totalGatewayDeduction,
+                net_amount: waterfall.availableForSplit,
+                razorpay_order_id: razorpayOrderId,
+                requirements_snapshot: requirements || {},
+                preferred_creator_id: isUUID(preferredCreatorId) ? preferredCreatorId : null,
+                client_phone: authUser.phone || clientPhone || null,
+                client_name: authUser.full_name || clientName || 'Client',
+                client_email: authUser.email || clientEmail || null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', existingOrd.id);
+          }
+        }
+
+        if (!orderRecordId) {
+          const { data: inserted, error: dbError } = await dbClient.from('orders').insert([
+            {
+              order_number: internalOrderNumber,
+              client_id: isUUID(authUser.id) ? authUser.id : null,
+              client_phone: authUser.phone || clientPhone || null,
+              client_name: authUser.full_name || clientName || 'Client',
+              client_email: authUser.email || clientEmail || null,
+              service_key: serviceKey,
+              service_id: isUUID(serviceId) ? serviceId : null,
+              quote_id: isUUID(quoteId) ? quoteId : null,
+              currency,
+              gross_amount: canonicalAmount,
+              gst_amount: waterfall.gstAmount,
+              gateway_fee: waterfall.totalGatewayDeduction,
+              net_amount: waterfall.availableForSplit,
+              status: 'payment_pending',
+              razorpay_order_id: razorpayOrderId,
+              requirements_snapshot: requirements || {},
+              preferred_creator_id: isUUID(preferredCreatorId) ? preferredCreatorId : null,
+              preferred_creator_assigned: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+          ]).select('id, order_number').single();
+
+          if (inserted?.id) {
+            orderRecordId = inserted.id;
+            finalOrderNum = inserted.order_number || internalOrderNumber;
+          }
+          if (dbError) {
+            console.warn('[Order DB Insert Warning]', dbError);
+          }
         } else if (preferredCreatorId && isUUID(preferredCreatorId)) {
           // Notify admin: Channel: WhatsApp + in-app
           // Message: "New booking with preferred creator. Order #X, Creator: [Name]"
@@ -323,12 +365,13 @@ export async function POST(request: NextRequest) {
     // 7. Return order details
     return NextResponse.json({
       success: true,
-      orderId: razorpayOrderId,
+      orderId: orderRecordId || razorpayOrderId,
+      orderNumber: finalOrderNum,
       amount: canonicalAmount,
       currency,
       razorpayKeyId: rzpKeyId || 'rzp_mock_key',
       razorpayOrderId,
-      internalOrderId: internalOrderNumber,
+      internalOrderId: finalOrderNum,
       serviceKey,
       mode: isRzpConfigured ? 'live' : 'mock',
       waterfall: {

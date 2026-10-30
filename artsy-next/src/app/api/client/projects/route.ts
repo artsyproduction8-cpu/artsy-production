@@ -15,7 +15,12 @@ export async function GET(request: Request) {
 
   const { data: projects, error } = await supabaseAdmin
     .from('projects')
-    .select('id, title, status, created_at, order_id, project_number, current_revision_round, max_free_revisions, client_deadline')
+    .select(`
+      id, title, status, created_at, order_id, project_number, current_revision_round, max_free_revisions, client_deadline,
+      orders:order_id (
+        id, order_number, gross_amount, status, service_key, requirements_snapshot, paid_at
+      )
+    `)
     .eq('client_id', authUser.id)
     .order('created_at', { ascending: false });
 

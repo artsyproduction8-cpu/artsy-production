@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       try {
         const { data: ord } = await supabaseAdmin
           .from('orders')
-          .select('id, gross_amount, status, order_number, client_id, client_phone, client_email, service_key, preferred_creator_id')
+          .select('id, gross_amount, status, order_number, client_id, client_phone, client_email, service_key, preferred_creator_id, requirements_snapshot')
           .eq('razorpay_order_id', order_id)
           .maybeSingle();
         orderRecord = ord;
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     // Mark as paid in database if matching order exists and spawn active project
     if (isSupabaseConfigured && supabaseAdmin && typeof supabaseAdmin.from === 'function') {
       try {
-        await supabaseAdmin
+        const { error: ordUpdateErr } = await supabaseAdmin
           .from('orders')
           .update({
             status: 'paid',
@@ -129,6 +129,10 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString(),
           })
           .eq('razorpay_order_id', order_id);
+
+        if (ordUpdateErr) {
+          console.error('[Verify Payment DB Error updating order]:', ordUpdateErr);
+        }
 
         let finalClientId: string = orderRecord?.client_id || '';
         if (orderRecord && orderRecord.id) {
@@ -165,25 +169,32 @@ export async function POST(request: NextRequest) {
               .maybeSingle();
 
             if (!existingProject) {
+              const snap = orderRecord.requirements_snapshot || {};
+              const rawSub = snap.subCategory || snap.serviceId;
+              const subLabel = rawSub
+                ? String(rawSub).replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+                : 'Master Edit';
               const serviceLabel = orderRecord.service_key
                 ? orderRecord.service_key.charAt(0).toUpperCase() + orderRecord.service_key.slice(1).replace(/_/g, ' ')
-                : 'Cinematic';
+                : 'Personal';
+              const projectTitle = `${serviceLabel} • ${subLabel}`;
 
               const projectNumber = `PRJ-${orderRecord.order_number || Date.now().toString(36).toUpperCase()}`;
 
-              await supabaseAdmin.from('projects').insert([
+              const { error: prjErr } = await supabaseAdmin.from('projects').insert([
                 {
                   project_number: projectNumber,
                   order_id: orderRecord.id,
                   client_id: finalClientId,
                   assigned_creator_id: orderRecord.preferred_creator_id || null,
-                  title: `${serviceLabel} Master Edit`,
+                  title: projectTitle,
                   status: 'awaiting_upload',
                   priority: 1,
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString(),
                 },
               ]);
+              if (prjErr) console.error('[Verify Payment DB Error creating project]:', prjErr);
             }
           }
         }
@@ -197,7 +208,7 @@ export async function POST(request: NextRequest) {
             .maybeSingle();
 
           if (!existingPayment) {
-            await supabaseAdmin.from('payments').insert([
+            const { error: payErr } = await supabaseAdmin.from('payments').insert([
               {
                 order_id: orderRecord.id,
                 amount: orderRecord.gross_amount,
@@ -211,6 +222,7 @@ export async function POST(request: NextRequest) {
                 captured_at: new Date().toISOString(),
               },
             ]);
+            if (payErr) console.error('[Verify Payment DB Error inserting payment]:', payErr);
 
             const { calculateFinancialWaterfall } = await import('@/lib/financial/engine');
             const waterfall = calculateFinancialWaterfall(orderRecord.gross_amount);

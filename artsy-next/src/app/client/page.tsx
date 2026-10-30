@@ -249,37 +249,51 @@ export default function ClientDashboardPage() {
                 </Link>
               </div>
             ) : (
-              projects.map((project) => (
-                <div
-                  key={project.id}
-                  className="bg-[#F5F5F7] rounded-2xl p-5 sm:p-6 border border-[#E5E5E7] hover:border-[#3B82F6]/40 transition-all space-y-4"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-[#3B82F6] bg-white px-2 py-0.5 rounded border border-[#E5E5E7]">
-                          #{project.id?.slice(0, 8)}
-                        </span>
-                        <span className="text-[10px] font-bold text-blue-700 bg-blue-100/70 border border-blue-300 px-2 py-0.5 rounded-full uppercase">
-                          {project.status?.replace('_', ' ') || 'ACTIVE'}
-                        </span>
-                      </div>
-                      <h3 className="text-base font-bold text-[#1D1D1F]">
-                        {project.title}
-                      </h3>
-                    </div>
+              projects.map((project) => {
+                const ord = project.orders || {};
+                const snap = ord.requirements_snapshot || {};
+                let displayTitle = project.title || 'Cinematic Edit';
+                const rawSub = snap.subCategory || snap.serviceId;
+                if (rawSub) {
+                  const cleanSub = String(rawSub).replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                  const rawCat = snap.category || ord.service_key || '';
+                  const cleanCat = rawCat ? String(rawCat).replace(/\b\w/g, (c: string) => c.toUpperCase()) : '';
+                  displayTitle = cleanCat ? `${cleanCat} • ${cleanSub}` : cleanSub;
+                }
+                const orderBadge = ord.order_number || `#${project.id?.slice(0, 8)}`;
 
-                    <div className="flex items-center gap-2 self-start sm:self-auto">
-                      <Link
-                        href={`/client/projects`}
-                        className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
-                      >
-                        Project Details →
-                      </Link>
+                return (
+                  <div
+                    key={project.id}
+                    className="bg-[#F5F5F7] rounded-2xl p-5 sm:p-6 border border-[#E5E5E7] hover:border-[#3B82F6]/40 transition-all space-y-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-[#3B82F6] bg-white px-2 py-0.5 rounded border border-[#E5E5E7]">
+                            {orderBadge}
+                          </span>
+                          <span className="text-[10px] font-bold text-blue-700 bg-blue-100/70 border border-blue-300 px-2 py-0.5 rounded-full uppercase">
+                            {project.status?.replace('_', ' ') || 'ACTIVE'}
+                          </span>
+                        </div>
+                        <h3 className="text-base font-bold text-[#1D1D1F]">
+                          {displayTitle}
+                        </h3>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <Link
+                          href={`/client/projects`}
+                          className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                        >
+                          Project Details →
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </section>
 

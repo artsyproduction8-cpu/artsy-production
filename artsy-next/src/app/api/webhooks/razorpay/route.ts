@@ -219,25 +219,32 @@ export async function POST(request: NextRequest) {
                   .maybeSingle();
 
                 if (!existingProject) {
+                  const snap = order.requirements_snapshot || {};
+                  const rawSub = snap.subCategory || snap.serviceId;
+                  const subLabel = rawSub
+                    ? String(rawSub).replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+                    : 'Master Edit';
                   const serviceLabel = order.service_key
                     ? order.service_key.charAt(0).toUpperCase() + order.service_key.slice(1).replace(/_/g, ' ')
-                    : 'Cinematic';
+                    : 'Personal';
+                  const projectTitle = `${serviceLabel} • ${subLabel}`;
 
                   const projectNumber = `PRJ-${order.order_number || Date.now().toString(36).toUpperCase()}`;
 
-                  await supabaseAdmin.from('projects').insert([
+                  const { error: prjErr } = await supabaseAdmin.from('projects').insert([
                     {
                       project_number: projectNumber,
                       order_id: order.id,
                       client_id: finalClientId,
                       assigned_creator_id: order.preferred_creator_id || null,
-                      title: `${serviceLabel} Master Edit`,
+                      title: projectTitle,
                       status: 'awaiting_upload',
                       priority: 1,
                       created_at: new Date().toISOString(),
                       updated_at: new Date().toISOString(),
                     },
                   ]);
+                  if (prjErr) console.error('[Webhook Razorpay DB Error creating project]:', prjErr);
                 }
               }
             } catch (prjErr) {

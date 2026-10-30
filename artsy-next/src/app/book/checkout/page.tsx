@@ -102,6 +102,7 @@ function CheckoutContent() {
       const grandTotalRupees = bookingData?.priceBreakdown?.grandTotal || 1000;
       const amountPaise = grandTotalRupees * 100;
 
+      const existingPendingId = typeof window !== 'undefined' ? sessionStorage.getItem('artsy_pending_order_id') : null;
       const checkoutPayload = {
         serviceId: resolvedServiceId,
         amount: amountPaise,
@@ -116,6 +117,7 @@ function CheckoutContent() {
         clientEmail: clientEmail || user?.email || '',
         client_id: user?.id || null,
         preferred_creator_id: bookingData?.preferredCreatorId || bookingData?.preferred_creator_id || null,
+        pendingOrderId: existingPendingId || undefined,
       };
       console.log('CHECKOUT PAYLOAD:', checkoutPayload);
 
@@ -135,6 +137,9 @@ function CheckoutContent() {
       }
 
       const { orderId, razorpayOrderId, razorpayKeyId } = orderData;
+      if (typeof window !== 'undefined' && orderId) {
+        sessionStorage.setItem('artsy_pending_order_id', orderId);
+      }
 
       // 3. Generate QuoteSnapshot locked at checkout
       const quote = generateQuoteSnapshot(
@@ -203,6 +208,7 @@ function CheckoutContent() {
 
             sessionStorage.setItem('artsy_confirmed_order', JSON.stringify(confirmedOrder));
             sessionStorage.setItem('artsy_confirmed_quote', JSON.stringify(quote));
+            sessionStorage.removeItem('artsy_pending_order_id');
 
             try {
               const storedQuotes = JSON.parse(localStorage.getItem('artsy_quotes') || '[]');

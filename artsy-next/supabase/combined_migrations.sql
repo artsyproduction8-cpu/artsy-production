@@ -1,7 +1,7 @@
 -- =============================================================================
 -- ARTSY PRODUCTION — CONSOLIDATED MASTER MIGRATION SCRIPT
 -- Generated for Supabase Project: cldewthefsteotdvftlj
--- Generated at: 2026-10-30T15:39:06.534Z
+-- Generated at: 2026-10-30T16:08:51.815Z
 -- =============================================================================
 
 
@@ -2587,34 +2587,36 @@ END $$;
 GRANT ALL ON public.assignments TO anon, authenticated, service_role;
 GRANT ALL ON public.notifications TO anon, authenticated, service_role;
 
+-- 2. Grant execute permissions on helper functions to prevent 42501 permission denied
+GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated, service_role, public;
+GRANT EXECUTE ON FUNCTION public.is_server_authorized() TO anon, authenticated, service_role, public;
+
 DO $$
 BEGIN
-  -- 2. assignments policies
+  -- 3. assignments policies (Matching Migration 016 server-auth standard)
   DROP POLICY IF EXISTS "Allow server auth insert assignments" ON public.assignments;
-  CREATE POLICY "Allow server auth insert assignments" ON public.assignments
-  FOR INSERT WITH CHECK (public.is_server_authorized() OR public.is_admin());
-
   DROP POLICY IF EXISTS "Allow server auth update assignments" ON public.assignments;
-  CREATE POLICY "Allow server auth update assignments" ON public.assignments
-  FOR UPDATE USING (public.is_server_authorized() OR public.is_admin())
-  WITH CHECK (public.is_server_authorized() OR public.is_admin());
-
   DROP POLICY IF EXISTS "Allow server auth select assignments" ON public.assignments;
-  CREATE POLICY "Allow server auth select assignments" ON public.assignments
-  FOR SELECT USING (public.is_server_authorized() OR public.is_admin() OR auth.uid() = creator_id);
+  DROP POLICY IF EXISTS "Allow server auth full access on assignments" ON public.assignments;
 
-  -- 3. notifications policies
+  CREATE POLICY "Allow server auth full access on assignments"
+    ON public.assignments
+    FOR ALL
+    TO public
+    USING (public.is_server_authorized())
+    WITH CHECK (public.is_server_authorized());
+
+  -- 4. notifications policies (Matching Migration 016 server-auth standard)
   DROP POLICY IF EXISTS "Allow server auth insert notifications" ON public.notifications;
-  CREATE POLICY "Allow server auth insert notifications" ON public.notifications
-  FOR INSERT WITH CHECK (public.is_server_authorized() OR public.is_admin());
-
   DROP POLICY IF EXISTS "Allow server auth update notifications" ON public.notifications;
-  CREATE POLICY "Allow server auth update notifications" ON public.notifications
-  FOR UPDATE USING (public.is_server_authorized() OR public.is_admin() OR auth.uid() = user_id)
-  WITH CHECK (public.is_server_authorized() OR public.is_admin() OR auth.uid() = user_id);
-
   DROP POLICY IF EXISTS "Allow server auth select notifications" ON public.notifications;
-  CREATE POLICY "Allow server auth select notifications" ON public.notifications
-  FOR SELECT USING (public.is_server_authorized() OR public.is_admin() OR auth.uid() = user_id);
+  DROP POLICY IF EXISTS "Allow server auth full access on notifications" ON public.notifications;
+
+  CREATE POLICY "Allow server auth full access on notifications"
+    ON public.notifications
+    FOR ALL
+    TO public
+    USING (public.is_server_authorized())
+    WITH CHECK (public.is_server_authorized());
 END $$;
 

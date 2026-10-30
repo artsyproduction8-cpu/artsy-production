@@ -217,6 +217,64 @@ stateDiagram-v2
 
 ---
 
+### 3.4 Automated Preferred Creator Push, Decline & Reassignment Lifecycle
+To ensure immediate fulfillment and zero lag for both clients and freelance editors, the platform operates a fully automated, multi-channel push and response workflow:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client
+    participant Checkout as /book/checkout
+    participant API as /api/verify-payment
+    participant Dispatcher as Creator Offer Dispatcher
+    actor Creator
+    participant Workstation as /freelancer
+    actor StudioLead as Artsy Studio Lead
+
+    Client->>Checkout: Selects Preferred Creator & Completes Payment
+    Checkout->>API: Verifies Razorpay signature & sets order paid
+    API->>Dispatcher: dispatchCreatorJobOffer(order, creator)
+    Note over Dispatcher: Inserts assignments (status: 'offered', 24h SLA)
+    Dispatcher->>Creator: 3-Channel Push (In-App + WhatsApp + Email)
+    
+    alt Creator Accepts
+        Creator->>Workstation: Clicks "Accept Project" (/api/freelancer/jobs/accept)
+        Workstation->>API: Updates assignments='accepted', projects='creator_assigned'
+        API->>Client: 3-Channel Alert: "Editor confirmed! Raw footage ready for assembly"
+    else Creator Declines
+        Creator->>Workstation: Clicks "Decline" (/api/freelancer/jobs/decline)
+        Workstation->>API: Updates assignments='declined', projects='pending_assignment'
+        API->>Client: 3-Channel Alert: "Editor unavailable for requested dates"
+        Client->>Client: Visits /client/projects Reassignment Slate
+        alt Option A: Reselect Creator
+            Client->>API: Calls /api/client/projects/resolve-creator (choice: 'reassign')
+            API->>Dispatcher: Dispatches 3-channel offer to newly selected creator
+        else Option B: Let Artsy Assign (Recommended)
+            Client->>API: Calls /api/client/projects/resolve-creator (choice: 'artsy_assign')
+            API->>StudioLead: Matches top approved senior creator in category & initiates cut
+            API->>Client: 3-Channel Confirmation: "Artsy Studio has assigned a senior lead"
+        end
+    end
+```
+
+#### Authoritative Invariants for Creator Offers & Turnaround SLAs
+1. **Multi-Channel Push Standard:** Job offers, acceptances, declines, and reassignments MUST dispatch concurrently across **ALL 3 CHANNELS**:
+   - **Website (In-App):** High-priority notification banner and card in `/freelancer` or `/client/projects`.
+   - **WhatsApp:** WhatsApp Cloud API notification to verified phone.
+   - **Email:** Transactional email via Resend with project brief, net payout, and direct CTA buttons.
+2. **Delivery SLA & Turnaround Matrix:**
+   - **Standard Delivery:** Strictly **7–10 Working Days** (₹0 included in base package, e.g. ₹1,000 for Birthday Reel).
+   - **Priority Delivery:** Strictly **4–5 Working Days** (+₹1,000 to +₹2,000).
+   - **Rush 48h Delivery:** Strictly **48 Hours Express** (+₹2,000 rush fee, total ₹3,000 for Birthday Reel).
+   - Display labels across client portal, admin slate, and creator station must never conflate Standard (7–10 days) with 48h express.
+3. **Admin Dashboard Order & Dispatch Slate Filtering:**
+   - Active project dispatch slates (`/admin`) must strictly exclude cancelled or superseded orders (`status !== 'cancelled'`).
+   - Dynamic editor assignment indicators: `Requested: [Creator Name] (Offer Sent)` for pending offers, `Assigned: [Creator Name]` for accepted projects, `Declined by [Creator Name]` for unavailable creators, and `Unassigned (Pending Match)` for studio allocation.
+4. **Migration 017 RLS Policies:**
+   - `public.assignments` and `public.notifications` enforce table grants to `anon, authenticated, service_role` and `WITH CHECK (is_server_authorized() OR is_admin())` policies so automated background dispatches and in-app updates never throw PostgreSQL `42501` permission errors.
+
+---
+
 ## 4. DYNAMIC PRICING ENGINE & FINANCIAL WATERFALL
 
 ### 4.1 Server-Side Authoritative Pricing

@@ -51,6 +51,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Associated order not found' }, { status: 404 });
     }
 
+    // Resolve client contact details from users table
+    const { data: clientUser } = await db
+      .from('users')
+      .select('id, full_name, email, phone')
+      .eq('id', project.client_id || order.client_id)
+      .maybeSingle();
+
+    const clientPhone = clientUser?.phone || authUser.phone;
+    const clientEmail = clientUser?.email || authUser.email;
+    const clientName = clientUser?.full_name || authUser.full_name || 'Client';
+
     const snap = order.requirements_snapshot || {};
     const turnaroundLabel =
       snap.turnaround === 'rush' || snap.turnaround === 'express'
@@ -104,9 +115,9 @@ export async function POST(request: NextRequest) {
         creatorId: newCreatorId,
         grossAmountPaise: order.gross_amount,
         serviceTitle: project.title,
-        clientName: order.client_name,
-        clientPhone: order.client_phone,
-        clientEmail: order.client_email,
+        clientName,
+        clientPhone,
+        clientEmail,
         turnaroundLabel,
       });
 
@@ -162,9 +173,9 @@ export async function POST(request: NextRequest) {
           creatorId: matchedCreator.id,
           grossAmountPaise: order.gross_amount,
           serviceTitle: project.title,
-          clientName: order.client_name,
-          clientPhone: order.client_phone,
-          clientEmail: order.client_email,
+          clientName,
+          clientPhone,
+          clientEmail,
           turnaroundLabel,
         });
 
@@ -237,3 +248,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to resolve creator assignment' }, { status: 500 });
   }
 }
+

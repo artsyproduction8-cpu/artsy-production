@@ -251,6 +251,13 @@ export async function POST(request: NextRequest) {
                   resolvedProjectId = existingProject.id;
                 }
 
+                // Resolve client contact details from users table for creator notifications
+                const { data: clientUserRecord } = await supabaseAdmin
+                  .from('users')
+                  .select('id, full_name, email, phone')
+                  .eq('id', finalClientId)
+                  .maybeSingle();
+
                 // AUTOMATED PREFERRED CREATOR PUSH (In-App, WhatsApp, Email)
                 if (order.preferred_creator_id && resolvedProjectId) {
                   try {
@@ -262,9 +269,9 @@ export async function POST(request: NextRequest) {
                       creatorId: order.preferred_creator_id,
                       grossAmountPaise: order.gross_amount,
                       serviceTitle: projectTitle,
-                      clientName: order.client_name,
-                      clientPhone: order.client_phone,
-                      clientEmail: order.client_email,
+                      clientName: clientUserRecord?.full_name || 'Client',
+                      clientPhone: clientUserRecord?.phone || undefined,
+                      clientEmail: clientUserRecord?.email || undefined,
                       turnaroundLabel: snap.turnaround === 'rush' || snap.turnaround === 'express'
                         ? '48 Hours Express'
                         : snap.turnaround === 'priority'

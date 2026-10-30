@@ -93,9 +93,22 @@ export async function POST(request: NextRequest) {
 
     // 6. MULTI-CHANNEL DISPATCH TO CLIENT (In-App, WhatsApp, Email)
     const clientUserId = targetProject.client_id || order?.client_id;
-    const clientPhone = order?.client_phone;
-    const clientEmail = order?.client_email;
-    const clientName = order?.client_name || 'Client';
+    let clientPhone: string | undefined;
+    let clientEmail: string | undefined;
+    let clientName = 'Client';
+
+    if (clientUserId) {
+      const { data: clientUser } = await db
+        .from('users')
+        .select('id, full_name, email, phone')
+        .eq('id', clientUserId)
+        .maybeSingle();
+      if (clientUser) {
+        clientPhone = clientUser.phone || undefined;
+        clientEmail = clientUser.email || undefined;
+        clientName = clientUser.full_name || 'Client';
+      }
+    }
     const projectTitle = targetProject.title || 'Production Project';
     const orderNumber = order?.order_number || targetProject.project_number;
     const clientActionUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/client/projects`;
@@ -163,3 +176,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to decline job' }, { status: 500 });
   }
 }
+

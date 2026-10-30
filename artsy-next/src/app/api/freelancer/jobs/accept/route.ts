@@ -199,7 +199,93 @@ export async function POST(request: NextRequest) {
       assignmentId = assignment?.id;
     }
 
-    // 4. Send Notification to Admin (Event 11: CREATOR_ASSIGNED)
+    // 4. Update associated order to mark preferred_creator_assigned = true
+    if (targetProject.order_id) {
+      await supabaseAdmin
+        .from('orders')
+        .update({
+          preferred_creator_assigned: true,
+          updated_at: now.toISOString(),
+        })
+        .eq('id', targetProject.order_id);
+    }
+
+    // Resolve creator display name
+    const { data: creatorProf } = await supabaseAdmin
+      .from('creator_profiles')
+      .select('public_display_name')
+      .eq('id', creatorId)
+      .maybeSingle();
+    const creatorDisplayName = creatorProf?.public_display_name || authUser.full_name || 'Your Assigned Editor';
+
+    // 5. Multi-Channel Notification to Client (In-App, WhatsApp, Email)
+    const clientUserId = targetProject.client_id;
+    if (clientUserId) {
+      const { data: clientUser } = await supabaseAdmin
+        .from('users')
+        .select('id, full_name, email, phone')
+        .eq('id', clientUserId)
+        .maybeSingle();
+
+      const clientPhone = clientUser?.phone;
+      const clientEmail = clientUser?.email;
+      const clientName = clientUser?.full_name || 'Client';
+
+      // 5A. In-App Notification to Client
+      try {
+        await supabaseAdmin.from('notifications').insert([
+          {
+            user_id: clientUserId,
+            event_number: 11,
+            title: `Editor Confirmed for Order #${projectNumber}`,
+            message: `Great news! Editor ${creatorDisplayName} has confirmed your project. You can now upload your raw footage to begin editing.`,
+            action_url: `/client/projects`,
+            read: false,
+            created_at: now.toISOString(),
+          },
+        ]);
+      } catch (e) {
+        console.warn('[ACCEPT JOB] Client in-app alert warning:', e);
+      }
+
+      // 5B. WhatsApp to Client
+      if (clientPhone) {
+        try {
+          await dispatchNotification({
+            eventNumber: 11,
+            userId: clientUserId,
+            recipientPhone: clientPhone,
+            recipientEmail: clientEmail || undefined,
+            variables: {
+              userName: clientName,
+              projectId: projectNumber,
+              editorName: creatorDisplayName,
+            },
+            actionUrl: `https://artsyproduction.com/client/projects`,
+          });
+        } catch (e) {
+          console.warn('[ACCEPT JOB] Client WhatsApp warning:', e);
+        }
+      }
+
+      // 5C. Email to Client
+      if (clientEmail) {
+        try {
+          const { sendNotificationEmail } = await import('@/lib/email/dispatcher');
+          await sendNotificationEmail({
+            eventNumber: 11,
+            title: `Editor Confirmed for Order #${projectNumber}`,
+            message: `Hello ${clientName},\n\nGreat news! Your editor ${creatorDisplayName} has accepted your project "${targetProject.title || projectNumber}".\n\nNext step: Please log in to your Artsy workstation and upload your raw footage so our editor can initiate the timeline cut.`,
+            recipientEmail: clientEmail,
+            actionUrl: `https://artsyproduction.com/client/projects`,
+          });
+        } catch (e) {
+          console.warn('[ACCEPT JOB] Client email alert warning:', e);
+        }
+      }
+    }
+
+    // 6. Send Notification to Admin (Event 11: CREATOR_ASSIGNED)
     try {
       const { data: adminUser } = await supabaseAdmin
         .from('users')
@@ -216,7 +302,7 @@ export async function POST(request: NextRequest) {
         userId: adminUser?.id || 'admin',
         recipientPhone: adminPhone,
         recipientEmail: adminEmail,
-        variables: { projectId: projectNumber },
+        variables: { projectId: projectNumber, editorName: creatorDisplayName },
       });
     } catch (notifErr) {
       console.warn('[ACCEPT JOB] Notification dispatch non-fatal error:', notifErr);

@@ -206,3 +206,4 @@ export async function dispatchCreatorJobOffer(params: DispatchOfferParams): Prom
     return { success: false, error: err?.message || 'Failed to dispatch offer' };
   }
 }
+

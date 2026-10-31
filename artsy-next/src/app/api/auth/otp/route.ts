@@ -399,7 +399,7 @@ export async function POST(request: NextRequest) {
             const { data: profile } = await dbClient
               .from('creator_profiles')
               .select('*')
-              .eq('id', resolvedUser.id)
+              .or(`id.eq.${resolvedUser.id},user_id.eq.${resolvedUser.id}`)
               .maybeSingle();
 
             if (profile) {

@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
           const { data: creatorProfile } = await dbClient
             .from('creator_profiles')
             .select('id, approval_status, onboarding_status, tracking_id, rejection_reason, bio, skills, software, languages, portfolio_url, public_display_name, public_specialty, bank_account_name, bank_account_number, bank_ifsc_code, pan_number, agreement_signed_at, agreement_accepted, agreement_accepted_at, hardware_config, sample_url_1, sample_url_2, sample_url_3, deleted_at')
-            .eq('id', resolvedUser.id)
+            .or(`id.eq.${resolvedUser.id},user_id.eq.${resolvedUser.id}`)
             .maybeSingle();
 
           if (creatorProfile) {

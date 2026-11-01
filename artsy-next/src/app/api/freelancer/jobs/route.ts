@@ -74,14 +74,17 @@ export async function GET(request: Request) {
       const payoutPaise = waterfall.creatorAmount;
       const payoutInr = Math.round(payoutPaise / 100);
 
-      // Turnaround label
+      // Creator Turnaround SLA:
+      // - Standard (Client 7-10d) -> 5 Working Days
+      // - Priority (Client 4-5d) -> 2-3 Working Days
+      // - Rush (Client 48h) -> 24 Hours
       const turnaround = snap.turnaround || 'standard';
-      const turnaroundLabel =
+      const creatorTurnaround =
         turnaround === 'rush' || turnaround === 'express'
-          ? '48 Hours Express'
+          ? '24 Hours'
           : turnaround === 'priority'
-          ? '4–5 Working Days'
-          : '7–10 Working Days Standard';
+          ? '2–3 Working Days'
+          : '5 Working Days';
 
       // Deliverable title
       let displayTitle = proj.title || 'Cinematic Edit';
@@ -102,7 +105,7 @@ export async function GET(request: Request) {
         title: displayTitle,
         category: snap.category || ord.service_key || 'Personal',
         angles: snap.angles === 'multi' ? 'Multi-Camera' : 'Single Camera',
-        turnaround: turnaroundLabel,
+        turnaround: creatorTurnaround,
         payoutInr,
         payoutPaise,
         grossPaise,

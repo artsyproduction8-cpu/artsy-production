@@ -89,26 +89,37 @@ export async function GET(
     const snap = order?.requirements_snapshot || {};
     const sd = clientUser?.studio_details || {};
     const rawFootageUrl =
-      order?.raw_footage_url ||
       snap.rawFootageUrl ||
       snap.footageUrl ||
       snap.driveUrl ||
       snap.raw_footage_url ||
+      project.raw_footage_b2_prefix ||
+      project.raw_footage_url ||
+      order?.raw_footage_url ||
       sd.ingestLink ||
       sd.rawFootageUrl ||
       sd.footageUrl ||
-      project.raw_footage_url ||
-      project.raw_footage_b2_prefix ||
       '';
 
     // 6. Resolve Project & Delivery Specifications
     const turnaround = snap.turnaround || 'standard';
-    const turnaroundLabel =
+    const clientTurnaroundLabel =
       turnaround === 'rush' || turnaround === 'express'
         ? '48 Hours Express'
         : turnaround === 'priority'
         ? '4–5 Working Days'
         : '7–10 Working Days Standard';
+
+    // Creator Delivery SLA:
+    // - Standard (Client 7-10d) -> strictly 5 Working Days
+    // - Priority (Client 4-5d) -> strictly 2-3 Working Days
+    // - Rush (Client 48h) -> strictly 24 Hours
+    const creatorTurnaroundLabel =
+      turnaround === 'rush' || turnaround === 'express'
+        ? '24 Hours'
+        : turnaround === 'priority'
+        ? '2–3 Working Days'
+        : '5 Working Days';
 
     const rawSub = snap.subCategory || snap.serviceId;
     let displayTitle = project.title || 'Cinematic Edit';
@@ -140,10 +151,12 @@ export async function GET(
       cameraAnglesCount,
       cameraAnglesLabel,
       aspectRatios,
-      turnaroundLabel,
+      turnaroundLabel: creatorTurnaroundLabel,
+      creatorTurnaroundLabel,
+      clientTurnaroundLabel,
       musicReferenceUrl: snap.musicReferenceUrl || null,
       clientNotes: snap.notes || null,
-      scopeSummary: `${aspectRatios}, ${cameraAnglesLabel}, ${turnaroundLabel}. Full color conform and audio mix.`,
+      scopeSummary: `${aspectRatios}, ${cameraAnglesLabel}. Delivery SLA: ${creatorTurnaroundLabel} for studio QA review.`,
       creatorAgreementSigned,
       client: {
         full_name: clientUser?.full_name || order?.client_name || 'Verified Client',

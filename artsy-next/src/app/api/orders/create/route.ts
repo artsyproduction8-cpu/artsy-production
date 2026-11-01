@@ -112,6 +112,11 @@ export async function POST(request: NextRequest) {
       (requirements as any)?.category || serviceId || (requirements as any)?.subCategory || (requirements as any)?.serviceId
     );
 
+    const effectiveRequirements = {
+      ...(requirements || {}),
+      rawFootageUrl: ((requirements as any)?.rawFootageUrl || body.rawFootageUrl || '').trim(),
+    };
+
     const effectiveSelections: ConfiguratorSelections = {
       ...((requirements as ConfiguratorSelections) || {}),
       serviceId: (requirements as any)?.serviceId || serviceId,
@@ -262,7 +267,7 @@ export async function POST(request: NextRequest) {
                 gateway_fee: waterfall.totalGatewayDeduction,
                 net_amount: waterfall.availableForSplit,
                 razorpay_order_id: razorpayOrderId,
-                requirements_snapshot: requirements || {},
+                requirements_snapshot: effectiveRequirements,
                 preferred_creator_id: isUUID(preferredCreatorId) ? preferredCreatorId : null,
                 client_phone: authUser.phone || clientPhone || null,
                 client_name: authUser.full_name || clientName || 'Client',
@@ -291,7 +296,7 @@ export async function POST(request: NextRequest) {
               net_amount: waterfall.availableForSplit,
               status: 'payment_pending',
               razorpay_order_id: razorpayOrderId,
-              requirements_snapshot: requirements || {},
+              requirements_snapshot: effectiveRequirements,
               preferred_creator_id: isUUID(preferredCreatorId) ? preferredCreatorId : null,
               preferred_creator_assigned: false,
               created_at: new Date().toISOString(),

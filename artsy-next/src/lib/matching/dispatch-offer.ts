@@ -54,6 +54,18 @@ export async function dispatchCreatorJobOffer(params: DispatchOfferParams): Prom
     const creatorPayoutPaise = waterfall.creatorAmount;
     const creatorPayoutInr = Math.round(creatorPayoutPaise / 100);
 
+    // Creator Delivery SLA:
+    // - Standard (Client 7-10d) -> 5 Working Days
+    // - Priority (Client 4-5d) -> 2-3 Working Days
+    // - Rush (Client 48h) -> 24 Hours
+    const rawTurn = String(turnaroundLabel).toLowerCase();
+    const creatorDeliverySla =
+      rawTurn.includes('rush') || rawTurn.includes('express') || rawTurn.includes('48')
+        ? '24 Hours'
+        : rawTurn.includes('priority') || rawTurn.includes('4-5') || rawTurn.includes('4–5')
+        ? '2–3 Working Days'
+        : '5 Working Days';
+
     // 2. Resolve creator user and profile
     const { data: creatorUser } = await db
       .from('users')
@@ -147,7 +159,7 @@ export async function dispatchCreatorJobOffer(params: DispatchOfferParams): Prom
           user_id: creatorId,
           event_number: 12,
           title: `New Project Offer: ${serviceTitle}`,
-          message: `You have been selected for ${serviceTitle}. Net Payout: ₹${creatorPayoutInr.toLocaleString('en-IN')}. Delivery: ${turnaroundLabel}. Respond within 24 hours.`,
+          message: `You have been selected for ${serviceTitle}. Net Payout: ₹${creatorPayoutInr.toLocaleString('en-IN')}. Delivery: ${creatorDeliverySla}. Respond within 24 hours.`,
           action_url: '/freelancer',
           read: false,
           created_at: now.toISOString(),
@@ -185,7 +197,7 @@ export async function dispatchCreatorJobOffer(params: DispatchOfferParams): Prom
         await sendNotificationEmail({
           eventNumber: 12,
           title: `New Project Offer: ${serviceTitle}`,
-          message: `Congratulations ${creatorDisplayName}!\n\nA client has chosen you for their production project.\n\n• Project: ${serviceTitle}\n• Net Payout: ₹${creatorPayoutInr.toLocaleString('en-IN')} INR\n• Delivery SLA: ${turnaroundLabel}\n• Response Window: 24 Hours\n\nPlease log in to your Artsy Creator Workstation to accept or decline this offer.`,
+          message: `Congratulations ${creatorDisplayName}!\n\nA client has chosen you for their production project.\n\n• Project: ${serviceTitle}\n• Net Payout: ₹${creatorPayoutInr.toLocaleString('en-IN')} INR\n• Delivery SLA: ${creatorDeliverySla}\n• Response Window: 24 Hours\n\nPlease log in to your Artsy Creator Workstation to accept or decline this offer.`,
           recipientEmail: creatorUser.email,
           actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/freelancer`,
         });

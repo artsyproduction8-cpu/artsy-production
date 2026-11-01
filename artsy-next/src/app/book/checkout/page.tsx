@@ -103,13 +103,16 @@ function CheckoutContent() {
       const amountPaise = grandTotalRupees * 100;
 
       const existingPendingId = typeof window !== 'undefined' ? sessionStorage.getItem('artsy_pending_order_id') : null;
+      const rawFootageUrl = bookingData?.rawFootageUrl || bookingData?.requirements?.rawFootageUrl || '';
       const checkoutPayload = {
         serviceId: resolvedServiceId,
         amount: amountPaise,
+        rawFootageUrl: rawFootageUrl ? String(rawFootageUrl).trim() : '',
         requirements: {
           category: bookingData?.requirements?.category || bookingData?.serviceKey || bookingData?.service || 'personal',
           subCategory: bookingData?.requirements?.subCategory || bookingData?.subCategoryId || bookingData?.serviceId || resolvedServiceId,
           serviceId: resolvedServiceId,
+          rawFootageUrl: rawFootageUrl ? String(rawFootageUrl).trim() : '',
           ...bookingData?.requirements,
         },
         clientPhone: clientPhone || user?.phone || '',

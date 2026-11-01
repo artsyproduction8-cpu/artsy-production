@@ -179,6 +179,8 @@ export async function POST(request: NextRequest) {
               : 'Personal';
             const projectTitle = `${serviceLabel} • ${subLabel}`;
 
+            const rawFootageCloudLink = snap.rawFootageUrl || snap.footageUrl || snap.driveUrl || snap.raw_footage_url || null;
+
             if (!existingProject) {
               const projectNumber = `PRJ-${orderRecord.order_number || Date.now().toString(36).toUpperCase()}`;
 
@@ -189,7 +191,8 @@ export async function POST(request: NextRequest) {
                   client_id: finalClientId,
                   assigned_creator_id: orderRecord.preferred_creator_id || null,
                   title: projectTitle,
-                  status: 'awaiting_upload',
+                  status: rawFootageCloudLink ? 'creator_assigned' : 'awaiting_upload',
+                  raw_footage_b2_prefix: rawFootageCloudLink,
                   priority: 1,
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString(),
@@ -199,6 +202,12 @@ export async function POST(request: NextRequest) {
               resolvedProjectId = newPrj?.id;
             } else {
               resolvedProjectId = existingProject.id;
+              if (rawFootageCloudLink && !existingProject.raw_footage_b2_prefix) {
+                await supabaseAdmin.from('projects').update({
+                  raw_footage_b2_prefix: rawFootageCloudLink,
+                  updated_at: new Date().toISOString(),
+                }).eq('id', existingProject.id);
+              }
             }
 
             // Resolve client contact details from users table for creator notifications

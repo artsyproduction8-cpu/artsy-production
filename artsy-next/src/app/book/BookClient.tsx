@@ -310,6 +310,7 @@ export default function BookClient() {
           angles,
           turnaround,
           hasRawFootage,
+          rawFootageUrl: hasRawFootage ? rawFootageUrl.trim() : '',
           musicReferenceUrl: audioUrl.trim(),
           notes,
         },

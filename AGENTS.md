@@ -262,11 +262,12 @@ sequenceDiagram
    - **Website (In-App):** High-priority notification banner and card in `/freelancer` or `/client/projects`.
    - **WhatsApp:** WhatsApp Cloud API notification to verified phone.
    - **Email:** Transactional email via Resend with project brief, net payout, and direct CTA buttons.
-2. **Delivery SLA & Turnaround Matrix:**
-   - **Standard Delivery:** Strictly **7–10 Working Days** (₹0 included in base package, e.g. ₹1,000 for Birthday Reel).
-   - **Priority Delivery:** Strictly **4–5 Working Days** (+₹1,000 to +₹2,000).
-   - **Rush 48h Delivery:** Strictly **48 Hours Express** (+₹2,000 rush fee, total ₹3,000 for Birthday Reel).
-   - Display labels across client portal, admin slate, and creator station must never conflate Standard (7–10 days) with 48h express.
+2. **Delivery SLA & Turnaround Matrix (Client vs. Creator Standard):**
+   - Studio operations mandate that Creator Delivery SLAs are strictly shorter than Client SLAs to guarantee room for internal studio QA conform, audio mastering, color grading audit, and client review:
+     - **Standard Delivery:** Client SLA: **7–10 Working Days** (₹0 included) $\to$ **Creator Delivery SLA: strictly 5 Working Days**.
+     - **Priority Delivery:** Client SLA: **4–5 Working Days** (+₹1,000 to +₹2,000) $\to$ **Creator Delivery SLA: strictly 2–3 Working Days**.
+     - **Rush Express Delivery:** Client SLA: **48 Hours Express** (+₹2,000 rush fee) $\to$ **Creator Delivery SLA: strictly 24 Hours**.
+   - **Creator Workstation Invariant:** The Creator Workroom (`/freelancer/work/[projectId]`) must strictly omit the client's 7–10 day SLA from the workroom header subtitle (displaying only `Client: [Name]`) and must omit redundant client SLA rows from the Milestone Deadlines card. The overview and deadlines cards must display `Creator Delivery SLA: 5 Working Days` and `Internal QA Delivery: 5 Working Days`.
 3. **Admin Dashboard Order & Dispatch Slate Filtering:**
    - Active project dispatch slates (`/admin`) must strictly exclude cancelled or superseded orders (`status !== 'cancelled'`).
    - Dynamic editor assignment indicators: `Requested: [Creator Name] (Offer Sent)` for pending offers, `Assigned: [Creator Name]` for accepted projects, `Declined by [Creator Name]` for unavailable creators, and `Unassigned (Pending Match)` for studio allocation.
@@ -518,7 +519,8 @@ flowchart TD
 
 17. **Creator Workroom & Payout Lifecycle Invariants (`/freelancer/work/[projectId]`):**
     - **Dynamic Financial Waterfall:** The workroom API (`/api/freelancer/work/[projectId]`) calculates the canonical financial waterfall from `order.gross_amount` in integer paise using `calculateFinancialWaterfall()`. The net payout ($P \to R \to G \to F_{\text{gw}} \to I \to A \to \text{Creator 70\%} \to \text{TDS 2\%}$) matches the dashboard card with exact precision (e.g., ₹496 for ₹1,000 package). Hardcoded mock fallbacks (e.g., 4533) are strictly forbidden.
-    - **Raw Footage Vault Resolution:** The "Access Folder ↗" button strictly resolves the client's actual cloud link from `order.requirements_snapshot.rawFootageUrl` or `clientUser.studio_details.ingestLink`. It never redirects to generic Google Drive home (`drive.google.com/drive/u/0/home`). If a link has not been provided by the client, the UI alerts the user gracefully and offers a copy button for verified URLs.
+    - **Creator Turnaround SLA Invariant:** Turnaround deadlines presented to creators are strictly enforced: Standard = 5 Working Days, Priority = 2–3 Working Days, Rush = 24 Hours. The workroom header subtitle strictly displays `Client: [Name]` without client turnaround text. Redundant `Delivery SLA` rows are removed from the Milestone Deadlines card.
+    - **Raw Footage Vault Resolution & End-to-End Preservation:** The client's raw footage cloud link entered during booking (`BookClient.tsx`) is preserved through `checkout/page.tsx`, `orders/create`, and stored in `order.requirements_snapshot.rawFootageUrl` as well as `projects.raw_footage_b2_prefix`. The workroom button "Access Folder ↗" and clickable direct URL strictly open the project's exact footage folder with normalized `https://` protocol and `target="_blank" rel="noopener noreferrer"`. If no link was attached, the creator is guided gracefully and given a copy trigger.
     - **Agreement Status Hydration:** The workroom API queries `creator_profiles` for `agreement_signed_at` and synchronizes the client session. Approved creators who signed during onboarding never see false "NDA & Creator Agreement Unsigned" warning banners.
-    - **Project Brief & Specifications:** True camera angles (`Single Camera Edit (1 Angle)`), aspect ratios (`9:16 Vertical Reel`), turnaround SLA (`7–10 Working Days Standard`), client notes, and music reference tracks are rendered directly from `order.requirements_snapshot` without mock placeholders.
+    - **Project Brief & Specifications:** True camera angles (`Single Camera Edit (1 Angle)`), aspect ratios (`9:16 Vertical Reel`), creator delivery SLA (`5 Working Days`), client notes, and music reference tracks are rendered directly from `order.requirements_snapshot` without mock placeholders.
     - **Immutable Check-In & Submission Auditing:** Creator daily check-ins and draft cut submissions write to `public.audit_logs`, update project status to `review_ready`, and dispatch multi-channel notifications (In-App, WhatsApp, Email) to the client.

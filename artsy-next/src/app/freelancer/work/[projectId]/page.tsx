@@ -88,11 +88,16 @@ export default function FreelancerWorkView() {
       return;
     }
 
+    let cleanUrl = footageUrl.trim();
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = `https://${cleanUrl}`;
+    }
+
     // Log immutable activity event (Tier 2 Refund Trigger)
     logFootageDownload(projectId, user?.id || 'creator', { fileCount: 12, totalSizeMb: 48500 });
     setFootageDownloaded(true);
     setActivityLogs(getProjectActivityLog(projectId));
-    window.open(footageUrl, '_blank', 'noopener,noreferrer');
+    window.open(cleanUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleCopyFootageLink = () => {
@@ -233,7 +238,7 @@ export default function FreelancerWorkView() {
   const displayTitle = project?.title || 'Personal • Birthday Reel';
   const clientName = project?.client?.full_name || order?.clients?.full_name || 'Verified Client';
   const cameraAnglesLabel = project?.cameraAnglesLabel || 'Single Camera Edit (1 Angle)';
-  const turnaroundLabel = project?.turnaroundLabel || '7–10 Working Days Standard';
+  const creatorTurnaroundLabel = project?.creatorTurnaroundLabel || project?.turnaroundLabel || '5 Working Days';
   const rawFootageUrl = project?.raw_footage_url || '';
   const musicReferenceUrl = project?.musicReferenceUrl || '';
   const clientNotes = project?.clientNotes || '';
@@ -262,7 +267,7 @@ export default function FreelancerWorkView() {
                   {displayTitle}
                 </h1>
                 <p className="text-xs text-[#86868B] mt-0.5">
-                  Client: <strong className="text-[#1D1D1F]">{clientName}</strong> • SLA: <strong className="text-[#1D1D1F]">{turnaroundLabel}</strong>
+                  Client: <strong className="text-[#1D1D1F]">{clientName}</strong>
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -329,8 +334,8 @@ export default function FreelancerWorkView() {
                       <div className="text-xs font-bold text-[#1D1D1F] mt-0.5">{project.aspectRatios || '9:16 Vertical Reel'}</div>
                     </div>
                     <div className="p-3 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]/70">
-                      <div className="text-[10px] uppercase font-bold text-[#86868B]">Delivery SLA</div>
-                      <div className="text-xs font-bold text-[#1D1D1F] mt-0.5">{turnaroundLabel}</div>
+                      <div className="text-[10px] uppercase font-bold text-[#86868B]">Creator Delivery SLA</div>
+                      <div className="text-xs font-bold text-[#1D1D1F] mt-0.5">{creatorTurnaroundLabel}</div>
                     </div>
                     <div className="p-3 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7]/70">
                       <div className="text-[10px] uppercase font-bold text-[#86868B]">Camera Setup</div>
@@ -413,9 +418,14 @@ export default function FreelancerWorkView() {
                     </div>
 
                     {rawFootageUrl && (
-                      <div className="text-[11px] font-mono text-[#6E6E73] bg-white px-3 py-1.5 rounded-lg border border-[#E5E5E7] truncate select-all">
-                        {rawFootageUrl}
-                      </div>
+                      <a
+                        href={rawFootageUrl.startsWith('http') ? rawFootageUrl : `https://${rawFootageUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-mono text-blue-600 hover:text-blue-800 hover:underline bg-white px-3 py-1.5 rounded-lg border border-[#E5E5E7] truncate select-all block transition-colors"
+                      >
+                        {rawFootageUrl} ↗
+                      </a>
                     )}
                   </div>
                 </div>
@@ -564,13 +574,9 @@ export default function FreelancerWorkView() {
                   </h2>
                   <div className="space-y-3 text-xs">
                     <div className="flex justify-between items-center">
-                      <span className="text-[#86868B]">Delivery SLA</span>
-                      <span className="font-bold text-[#1D1D1F]">{turnaroundLabel}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
                       <span className="text-[#86868B]">Internal QA Delivery</span>
                       <span className="font-bold text-[#1D1D1F]">
-                        {turnaroundLabel.includes('48 Hours') ? '24 Hours' : '5–7 Working Days'}
+                        {creatorTurnaroundLabel}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">

@@ -32,6 +32,21 @@ export default function FreelancerWorkView() {
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [footageToast, setFootageToast] = useState<string | null>(null);
 
+  // 4-Stage Post-Production Progress Tracker
+  const [currentStage, setCurrentStage] = useState<number>(1);
+  const [stageNotes, setStageNotes] = useState<string>('');
+  const [savingProgress, setSavingProgress] = useState(false);
+  const [progressSavedToast, setProgressSavedToast] = useState(false);
+
+  // Dedicated 5th Section: Creator Roadblock & Missing Details Desk
+  const [activeIssue, setActiveIssue] = useState<any>(null);
+  const [showIssueForm, setShowIssueForm] = useState(false);
+  const [issueCategory, setIssueCategory] = useState('missing_raw_clips');
+  const [issueTitle, setIssueTitle] = useState('');
+  const [issueMissingDetails, setIssueMissingDetails] = useState('');
+  const [issueUrgency, setIssueUrgency] = useState<'normal' | 'blocker'>('normal');
+  const [submittingIssue, setSubmittingIssue] = useState(false);
+
   useEffect(() => {
     // 1. Enforce authenticated creator session; redirect to login if missing
     const currentUser = getCurrentUser();
@@ -51,6 +66,19 @@ export default function FreelancerWorkView() {
         if (data.success && data.project) {
           setProject(data.project);
           if (data.project.orders) setOrder(data.project.orders);
+
+          // Sync progress and roadblock state
+          if (typeof data.project.currentStage === 'number') {
+            setCurrentStage(data.project.currentStage);
+          }
+          if (data.project.stageNotes) {
+            setStageNotes(data.project.stageNotes);
+          }
+          if (data.project.issueFlagged && data.project.issueDetails) {
+            setActiveIssue(data.project.issueDetails);
+          } else {
+            setActiveIssue(null);
+          }
 
           // If creator agreement is signed on server, sync to client session
           if (data.creatorAgreementSigned && currentUser && !currentUser.agreement_signed_at) {
@@ -119,6 +147,93 @@ export default function FreelancerWorkView() {
     }
     // Continue with footage download
     handleFootageAccess();
+  };
+
+  const handleUpdateStage = async (stageNum: number, optionalNotes?: string) => {
+    const nextStage = Math.min(Math.max(stageNum, 1), 4);
+    setCurrentStage(nextStage);
+    const notesToSend = optionalNotes !== undefined ? optionalNotes : stageNotes;
+
+    setSavingProgress(true);
+    try {
+      const res = await fetch(`/api/freelancer/work/${encodeURIComponent(projectId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'update_progress',
+          stage: nextStage,
+          notes: notesToSend,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProgressSavedToast(true);
+        setTimeout(() => setProgressSavedToast(false), 3000);
+      }
+    } catch (err) {
+      console.warn('Failed to save milestone progress:', err);
+    } finally {
+      setSavingProgress(false);
+    }
+  };
+
+  const handleRaiseRoadblock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!issueTitle.trim()) {
+      alert('Please enter a brief subject/title for what is missing.');
+      return;
+    }
+    if (!issueMissingDetails.trim()) {
+      alert('Please explain what details or files are missing to complete the video.');
+      return;
+    }
+
+    setSubmittingIssue(true);
+    try {
+      const res = await fetch(`/api/freelancer/work/${encodeURIComponent(projectId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'raise_issue',
+          category: issueCategory,
+          title: issueTitle.trim(),
+          missingDetails: issueMissingDetails.trim(),
+          urgency: issueUrgency,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.issue) {
+        setActiveIssue(data.issue);
+        setShowIssueForm(false);
+        setIssueTitle('');
+        setIssueMissingDetails('');
+        alert('Roadblock logged with Artsy Studio Lead. Our team will coordinate with the client to provide the missing assets.');
+      }
+    } catch (err: any) {
+      alert('Failed to submit roadblock: ' + err.message);
+    } finally {
+      setSubmittingIssue(false);
+    }
+  };
+
+  const handleResolveRoadblock = async () => {
+    if (!confirm('Are you sure the missing details/assets have been received and you are ready to continue editing?')) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/freelancer/work/${encodeURIComponent(projectId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'resolve_issue' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActiveIssue(null);
+        alert('Roadblock marked resolved! Happy editing.');
+      }
+    } catch (err: any) {
+      alert('Failed to clear roadblock: ' + err.message);
+    }
   };
 
   const handleDailyCheckIn = async (status: 'on_track' | 'missed' | 'escalated' | 'blocked', message: string) => {
@@ -430,47 +545,281 @@ export default function FreelancerWorkView() {
                   </div>
                 </div>
 
-                {/* Daily Check-In */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-base font-bold text-[#1D1D1F]">Daily Progress Check-In</h2>
-                    <span className="text-[11px] font-semibold text-[#86868B]">
-                      Status: <strong className="text-[#1D1D1F]">{checkInStatus.replace('_', ' ').toUpperCase()}</strong>
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#86868B] mb-4">
-                    Daily check-ins keep clients reassured and protect your milestone ratings on the Artsy platform.
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-                    <button
-                      onClick={() => handleDailyCheckIn('on_track', 'Working on schedule. Timeline assembling cleanly.')}
-                      className="py-2.5 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl border border-emerald-200 transition-all text-center cursor-pointer"
-                    >
-                      ✓ On Track
-                    </button>
-                    <button
-                      onClick={() => handleDailyCheckIn('missed', 'Delayed start due to rendering queue.')}
-                      className="py-2.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold rounded-xl border border-amber-200 transition-all text-center cursor-pointer"
-                    >
-                      ⏳ Delayed Start
-                    </button>
-                    <button
-                      onClick={() => handleDailyCheckIn('blocked', 'Need clarification from client on audio stem.')}
-                      className="py-2.5 px-3 bg-red-50 hover:bg-red-100 text-red-800 text-xs font-bold rounded-xl border border-red-200 transition-all text-center cursor-pointer"
-                    >
-                      🚫 Blocked
-                    </button>
-                    <button
-                      onClick={() => handleDailyCheckIn('escalated', 'Technical drive access or corrupt clip.')}
-                      className="py-2.5 px-3 bg-purple-50 hover:bg-purple-100 text-purple-800 text-xs font-bold rounded-xl border border-purple-200 transition-all text-center cursor-pointer"
-                    >
-                      ⚠️ Escalate to QA
-                    </button>
-                  </div>
-                  {checkInMessage && (
-                    <div className="p-3 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] text-xs text-[#86868B]">
-                      <strong>Last Note:</strong> {checkInMessage}
+                {/* 4-Stage Post-Production Progress Tracker */}
+                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs uppercase font-extrabold tracking-wider text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+                          Milestone Tracking
+                        </span>
+                        <h2 className="text-base font-bold text-[#1D1D1F]">Post-Production Progress</h2>
+                      </div>
+                      <p className="text-xs text-[#86868B] mt-1">
+                        Advance the timeline stage as you edit so the Artsy Studio Lead and client see verified progress.
+                      </p>
                     </div>
+                    <div className="text-left sm:text-right shrink-0">
+                      <div className="text-xs font-extrabold text-[#1D1D1F]">
+                        Stage {currentStage} of 4 • {currentStage * 25}% Complete
+                      </div>
+                      <div className="text-[11px] text-[#86868B]">
+                        {currentStage === 4 ? 'Ready for Master QA' : currentStage === 3 ? 'Color & Sound Conform' : currentStage === 2 ? 'Story Assembly Locked' : 'Ingest & Footage Verification'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Visual Stepper Bar */}
+                  <div className="space-y-2">
+                    <div className="w-full bg-[#F5F5F7] h-2.5 rounded-full overflow-hidden border border-[#E5E5E7]/80">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 transition-all duration-500 rounded-full"
+                        style={{ width: `${currentStage * 25}%` }}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+                      {[
+                        { step: 1, pct: 25, title: '01. Ingest & Selects', sub: 'Footage checked, audio synced' },
+                        { step: 2, pct: 50, title: '02. Story Assembly', sub: 'Primary cut, pacing locked' },
+                        { step: 3, pct: 75, title: '03. Audio & Color', sub: 'Music sync, Rec.709 grade' },
+                        { step: 4, pct: 100, title: '04. Final Polish', sub: 'Titles & master render ready' },
+                      ].map((st) => {
+                        const isCurrent = currentStage === st.step;
+                        const isPast = currentStage > st.step;
+                        return (
+                          <button
+                            key={st.step}
+                            type="button"
+                            onClick={() => handleUpdateStage(st.step)}
+                            className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative ${
+                              isCurrent
+                                ? 'bg-blue-50/70 border-blue-500 shadow-xs ring-1 ring-blue-500/20'
+                                : isPast
+                                ? 'bg-emerald-50/40 border-emerald-300 text-[#1D1D1F]'
+                                : 'bg-[#FAFAFA] border-[#E5E5E7] hover:bg-slate-100/60 text-[#86868B]'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className={`text-xs font-bold ${isCurrent ? 'text-blue-700' : isPast ? 'text-emerald-700' : 'text-[#1D1D1F]'}`}>
+                                {st.title}
+                              </span>
+                              <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                                isCurrent ? 'bg-blue-200/60 text-blue-800' : isPast ? 'bg-emerald-100 text-emerald-800' : 'bg-[#E5E5E7] text-[#6E6E73]'
+                              }`}>
+                                {isPast ? '✓' : `${st.pct}%`}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#86868B] mt-1 leading-snug">
+                              {st.sub}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Stage Notes & Quick Update */}
+                  <div className="pt-2 border-t border-[#F5F5F7] flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={stageNotes}
+                        onChange={(e) => setStageNotes(e.target.value)}
+                        placeholder="Add optional timeline note (e.g. Assembling scene 2 with music beat drop...)"
+                        className="w-full text-xs px-3.5 py-2.5 bg-[#F5F5F7] border border-[#E5E5E7] rounded-xl focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      {progressSavedToast && (
+                        <span className="text-xs font-bold text-emerald-600 animate-fade-in">
+                          ✓ Progress Synced
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        disabled={savingProgress}
+                        onClick={() => handleUpdateStage(currentStage, stageNotes)}
+                        className="px-4 py-2.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                      >
+                        {savingProgress ? 'Saving...' : 'Save Milestone Note'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dedicated 5th Section: Creator Roadblock & Missing Details Desk */}
+                <div className={`rounded-2xl p-6 border shadow-sm transition-all ${
+                  activeIssue
+                    ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-300/40'
+                    : 'bg-white border-[#E5E5E7]'
+                }`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">⚠️</span>
+                        <h2 className="text-base font-bold text-[#1D1D1F]">
+                          Need Help or Missing Details to Complete Video?
+                        </h2>
+                      </div>
+                      <p className="text-xs text-[#86868B]">
+                        Missing clips, fonts, audio references, or story clarifications? Report it directly to Artsy Studio Lead so our team can resolve it with the client.
+                      </p>
+                    </div>
+
+                    <div className="shrink-0 self-start sm:self-auto">
+                      {activeIssue ? (
+                        <span className="px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold rounded-full uppercase tracking-wide">
+                          Active Roadblock Logged
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setShowIssueForm(!showIssueForm)}
+                          className="px-3.5 py-2 bg-[#F5F5F7] hover:bg-slate-100 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                        >
+                          {showIssueForm ? '✕ Close Form' : '+ Raise Issue / Missing Asset'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Active Issue Status Banner */}
+                  {activeIssue && (
+                    <div className="mt-4 p-4 bg-white rounded-xl border border-amber-200/90 shadow-2xs space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-3 border-b border-[#F5F5F7]">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900">
+                              {activeIssue.category?.replace(/_/g, ' ').toUpperCase() || 'MISSING DETAILS'}
+                            </span>
+                            <span className="text-xs font-extrabold text-[#1D1D1F]">
+                              {activeIssue.title}
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#48484A] leading-relaxed pt-1">
+                            {activeIssue.missingDetails || activeIssue.notes}
+                          </p>
+                        </div>
+                        <div className="text-left sm:text-right shrink-0">
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                            activeIssue.urgency === 'blocker' ? 'bg-red-100 text-red-800 border border-red-300' : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {activeIssue.urgency === 'blocker' ? 'Critical Blocker' : 'Normal Priority'}
+                          </span>
+                          <div className="text-[10px] text-[#86868B] mt-1">
+                            Logged: {activeIssue.raisedAt ? new Date(activeIssue.raisedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : 'Recently'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                        <div className="text-xs text-amber-900 font-semibold flex items-center gap-1.5">
+                          <span>⏳</span>
+                          <span>Artsy Studio Lead has been flagged. Client will not see negative signals; admin will coordinate resolution.</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleResolveRoadblock}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer whitespace-nowrap self-end sm:self-auto"
+                        >
+                          ✓ Mark Roadblock Resolved
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Expandable Issue Submission Form */}
+                  {!activeIssue && showIssueForm && (
+                    <form onSubmit={handleRaiseRoadblock} className="mt-5 p-5 bg-[#FAFAFA] rounded-xl border border-[#E5E5E7] space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-xs font-semibold text-[#1D1D1F] block mb-1">
+                            Roadblock / Missing Category *
+                          </label>
+                          <select
+                            value={issueCategory}
+                            onChange={(e) => setIssueCategory(e.target.value)}
+                            className="w-full text-xs px-3 py-2 bg-white border border-[#E5E5E7] rounded-xl focus:outline-none focus:border-blue-500"
+                          >
+                            <option value="missing_raw_clips">Missing Raw Clips / Corrupted Files</option>
+                            <option value="missing_brand_assets">Missing Brand Logo, Fonts or Assets</option>
+                            <option value="audio_music_unclear">Audio / Music Reference Track Unclear</option>
+                            <option value="brief_clarification">Story / Creative Brief Clarification Needed</option>
+                            <option value="other_roadblock">Other Technical / Delivery Blocker</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-[#1D1D1F] block mb-1">
+                            Subject / Title *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={issueTitle}
+                            onChange={(e) => setIssueTitle(e.target.value)}
+                            placeholder="e.g. Scene 4 drone clips missing in Google Drive"
+                            className="w-full text-xs px-3 py-2 bg-white border border-[#E5E5E7] rounded-xl focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-[#1D1D1F] block mb-1">
+                          What is Missing or What Do You Need to Complete the Video? *
+                        </label>
+                        <textarea
+                          required
+                          rows={3}
+                          value={issueMissingDetails}
+                          onChange={(e) => setIssueMissingDetails(e.target.value)}
+                          placeholder="Describe the exact files, timestamps, or clarifications you need. Artsy Studio Lead will review this and contact the client directly."
+                          className="w-full text-xs p-3 bg-white border border-[#E5E5E7] rounded-xl focus:outline-none focus:border-blue-500 resize-none"
+                        />
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+                        <div className="flex items-center gap-4 text-xs">
+                          <span className="font-semibold text-[#1D1D1F]">Urgency:</span>
+                          <label className="flex items-center gap-1.5 cursor-pointer text-[#48484A]">
+                            <input
+                              type="radio"
+                              name="urgency"
+                              checked={issueUrgency === 'normal'}
+                              onChange={() => setIssueUrgency('normal')}
+                            />
+                            Normal (Within 24h)
+                          </label>
+                          <label className="flex items-center gap-1.5 cursor-pointer text-red-600 font-semibold">
+                            <input
+                              type="radio"
+                              name="urgency"
+                              checked={issueUrgency === 'blocker'}
+                              onChange={() => setIssueUrgency('blocker')}
+                            />
+                            Critical Blocker (Editing Halted)
+                          </label>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-auto">
+                          <button
+                            type="button"
+                            onClick={() => setShowIssueForm(false)}
+                            className="px-3.5 py-2 bg-white text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-xl"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={submittingIssue}
+                            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                          >
+                            {submittingIssue ? 'Submitting...' : 'Submit Roadblock to Studio Admin →'}
+                          </button>
+                        </div>
+                      </div>
+                    </form>
                   )}
                 </div>
 

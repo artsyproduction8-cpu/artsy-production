@@ -199,6 +199,30 @@ export default function UnifiedAdminDashboard() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  const [resolvingRoadblock, setResolvingRoadblock] = useState<string | null>(null);
+
+  const handleAdminResolveRoadblock = async (projectId: string) => {
+    setResolvingRoadblock(projectId);
+    try {
+      const res = await fetch('/api/admin/projects/resolve-roadblock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('✓ Creator roadblock resolved and marked cleared');
+        await fetchRealtime();
+      } else {
+        alert(data.error || 'Failed to resolve roadblock');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Network error resolving roadblock');
+    } finally {
+      setResolvingRoadblock(null);
+    }
+  };
+
   // Find currently selected product for waterfall calculation
   let activeProduct: ServiceProduct | null = null;
   for (const cat of pricingCategories) {
@@ -696,6 +720,90 @@ export default function UnifiedAdminDashboard() {
       {/* ========================================================================= */}
       {activeTab === 'overview' && (
         <div className="space-y-8">
+          {/* Creator Roadblock Alert Banner (Super Admin High Priority Action) */}
+          {realtime?.creatorRoadblocks && realtime.creatorRoadblocks.length > 0 && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-red-50 border border-red-200 shadow-sm space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-red-900 font-bold text-sm">
+                  <span className="text-lg">🚨</span>
+                  <span>Creator Roadblock Action Required ({realtime.creatorRoadblocks.length} Flagged)</span>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-200">
+                  Immediate Studio Intervention
+                </span>
+              </div>
+              <p className="text-xs text-red-700 leading-relaxed">
+                Creators have flagged missing assets or details blocking post-production delivery. Contact client via direct WhatsApp to unblock the cut without compromising turnaround deadlines.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                {realtime.creatorRoadblocks.map((rb: any) => (
+                  <div key={rb.projectId} className="bg-white rounded-xl p-4 border border-red-200 shadow-2xs space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded">
+                            {rb.orderNumber || rb.projectNumber || 'PROJ'}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                            rb.urgency === 'critical' ? 'bg-red-600 text-white animate-pulse' : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {rb.urgency === 'critical' ? 'CRITICAL BLOCKER' : 'NORMAL INQUIRY'}
+                          </span>
+                        </div>
+                        <h4 className="text-xs font-bold text-[#1D1D1F] mt-1">{rb.title}</h4>
+                      </div>
+                      <span className="text-[10px] text-[#86868B] shrink-0">
+                        {rb.raisedAt ? new Date(rb.raisedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                      </span>
+                    </div>
+
+                    <div className="bg-red-50/60 rounded-lg p-2.5 border border-red-100 text-xs">
+                      <div className="text-[11px] font-bold text-red-900 mb-0.5 flex items-center gap-1.5">
+                        <span>⚠️</span>
+                        <span>{rb.issueTitle}</span>
+                        <span className="text-[10px] font-normal text-red-600 uppercase">({String(rb.category || '').replace(/_/g, ' ')})</span>
+                      </div>
+                      <p className="text-red-800 text-[11px] leading-relaxed italic">
+                        "{rb.missingDetails}"
+                      </p>
+                      <div className="text-[10px] text-red-600 font-medium mt-1">
+                        Reported by Editor: <span className="font-bold">{rb.creatorName}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-gray-100 text-xs">
+                      <div className="text-[11px] text-[#1D1D1F]">
+                        Client: <span className="font-bold">{rb.clientName}</span> ({rb.clientPhone || 'No Phone'})
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {rb.clientPhone && (
+                          <a
+                            href={`https://wa.me/${String(rb.clientPhone).replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                              `Hi ${rb.clientName}, regarding your video order ${rb.orderNumber || ''} on Artsy: our post-production team needs a quick detail: ${rb.missingDetails}. Could you please send this across?`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] cursor-pointer transition-colors"
+                          >
+                            <span>WhatsApp Client</span>
+                          </a>
+                        )}
+                        <button
+                          onClick={() => handleAdminResolveRoadblock(rb.projectId)}
+                          disabled={resolvingRoadblock === rb.projectId}
+                          className="px-2.5 py-1 rounded-lg bg-gray-900 hover:bg-black text-white font-bold text-[11px] cursor-pointer disabled:opacity-50 transition-colors"
+                        >
+                          {resolvingRoadblock === rb.projectId ? 'Resolving...' : '✓ Mark Resolved'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Urgent Dispatch Alert if unassigned orders exist */}
           {unassignedCount > 0 && (
             <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

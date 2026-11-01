@@ -285,6 +285,33 @@ export default function ClientDashboardPage() {
                         <h3 className="text-base font-bold text-[#1D1D1F]">
                           {displayTitle}
                         </h3>
+
+                        {/* Positive 4-Stage Progress Meter */}
+                        {((project as any).editingProgress) && (
+                          <div className="pt-2 space-y-1.5 max-w-md">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-semibold text-[#1D1D1F]">
+                                Stage {(project as any).editingProgress.stage || 1} of 4: {(project as any).editingProgress.stageName || 'Ingest & Selects'}
+                              </span>
+                              <span className="text-[10px] font-bold text-blue-700 bg-white px-2 py-0.5 rounded border border-[#E5E5E7]">
+                                {(project as any).editingProgress.percentage || 25}% Complete
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-4 gap-1 w-full">
+                              {[1, 2, 3, 4].map((s) => {
+                                const isFilled = ((project as any).editingProgress.stage || 1) >= s;
+                                return (
+                                  <div
+                                    key={s}
+                                    className={`h-1.5 rounded-full transition-all duration-500 ${
+                                      isFilled ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-[#E5E5E7]'
+                                    }`}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-2 self-start sm:self-auto">

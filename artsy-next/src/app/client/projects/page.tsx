@@ -22,6 +22,13 @@ interface ClientProject {
   preferredCreatorName?: string | null;
   isCreatorDeclined?: boolean;
   declineReason?: string | null;
+  editingProgress?: {
+    stage: number;
+    percentage: number;
+    stageName: string;
+    stageDescription: string;
+    updatedAt?: string;
+  };
 }
 
 export default function ClientProjectsPage() {
@@ -108,6 +115,12 @@ export default function ClientProjectsPage() {
             preferredCreatorName: p.preferredCreatorName || null,
             isCreatorDeclined: p.isCreatorDeclined || false,
             declineReason: p.declineReason || null,
+            editingProgress: p.editingProgress || {
+              stage: 1,
+              percentage: 25,
+              stageName: 'Ingest & Selects',
+              stageDescription: 'Raw footage verified & best takes organized on timeline',
+            },
           };
         });
         setProjects(mapped);
@@ -273,6 +286,50 @@ export default function ClientProjectsPage() {
                             <span>🎥 {proj.cameraAngles}</span>
                             <span>📐 {proj.aspectRatios}</span>
                           </p>
+                        </div>
+
+                        {/* Positive 4-Stage Post-Production Progress Tracker (Zero negative flags) */}
+                        <div className="pt-2.5 space-y-2 max-w-xl">
+                          <div className="flex flex-wrap items-center justify-between text-xs gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-extrabold text-[#1D1D1F]">
+                                Stage {proj.editingProgress?.stage || 1} of 4: {proj.editingProgress?.stageName || 'Ingest & Selects'}
+                              </span>
+                              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                                {proj.editingProgress?.percentage || 25}% Complete
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-[#86868B]">
+                              {proj.editingProgress?.stageDescription}
+                            </span>
+                          </div>
+
+                          {/* 4 Segmented Progress Meter */}
+                          <div className="grid grid-cols-4 gap-1.5 w-full">
+                            {[
+                              { s: 1, label: '01. Ingest' },
+                              { s: 2, label: '02. Assembly' },
+                              { s: 3, label: '03. Color/Audio' },
+                              { s: 4, label: '04. Polish' },
+                            ].map((step) => {
+                              const curr = proj.editingProgress?.stage || 1;
+                              const isFilled = curr >= step.s;
+                              return (
+                                <div key={step.s} className="space-y-1">
+                                  <div
+                                    className={`h-1.5 rounded-full transition-all duration-500 ${
+                                      isFilled
+                                        ? 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-2xs'
+                                        : 'bg-[#E5E5E7]'
+                                    }`}
+                                  />
+                                  <div className={`text-[10px] truncate ${isFilled ? 'font-bold text-[#1D1D1F]' : 'text-[#A1A1A6]'}`}>
+                                    {step.label}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
 

@@ -139,6 +139,18 @@ export async function GET(
     const cameraAnglesCount = snap.angles === 'multi' ? 3 : 1;
     const cameraAnglesLabel = snap.angles === 'multi' ? 'Multi-Camera Editing (3 Angles)' : 'Single Camera Edit (1 Angle)';
 
+    // 7. Resolve Editing Progress & Creator Roadblock Status
+    const editingProgress = snap.editing_progress || {
+      stage: (project as any).current_stage || 1,
+      percentage: (project as any).progress_percentage || 25,
+      stageName: 'Ingest & Selects (25%)',
+      notes: (project as any).stage_notes || 'Raw footage verified & best takes organized',
+      updatedAt: project.updated_at,
+    };
+
+    const creatorIssue = (project as any).issue_details || snap.creator_issue || null;
+    const issueFlagged = Boolean((project as any).issue_flagged ?? creatorIssue?.flagged);
+
     const enrichedProject = {
       ...project,
       title: displayTitle,
@@ -158,6 +170,12 @@ export async function GET(
       clientNotes: snap.notes || null,
       scopeSummary: `${aspectRatios}, ${cameraAnglesLabel}. Delivery SLA: ${creatorTurnaroundLabel} for studio QA review.`,
       creatorAgreementSigned,
+      editingProgress,
+      currentStage: editingProgress.stage,
+      progressPercentage: editingProgress.percentage,
+      stageNotes: editingProgress.notes,
+      issueFlagged,
+      issueDetails: creatorIssue,
       client: {
         full_name: clientUser?.full_name || order?.client_name || 'Verified Client',
         email: clientUser?.email || order?.client_email || '',
@@ -205,6 +223,197 @@ export async function PATCH(
     const db = supabaseAdmin || supabase;
     if (!db || typeof db.from !== 'function') {
       return NextResponse.json({ error: 'Database service unavailable' }, { status: 503 });
+    }
+
+    const STAGE_NAMES: Record<number, string> = {
+      1: 'Ingest & Selects',
+      2: 'Story Assembly',
+      3: 'Audio & Color Grade',
+      4: 'Final Polish & QA',
+    };
+
+    const STAGE_PERCENTAGES: Record<number, number> = {
+      1: 25,
+      2: 50,
+      3: 75,
+      4: 100,
+    };
+
+    if (action === 'update_progress') {
+      const rawStage = Number(body.stage) || 1;
+      const validStage = Math.min(Math.max(rawStage, 1), 4);
+      const percentage = STAGE_PERCENTAGES[validStage] || 25;
+      const stageNotes = typeof body.notes === 'string' ? body.notes.trim() : '';
+      const nowIso = new Date().toISOString();
+
+      // 1. Fetch current order requirements snapshot
+      const { data: currentProj } = await db.from('projects').select('id, order_id').eq('id', projectId).single();
+      if (currentProj?.order_id) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', currentProj.order_id).single();
+        const snap = ord?.requirements_snapshot || {};
+        snap.editing_progress = {
+          stage: validStage,
+          percentage,
+          stageName: STAGE_NAMES[validStage],
+          notes: stageNotes,
+          updatedAt: nowIso,
+          updatedBy: authUser.full_name || authUser.id,
+        };
+        await db.from('orders').update({
+          requirements_snapshot: snap,
+          updated_at: nowIso,
+        }).eq('id', currentProj.order_id);
+      }
+
+      // Try updating projects table if columns exist
+      try {
+        await db.from('projects').update({
+          current_stage: validStage,
+          progress_percentage: percentage,
+          stage_notes: stageNotes,
+          updated_at: nowIso,
+        }).eq('id', projectId);
+      } catch {}
+
+      // Log in audit_logs
+      try {
+        await db.from('audit_logs').insert([{
+          action: 'creator_milestone_progress',
+          user_id: authUser.id,
+          entity_type: 'project',
+          entity_id: projectId,
+          new_values: {
+            stage: validStage,
+            percentage,
+            stageName: STAGE_NAMES[validStage],
+            notes: stageNotes,
+            recorded_at: nowIso,
+          },
+        }]);
+      } catch {}
+
+      return NextResponse.json({
+        success: true,
+        message: 'Editing progress saved',
+        progress: {
+          stage: validStage,
+          percentage,
+          stageName: STAGE_NAMES[validStage],
+          notes: stageNotes,
+          updatedAt: nowIso,
+        },
+      });
+    }
+
+    if (action === 'raise_issue') {
+      const category = body.category || 'other_roadblock';
+      const title = (body.title || 'Missing Project Details').trim();
+      const missingDetails = (body.missingDetails || body.notes || '').trim();
+      const urgency = body.urgency === 'blocker' ? 'blocker' : 'normal';
+      const creatorName = authUser.full_name || 'Creator';
+      const nowIso = new Date().toISOString();
+
+      const issueObj = {
+        flagged: true,
+        category,
+        title,
+        missingDetails,
+        urgency,
+        creatorId: authUser.id,
+        creatorName,
+        raisedAt: nowIso,
+        status: 'open',
+      };
+
+      const { data: currentProj } = await db.from('projects').select('id, order_id, project_number').eq('id', projectId).single();
+      if (currentProj?.order_id) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', currentProj.order_id).single();
+        const snap = ord?.requirements_snapshot || {};
+        snap.creator_issue = issueObj;
+        await db.from('orders').update({
+          requirements_snapshot: snap,
+          updated_at: nowIso,
+        }).eq('id', currentProj.order_id);
+      }
+
+      try {
+        await db.from('projects').update({
+          issue_flagged: true,
+          issue_details: issueObj,
+          updated_at: nowIso,
+        }).eq('id', projectId);
+      } catch {}
+
+      // Audit log
+      try {
+        await db.from('audit_logs').insert([{
+          action: 'creator_roadblock_raised',
+          user_id: authUser.id,
+          entity_type: 'project',
+          entity_id: projectId,
+          new_values: issueObj,
+        }]);
+      } catch {}
+
+      // In-app studio alert for admin
+      try {
+        await db.from('notifications').insert([{
+          user_id: authUser.id,
+          event_number: 99,
+          title: `⚠️ Creator Roadblock: ${title}`,
+          message: `${creatorName} reported missing details on ${currentProj?.project_number || 'Project'}: "${title}". What is needed: ${missingDetails.slice(0, 100)}`,
+          action_url: '/admin',
+          read: false,
+          created_at: nowIso,
+        }]);
+      } catch {}
+
+      return NextResponse.json({
+        success: true,
+        message: 'Roadblock submitted to Studio Lead',
+        issue: issueObj,
+      });
+    }
+
+    if (action === 'resolve_issue') {
+      const nowIso = new Date().toISOString();
+      const { data: currentProj } = await db.from('projects').select('id, order_id').eq('id', projectId).single();
+      if (currentProj?.order_id) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', currentProj.order_id).single();
+        const snap = ord?.requirements_snapshot || {};
+        if (snap.creator_issue) {
+          snap.creator_issue.flagged = false;
+          snap.creator_issue.status = 'resolved';
+          snap.creator_issue.resolvedAt = nowIso;
+        }
+        await db.from('orders').update({
+          requirements_snapshot: snap,
+          updated_at: nowIso,
+        }).eq('id', currentProj.order_id);
+      }
+
+      try {
+        await db.from('projects').update({
+          issue_flagged: false,
+          updated_at: nowIso,
+        }).eq('id', projectId);
+      } catch {}
+
+      // Audit log
+      try {
+        await db.from('audit_logs').insert([{
+          action: 'creator_roadblock_resolved',
+          user_id: authUser.id,
+          entity_type: 'project',
+          entity_id: projectId,
+          new_values: { resolvedAt: nowIso },
+        }]);
+      } catch {}
+
+      return NextResponse.json({
+        success: true,
+        message: 'Roadblock cleared',
+      });
     }
 
     if (action === 'checkin') {

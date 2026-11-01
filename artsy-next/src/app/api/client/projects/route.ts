@@ -54,10 +54,37 @@ export async function GET(request: Request) {
     });
   }
 
+  const POSITIVE_STAGE_INFO: Record<number, { name: string; desc: string }> = {
+    1: {
+      name: 'Ingest & Selects',
+      desc: 'Raw footage verified & best takes organized on timeline',
+    },
+    2: {
+      name: 'Story Assembly',
+      desc: 'Story assembly in progress — timeline cut and pacing locked',
+    },
+    3: {
+      name: 'Audio & Color Grade',
+      desc: 'Cinematic color grading & audio music sync in progress',
+    },
+    4: {
+      name: 'Master Polish & QA',
+      desc: 'Master polish complete — draft rendered for preview',
+    },
+  };
+
   const enrichedProjects = (projects || []).map((p: any) => {
     const ord = p.orders || {};
+    const snap = ord.requirements_snapshot || {};
     const creatorId = p.assigned_creator_id || ord.preferred_creator_id;
     const creatorName = creatorId ? (creatorNameMap[creatorId] || 'Senior Editor') : null;
+
+    // Strict Client Visibility: Positive progress milestones only (Zero negative flags)
+    const progress = snap.editing_progress || {};
+    const rawStage = Number(p.current_stage || progress.stage) || 1;
+    const stageNumber = Math.min(Math.max(rawStage, 1), 4);
+    const progressPct = stageNumber * 25;
+    const stageInfo = POSITIVE_STAGE_INFO[stageNumber] || POSITIVE_STAGE_INFO[1];
 
     return {
       ...p,
@@ -65,6 +92,13 @@ export async function GET(request: Request) {
       preferredCreatorName: ord.preferred_creator_id ? (creatorNameMap[ord.preferred_creator_id] || 'Requested Editor') : null,
       isCreatorDeclined: Boolean(ord.preferred_creator_rejection_reason && !ord.preferred_creator_assigned),
       declineReason: ord.preferred_creator_rejection_reason || null,
+      editingProgress: {
+        stage: stageNumber,
+        percentage: progressPct,
+        stageName: stageInfo.name,
+        stageDescription: stageInfo.desc,
+        updatedAt: progress.updatedAt || p.updated_at,
+      },
     };
   });
 

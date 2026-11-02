@@ -603,13 +603,45 @@ export default function ClientDashboardPage() {
               )}
             </div>
 
-            <div className="text-center py-12 border-2 border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-6 space-y-2">
-              <div className="text-3xl">📦</div>
-              <h3 className="text-sm font-bold text-[#1D1D1F]">No completed videos yet</h3>
-              <p className="text-xs text-[#86868B] max-w-sm mx-auto">
-                Once you approve a draft, your final clean videos and social cuts will appear here for download.
-              </p>
-            </div>
+            {(() => {
+              const completedProjects = projects.filter(
+                (p) => p.status === 'completed' || p.status === 'approved' || Boolean(p.final_download_url)
+              );
+              if (completedProjects.length === 0) {
+                return (
+                  <div className="text-center py-12 border-2 border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-6 space-y-2">
+                    <div className="text-3xl">📦</div>
+                    <h3 className="text-sm font-bold text-[#1D1D1F]">No completed videos yet</h3>
+                    <p className="text-xs text-[#86868B] max-w-sm mx-auto">
+                      Once you approve a draft, your final clean videos and social cuts will appear here for download.
+                    </p>
+                  </div>
+                );
+              }
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {completedProjects.slice(0, 2).map((cp) => (
+                    <div key={cp.id} className="p-4 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col justify-between space-y-3">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          ✓ Ready to Download
+                        </span>
+                        <h4 className="text-sm font-bold text-[#1D1D1F] mt-2">{cp.title || 'Cinematic Film Delivery'}</h4>
+                        <div className="text-[11px] text-[#86868B] mt-0.5">Order Ref: {cp.orders?.order_number || cp.project_number || `#${cp.id?.slice(0, 8)}`}</div>
+                      </div>
+                      <div className="flex items-center gap-2 pt-2">
+                        <Link
+                          href="/client/masters"
+                          className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg text-center transition-colors shadow-2xs"
+                        >
+                          Download 4K Master ↓
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </section>
 
           {/* ================================================================ */}
@@ -636,13 +668,54 @@ export default function ClientDashboardPage() {
               )}
             </div>
 
-            <div className="text-center py-12 border-2 border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-6 space-y-2">
-              <div className="text-3xl">🧾</div>
-              <h3 className="text-sm font-bold text-[#1D1D1F]">No invoices yet</h3>
-              <p className="text-xs text-[#86868B] max-w-sm mx-auto">
-                Official GST invoices and payment receipts will appear here automatically when you book a project.
-              </p>
-            </div>
+            {(() => {
+              const paidProjects = projects.filter(
+                (p) => p.orders?.status === 'paid' || p.orders?.gross_amount
+              );
+              if (paidProjects.length === 0) {
+                return (
+                  <div className="text-center py-12 border-2 border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-6 space-y-2">
+                    <div className="text-3xl">🧾</div>
+                    <h3 className="text-sm font-bold text-[#1D1D1F]">No invoices yet</h3>
+                    <p className="text-xs text-[#86868B] max-w-sm mx-auto">
+                      Official GST invoices and payment receipts will appear here automatically when you book a project.
+                    </p>
+                  </div>
+                );
+              }
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {paidProjects.slice(0, 2).map((pp) => {
+                    const gross = Number(pp.orders?.gross_amount) || 0;
+                    const paidInr = Math.round(gross / 100);
+                    const invNumber = `INV-ARTSY-${(pp.orders?.order_number || pp.id)?.replace(/[^a-zA-Z0-9]/g, '').slice(-6)}`;
+                    return (
+                      <div key={pp.id} className="p-4 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col justify-between space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <span className="text-[10px] font-mono font-bold text-blue-600">{invNumber}</span>
+                            <h4 className="text-sm font-bold text-[#1D1D1F] mt-1">{pp.title || 'Post-Production Order'}</h4>
+                            <div className="text-[11px] text-[#86868B] mt-0.5">Total Paid: <strong className="text-[#1D1D1F]">₹{paidInr.toLocaleString('en-IN')}</strong> (Inc. 18% GST)</div>
+                          </div>
+                          <span className="text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">
+                            ✓ Paid
+                          </span>
+                        </div>
+                        <div className="pt-2">
+                          <Link
+                            href={`/api/invoices/${pp.orders?.id || pp.id}`}
+                            target="_blank"
+                            className="inline-block py-2 px-3 bg-white hover:bg-slate-50 border border-[#E5E5E7] text-[#1D1D1F] text-xs font-bold rounded-lg transition-colors shadow-2xs"
+                          >
+                            View Tax Invoice ↗
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </section>
           </div>
         </main>

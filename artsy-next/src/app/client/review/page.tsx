@@ -559,8 +559,16 @@ export default function ClientReviewPage() {
                           <span>{isApproving ? 'Approving...' : '✓ I Like It! Approve Video Cut'}</span>
                         </button>
                       ) : (
-                        <div className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5">
-                          <span>✓ Video Cut Approved</span>
+                        <div className="flex items-center gap-2">
+                          <div className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs">
+                            <span>✓ Video Cut Approved</span>
+                          </div>
+                          <Link
+                            href="/client/masters"
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-xs"
+                          >
+                            <span>Download 4K Master Assets →</span>
+                          </Link>
                         </div>
                       )}
                     </div>

@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
+import { formatPublicCreatorName } from '@/lib/masking';
 
 export const dynamic = 'force-dynamic';
 
@@ -118,17 +119,37 @@ export async function GET(
       displayTitle = cleanCat ? `${cleanCat} • ${cleanSub}` : cleanSub;
     }
 
-    // Resolve creator name
+    // Resolve creator name (Strict Privacy Invariant: Match creator page public display name; NEVER reveal full legal name)
     let creatorName: string | null = null;
     const creatorId = project.assigned_creator_id || ord.preferred_creator_id;
     if (creatorId) {
-      const { data: creatorUser } = await db
-        .from('users')
-        .select('full_name')
+      // 1. First check creator_profiles for curated public_display_name
+      const { data: creatorProfile } = await db
+        .from('creator_profiles')
+        .select('public_display_name')
         .eq('id', creatorId)
         .maybeSingle();
-      if (creatorUser?.full_name) {
-        creatorName = creatorUser.full_name;
+
+      const profileName = creatorProfile?.public_display_name?.trim();
+      const isGeneric = (n?: string | null) => {
+        if (!n) return true;
+        const l = n.trim().toLowerCase();
+        return l === 'creator partner' || l === 'creator' || l === 'creator member' || l === 'artsy creator';
+      };
+
+      if (profileName && !isGeneric(profileName)) {
+        creatorName = formatPublicCreatorName(profileName) || profileName;
+      } else {
+        // Fallback to user full_name but ALWAYS mask with formatPublicCreatorName (e.g. "Shivratan K")
+        const { data: creatorUser } = await db
+          .from('users')
+          .select('full_name')
+          .eq('id', creatorId)
+          .maybeSingle();
+
+        if (creatorUser?.full_name) {
+          creatorName = formatPublicCreatorName(creatorUser.full_name);
+        }
       }
     }
 

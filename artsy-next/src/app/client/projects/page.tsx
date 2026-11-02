@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import ClientHeader from '../components/ClientHeader';
 import ClientSidebar from '../components/ClientSidebar';
+import { formatPublicCreatorName } from '@/lib/masking';
 
 interface ClientProject {
   id: string;
@@ -111,8 +112,8 @@ export default function ClientProjectsPage() {
             priceFormatted,
             aspectRatios,
             cameraAngles,
-            creatorName: p.creatorName || null,
-            preferredCreatorName: p.preferredCreatorName || null,
+            creatorName: p.creatorName ? formatPublicCreatorName(p.creatorName) : null,
+            preferredCreatorName: p.preferredCreatorName ? formatPublicCreatorName(p.preferredCreatorName) : null,
             isCreatorDeclined: p.isCreatorDeclined || false,
             declineReason: p.declineReason || null,
             editingProgress: p.editingProgress || {

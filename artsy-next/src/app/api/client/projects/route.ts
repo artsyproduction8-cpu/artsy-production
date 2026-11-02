@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
+import { formatPublicCreatorName } from '@/lib/masking';
 
 export async function GET(request: Request) {
   const authUser = await getAuthenticatedUser(request);
@@ -44,13 +45,41 @@ export async function GET(request: Request) {
 
   const creatorNameMap: Record<string, string> = {};
   if (creatorIds.size > 0) {
+    const idList = Array.from(creatorIds);
     const { data: creatorProfiles } = await db
       .from('creator_profiles')
       .select('id, public_display_name')
-      .in('id', Array.from(creatorIds));
+      .in('id', idList);
+
+    const { data: creatorUsers } = await db
+      .from('users')
+      .select('id, full_name')
+      .in('id', idList);
+
+    const userMap: Record<string, string> = {};
+    (creatorUsers || []).forEach((u: any) => {
+      userMap[u.id] = u.full_name;
+    });
+
+    const isGeneric = (n?: string | null) => {
+      if (!n) return true;
+      const l = n.trim().toLowerCase();
+      return l === 'creator partner' || l === 'creator' || l === 'creator member' || l === 'artsy creator';
+    };
 
     (creatorProfiles || []).forEach((c: any) => {
-      creatorNameMap[c.id] = c.public_display_name;
+      const pName = c.public_display_name?.trim();
+      if (pName && !isGeneric(pName)) {
+        creatorNameMap[c.id] = formatPublicCreatorName(pName) || pName;
+      } else if (userMap[c.id]) {
+        creatorNameMap[c.id] = formatPublicCreatorName(userMap[c.id]);
+      }
+    });
+
+    idList.forEach((id) => {
+      if (!creatorNameMap[id] && userMap[id]) {
+        creatorNameMap[id] = formatPublicCreatorName(userMap[id]);
+      }
     });
   }
 

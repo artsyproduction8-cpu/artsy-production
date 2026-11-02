@@ -8,6 +8,7 @@ import ClientHeader from './components/ClientHeader';
 import ClientSidebar from './components/ClientSidebar';
 import { useAuth } from '@/lib/auth';
 import { parseVideoEmbedUrl } from '@/lib/video/embed';
+import { formatPublicCreatorName } from '@/lib/masking';
 
 interface StudioProfile {
   displayName: string;
@@ -378,7 +379,7 @@ export default function ClientDashboardPage() {
                 displayTitle = cleanCat ? `${cleanCat} • ${cleanSub}` : cleanSub;
               }
               const orderBadge = ord.order_number || `#${activeProject?.id?.slice(0, 8)}`;
-              const editorName = activeProject?.creatorName || 'Assigned Senior Editor';
+              const editorName = activeProject?.creatorName ? formatPublicCreatorName(activeProject.creatorName) : 'Assigned Senior Editor';
               const embed = parseVideoEmbedUrl(activeProject?.deliverableUrl);
               const isProjectApproved = activeProject?.status === 'approved' || activeProject?.status === 'completed';
 

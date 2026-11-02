@@ -203,7 +203,7 @@ export default function ClientDashboardPage() {
                 DRAFTS TO REVIEW
               </span>
               <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1.5">
-                {projects.filter((p) => p.status === 'review_ready' || p.status === 'in_review').length} Pending
+                {projects.filter((p) => p.status === 'review_ready' || p.status === 'in_review' || p.status === 'client_review').length} Pending
               </div>
             </div>
 
@@ -324,7 +324,7 @@ export default function ClientDashboardPage() {
 
                       <div className="flex items-center gap-2 self-start sm:self-auto">
                         <Link
-                          href={`/client/projects`}
+                          href={`/client/projects/${project.id}`}
                           className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
                         >
                           Project Details →

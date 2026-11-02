@@ -418,12 +418,16 @@ export default function FreelancerDashboard() {
                       <div className="rounded-2xl p-5 bg-[#F5F5F7] border border-[#E5E5E7]">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[11px] uppercase text-[#86868B] font-semibold">
-                            TOTAL EARNINGS
+                            ACTIVE PAYOUT VALUE
                           </span>
-                          <span className="text-emerald-600 text-xs font-bold">Paid Out</span>
+                          <span className="text-emerald-600 text-xs font-bold">In-Flight</span>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-extrabold text-[#1D1D1F] leading-none">₹0</div>
-                        <div className="text-xs text-[#86868B] mt-2">0 Completed Orders</div>
+                        <div className="text-3xl sm:text-4xl font-extrabold text-[#1D1D1F] leading-none">
+                          ₹{activeProjects.reduce((sum, p) => sum + (p.payoutInr || 0), 0).toLocaleString('en-IN')}
+                        </div>
+                        <div className="text-xs text-[#86868B] mt-2">
+                          {activeProjects.length} {activeProjects.length === 1 ? 'Active Project' : 'Active Projects'}
+                        </div>
                       </div>
 
                       <div className="rounded-2xl p-5 bg-[#F5F5F7] border border-[#E5E5E7]">
@@ -431,16 +435,20 @@ export default function FreelancerDashboard() {
                           <span className="text-[11px] uppercase text-[#86868B] font-semibold">
                             ACTIVE PROJECTS
                           </span>
-                          <span className="w-2 h-2 rounded-full bg-zinc-400"></span>
+                          <span className={`w-2 h-2 rounded-full ${activeProjects.length > 0 ? 'bg-emerald-500' : 'bg-zinc-400'}`}></span>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-extrabold text-[#1D1D1F] leading-none">00</div>
-                        <div className="text-xs text-[#86868B] mt-2">None In Progress</div>
+                        <div className="text-3xl sm:text-4xl font-extrabold text-[#1D1D1F] leading-none">
+                          {String(activeProjects.length).padStart(2, '0')}
+                        </div>
+                        <div className="text-xs text-[#86868B] mt-2">
+                          {activeProjects.length > 0 ? `${activeProjects.length} In Progress` : 'None In Progress'}
+                        </div>
                       </div>
 
                       <div className="rounded-2xl p-5 bg-[#F5F5F7] border border-[#E5E5E7]">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[11px] uppercase text-[#86868B] font-semibold">PERFORMANCE RATING</span>
-                          <span className="text-emerald-600 text-xs font-bold">New Partner</span>
+                          <span className="text-emerald-600 text-xs font-bold">Verified Partner</span>
                         </div>
                         <div className="text-3xl sm:text-4xl font-extrabold text-emerald-600 leading-none">100%</div>
                         <div className="text-xs text-[#86868B] mt-2">On-Time Delivery Target</div>

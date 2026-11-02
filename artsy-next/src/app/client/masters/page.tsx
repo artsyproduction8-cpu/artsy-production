@@ -1,23 +1,104 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ClientHeader from '../components/ClientHeader';
 import ClientSidebar from '../components/ClientSidebar';
 
 interface MasterDeliverable {
   id: string;
+  projectId: string;
   projectTitle: string;
   orderRef: string;
   completedDate: string;
+  status: string;
   resolution: string;
   audioSpec: string;
   downloads: { label: string; format: string; size: string; url: string }[];
 }
 
-const MASTERS: MasterDeliverable[] = [];
-
 export default function ClientMastersPage() {
-  const masters = MASTERS;
+  const [masters, setMasters] = useState<MasterDeliverable[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadMasters() {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/client/projects');
+        const data = await res.json();
+        if (data.projects && Array.isArray(data.projects)) {
+          // Filter for projects that are completed, approved, or have final_download_url
+          const completedProjects = data.projects.filter(
+            (p: any) =>
+              p.status === 'completed' ||
+              p.status === 'approved' ||
+              Boolean(p.final_download_url)
+          );
+
+          const mapped: MasterDeliverable[] = completedProjects.map((p: any) => {
+            const ord = p.orders || {};
+            const downloadUrl = p.final_download_url || '#';
+            const orderRef = ord.order_number || p.project_number || `ORD-${p.id.slice(0, 8)}`;
+            const dateStr = p.created_at
+              ? new Date(p.created_at).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : 'Recent';
+
+            return {
+              id: p.id,
+              projectId: p.id,
+              projectTitle: p.title || 'Cinematic Film Delivery',
+              orderRef,
+              completedDate: dateStr,
+              status: p.status === 'approved' || p.status === 'completed' ? 'Approved & Finalized' : 'Ready for Ingest',
+              resolution: '4K DCI (3840x2160) ProRes 422 HQ',
+              audioSpec: '24-bit 48kHz Stereo Master',
+              downloads: [
+                {
+                  label: '4K Master Video (ProRes / High Bitrate)',
+                  format: 'Apple ProRes 422 HQ / MP4 Clean',
+                  size: 'Primary Master Delivery',
+                  url: downloadUrl,
+                },
+                {
+                  label: 'Web & Social Cut (H.264)',
+                  format: 'H.264 High Profile (Optimized)',
+                  size: 'Web Deliverable',
+                  url: downloadUrl,
+                },
+                {
+                  label: 'Full Delivery Vault Folder',
+                  format: 'Master Archive (Raw Cuts + Project File)',
+                  size: 'Studio Archival',
+                  url: downloadUrl,
+                },
+              ],
+            };
+          });
+
+          setMasters(mapped);
+        }
+      } catch (err) {
+        console.warn('Failed to load completed deliverables:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadMasters();
+  }, []);
+
+  const handleDownload = (url: string, label: string) => {
+    if (!url || url === '#') {
+      alert(`Master file for ${label} is being prepared by the studio render engine.`);
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="bg-[#F5F5F7] text-[#1D1D1F] min-h-screen font-sans overflow-x-hidden">
@@ -32,76 +113,110 @@ export default function ClientMastersPage() {
                 Final Downloads
               </h1>
               <p className="text-sm text-[#86868B] mt-1">
-                Download your finished, approved videos and files in full 4K quality without watermarks.
+                Download your finished, approved videos and assets in pristine 4K quality without watermarks.
               </p>
             </div>
 
-            {/* Masters Grid or Empty State */}
-            {masters.length === 0 ? (
-              <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8 space-y-3">
+            {loading ? (
+              <div className="py-24 flex flex-col items-center justify-center space-y-4">
+                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-xs text-[#86868B] font-medium">Loading verified master cuts...</p>
+              </div>
+            ) : masters.length === 0 ? (
+              <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-3xl bg-white p-8 space-y-3 shadow-xs">
                 <div className="text-4xl mb-3">📦</div>
                 <h3 className="text-lg font-semibold text-[#1D1D1F]">No final downloads yet</h3>
                 <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-                  Once you review and approve a video draft, your full quality 4K video, social media cuts, and audio files will appear here ready to download.
+                  Once your video editor submits a master draft and you approve the cut, your unwatermarked 4K video, social media cuts, and audio files will appear here ready to download.
                 </p>
-                <Link
-                  href="/book"
-                  className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm"
-                >
-                  Start New Project →
-                </Link>
+                <div className="flex items-center justify-center gap-3">
+                  <Link
+                    href="/client/projects"
+                    className="inline-block px-5 py-2.5 bg-white hover:bg-slate-50 border border-[#E5E5E7] text-[#1D1D1F] rounded-xl font-bold text-xs transition-all shadow-2xs"
+                  >
+                    View Active Projects →
+                  </Link>
+                  <Link
+                    href="/book"
+                    className="inline-block px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-all shadow-xs"
+                  >
+                    Start New Project
+                  </Link>
+                </div>
               </div>
             ) : (
               <div className="space-y-6">
-              {MASTERS.map((master) => (
-                <div
-                  key={master.id}
-                  className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E5E7] shadow-xs space-y-6"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#F5F5F7]">
+                {masters.map((master) => (
+                  <div
+                    key={master.id}
+                    className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E5E7] shadow-xs space-y-6"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#F5F5F7]">
+                      <div>
+                        <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                          ✓ {master.status.toUpperCase()}
+                        </span>
+                        <h2 className="text-lg font-bold text-[#1D1D1F] mt-2">{master.projectTitle}</h2>
+                        <div className="text-xs text-[#86868B] mt-0.5">
+                          Order: <span className="font-mono text-[#1D1D1F] font-semibold">{master.orderRef}</span> • Delivery Date: {master.completedDate}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/client/projects/${master.projectId}`}
+                          className="px-4 py-2 rounded-xl bg-[#F5F5F7] hover:bg-[#E5E5E7] text-xs font-bold text-[#1D1D1F] transition-colors"
+                        >
+                          View Workstation →
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Master Video Technical Specs */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-[#F5F5F7]/60 rounded-2xl border border-[#E5E5E7]/60 text-xs">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-[#86868B] block">Master Resolution & Codec</span>
+                        <span className="font-semibold text-[#1D1D1F]">{master.resolution}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-[#86868B] block">Audio Master Profile</span>
+                        <span className="font-semibold text-[#1D1D1F]">{master.audioSpec}</span>
+                      </div>
+                    </div>
+
+                    {/* Downloads Cards */}
                     <div>
-                      <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        ✓ APPROVED &amp; FINALIZED
-                      </span>
-                      <h2 className="text-lg font-bold text-[#1D1D1F] mt-2">{master.projectTitle}</h2>
-                      <div className="text-xs text-[#86868B] mt-0.5">
-                        Ref: {master.orderRef} • Completed: {master.completedDate}
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-[#86868B] mb-3">
+                        Ready to Download
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {master.downloads.map((dl, i) => (
+                          <div
+                            key={i}
+                            className="p-5 rounded-2xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col justify-between space-y-3"
+                          >
+                            <div>
+                              <div className="text-xs font-bold text-[#1D1D1F]">{dl.label}</div>
+                              <div className="text-[11px] text-[#86868B] mt-0.5">{dl.format}</div>
+                              <div className="text-[10px] font-mono font-semibold text-blue-600 mt-1">
+                                {dl.size}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDownload(dl.url, dl.label)}
+                              className="w-full py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-[#E5E5E7] text-xs font-bold text-[#1D1D1F] transition-colors shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <span>Download Master</span>
+                              <span>↓</span>
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
-
-                  {/* Downloads Cards */}
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#86868B] mb-3">
-                      Ready to Download
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {master.downloads.map((dl, i) => (
-                        <div
-                          key={i}
-                          className="p-4 rounded-2xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col justify-between space-y-3"
-                        >
-                          <div>
-                            <div className="text-xs font-bold text-[#1D1D1F]">{dl.label}</div>
-                            <div className="text-[11px] text-[#86868B] mt-0.5">{dl.format}</div>
-                            <div className="text-[10px] font-mono font-semibold text-blue-600 mt-1">
-                              {dl.size}
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => alert(`Starting download for ${dl.label}...`)}
-                            className="w-full py-2 rounded-xl bg-white hover:bg-slate-50 border border-[#E5E5E7] text-xs font-bold text-[#1D1D1F] transition-colors shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
-                          >
-                            <span>Download File</span>
-                            <span>↓</span>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
             )}
           </div>
         </main>

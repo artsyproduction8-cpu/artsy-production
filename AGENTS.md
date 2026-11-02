@@ -294,6 +294,23 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
    - **Timeline Timecode (`⏱ HH:MM:SS`):** The video playback position where feedback applies is prominently displayed on review note badges for both clients and creators to guide precise video revisions.
    - **Submission Date & Calendar Time Privacy:** Calendar day, date, and clock time of submission (e.g. `2 Nov, 02:09 pm`) are strictly hidden from client and creator card views to keep the creative review interface clean and focused solely on creative notes. Calendar timestamps are strictly reserved for and visible to Studio Administrators only (`/admin/*`) via order snapshots and audit logs.
 
+### 3.6 Client Downloads, Invoicing & Creator Payout Ledgers
+1. **Client Final Downloads (`/client/masters`):**
+   - Must dynamically fetch verified deliverables from `/api/client/projects`.
+   - Filters for approved or completed cuts (`p.status === 'completed' || p.status === 'approved'` or active `final_download_url`).
+   - Renders 1-click download cards for 4K ProRes Master, Social H.264 cut, and Archival Delivery Vault with direct download triggers.
+2. **Client Statutory Invoicing (`/client/invoices` & `/api/client/invoices`):**
+   - `GET /api/client/invoices` resolves paid client orders, calculates net taxable value ($gross \times 100 / 118$) and 18% GST liability ($gross - netBase$).
+   - Returns structured tax invoice records with studio GSTIN (`27AABCU9603R1ZM`) and direct links to `/api/invoices/[orderId]`.
+3. **Creator Earnings & Payout Ledger (`/freelancer/payouts` & `/api/freelancer/payouts`):**
+   - `GET /api/freelancer/payouts` resolves assigned projects and recorded `creator_payouts`.
+   - Calculates the authoritative financial waterfall: 70% gross creator share, 2% Section 194J statutory TDS deduction, and 68.6% net NEFT bank payout.
+   - Computes live aggregate metrics: Total Paid Out, Pending In Progress, and Ready for Payout.
+4. **Client & Creator Dashboard Status Alignment:**
+   - Canonical status `'client_review'` is strictly included in "Drafts to Review" counts and "Review Ready" badges across `/client` and `/client/projects`.
+   - Dashboard project cards strictly route to `/client/projects/${project.id}`.
+   - Creator dashboard dynamically aggregates active project counts and in-flight payout valuations.
+
 ---
 
 ## 4. DYNAMIC PRICING ENGINE & FINANCIAL WATERFALL

@@ -97,13 +97,13 @@ export default function ClientProjectsPage() {
             category: categoryLabel,
             status: p.status || 'in_progress',
             statusLabel:
-              p.status === 'review_ready'
+              p.status === 'review_ready' || p.status === 'client_review'
                 ? 'Review Ready'
                 : p.status === 'completed' || p.status === 'approved'
                 ? 'Completed'
                 : 'In Production',
             statusColor:
-              p.status === 'review_ready'
+              p.status === 'review_ready' || p.status === 'client_review'
                 ? 'bg-blue-500/10 text-blue-600 border-blue-200'
                 : p.status === 'completed' || p.status === 'approved'
                 ? 'bg-emerald-500/10 text-emerald-700 border-emerald-200'

@@ -47,6 +47,11 @@ export default function FreelancerWorkView() {
   const [issueUrgency, setIssueUrgency] = useState<'normal' | 'blocker'>('normal');
   const [submittingIssue, setSubmittingIssue] = useState(false);
 
+  // Client Review & Feedback State
+  const [clientReviewNotes, setClientReviewNotes] = useState<any[]>([]);
+  const [isClientApproved, setIsClientApproved] = useState<boolean>(false);
+  const [showReplaceDeliverable, setShowReplaceDeliverable] = useState<boolean>(false);
+
   useEffect(() => {
     // 1. Enforce authenticated creator session; redirect to login if missing
     const currentUser = getCurrentUser();
@@ -78,6 +83,22 @@ export default function FreelancerWorkView() {
             setActiveIssue(data.project.issueDetails);
           } else {
             setActiveIssue(null);
+          }
+
+          // Sync deliverable URL & status
+          if (data.project.deliverableUrl) {
+            setDeliverableUrl(data.project.deliverableUrl);
+            setDeliverableUploaded(true);
+          } else if (data.project.deliverableUploaded) {
+            setDeliverableUploaded(true);
+          }
+
+          // Sync client reviews & approval
+          if (Array.isArray(data.project.reviewNotes)) {
+            setClientReviewNotes(data.project.reviewNotes);
+          }
+          if (data.project.isApproved) {
+            setIsClientApproved(true);
           }
 
           // If creator agreement is signed on server, sync to client session
@@ -824,16 +845,53 @@ export default function FreelancerWorkView() {
                 </div>
 
                 {/* Deliverable Submission */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm">
-                  <h2 className="text-base font-bold text-[#1D1D1F] mb-1">Submit Master Cut Deliverable</h2>
-                  <p className="text-xs text-[#86868B] mb-4">
-                    Provide your master export link from any platform (Google Drive, Vimeo, Frame.io, Dropbox, or YouTube unlisted).
-                  </p>
-                  {deliverableUploaded ? (
-                    <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                      <span className="text-emerald-700 font-bold text-sm">✓ Deliverable Submitted to QA Pipeline</span>
-                      <p className="text-xs text-emerald-600 mt-1">
-                        Client review will open once internal quality checklist passes. Substantial progress logged.
+                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h2 className="text-base font-bold text-[#1D1D1F]">Master Cut Deliverable</h2>
+                      <p className="text-xs text-[#86868B] mt-0.5">
+                        Provide your export link from any platform (YouTube, Vimeo, Google Drive, Frame.io, Dropbox, or direct stream URL).
+                      </p>
+                    </div>
+                    {deliverableUploaded && (
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                        ✓ In Client Review Pipeline
+                      </span>
+                    )}
+                  </div>
+
+                  {deliverableUploaded && !showReplaceDeliverable ? (
+                    <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                        <div className="space-y-0.5 min-w-0 flex-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                            Active Deliverable Link
+                          </span>
+                          <p className="font-mono text-xs text-emerald-900 truncate">
+                            {deliverableUrl}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <a
+                            href={deliverableUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>Open Link</span>
+                            <span>↗</span>
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => setShowReplaceDeliverable(true)}
+                            className="px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-900 font-semibold text-xs rounded-lg border border-emerald-300 transition-colors cursor-pointer"
+                          >
+                            Update Link
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-emerald-700 leading-relaxed">
+                        This video is live in the client portal. The client can watch, pause at any second, and leave timestamped feedback.
                       </p>
                     </div>
                   ) : (
@@ -846,20 +904,103 @@ export default function FreelancerWorkView() {
                           type="url"
                           value={deliverableUrl}
                           onChange={(e) => setDeliverableUrl(e.target.value)}
-                          placeholder="https://drive.google.com/... or Vimeo / Frame.io / Dropbox link"
-                          className="bg-[#F5F5F7] px-4 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all"
+                          placeholder="https://youtu.be/... or Google Drive / Vimeo / Loom / Dropbox link"
+                          className="bg-[#F5F5F7] px-4 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all font-mono"
                         />
                         <span className="text-[11px] text-[#86868B]">
-                          Universal link from any cloud storage or video hosting platform
+                          Supports YouTube, Vimeo, Google Drive video previews, Loom, or direct MP4/stream links.
                         </span>
                       </div>
-                      <button
-                        onClick={handleDeliverableSubmit}
-                        className="w-full py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <span>Submit Master Cut for QA Review</span>
-                        <span>↗</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {showReplaceDeliverable && (
+                          <button
+                            type="button"
+                            onClick={() => setShowReplaceDeliverable(false)}
+                            className="px-4 py-3 bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] text-xs font-semibold rounded-xl"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        <button
+                          onClick={async () => {
+                            await handleDeliverableSubmit();
+                            setShowReplaceDeliverable(false);
+                          }}
+                          className="flex-1 py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <span>{showReplaceDeliverable ? 'Save Updated Master Cut Link' : 'Submit Master Cut for Client Review'}</span>
+                          <span>↗</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Dedicated Section: Client Review & Revision Notes Desk */}
+                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h2 className="text-base font-bold text-[#1D1D1F]">Client Review &amp; Timeline Feedback</h2>
+                      <p className="text-xs text-[#86868B] mt-0.5">
+                        Client feedback logged at specific timecodes during draft review.
+                      </p>
+                    </div>
+                    {isClientApproved ? (
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                        ✓ APPROVED BY CLIENT
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                        {clientReviewNotes.length} Client {clientReviewNotes.length === 1 ? 'Note' : 'Notes'}
+                      </span>
+                    )}
+                  </div>
+
+                  {isClientApproved && (
+                    <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
+                      <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
+                        <span>🎉</span>
+                        <span>Client Has Approved This Cut!</span>
+                      </div>
+                      <p className="text-xs text-emerald-700">
+                        The client approved the final draft. Milestone payout will settle to your bank account upon final export conform.
+                      </p>
+                    </div>
+                  )}
+
+                  {clientReviewNotes.length === 0 ? (
+                    <div className="p-6 bg-[#F5F5F7] rounded-xl text-center space-y-1 border border-[#E5E5E7]">
+                      <span className="text-lg">👀</span>
+                      <p className="text-xs font-semibold text-[#1D1D1F]">No review notes yet</p>
+                      <p className="text-[11px] text-[#86868B] max-w-sm mx-auto">
+                        Once your client plays the draft cut, any timestamped notes, color adjustments, or audio changes they request will appear right here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {clientReviewNotes.map((note) => (
+                        <div
+                          key={note.id}
+                          className="p-3.5 bg-[#F5F5F7] hover:bg-white border border-[#E5E5E7] rounded-xl transition-all space-y-1.5"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-xs font-bold text-[#1D1D1F] bg-white px-2 py-0.5 rounded border border-[#E5E5E7]">
+                                ⏱ {note.timecode || '00:00:00'}
+                              </span>
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                {note.tag || note.category || 'NOTE'}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-[#86868B]">
+                              {note.timeAgo || (note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '')}
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#1D1D1F] leading-relaxed font-medium">
+                            &quot;{note.text}&quot;
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>

@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const { data: projects, error } = await db
     .from('projects')
     .select(`
-      id, title, status, created_at, order_id, project_number, current_revision_round, max_free_revisions, client_deadline, assigned_creator_id,
+      id, title, status, created_at, order_id, project_number, current_revision_round, max_free_revisions, client_deadline, assigned_creator_id, final_download_url,
       orders:order_id (
         id, order_number, gross_amount, status, service_key, requirements_snapshot, paid_at,
         preferred_creator_id, preferred_creator_assigned, preferred_creator_rejection_reason
@@ -89,6 +89,8 @@ export async function GET(request: Request) {
     return {
       ...p,
       creatorName,
+      deliverableUrl: p.final_download_url || snap.deliverable_url || snap.draft_cut_url || null,
+      isReviewReady: Boolean(p.status === 'review_ready' || p.final_download_url || snap.deliverable_url),
       preferredCreatorName: ord.preferred_creator_id ? (creatorNameMap[ord.preferred_creator_id] || 'Requested Editor') : null,
       isCreatorDeclined: Boolean(ord.preferred_creator_rejection_reason && !ord.preferred_creator_assigned),
       declineReason: ord.preferred_creator_rejection_reason || null,

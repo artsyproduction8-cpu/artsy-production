@@ -151,6 +151,68 @@ export async function GET(
     const creatorIssue = (project as any).issue_details || snap.creator_issue || null;
     const issueFlagged = Boolean((project as any).issue_flagged ?? creatorIssue?.flagged);
 
+    // Fetch review notes from public.revisions table & snap
+    const reviewNotes: any[] = [];
+    try {
+      const { data: dbRevs } = await db
+        .from('revisions')
+        .select('*')
+        .eq('project_id', project.id)
+        .order('created_at', { ascending: false });
+
+      (dbRevs || []).forEach((r: any) => {
+        let tag = 'GENERAL';
+        let text = r.comment || '';
+        const match = text.match(/^\[(.*?)\]\s*(.*)$/);
+        if (match) {
+          tag = match[1].toUpperCase();
+          text = match[2];
+        }
+
+        const secs = Number(r.timecode_seconds) || 0;
+        const h = String(Math.floor(secs / 3600)).padStart(2, '0');
+        const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
+        const s = String(Math.floor(secs % 60)).padStart(2, '0');
+        const formattedTc = `${h}:${m}:${s}`;
+
+        reviewNotes.push({
+          id: r.id,
+          timecode: formattedTc,
+          timecodeSeconds: secs,
+          tag,
+          text,
+          status: r.status,
+          createdAt: r.created_at,
+        });
+      });
+    } catch {}
+
+    const snapNotes = Array.isArray(snap.client_review_notes) ? snap.client_review_notes : [];
+    snapNotes.forEach((sn: any) => {
+      if (!reviewNotes.some((rn) => rn.id === sn.id)) {
+        reviewNotes.push({
+          id: sn.id || String(Date.now()),
+          timecode: sn.timecode || '00:00:00',
+          timecodeSeconds: sn.timecodeSeconds || 0,
+          tag: sn.tag || sn.category || 'GENERAL',
+          text: sn.text || sn.comment || '',
+          status: sn.status || 'requested',
+          createdAt: sn.createdAt || new Date().toISOString(),
+        });
+      }
+    });
+
+    const isApproved =
+      project.status === 'approved' ||
+      project.status === 'completed' ||
+      Boolean(snap.client_approval?.approvedAt);
+    const deliverableUrl =
+      project.final_download_url ||
+      snap.deliverable_url ||
+      snap.draft_cut_url ||
+      null;
+    const deliverableUploaded = Boolean(deliverableUrl || project.status === 'review_ready');
+
     const enrichedProject = {
       ...project,
       title: displayTitle,
@@ -176,6 +238,10 @@ export async function GET(
       stageNotes: editingProgress.notes,
       issueFlagged,
       issueDetails: creatorIssue,
+      deliverableUrl,
+      deliverableUploaded,
+      isApproved,
+      reviewNotes,
       client: {
         full_name: clientUser?.full_name || order?.client_name || 'Verified Client',
         email: clientUser?.email || order?.client_email || '',
@@ -442,27 +508,63 @@ export async function PATCH(
         return NextResponse.json({ error: 'Deliverable URL is required' }, { status: 400 });
       }
 
+      const cleanProjId = (projectId || '').trim();
+      const nowIso = new Date().toISOString();
+
+      // Resolve project by id or project_number
+      let targetProjectId = cleanProjId;
+      let orderId: string | null = null;
+      let clientId: string | null = null;
+      let projectNumber: string = cleanProjId;
+      let projectTitle: string = 'Master Cut Draft';
+
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanProjId);
+      let currentProject: any = null;
+
+      if (isUuid) {
+        const { data } = await db.from('projects').select('id, order_id, client_id, project_number, title').eq('id', cleanProjId).maybeSingle();
+        if (data) currentProject = data;
+      }
+      if (!currentProject) {
+        const { data } = await db.from('projects').select('id, order_id, client_id, project_number, title').eq('project_number', cleanProjId).maybeSingle();
+        if (data) currentProject = data;
+      }
+
+      if (currentProject) {
+        targetProjectId = currentProject.id;
+        orderId = currentProject.order_id;
+        clientId = currentProject.client_id;
+        projectNumber = currentProject.project_number || cleanProjId;
+        projectTitle = currentProject.title || 'Master Cut Draft';
+      }
+
       // 1. Update project status and final_download_url
-      const { data: updatedProject } = await db
+      await db
         .from('projects')
         .update({
           status: 'review_ready',
           final_download_url: deliverableUrl.trim(),
-          updated_at: new Date().toISOString(),
+          updated_at: nowIso,
         })
-        .eq('id', projectId)
-        .select('*')
-        .maybeSingle();
+        .eq('id', targetProjectId);
 
-      // 2. Also update associated order work_status
-      if (updatedProject?.order_id) {
+      // 2. Also update associated order work_status & snapshot
+      if (orderId) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', orderId).maybeSingle();
+        const snap = ord?.requirements_snapshot || {};
+        snap.deliverable_url = deliverableUrl.trim();
+        snap.draft_cut_url = deliverableUrl.trim();
+        snap.deliverable_submitted_at = nowIso;
+        snap.deliverable_submitted_by = authUser.full_name || 'Creator';
+
         await db
           .from('orders')
           .update({
             work_status: 'review_ready',
-            updated_at: new Date().toISOString(),
+            requirements_snapshot: snap,
+            updated_at: nowIso,
           })
-          .eq('id', updatedProject.order_id);
+          .eq('id', orderId);
       }
 
       // 3. Record audit log
@@ -471,10 +573,10 @@ export async function PATCH(
           action: 'creator_deliverable_submitted',
           user_id: authUser.id,
           entity_type: 'project',
-          entity_id: projectId,
+          entity_id: targetProjectId,
           new_values: {
             deliverable_url: deliverableUrl.trim(),
-            submitted_at: new Date().toISOString(),
+            submitted_at: nowIso,
           },
         }]);
       } catch {}
@@ -482,11 +584,11 @@ export async function PATCH(
       // 4. Dispatch multi-channel notification to client (In-App, WhatsApp, Email)
       try {
         const { dispatchNotification } = await import('@/lib/whatsapp/dispatcher');
-        if (updatedProject?.client_id) {
+        if (clientId) {
           const { data: clientUser } = await db
             .from('users')
             .select('id, full_name, email, phone')
-            .eq('id', updatedProject.client_id)
+            .eq('id', clientId)
             .maybeSingle();
 
           if (clientUser) {
@@ -497,10 +599,10 @@ export async function PATCH(
               recipientEmail: clientUser.email || undefined,
               variables: {
                 name: clientUser.full_name || 'Client Partner',
-                projectId: updatedProject.project_number || projectId,
-                title: updatedProject.title || 'Master Cut Draft',
+                projectId: projectNumber,
+                title: projectTitle,
               },
-              actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/client/projects`,
+              actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/client/projects/${targetProjectId}`,
             });
           }
         }
@@ -508,7 +610,11 @@ export async function PATCH(
         console.warn('[Deliverable Client Notification Warning]:', notifErr);
       }
 
-      return NextResponse.json({ success: true, message: 'Deliverable submitted for QA' });
+      return NextResponse.json({
+        success: true,
+        message: 'Deliverable submitted for client review',
+        deliverableUrl: deliverableUrl.trim(),
+      });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });

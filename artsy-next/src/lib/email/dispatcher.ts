@@ -4,12 +4,18 @@
 // Integrates with Resend API for transactional emails:
 // - Email OTP Authentication (Primary delivery channel)
 // - 44 Platform Notification Events
-// - GST Statutory Invoices (SAC 999613)
+// - GST Statutory Invoices (SAC 999613) with Direct File Attachment
 // =============================================================================
 
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 const dbClient = supabaseAdmin || supabase;
-import { InvoiceData } from '@/lib/invoices/generator';
+import { InvoiceData, generateStatutoryInvoiceHtml } from '@/lib/invoices/generator';
+
+export interface EmailAttachment {
+  filename: string;
+  content?: string | Buffer;
+  path?: string;
+}
 
 export interface EmailOptions {
   to: string | string[];
@@ -18,6 +24,7 @@ export interface EmailOptions {
   text?: string;
   from?: string;
   replyTo?: string;
+  attachments?: EmailAttachment[];
 }
 
 export interface EmailResult {
@@ -29,6 +36,18 @@ export interface EmailResult {
 
 const RESEND_API_URL = 'https://api.resend.com/emails';
 const SANDBOX_OWNER_EMAIL = 'artsyproduction8@gmail.com';
+
+/**
+ * Resolves the authoritative public domain for email action links.
+ * Strictly avoids localhost:3000 in production delivery.
+ */
+export function resolveProductionBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return 'https://artsyproduction.com';
+}
 
 /**
  * Sends an email using the Resend REST API.
@@ -62,6 +81,9 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
   }
   if (options.replyTo) {
     payload.reply_to = options.replyTo;
+  }
+  if (options.attachments && options.attachments.length > 0) {
+    payload.attachments = options.attachments;
   }
 
   try {
@@ -98,17 +120,9 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
         ...payload,
         to: [SANDBOX_OWNER_EMAIL],
         subject: `[Dev Sandbox for ${recipients[0]}] ${options.subject}`,
-        html: options.html
-          ? `<div style="background:#fff3cd;padding:12px;margin-bottom:16px;border-radius:6px;font-family:sans-serif;font-size:12px;color:#856404;border:1px solid #ffeeba;">
-               <strong>Resend Sandbox Notice:</strong> Intended recipient was <code>${recipients.join(', ')}</code>. In sandbox mode, Resend routes test emails to your verified account inbox.
-             </div>${options.html}`
-          : undefined,
-        text: options.text
-          ? `[Resend Sandbox Notice: Intended recipient was ${recipients.join(', ')}. Delivered to verified account owner.]\n\n${options.text}`
-          : undefined,
       };
 
-      const fallbackRes = await fetch(RESEND_API_URL, {
+      const fallbackResponse = await fetch(RESEND_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,30 +132,38 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResult> {
         signal: AbortSignal.timeout(6000),
       });
 
-      const fallbackData = await fallbackRes.json();
-      if (fallbackRes.ok && fallbackData.id) {
+      const fallbackData = await fallbackResponse.json();
+
+      if (fallbackResponse.ok && fallbackData.id) {
         return {
           success: true,
           id: fallbackData.id,
           forwardedTo: SANDBOX_OWNER_EMAIL,
         };
       }
+
+      return {
+        success: false,
+        error: fallbackData.message || 'Failed to dispatch via Resend sandbox',
+      };
     }
 
-    console.error('[Resend Email Error]', response.status, data);
     return {
       success: false,
-      error: data.message || `HTTP ${response.status}`,
+      error: data.message || `Resend API returned HTTP ${response.status}`,
     };
   } catch (err: unknown) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    console.error('[Resend Email Network Exception]', errorMsg);
-    return { success: false, error: errorMsg };
+    const message = err instanceof Error ? err.message : 'Network error';
+    console.error('[Resend Dispatch Error]', message);
+    return {
+      success: false,
+      error: message,
+    };
   }
 }
 
 /**
- * Sends a 6-digit verification code (OTP) via Resend email.
+ * Sends a cryptographically generated 6-digit OTP to the user's email.
  */
 export async function sendOtpEmail(toEmail: string, otpCode: string): Promise<EmailResult> {
   const subject = `Your Artsy Verification Code: ${otpCode}`;
@@ -219,11 +241,18 @@ export async function sendOtpEmail(toEmail: string, otpCode: string): Promise<Em
 }
 
 /**
- * Sends a statutory GST Tax Invoice email via Resend.
+ * Sends a statutory GST Tax Invoice email via Resend with attached invoice file.
  */
 export async function sendInvoiceEmail(toEmail: string, invoice: InvoiceData): Promise<EmailResult> {
   const subject = `Tax Invoice #${invoice.invoiceNumber} — Artsy Production`;
-  const viewInvoiceUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/invoices/${invoice.orderDetails.orderId}`;
+  const baseUrl = resolveProductionBaseUrl();
+  const viewInvoiceUrl = `${baseUrl}/api/invoices/${invoice.orderDetails.orderId}`;
+  const clientInvoicesPortalUrl = `${baseUrl}/client/invoices`;
+
+  // Generate complete, self-contained statutory invoice HTML document
+  const invoiceDocHtml = generateStatutoryInvoiceHtml(invoice);
+  const invoiceBase64 = Buffer.from(invoiceDocHtml, 'utf-8').toString('base64');
+  const cleanInvoiceFileName = `Tax-Invoice-${invoice.invoiceNumber.replace(/[^a-zA-Z0-9_-]/g, '-')}.html`;
 
   const html = `
 <!DOCTYPE html>
@@ -236,7 +265,7 @@ export async function sendInvoiceEmail(toEmail: string, invoice: InvoiceData): P
   <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
     <tr>
       <td align="center">
-        <table width="100%" style="max-width:600px;background:#ffffff;border:1px solid #e5e5e7;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+        <table width="100%" style="max-width:600px;background:#ffffff;border:1px solid #e5e5e7;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
           <tr>
             <td style="padding:32px;border-bottom:2px solid #1d1d1f;">
               <span style="font-size:20px;font-weight:800;letter-spacing:1px;text-transform:uppercase;">ARTSY PRODUCTION</span>
@@ -246,9 +275,14 @@ export async function sendInvoiceEmail(toEmail: string, invoice: InvoiceData): P
           <tr>
             <td style="padding:32px;">
               <h2 style="margin:0 0 16px;font-size:18px;font-weight:700;">Payment Confirmed &amp; Invoice Issued</h2>
-              <p style="margin:0 0 24px;font-size:13px;line-height:1.6;color:#555;">
+              <p style="margin:0 0 20px;font-size:13px;line-height:1.6;color:#555;">
                 Thank you for your business. Your payment of <strong>₹${(invoice.orderDetails.totalPaidPaise / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong> for Order #<strong>${invoice.orderDetails.orderId}</strong> has been successfully captured into Production Vault custody.
               </p>
+
+              <!-- Attached Notice Banner -->
+              <div style="background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin-bottom:24px;font-size:12px;line-height:1.5;color:#1e40af;">
+                <strong>📎 Official Invoice Attached:</strong> Your statutory tax invoice (<span style="font-family:monospace;font-weight:700;">${cleanInvoiceFileName}</span>) is attached to this email. You can open and print it directly for tax deduction and input credit filing.
+              </div>
 
               <table width="100%" style="border-collapse:collapse;margin-bottom:24px;font-size:12px;">
                 <tr style="background:#f5f5f7;">
@@ -282,13 +316,19 @@ export async function sendInvoiceEmail(toEmail: string, invoice: InvoiceData): P
               </table>
 
               <div style="text-align:center;margin:32px 0;">
-                <a href="${viewInvoiceUrl}" style="background-color:#1d1d1f;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:600;display:inline-block;">
+                <a href="${viewInvoiceUrl}" style="background-color:#1d1d1f;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:10px;font-size:13px;font-weight:700;display:inline-block;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
                   View &amp; Download GST Invoice PDF &rarr;
                 </a>
+                <div style="margin-top:12px;">
+                  <a href="${clientInvoicesPortalUrl}" style="font-size:11px;color:#3b82f6;text-decoration:underline;">
+                    Or view in your Artsy Client Invoices Portal &rarr;
+                  </a>
+                </div>
               </div>
 
               <p style="margin:0;font-size:11px;color:#86868b;text-align:center;line-height:1.5;">
-                This electronic invoice is archived in the immutable statutory WORM vault per Section 36 of CGST Act.
+                This electronic invoice is archived in the immutable statutory WORM vault per Section 36 of CGST Act.<br>
+                Artsy Production • GSTIN: 27AABCU9603R1ZM
               </p>
             </td>
           </tr>
@@ -300,13 +340,19 @@ export async function sendInvoiceEmail(toEmail: string, invoice: InvoiceData): P
 </html>
   `.trim();
 
-  const text = `Tax Invoice #${invoice.invoiceNumber}\nOrder ID: ${invoice.orderDetails.orderId}\nTotal Paid: ₹${(invoice.orderDetails.totalPaidPaise / 100).toFixed(2)}\nView online: ${viewInvoiceUrl}`;
+  const text = `Tax Invoice #${invoice.invoiceNumber}\nOrder ID: ${invoice.orderDetails.orderId}\nTotal Paid: ₹${(invoice.orderDetails.totalPaidPaise / 100).toFixed(2)}\n\nAn official statutory HTML tax invoice is attached to this email.\nView online: ${viewInvoiceUrl}`;
 
   return sendEmail({
     to: toEmail,
     subject,
     html,
     text,
+    attachments: [
+      {
+        filename: cleanInvoiceFileName,
+        content: invoiceBase64,
+      },
+    ],
   });
 }
 

@@ -310,6 +310,9 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
    - Canonical status `'client_review'` is strictly included in "Drafts to Review" counts and "Review Ready" badges across `/client` and `/client/projects`.
    - Dashboard project cards strictly route to `/client/projects/${project.id}`.
    - Creator dashboard dynamically aggregates active project counts and in-flight payout valuations.
+5. **Statutory Tax Invoice Email Delivery & Direct File Attachment Invariant:**
+   - **Production Base URL Resolution:** Email generation and transactional dispatchers must strictly resolve public base URLs via `resolveProductionBaseUrl()` (`NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_SITE_URL` / `VERCEL_URL` / `https://artsyproduction.com`). Transactional emails must NEVER contain `http://localhost:3000` links, preventing `ERR_CONNECTION_REFUSED` on mobile clients.
+   - **Direct File Attachment:** Every invoice confirmation email dispatched via Resend must attach the standalone, print-ready statutory tax invoice document directly (`attachments: [{ filename: 'Tax-Invoice-...html', content: base64 }]`) alongside the in-body summary and interactive CTA button, allowing clients to download, archive, and print their tax bill immediately offline.
 
 ---
 

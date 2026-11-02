@@ -23,8 +23,10 @@ export function parseVideoEmbedUrl(rawUrl: string | null | undefined): VideoEmbe
     };
   }
 
-  // 2. Google Drive single file preview
-  const gDriveMatch = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/i);
+  // 2. Google Drive single file preview (supports /file/d/, /file/u/0/d/, open?id=, uc?id=)
+  const gDriveMatch = raw.match(
+    /(?:drive|docs)\.google\.com\/(?:file\/(?:u\/\d+\/)?d\/|open\?id=|uc\?id=)([a-zA-Z0-9_-]+)/i
+  );
   if (gDriveMatch && gDriveMatch[1] && !raw.includes('/folders/')) {
     const videoId = gDriveMatch[1];
     return {
@@ -35,7 +37,18 @@ export function parseVideoEmbedUrl(rawUrl: string | null | undefined): VideoEmbe
     };
   }
 
-  // 3. Vimeo
+  // 3. Dropbox video file direct stream conversion
+  if (/dropbox\.com\/(?:s|scl\/fi)\//i.test(raw) && !raw.includes('/sh/')) {
+    const cleanDropbox = raw.replace(/[?&]dl=[01]/g, '').replace(/[?&]raw=1/g, '');
+    const streamUrl = cleanDropbox + (cleanDropbox.includes('?') ? '&raw=1' : '?raw=1');
+    return {
+      type: 'direct',
+      embedUrl: streamUrl,
+      originalUrl: raw,
+    };
+  }
+
+  // 4. Vimeo
   const vimeoMatch = raw.match(/vimeo\.com\/(?:video\/)?([0-9]+)/i);
   if (vimeoMatch && vimeoMatch[1]) {
     const videoId = vimeoMatch[1];
@@ -47,7 +60,7 @@ export function parseVideoEmbedUrl(rawUrl: string | null | undefined): VideoEmbe
     };
   }
 
-  // 4. Loom
+  // 5. Loom
   const loomMatch = raw.match(/loom\.com\/share\/([a-zA-Z0-9]+)/i);
   if (loomMatch && loomMatch[1]) {
     const videoId = loomMatch[1];
@@ -59,7 +72,7 @@ export function parseVideoEmbedUrl(rawUrl: string | null | undefined): VideoEmbe
     };
   }
 
-  // 5. Direct Video Streams (.mp4, .webm, .m3u8, .mov)
+  // 6. Direct Video Streams (.mp4, .webm, .m3u8, .mov)
   const isDirectVideo = /\.(mp4|webm|m3u8|mov)(?:\?.*)?$/i.test(raw);
   if (isDirectVideo) {
     return {

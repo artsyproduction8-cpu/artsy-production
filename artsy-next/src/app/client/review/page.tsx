@@ -8,7 +8,7 @@ import ClientSidebar from '../components/ClientSidebar';
 import ClientHeader from '../components/ClientHeader';
 import { createChangeOrder } from '@/lib/changeOrders/engine';
 import { logRefundRequest } from '@/lib/activity/logger';
-import { parseVideoEmbedUrl, VideoEmbedInfo } from '@/lib/video/embed';
+import { parseVideoEmbedUrl, formatTimecode, parseTimecodeToSeconds, VideoEmbedInfo } from '@/lib/video/embed';
 
 interface RevisionItem {
   id: string;
@@ -53,6 +53,7 @@ export default function ClientReviewPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTimecode, setCurrentTimecode] = useState('00:00:00');
   const [currentSeconds, setCurrentSeconds] = useState(0);
+  const [totalDuration, setTotalDuration] = useState<number>(180);
   const [activeCategory, setActiveCategory] = useState('COLOR');
   const [noteText, setNoteText] = useState('');
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
@@ -80,6 +81,8 @@ export default function ClientReviewPage() {
 
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const ytPlayerRef = useRef<any>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -147,6 +150,293 @@ export default function ClientReviewPage() {
     return parseVideoEmbedUrl(project?.deliverableUrl);
   }, [project?.deliverableUrl]);
 
+  // Append origin & enablejsapi to YouTube embed URL for cross-origin postMessage sync
+  const embedUrlWithOrigin = useMemo(() => {
+    if (!videoEmbed?.embedUrl) return '';
+    if (videoEmbed.type === 'youtube') {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://artsyproduction.com';
+      const sep = videoEmbed.embedUrl.includes('?') ? '&' : '?';
+      return `${videoEmbed.embedUrl}${sep}origin=${encodeURIComponent(origin)}&enablejsapi=1&widgetid=1`;
+    }
+    return videoEmbed.embedUrl;
+  }, [videoEmbed]);
+
+  // Inject YouTube IFrame API script when YouTube video is present
+  useEffect(() => {
+    if (videoEmbed?.type !== 'youtube') return;
+    if (typeof window === 'undefined') return;
+
+    if (!window.YT) {
+      const existing = document.getElementById('youtube-iframe-api');
+      if (!existing) {
+        const tag = document.createElement('script');
+        tag.id = 'youtube-iframe-api';
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.body.appendChild(tag);
+      }
+    }
+  }, [videoEmbed?.type]);
+
+  // Universal helper to synchronize time state across the suite
+  const syncCurrentTime = (secs: number) => {
+    const clamped = Math.max(0, Math.floor(secs));
+    setCurrentSeconds(clamped);
+    setCurrentTimecode(formatTimecode(clamped));
+  };
+
+  // Initialize YT.Player instance on the mounted iframe
+  const initYouTubePlayer = () => {
+    if (typeof window === 'undefined' || !window.YT || !window.YT.Player || !iframeRef.current) return;
+    try {
+      if (ytPlayerRef.current) {
+        try {
+          ytPlayerRef.current.destroy?.();
+        } catch {}
+      }
+      ytPlayerRef.current = new window.YT.Player(iframeRef.current, {
+        events: {
+          onReady: (event: any) => {
+            const dur = event.target?.getDuration?.();
+            if (dur && dur > 0) {
+              setTotalDuration(Math.floor(dur));
+            }
+          },
+          onStateChange: (event: any) => {
+            // 1: playing, 2: paused, 0: ended
+            if (event.data === 1) {
+              setIsPlaying(true);
+            } else if (event.data === 2 || event.data === 0) {
+              setIsPlaying(false);
+            }
+            const time = event.target?.getCurrentTime?.();
+            if (typeof time === 'number') {
+              syncCurrentTime(time);
+            }
+            const dur = event.target?.getDuration?.();
+            if (dur && dur > 0) {
+              setTotalDuration(Math.floor(dur));
+            }
+          },
+        },
+      });
+    } catch (e) {
+      console.warn('YT.Player initialization notice:', e);
+    }
+  };
+
+  const handleIframeLoad = () => {
+    if (!iframeRef.current?.contentWindow) return;
+
+    // Send handshake so YouTube knows to emit postMessage events
+    try {
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'listening', id: 1 }),
+        '*'
+      );
+    } catch {}
+
+    if (typeof window !== 'undefined') {
+      if (window.YT && window.YT.Player) {
+        initYouTubePlayer();
+      } else {
+        const prev = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = () => {
+          if (prev) prev();
+          initYouTubePlayer();
+        };
+        setTimeout(initYouTubePlayer, 1200);
+      }
+    }
+  };
+
+  // Global window message listener for YouTube infoDelivery & Vimeo timeupdate
+  useEffect(() => {
+    const handleWindowMessage = (e: MessageEvent) => {
+      let data: any = e.data;
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          return;
+        }
+      }
+
+      if (!data || typeof data !== 'object') return;
+
+      // 1. YouTube infoDelivery
+      if (data.event === 'infoDelivery' && data.info) {
+        if (typeof data.info.currentTime === 'number') {
+          syncCurrentTime(data.info.currentTime);
+        }
+        if (typeof data.info.duration === 'number' && data.info.duration > 0) {
+          setTotalDuration(Math.floor(data.info.duration));
+        }
+        if (typeof data.info.playerState === 'number') {
+          if (data.info.playerState === 1) {
+            setIsPlaying(true);
+          } else if (data.info.playerState === 2 || data.info.playerState === 0) {
+            setIsPlaying(false);
+          }
+        }
+      } else if (data.event === 'onStateChange') {
+        if (data.info === 1) {
+          setIsPlaying(true);
+        } else if (data.info === 2 || data.info === 0) {
+          setIsPlaying(false);
+        }
+      }
+
+      // 2. Vimeo timeupdate / play / pause
+      if (data.event === 'timeupdate' && data.data) {
+        if (typeof data.data.seconds === 'number') {
+          syncCurrentTime(data.data.seconds);
+        }
+        if (typeof data.data.duration === 'number' && data.data.duration > 0) {
+          setTotalDuration(Math.floor(data.data.duration));
+        }
+      } else if (data.event === 'play') {
+        setIsPlaying(true);
+      } else if (data.event === 'pause' || data.event === 'finish') {
+        setIsPlaying(false);
+      }
+    };
+
+    window.addEventListener('message', handleWindowMessage);
+    return () => window.removeEventListener('message', handleWindowMessage);
+  }, []);
+
+  // Real-time polling while video is playing
+  useEffect(() => {
+    if (!isPlaying || !videoEmbed) return;
+
+    if (videoEmbed.type === 'youtube') {
+      const interval = setInterval(() => {
+        try {
+          if (ytPlayerRef.current?.getCurrentTime) {
+            const t = ytPlayerRef.current.getCurrentTime();
+            if (typeof t === 'number') {
+              syncCurrentTime(t);
+            }
+            const dur = ytPlayerRef.current.getDuration?.();
+            if (dur && dur > 0) {
+              setTotalDuration(Math.floor(dur));
+            }
+          } else if (iframeRef.current?.contentWindow) {
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: 'listening' }),
+              '*'
+            );
+          }
+        } catch {}
+      }, 250);
+      return () => clearInterval(interval);
+    }
+
+    if (!videoRef.current && videoEmbed.type !== 'vimeo') {
+      const interval = setInterval(() => {
+        setCurrentSeconds((prev) => {
+          const next = Math.min(totalDuration, prev + 1);
+          setCurrentTimecode(formatTimecode(next));
+          return next;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying, videoEmbed, totalDuration]);
+
+  // Universal Player Command Dispatcher (HTML5, YouTube, Vimeo)
+  const sendPlayerCommand = (command: 'play' | 'pause' | 'seek', value?: number) => {
+    // 1. Direct HTML5 video
+    if (videoRef.current) {
+      if (command === 'play') {
+        videoRef.current.play().catch(() => {});
+        setIsPlaying(true);
+      } else if (command === 'pause') {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else if (command === 'seek' && typeof value === 'number') {
+        videoRef.current.currentTime = value;
+        syncCurrentTime(value);
+      }
+      return;
+    }
+
+    // 2. YouTube
+    if (videoEmbed?.type === 'youtube') {
+      if (ytPlayerRef.current) {
+        try {
+          if (command === 'play' && ytPlayerRef.current.playVideo) {
+            ytPlayerRef.current.playVideo();
+            setIsPlaying(true);
+          } else if (command === 'pause' && ytPlayerRef.current.pauseVideo) {
+            ytPlayerRef.current.pauseVideo();
+            setIsPlaying(false);
+          } else if (command === 'seek' && typeof value === 'number' && ytPlayerRef.current.seekTo) {
+            ytPlayerRef.current.seekTo(value, true);
+            syncCurrentTime(value);
+          }
+        } catch {}
+      }
+
+      if (iframeRef.current?.contentWindow) {
+        try {
+          if (command === 'play') {
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+              '*'
+            );
+            setIsPlaying(true);
+          } else if (command === 'pause') {
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }),
+              '*'
+            );
+            setIsPlaying(false);
+          } else if (command === 'seek' && typeof value === 'number') {
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: 'command', func: 'seekTo', args: [value, true] }),
+              '*'
+            );
+            syncCurrentTime(value);
+          }
+        } catch {}
+      }
+      return;
+    }
+
+    // 3. Vimeo
+    if (videoEmbed?.type === 'vimeo' && iframeRef.current?.contentWindow) {
+      try {
+        if (command === 'play') {
+          iframeRef.current.contentWindow.postMessage(JSON.stringify({ method: 'play' }), '*');
+          setIsPlaying(true);
+        } else if (command === 'pause') {
+          iframeRef.current.contentWindow.postMessage(JSON.stringify({ method: 'pause' }), '*');
+          setIsPlaying(false);
+        } else if (command === 'seek' && typeof value === 'number') {
+          iframeRef.current.contentWindow.postMessage(JSON.stringify({ method: 'seekTo', value }), '*');
+          syncCurrentTime(value);
+        }
+      } catch {}
+    }
+  };
+
+  const togglePlayPause = () => {
+    if (!videoEmbed) return;
+    if (isPlaying) {
+      sendPlayerCommand('pause');
+    } else {
+      sendPlayerCommand('play');
+    }
+  };
+
+  const handleSeek = (seconds: number) => {
+    if (!videoEmbed) return;
+    const clamped = Math.max(0, Math.min(totalDuration, Math.floor(seconds)));
+    syncCurrentTime(clamped);
+    sendPlayerCommand('seek', clamped);
+  };
+
   // Keyboard shortcut listener: Space toggles play/pause, M focuses feedback textarea
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -160,18 +450,7 @@ export default function ClientReviewPage() {
 
       if (e.code === 'Space') {
         e.preventDefault();
-        if (!videoEmbed) return; // Prevent phantom timer when video is not submitted yet
-        if (videoRef.current) {
-          if (videoRef.current.paused) {
-            videoRef.current.play();
-            setIsPlaying(true);
-          } else {
-            videoRef.current.pause();
-            setIsPlaying(false);
-          }
-        } else {
-          setIsPlaying((prev) => !prev);
-        }
+        togglePlayPause();
       } else if (e.key === 'm' || e.key === 'M') {
         e.preventDefault();
         noteTextareaRef.current?.focus();
@@ -180,46 +459,16 @@ export default function ClientReviewPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [videoEmbed]);
-
-  // Timer simulation for non-native video players
-  useEffect(() => {
-    if (!isPlaying || !videoEmbed || videoRef.current) return;
-    const interval = setInterval(() => {
-      setCurrentSeconds((prev) => {
-        const next = prev + 1;
-        const h = String(Math.floor(next / 3600)).padStart(2, '0');
-        const m = String(Math.floor((next % 3600) / 60)).padStart(2, '0');
-        const s = String(Math.floor(next % 60)).padStart(2, '0');
-        setCurrentTimecode(`${h}:${m}:${s}`);
-        return next;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isPlaying, videoEmbed]);
+  }, [videoEmbed, isPlaying]);
 
   // Native HTML5 video time tracking
   const handleNativeTimeUpdate = () => {
     if (videoRef.current) {
       const cur = Math.floor(videoRef.current.currentTime);
-      setCurrentSeconds(cur);
-      const h = String(Math.floor(cur / 3600)).padStart(2, '0');
-      const m = String(Math.floor((cur % 3600) / 60)).padStart(2, '0');
-      const s = String(Math.floor(cur % 60)).padStart(2, '0');
-      setCurrentTimecode(`${h}:${m}:${s}`);
-    }
-  };
-
-  const handleSeek = (seconds: number) => {
-    if (!videoEmbed) return;
-    setCurrentSeconds(seconds);
-    const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
-    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-    const s = String(Math.floor(seconds % 60)).padStart(2, '0');
-    setCurrentTimecode(`${h}:${m}:${s}`);
-
-    if (videoRef.current) {
-      videoRef.current.currentTime = seconds;
+      syncCurrentTime(cur);
+      if (videoRef.current.duration && !isNaN(videoRef.current.duration)) {
+        setTotalDuration(Math.floor(videoRef.current.duration));
+      }
     }
   };
 
@@ -588,8 +837,11 @@ export default function ClientReviewPage() {
                         {/* 2. YouTube Embed */}
                         {videoEmbed?.type === 'youtube' && (
                           <iframe
-                            src={videoEmbed.embedUrl}
+                            ref={iframeRef}
+                            id="artsy-youtube-review-player"
+                            src={embedUrlWithOrigin}
                             title={project.title}
+                            onLoad={handleIframeLoad}
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                             className="w-full h-full border-0"
@@ -610,8 +862,11 @@ export default function ClientReviewPage() {
                         {/* 4. Vimeo Embed */}
                         {videoEmbed?.type === 'vimeo' && (
                           <iframe
+                            ref={iframeRef}
+                            id="artsy-vimeo-review-player"
                             src={videoEmbed.embedUrl}
                             title={project.title}
+                            onLoad={handleIframeLoad}
                             allow="autoplay; fullscreen; picture-in-picture"
                             allowFullScreen
                             className="w-full h-full border-0"
@@ -690,48 +945,74 @@ export default function ClientReviewPage() {
                         <div className="mt-5 bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3">
                           {/* Interactive Playbar */}
                           <div
-                            className="relative w-full h-3 bg-[#E5E5E7] rounded-full cursor-pointer overflow-hidden group"
+                            className="relative w-full h-3 bg-[#E5E5E7] rounded-full cursor-pointer overflow-hidden group select-none"
                             onClick={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
                               const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                              const targetSecs = Math.floor(ratio * 180); // 3-min scale
+                              const targetSecs = Math.floor(ratio * (totalDuration || 240));
                               handleSeek(targetSecs);
                             }}
                             title="Click to scrub timeline"
                           >
                             <div
-                              className="h-full bg-[#3B82F6] rounded-full transition-all"
-                              style={{ width: `${Math.min(100, Math.max(5, (currentSeconds / 180) * 100))}%` }}
+                              className="h-full bg-[#3B82F6] rounded-full transition-all duration-150"
+                              style={{
+                                width: `${Math.min(100, Math.max(1, (currentSeconds / (totalDuration || 240)) * 100))}%`,
+                              }}
                             />
                           </div>
 
                           {/* Controller Row */}
                           <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                            {/* Left: Quick Scrub Buttons */}
-                            <div className="flex items-center gap-2">
+                            {/* Left: Play/Pause & Quick Scrub Buttons */}
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={togglePlayPause}
+                                className="px-3 py-1.5 bg-[#1D1D1F] hover:bg-black text-white rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-2xs"
+                                title={isPlaying ? 'Pause video (Space)' : 'Play video (Space)'}
+                              >
+                                <span>{isPlaying ? '⏸ Pause' : '▶ Play'}</span>
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => handleSeek(Math.max(0, currentSeconds - 5))}
-                                className="px-2.5 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
+                                className="px-2 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
                                 title="Rewind 5 seconds"
                               >
                                 -5s
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleSeek(currentSeconds + 5)}
-                                className="px-2.5 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
+                                onClick={() => handleSeek(Math.max(0, currentSeconds - 1))}
+                                className="px-2 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
+                                title="Rewind 1 second"
+                              >
+                                -1s
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSeek(Math.min(totalDuration, currentSeconds + 1))}
+                                className="px-2 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
+                                title="Forward 1 second"
+                              >
+                                +1s
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSeek(Math.min(totalDuration, currentSeconds + 5))}
+                                className="px-2 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
                                 title="Forward 5 seconds"
                               >
                                 +5s
                               </button>
                             </div>
 
-                            {/* Timecode Display */}
+                            {/* Timecode Display with Dynamic Duration */}
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] uppercase font-bold text-[#86868B]">Current Timecode:</span>
+                              <span className="text-[10px] uppercase font-bold text-[#86868B]">Timeline:</span>
                               <div className="px-3 py-1 bg-white rounded-lg border border-[#E5E5E7] font-mono text-xs font-extrabold text-[#3B82F6]">
-                                {currentTimecode}
+                                {currentTimecode} <span className="text-[#86868B] font-normal">/ {formatTimecode(totalDuration)}</span>
                               </div>
                             </div>
 
@@ -739,7 +1020,7 @@ export default function ClientReviewPage() {
                             <button
                               type="button"
                               onClick={() => {
-                                showToast(`Captured timecode: ${currentTimecode}`);
+                                showToast(`📍 Locked timecode: ${currentTimecode}`);
                                 noteTextareaRef.current?.focus();
                               }}
                               className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold rounded-lg cursor-pointer transition-colors"
@@ -799,9 +1080,19 @@ export default function ClientReviewPage() {
                             >
                               <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-[#E5E5E7]">
                                 <div className="flex items-center gap-1.5">
-                                  <span className="text-[11px] font-mono font-bold text-white px-2 py-0.5 rounded-md bg-[#1D1D1F]">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const s = typeof rev.timecodeSeconds === 'number' && rev.timecodeSeconds >= 0
+                                        ? rev.timecodeSeconds
+                                        : parseTimecodeToSeconds(rev.timecode);
+                                      handleSeek(s);
+                                    }}
+                                    className="text-[11px] font-mono font-bold text-white px-2 py-0.5 rounded-md bg-[#1D1D1F] hover:bg-[#3B82F6] transition-colors cursor-pointer"
+                                    title={`Jump video to ${rev.timecode}`}
+                                  >
                                     ⏱ {rev.timecode}
-                                  </span>
+                                  </button>
                                   <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md">
                                     {rev.tag}
                                   </span>
@@ -817,15 +1108,18 @@ export default function ClientReviewPage() {
                                 <span className={`text-[10px] font-bold ${rev.statusColor || 'text-blue-600'}`}>
                                   {rev.status || 'Queued for editor'}
                                 </span>
-                                {typeof rev.timecodeSeconds === 'number' && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSeek(rev.timecodeSeconds || 0)}
-                                    className="text-[11px] font-bold text-[#3B82F6] hover:underline cursor-pointer"
-                                  >
-                                    Jump to this time →
-                                  </button>
-                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const s = typeof rev.timecodeSeconds === 'number' && rev.timecodeSeconds >= 0
+                                      ? rev.timecodeSeconds
+                                      : parseTimecodeToSeconds(rev.timecode);
+                                    handleSeek(s);
+                                  }}
+                                  className="text-[11px] font-bold text-[#3B82F6] hover:underline cursor-pointer"
+                                >
+                                  Jump to this time ({rev.timecode}) →
+                                </button>
                               </div>
                             </div>
                           ))

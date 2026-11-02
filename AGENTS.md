@@ -276,6 +276,18 @@ sequenceDiagram
 
 ---
 
+### 3.5 Universal Interactive Video Review Suite & Real-Time Timeline Synchronization Invariant
+To ensure clients can inspect draft master cuts and leave frame-accurate creative notes, `/client/projects/[id]` and `/client/review` feature an interactive, bi-directionally synchronized video player engine:
+1. **Dynamic Provider Detection (`src/lib/video/embed.ts`):** Parses submitted URLs into validated embeds supporting YouTube (shorts, watch, youtu.be, embed), Google Drive video previews, Vimeo, Loom, direct HTML5 video (`.mp4`, `.webm`, `.mov`), and Cloud Folders.
+2. **Real-Time Bidirectional Synchronization:**
+   - **Cross-Origin Security & API Activation:** YouTube embeds pass `origin=${window.location.origin}&enablejsapi=1&widgetid=1` and initialize `window.YT.Player` on the iframe.
+   - **Dual-Layer Timecode Tracking:** Employs window `message` listeners (`infoDelivery`, `onStateChange`, Vimeo `timeupdate`) paired with 250ms active polling of `getCurrentTime()` during playback. Pausing on YouTube/Vimeo/HTML5 or through the website spacebar/pause button immediately locks the exact timecode (`HH:MM:SS`) in the scrubber, timecode display, and note drafting module.
+   - **Dynamic Duration Math:** Scrubber percentage and seek ratios dynamically scale to the video's actual `totalDuration` rather than a hardcoded scale.
+   - **Interactive Controls:** Includes play/pause toggle, frame scrubbing (`-5s`, `-1s`, `+1s`, `+5s`), quick `📍 Tag at [Timecode]` lock, and jumping directly to any existing note's timestamp from the revision list.
+3. **Creator Desk Sync:** Timestamped notes (`public.revisions` & `requirements_snapshot.client_review_notes`) immediately render in the creator workroom (`/freelancer/work/[projectId]`) under the "Client Review & Timeline Feedback" desk with the exact timecode badge (`⏱ HH:MM:SS`), category tag, and client quote.
+
+---
+
 ## 4. DYNAMIC PRICING ENGINE & FINANCIAL WATERFALL
 
 ### 4.1 Server-Side Authoritative Pricing

@@ -51,6 +51,7 @@ export default function FreelancerWorkView() {
   const [clientReviewNotes, setClientReviewNotes] = useState<any[]>([]);
   const [isClientApproved, setIsClientApproved] = useState<boolean>(false);
   const [showReplaceDeliverable, setShowReplaceDeliverable] = useState<boolean>(false);
+  const [resolvingNoteId, setResolvingNoteId] = useState<string | null>(null);
 
   useEffect(() => {
     // 1. Enforce authenticated creator session; redirect to login if missing
@@ -336,10 +337,68 @@ export default function FreelancerWorkView() {
       }
 
       setDeliverableUploaded(true);
-      alert('Draft cut submitted! Platform QA review initiated. Milestone progress locked.');
+      setClientReviewNotes((prev) =>
+        prev.map((n) => ({ ...n, status: 'addressed', isAddressed: true }))
+      );
+      alert('Master cut submitted! All client review notes marked as addressed in this new cut.');
     } catch (err: any) {
       console.error('Error submitting deliverable:', err);
       alert('Failed to submit deliverable: ' + err.message);
+    }
+  };
+
+  const handleToggleNoteStatus = async (noteId: string, resolved: boolean) => {
+    setResolvingNoteId(noteId);
+    try {
+      const res = await fetch(`/api/freelancer/work/${encodeURIComponent(projectId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'resolve_note',
+          noteId,
+          resolved,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setClientReviewNotes((prev) =>
+          prev.map((n) =>
+            String(n.id) === String(noteId)
+              ? { ...n, status: resolved ? 'addressed' : 'queued', isAddressed: resolved }
+              : n
+          )
+        );
+      } else {
+        alert(data.error || 'Failed to update note status');
+      }
+    } catch (err: any) {
+      alert('Error updating note: ' + err.message);
+    } finally {
+      setResolvingNoteId(null);
+    }
+  };
+
+  const handleMarkAllNotesAddressed = async () => {
+    if (!confirm('Mark all review notes as addressed in your latest video cut?')) return;
+    try {
+      const res = await fetch(`/api/freelancer/work/${encodeURIComponent(projectId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'resolve_all_notes',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setClientReviewNotes((prev) =>
+          prev.map((n) => ({ ...n, status: 'addressed', isAddressed: true }))
+        );
+        alert('All client review notes marked as addressed in new cut!');
+      } else {
+        alert(data.error || 'Failed to resolve notes');
+      }
+    } catch (err: any) {
+      alert('Error: ' + err.message);
     }
   };
 
@@ -938,22 +997,40 @@ export default function FreelancerWorkView() {
 
                 {/* Dedicated Section: Client Review & Revision Notes Desk */}
                 <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm space-y-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <h2 className="text-base font-bold text-[#1D1D1F]">Client Review &amp; Timeline Feedback</h2>
                       <p className="text-xs text-[#86868B] mt-0.5">
                         Client feedback logged at specific timecodes during draft review.
                       </p>
                     </div>
-                    {isClientApproved ? (
-                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                        ✓ APPROVED BY CLIENT
-                      </span>
-                    ) : (
-                      <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-                        {clientReviewNotes.length} Client {clientReviewNotes.length === 1 ? 'Note' : 'Notes'}
-                      </span>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isClientApproved ? (
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                          ✓ APPROVED BY CLIENT
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                            {clientReviewNotes.length} Client {clientReviewNotes.length === 1 ? 'Note' : 'Notes'}
+                          </span>
+                          {clientReviewNotes.filter((n) => n.isAddressed || String(n.status || '').toLowerCase().includes('addressed') || String(n.status || '').toLowerCase().includes('resolved')).length > 0 && (
+                            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
+                              ✓ {clientReviewNotes.filter((n) => n.isAddressed || String(n.status || '').toLowerCase().includes('addressed') || String(n.status || '').toLowerCase().includes('resolved')).length} Addressed in Cut
+                            </span>
+                          )}
+                          {clientReviewNotes.length > 0 && clientReviewNotes.some((n) => !n.isAddressed && !String(n.status || '').toLowerCase().includes('addressed') && !String(n.status || '').toLowerCase().includes('resolved')) && (
+                            <button
+                              type="button"
+                              onClick={handleMarkAllNotesAddressed}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                            >
+                              ✓ Mark All Addressed
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {isClientApproved && (
@@ -978,29 +1055,63 @@ export default function FreelancerWorkView() {
                     </div>
                   ) : (
                     <div className="space-y-2.5">
-                      {clientReviewNotes.map((note) => (
-                        <div
-                          key={note.id}
-                          className="p-3.5 bg-[#F5F5F7] hover:bg-white border border-[#E5E5E7] rounded-xl transition-all space-y-1.5"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs font-bold text-[#1D1D1F] bg-white px-2 py-0.5 rounded border border-[#E5E5E7]">
-                                ⏱ {note.timecode || '00:00:00'}
-                              </span>
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                                {note.tag || note.category || 'NOTE'}
-                              </span>
+                      {clientReviewNotes.map((note) => {
+                        const isNoteAddressed = note.isAddressed || String(note.status || '').toLowerCase().includes('addressed') || String(note.status || '').toLowerCase().includes('resolved');
+                        return (
+                          <div
+                            key={note.id}
+                            className={`p-3.5 rounded-xl transition-all space-y-2 border ${
+                              isNoteAddressed
+                                ? 'bg-emerald-50/50 border-emerald-200'
+                                : 'bg-[#F5F5F7] hover:bg-white border-[#E5E5E7]'
+                            }`}
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-mono text-xs font-bold text-[#1D1D1F] bg-white px-2 py-0.5 rounded border border-[#E5E5E7]">
+                                  ⏱ {note.timecode || '00:00:00'}
+                                </span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                  {note.tag || note.category || 'NOTE'}
+                                </span>
+                                {isNoteAddressed ? (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1">
+                                    <span>✓ Addressed in Cut</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                    Pending Fix
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-[#86868B]">
+                                  {note.timeAgo || (note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '')}
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={resolvingNoteId === String(note.id)}
+                                  onClick={() => handleToggleNoteStatus(String(note.id), !isNoteAddressed)}
+                                  className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50 ${
+                                    isNoteAddressed
+                                      ? 'bg-white hover:bg-slate-100 text-[#86868B] border border-[#E5E5E7]'
+                                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs'
+                                  }`}
+                                >
+                                  {resolvingNoteId === String(note.id)
+                                    ? 'Updating...'
+                                    : isNoteAddressed
+                                    ? '↩ Reopen'
+                                    : '✓ Mark Addressed'}
+                                </button>
+                              </div>
                             </div>
-                            <span className="text-[10px] text-[#86868B]">
-                              {note.timeAgo || (note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '')}
-                            </span>
+                            <p className="text-xs text-[#1D1D1F] leading-relaxed font-medium">
+                              &quot;{note.text}&quot;
+                            </p>
                           </div>
-                          <p className="text-xs text-[#1D1D1F] leading-relaxed font-medium">
-                            &quot;{note.text}&quot;
-                          </p>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

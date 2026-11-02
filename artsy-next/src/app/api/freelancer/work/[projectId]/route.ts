@@ -210,13 +210,15 @@ export async function GET(
         const s = String(Math.floor(secs % 60)).padStart(2, '0');
         const formattedTc = `${h}:${m}:${s}`;
 
+        const isAddressed = r.status === 'addressed' || r.status === 'resolved' || r.status === 'completed';
         reviewNotes.push({
           id: r.id,
           timecode: formattedTc,
           timecodeSeconds: secs,
           tag,
           text,
-          status: r.status,
+          status: isAddressed ? 'addressed' : (r.status || 'requested'),
+          isAddressed,
           createdAt: r.created_at,
         });
       });
@@ -225,13 +227,15 @@ export async function GET(
     const snapNotes = Array.isArray(snap.client_review_notes) ? snap.client_review_notes : [];
     snapNotes.forEach((sn: any) => {
       if (!reviewNotes.some((rn) => rn.id === sn.id)) {
+        const isAddressed = sn.status === 'addressed' || sn.status === 'resolved' || sn.status === 'completed';
         reviewNotes.push({
           id: sn.id || String(Date.now()),
           timecode: sn.timecode || '00:00:00',
           timecodeSeconds: sn.timecodeSeconds || 0,
           tag: sn.tag || sn.category || 'GENERAL',
           text: sn.text || sn.comment || '',
-          status: sn.status || 'requested',
+          status: isAddressed ? 'addressed' : (sn.status || 'requested'),
+          isAddressed,
           createdAt: sn.createdAt || new Date().toISOString(),
         });
       }
@@ -609,6 +613,17 @@ export async function PATCH(
         snap.deliverable_submitted_at = nowIso;
         snap.deliverable_submitted_by = authUser.full_name || 'Creator';
 
+        // Auto-mark any pending client review notes as addressed in the new cut!
+        if (Array.isArray(snap.client_review_notes) && snap.client_review_notes.length > 0) {
+          snap.client_review_notes = snap.client_review_notes.map((n: any) => ({
+            ...n,
+            status: 'addressed',
+            addressedAt: nowIso,
+            addressedInCutUrl: deliverableUrl.trim(),
+            addressedBy: authUser.full_name || 'Creator',
+          }));
+        }
+
         await db
           .from('orders')
           .update({
@@ -619,7 +634,20 @@ export async function PATCH(
           .eq('id', realOrderId);
       }
 
-      // 3. Record audit log
+      // 3. Mark revisions table rows for this project as addressed
+      try {
+        await db
+          .from('revisions')
+          .update({
+            status: 'addressed',
+            resolved_at: nowIso,
+          })
+          .eq('project_id', realProjectId);
+      } catch (revErr) {
+        console.warn('[Revisions Table Update Warning]:', revErr);
+      }
+
+      // 4. Record audit log
       try {
         await db.from('audit_logs').insert([{
           action: 'creator_deliverable_submitted',
@@ -629,11 +657,12 @@ export async function PATCH(
           new_values: {
             deliverable_url: deliverableUrl.trim(),
             submitted_at: nowIso,
+            client_notes_addressed: true,
           },
         }]);
       } catch {}
 
-      // 4. Dispatch multi-channel notification to client (In-App, WhatsApp, Email)
+      // 5. Dispatch multi-channel notification to client (In-App, WhatsApp, Email)
       try {
         const { dispatchNotification } = await import('@/lib/whatsapp/dispatcher');
         if (realClientId) {
@@ -667,6 +696,98 @@ export async function PATCH(
         message: 'Deliverable submitted for client review',
         deliverableUrl: deliverableUrl.trim(),
         projectId: realProjectId,
+      });
+    }
+
+    if (action === 'resolve_note') {
+      const noteId = (body.noteId || '').trim();
+      const markResolved = body.resolved !== false;
+      const nowIso = new Date().toISOString();
+
+      if (!noteId) {
+        return NextResponse.json({ error: 'noteId is required' }, { status: 400 });
+      }
+
+      if (realOrderId) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', realOrderId).maybeSingle();
+        const snap = ord?.requirements_snapshot || {};
+        if (Array.isArray(snap.client_review_notes)) {
+          snap.client_review_notes = snap.client_review_notes.map((n: any) => {
+            if (String(n.id) === String(noteId)) {
+              return {
+                ...n,
+                status: markResolved ? 'addressed' : 'queued',
+                addressedAt: markResolved ? nowIso : null,
+                addressedBy: markResolved ? (authUser.full_name || 'Creator') : null,
+              };
+            }
+            return n;
+          });
+
+          await db
+            .from('orders')
+            .update({
+              requirements_snapshot: snap,
+              updated_at: nowIso,
+            })
+            .eq('id', realOrderId);
+        }
+      }
+
+      try {
+        await db
+          .from('revisions')
+          .update({
+            status: markResolved ? 'addressed' : 'requested',
+            resolved_at: markResolved ? nowIso : null,
+          })
+          .eq('id', noteId);
+      } catch {}
+
+      return NextResponse.json({
+        success: true,
+        message: markResolved ? 'Note marked as addressed in cut' : 'Note reopened',
+        noteId,
+        resolved: markResolved,
+      });
+    }
+
+    if (action === 'resolve_all_notes') {
+      const nowIso = new Date().toISOString();
+      if (realOrderId) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', realOrderId).maybeSingle();
+        const snap = ord?.requirements_snapshot || {};
+        if (Array.isArray(snap.client_review_notes)) {
+          snap.client_review_notes = snap.client_review_notes.map((n: any) => ({
+            ...n,
+            status: 'addressed',
+            addressedAt: nowIso,
+            addressedBy: authUser.full_name || 'Creator',
+          }));
+
+          await db
+            .from('orders')
+            .update({
+              requirements_snapshot: snap,
+              updated_at: nowIso,
+            })
+            .eq('id', realOrderId);
+        }
+      }
+
+      try {
+        await db
+          .from('revisions')
+          .update({
+            status: 'addressed',
+            resolved_at: nowIso,
+          })
+          .eq('project_id', realProjectId);
+      } catch {}
+
+      return NextResponse.json({
+        success: true,
+        message: 'All review notes marked as addressed in new cut',
       });
     }
 

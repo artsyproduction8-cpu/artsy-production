@@ -22,6 +22,7 @@ interface RevisionItem {
   text: string;
   status: string;
   statusColor: string;
+  isAddressed?: boolean;
 }
 
 interface LoadedProject {
@@ -150,6 +151,14 @@ export default function ClientReviewPage() {
   const videoEmbed = useMemo(() => {
     return parseVideoEmbedUrl(project?.deliverableUrl);
   }, [project?.deliverableUrl]);
+
+  // Track how many feedback notes have been addressed in the current video cut
+  const addressedNotesCount = useMemo(() => {
+    if (!project?.reviewNotes) return 0;
+    return project.reviewNotes.filter(
+      (n) => n.isAddressed || String(n.status || '').toLowerCase().includes('addressed') || String(n.status || '').toLowerCase().includes('resolved')
+    ).length;
+  }, [project?.reviewNotes]);
 
   // Keyboard shortcut listener: Space toggles play/pause, M focuses feedback textarea
   useEffect(() => {
@@ -517,6 +526,14 @@ export default function ClientReviewPage() {
                           ? 'You have approved this cut! You can download your final unwatermarked master below.'
                           : 'Watch the video preview below. If you love it, click "Approve Video Cut". If you want changes, pause at any second and type your note.'}
                       </p>
+                      {!isApproved && addressedNotesCount > 0 && (
+                        <div className="pt-1 flex items-center gap-1.5">
+                          <span className="text-[11px] font-bold text-emerald-800 bg-white/90 border border-emerald-300 px-2.5 py-0.5 rounded-md shadow-2xs inline-flex items-center gap-1">
+                            <span className="text-emerald-600 font-extrabold">✓</span>
+                            <span>{addressedNotesCount} review {addressedNotesCount === 1 ? 'change' : 'changes'} addressed in this cut</span>
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2.5 shrink-0">
@@ -782,11 +799,22 @@ export default function ClientReviewPage() {
                       <div className="flex items-center justify-between pb-3 border-b border-[#F5F5F7]">
                         <div>
                           <h2 className="text-base font-bold text-[#1D1D1F]">Notes &amp; Feedback</h2>
-                          <p className="text-[11px] text-[#86868B]">Specific notes for your editor</p>
+                          <p className="text-[11px] text-[#86868B]">
+                            {addressedNotesCount > 0
+                              ? `${addressedNotesCount} of ${project.reviewNotes.length} notes addressed in new cut`
+                              : 'Specific notes for your editor'}
+                          </p>
                         </div>
-                        <span className="px-2.5 py-0.5 bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold rounded-full">
-                          {project.reviewNotes.length} {project.reviewNotes.length === 1 ? 'Note' : 'Notes'}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {addressedNotesCount > 0 && (
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full border border-emerald-200">
+                              ✓ {addressedNotesCount} Addressed
+                            </span>
+                          )}
+                          <span className="px-2.5 py-0.5 bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold rounded-full">
+                            {project.reviewNotes.length} {project.reviewNotes.length === 1 ? 'Note' : 'Notes'}
+                          </span>
+                        </div>
                       </div>
 
                       {/* REVISION LIST */}
@@ -796,43 +824,60 @@ export default function ClientReviewPage() {
                             No notes added yet. Pause the video at any time to leave a timestamped note for your editor.
                           </div>
                         ) : (
-                          project.reviewNotes.map((rev) => (
-                            <div
-                              key={rev.id}
-                              className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] hover:border-[#3B82F6]/40 transition-colors space-y-2"
-                            >
-                              <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-[#E5E5E7]">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[11px] font-mono font-bold text-white px-2 py-0.5 rounded-md bg-[#1D1D1F]">
-                                    ⏱ {rev.timecode}
-                                  </span>
-                                  <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md">
-                                    {rev.tag}
+                          project.reviewNotes.map((rev) => {
+                            const isNoteAddressed = rev.isAddressed || String(rev.status || '').toLowerCase().includes('addressed') || String(rev.status || '').toLowerCase().includes('resolved');
+                            return (
+                              <div
+                                key={rev.id}
+                                className={`p-4 rounded-xl border transition-colors space-y-2 ${
+                                  isNoteAddressed
+                                    ? 'bg-emerald-50/40 border-emerald-200/90 hover:border-emerald-300'
+                                    : 'bg-[#F5F5F7] border-[#E5E5E7] hover:border-[#3B82F6]/40'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-[#E5E5E7]/70">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[11px] font-mono font-bold text-white px-2 py-0.5 rounded-md bg-[#1D1D1F]">
+                                      ⏱ {rev.timecode}
+                                    </span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md">
+                                      {rev.tag}
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] text-[#86868B]">
+                                    {rev.timeAgo}
                                   </span>
                                 </div>
-                                <span className="text-[10px] text-[#86868B]">
-                                  {rev.timeAgo}
-                                </span>
+                                <p className="text-xs text-[#1D1D1F] leading-relaxed font-medium">
+                                  &ldquo;{rev.text}&rdquo;
+                                </p>
+                                <div className="pt-1.5 flex items-center justify-between text-xs">
+                                  {isNoteAddressed ? (
+                                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full shadow-2xs">
+                                      <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                      <span>✓ Addressed in New Cut</span>
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                      <span>Queued for editor</span>
+                                    </span>
+                                  )}
+                                  {typeof rev.timecodeSeconds === 'number' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSeek(rev.timecodeSeconds || 0)}
+                                      className="text-[11px] font-bold text-[#3B82F6] hover:underline cursor-pointer"
+                                    >
+                                      Jump to this time →
+                                    </button>
+                                  )}
+                                </div>
                               </div>
-                              <p className="text-xs text-[#1D1D1F] leading-relaxed font-medium">
-                                &ldquo;{rev.text}&rdquo;
-                              </p>
-                              <div className="pt-1.5 flex items-center justify-between text-xs">
-                                <span className={`text-[10px] font-bold ${rev.statusColor || 'text-blue-600'}`}>
-                                  {rev.status || 'Queued for editor'}
-                                </span>
-                                {typeof rev.timecodeSeconds === 'number' && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleSeek(rev.timecodeSeconds || 0)}
-                                    className="text-[11px] font-bold text-[#3B82F6] hover:underline cursor-pointer"
-                                  >
-                                    Jump to this time →
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          ))
+                            );
+                          })
                         )}
                       </div>
                     </div>

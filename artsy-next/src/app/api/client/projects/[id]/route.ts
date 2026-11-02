@@ -195,6 +195,7 @@ export async function GET(
         const s = String(Math.floor(secs % 60)).padStart(2, '0');
         const formattedTc = `${h}:${m}:${s}`;
 
+        const isAddressed = r.status === 'addressed' || r.status === 'resolved' || r.status === 'completed';
         reviewNotes.push({
           id: r.id,
           timecode: formattedTc,
@@ -204,8 +205,9 @@ export async function GET(
           author: 'Client',
           timeAgo: new Date(r.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
           text,
-          status: r.status === 'addressed' ? 'Addressed' : 'Queued for editor',
-          statusColor: r.status === 'addressed' ? 'text-emerald-600' : 'text-[#3B82F6]',
+          status: isAddressed ? '✓ Addressed in New Cut' : 'Queued for editor',
+          statusColor: isAddressed ? 'text-emerald-700' : 'text-[#3B82F6]',
+          isAddressed,
         });
       });
     } catch {}
@@ -214,6 +216,7 @@ export async function GET(
     const snapNotes = Array.isArray(snap.client_review_notes) ? snap.client_review_notes : [];
     snapNotes.forEach((sn: any) => {
       if (!reviewNotes.some((rn) => rn.id === sn.id)) {
+        const isAddressed = sn.status === 'addressed' || sn.status === 'resolved' || sn.status === 'completed';
         reviewNotes.push({
           id: sn.id || String(Date.now()),
           timecode: sn.timecode || '00:00:00',
@@ -223,8 +226,9 @@ export async function GET(
           author: sn.author || 'Client',
           timeAgo: sn.createdAt ? new Date(sn.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recently',
           text: sn.text || sn.comment || '',
-          status: sn.status === 'addressed' ? 'Addressed' : 'Queued for editor',
-          statusColor: sn.status === 'addressed' ? 'text-emerald-600' : 'text-[#3B82F6]',
+          status: isAddressed ? '✓ Addressed in New Cut' : 'Queued for editor',
+          statusColor: isAddressed ? 'text-emerald-700' : 'text-[#3B82F6]',
+          isAddressed,
         });
       }
     });

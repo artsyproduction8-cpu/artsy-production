@@ -844,9 +844,6 @@ export default function ClientReviewPage() {
                                       {rev.tag}
                                     </span>
                                   </div>
-                                  <span className="text-[10px] text-[#86868B]">
-                                    {rev.timeAgo}
-                                  </span>
                                 </div>
                                 <p className="text-xs text-[#1D1D1F] leading-relaxed font-medium">
                                   &ldquo;{rev.text}&rdquo;

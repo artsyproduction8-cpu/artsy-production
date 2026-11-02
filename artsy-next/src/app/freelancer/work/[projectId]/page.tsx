@@ -1085,9 +1085,6 @@ export default function FreelancerWorkView() {
                                 )}
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-[#86868B]">
-                                  {note.timeAgo || (note.createdAt ? new Date(note.createdAt).toLocaleDateString() : '')}
-                                </span>
                                 <button
                                   type="button"
                                   disabled={resolvingNoteId === String(note.id)}

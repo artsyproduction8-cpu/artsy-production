@@ -290,6 +290,9 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
    - **Automatic Resolution on Cut Submission:** When the creator submits or updates their master cut deliverable URL (`PATCH /api/freelancer/work/[projectId]` with `action: 'deliverable'`), the system automatically marks all pending client review notes as `status: 'addressed'` (`addressedAt: ISO timestamp`, `addressedInCutUrl: url`, `addressedBy: creator name`) across both `orders.requirements_snapshot.client_review_notes` and `public.revisions`.
    - **Creator Workstation Individual & Batch Controls:** The creator workroom equips editors with `✓ Mark Addressed` per item and `✓ Mark All Addressed` in batch (`action: 'resolve_note'`, `action: 'resolve_all_notes'`).
    - **Client Portal Resolution Badging:** In `/client/projects/[id]` and `/client/review`, addressed feedback items render with a prominent emerald check badge (`✓ Addressed in New Cut` styled with `bg-emerald-100 text-emerald-800 border-emerald-300`) and the top action bar displays a reassuring summary badge (`✓ X review changes addressed in this cut`), eliminating any ambiguity for the client.
+4. **Review Note Timestamp Invariant (Timeline Time vs. Submission Date Privacy):**
+   - **Timeline Timecode (`⏱ HH:MM:SS`):** The video playback position where feedback applies is prominently displayed on review note badges for both clients and creators to guide precise video revisions.
+   - **Submission Date & Calendar Time Privacy:** Calendar day, date, and clock time of submission (e.g. `2 Nov, 02:09 pm`) are strictly hidden from client and creator card views to keep the creative review interface clean and focused solely on creative notes. Calendar timestamps are strictly reserved for and visible to Studio Administrators only (`/admin/*`) via order snapshots and audit logs.
 
 ---
 

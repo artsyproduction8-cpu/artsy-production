@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import ClientHeader from './components/ClientHeader';
 import ClientSidebar from './components/ClientSidebar';
 import { useAuth } from '@/lib/auth';
+import { parseVideoEmbedUrl } from '@/lib/video/embed';
 
 interface StudioProfile {
   displayName: string;
@@ -67,35 +69,40 @@ export default function ClientDashboardPage() {
     }
   }, [user]);
 
-  const handleApproveCut = () => {
-    setApprovedNotice(true);
-    // Dispatch automated WhatsApp notification in background
-    fetch('/api/notifications/whatsapp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phone: user?.phone || '',
-        eventType: 'MILESTONE_COMPLETED',
-        projectId: 'AP-8841',
-      }),
-    }).catch(() => {});
+  const router = useRouter();
+
+  const handleApproveCut = async (projectId?: string) => {
+    const targetId = projectId || (projects.length > 0 ? projects[0].id : null);
+    if (!targetId) return;
+
+    try {
+      const res = await fetch(`/api/client/projects/${encodeURIComponent(targetId)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'approve_cut' }),
+      });
+
+      if (res.ok) {
+        setApprovedNotice(true);
+        // Refresh projects list to show updated status
+        const listRes = await fetch('/api/client/projects');
+        const listData = await listRes.json();
+        if (listData.projects) setProjects(listData.projects);
+      }
+    } catch (err) {
+      console.warn('Failed to approve cut:', err);
+    }
 
     setTimeout(() => setApprovedNotice(false), 5000);
   };
 
-  const handleRequestRetake = () => {
-    setRetakeNotice(true);
-    fetch('/api/notifications/whatsapp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phone: user?.phone || '',
-        message: '🎬 Artsy Retake Notice: Client requested revision adjustments on Draft v1.2 Cut (Project #AP-8841).',
-        projectId: 'AP-8841',
-      }),
-    }).catch(() => {});
-
-    setTimeout(() => setRetakeNotice(false), 5000);
+  const handleRequestRetake = (projectId?: string) => {
+    const targetId = projectId || (projects.length > 0 ? projects[0].id : null);
+    if (targetId) {
+      router.push(`/client/projects/${encodeURIComponent(targetId)}`);
+    } else {
+      router.push('/client/review');
+    }
   };
 
   return (
@@ -358,82 +365,217 @@ export default function ClientDashboardPage() {
                   When your lead editor finishes a cut, you can watch it here and add notes at exact seconds.
                 </p>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* Left Column: Embedded 16:9 Video Canvas */}
-                <div className="lg:col-span-7 bg-[#0A0A0A] rounded-2xl overflow-hidden border border-[#262626] relative group shadow-md">
-                  <div className="relative aspect-video w-full">
-                    <Image
-                      src="/images/reels/wedding-palace.jpg"
-                      alt="Review Cut Spotlight"
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+            ) : (() => {
+              const activeProject = projects.find((p) => p.isReviewReady || p.deliverableUrl) || projects[0];
+              const ord = activeProject?.orders || {};
+              const snap = ord.requirements_snapshot || {};
+              let displayTitle = activeProject?.title || 'Cinematic Edit';
+              const rawSub = snap.subCategory || snap.serviceId;
+              if (rawSub) {
+                const cleanSub = String(rawSub).replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+                const rawCat = snap.category || ord.service_key || '';
+                const cleanCat = rawCat ? String(rawCat).replace(/\b\w/g, (c: string) => c.toUpperCase()) : '';
+                displayTitle = cleanCat ? `${cleanCat} • ${cleanSub}` : cleanSub;
+              }
+              const orderBadge = ord.order_number || `#${activeProject?.id?.slice(0, 8)}`;
+              const editorName = activeProject?.creatorName || 'Assigned Senior Editor';
+              const embed = parseVideoEmbedUrl(activeProject?.deliverableUrl);
+              const isProjectApproved = activeProject?.status === 'approved' || activeProject?.status === 'completed';
 
-                    {/* Top Canvas Bar */}
-                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between text-[11px] font-mono text-white/90 z-10">
-                      <span className="bg-black/60 backdrop-blur-md px-2 py-0.5 rounded border border-white/10 font-bold">
-                        PREVIEW DRAFT v1.0
-                      </span>
+              return (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Left Column: Embedded 16:9 Video Canvas or Dynamic Status Card */}
+                  <div className="lg:col-span-7 bg-[#0A0A0A] rounded-2xl overflow-hidden border border-[#262626] relative group shadow-md flex items-center justify-center">
+                    <div className="relative aspect-video w-full">
+                      {embed?.type === 'direct' && (
+                        <video
+                          src={embed.embedUrl}
+                          controls
+                          className="w-full h-full object-contain bg-black"
+                        />
+                      )}
+                      {embed?.type === 'youtube' && (
+                        <iframe
+                          src={embed.embedUrl}
+                          title={displayTitle}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                        />
+                      )}
+                      {embed?.type === 'gdrive' && (
+                        <iframe
+                          src={embed.embedUrl}
+                          title={displayTitle}
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                        />
+                      )}
+                      {embed?.type === 'vimeo' && (
+                        <iframe
+                          src={embed.embedUrl}
+                          title={displayTitle}
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                        />
+                      )}
+                      {embed?.type === 'loom' && (
+                        <iframe
+                          src={embed.embedUrl}
+                          title={displayTitle}
+                          allowFullScreen
+                          className="w-full h-full border-0"
+                        />
+                      )}
+                      {embed?.type === 'cloud' && (
+                        <div className="w-full h-full bg-gradient-to-tr from-[#111111] via-[#1a1a1a] to-[#0d0d0d] flex flex-col items-center justify-center p-6 text-center text-white space-y-3">
+                          <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-2xl">
+                            📁
+                          </div>
+                          <div className="space-y-1 max-w-sm">
+                            <h4 className="text-sm font-bold text-white">Cloud Master Folder Ready</h4>
+                            <p className="text-xs text-white/70">
+                              Your editor has provided the export folder. Click below to inspect raw renders.
+                            </p>
+                          </div>
+                          <a
+                            href={embed.originalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl inline-flex items-center gap-1.5"
+                          >
+                            <span>Open Cloud Folder</span>
+                            <span>↗</span>
+                          </a>
+                        </div>
+                      )}
+                      {!embed && (
+                        <div className="w-full h-full bg-gradient-to-tr from-[#111111] via-[#1a1a1a] to-[#0d0d0d] flex flex-col items-center justify-center p-6 text-center text-white space-y-3">
+                          <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center text-2xl animate-pulse">
+                            ✂️
+                          </div>
+                          <div className="space-y-1 max-w-sm">
+                            <span className="text-[10px] font-mono uppercase tracking-wider text-blue-400 font-bold block">
+                              STAGE {activeProject?.editingProgress?.stage || 1} OF 4 • {activeProject?.editingProgress?.stageName || 'ASSEMBLY'}
+                            </span>
+                            <h4 className="text-sm font-bold text-white">Post-Production In Progress</h4>
+                            <p className="text-xs text-white/70 leading-relaxed">
+                              Your editor <strong className="text-white">{editorName}</strong> is assembling your timeline. Once submitted, the draft cut will stream here for review.
+                            </p>
+                          </div>
+                          <Link
+                            href={`/client/projects/${activeProject?.id}`}
+                            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl inline-flex items-center gap-1.5 transition-colors"
+                          >
+                            <span>View Workroom</span>
+                            <span>→</span>
+                          </Link>
+                        </div>
+                      )}
+
+                      {/* Watermark Overlay for In-Progress Cuts */}
+                      {embed && !isProjectApproved && (
+                        <div className="absolute bottom-3 right-3 bg-black/80 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-md tracking-wider border border-amber-400/40 backdrop-blur-xs pointer-events-none shadow-md z-20">
+                          DRAFT PREVIEW — ARTSY
+                        </div>
+                      )}
+
+                      {/* Approved Badge Overlay */}
+                      {isProjectApproved && (
+                        <div className="absolute top-3 right-3 bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full tracking-wider shadow-lg z-20">
+                          APPROVED ✓
+                        </div>
+                      )}
                     </div>
+                  </div>
 
-                    {/* Center Play Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                      <button
-                        type="button"
-                        onClick={() => setIsPlaying(!isPlaying)}
-                        className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white flex items-center justify-center text-xl hover:scale-110 transition-all cursor-pointer shadow-lg"
-                      >
-                        {isPlaying ? '⏸' : '▶'}
-                      </button>
-                    </div>
+                  {/* Right Column: Quick Actions & Live Milestone Info */}
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="bg-[#1D1D1F] text-white rounded-2xl p-6 space-y-4 shadow-sm border border-[#262626]">
+                      <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-mono text-[#3B82F6] font-bold">
+                            {orderBadge}
+                          </span>
+                          <h4 className="text-sm font-bold text-white">
+                            {displayTitle}
+                          </h4>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${
+                          isProjectApproved
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : embed
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        }`}>
+                          {isProjectApproved ? 'APPROVED ✓' : embed ? 'REVIEW READY' : 'IN ASSEMBLY'}
+                        </span>
+                      </div>
 
-                    {/* Bottom Timecode Scrubber Bar */}
-                    <div className="absolute bottom-3 left-3 right-3 z-10 space-y-1.5">
-                      <div className="flex items-center justify-between text-xs font-mono font-bold text-white">
-                        <span>Time @ {activeTimecode}</span>
-                        <span className="text-[#86868B]">00:00:00</span>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex items-center justify-between text-[#86868B]">
+                          <span>Assigned Editor:</span>
+                          <span className="text-white font-medium">{editorName}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-[#86868B]">
+                          <span>Production Phase:</span>
+                          <span className="text-white font-medium">
+                            Stage {activeProject?.editingProgress?.stage || 1} of 4: {activeProject?.editingProgress?.stageName || 'Story Assembly'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="w-full bg-white/20 h-1.5 rounded-full overflow-hidden relative">
-                        <div className="bg-[#3B82F6] h-full w-[0%]"></div>
-                      </div>
+
+                      {embed ? (
+                        <div className="space-y-3 pt-2">
+                          <p className="text-[11px] text-[#86868B] leading-relaxed">
+                            {isProjectApproved
+                              ? 'You have approved this cut! The 4K unwatermarked master file is unlocked in Final Downloads.'
+                              : 'Watch the draft cut above. If you love it, approve the cut to unlock master files. If you need any tweaks, pause and leave timestamped notes.'}
+                          </p>
+
+                          <div className="flex items-center gap-2 pt-1">
+                            <Link
+                              href={`/client/projects/${activeProject?.id}`}
+                              className="flex-1 py-2.5 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl transition-all text-center cursor-pointer inline-flex items-center justify-center gap-1"
+                            >
+                              <span>Review &amp; Notes</span>
+                              <span>↗</span>
+                            </Link>
+
+                            {!isProjectApproved ? (
+                              <button
+                                type="button"
+                                onClick={() => handleApproveCut(activeProject?.id)}
+                                className="flex-1 py-2.5 px-3 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all text-center cursor-pointer shadow-sm"
+                              >
+                                Approve Video ✓
+                              </button>
+                            ) : (
+                              <div className="flex-1 py-2.5 px-3 bg-emerald-600 text-white text-xs font-bold rounded-xl text-center">
+                                Approved ✓
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 pt-2">
+                          <p className="text-[11px] text-[#86868B] leading-relaxed">
+                            Your editor is actively cutting footage and matching music pacing. You will receive an instant notification on WhatsApp, Email, and here as soon as the review cut is ready.
+                          </p>
+                          <Link
+                            href={`/client/projects/${activeProject?.id}`}
+                            className="block w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl text-center transition-colors"
+                          >
+                            Open Project Review Workroom →
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
-
-                {/* Right Column: Quick Actions */}
-                <div className="lg:col-span-5 space-y-4">
-                  <div className="bg-[#1D1D1F] text-white rounded-xl p-5 space-y-3">
-                    <span className="text-[10px] font-bold tracking-widest text-[#3B82F6] uppercase">
-                      APPROVAL &amp; SIGN OFF
-                    </span>
-                    <h4 className="text-sm font-bold text-white mt-0.5">
-                      Happy with this video?
-                    </h4>
-                    <p className="text-[11px] text-[#86868B] leading-relaxed mt-1">
-                      Approving unlocks your unwatermarked 4K video download and completes the edit milestone.
-                    </p>
-                    <div className="flex items-center gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={handleRequestRetake}
-                        className="flex-1 py-2.5 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-all text-center cursor-pointer"
-                      >
-                        Request Changes
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleApproveCut}
-                        className="flex-1 py-2.5 px-3 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-lg transition-all text-center cursor-pointer shadow-sm"
-                      >
-                        Approve Video ✓
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </section>
 
           {/* ================================================================ */}

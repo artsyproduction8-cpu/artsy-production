@@ -25,14 +25,49 @@ export async function GET(
       return NextResponse.json({ error: 'Database service unavailable' }, { status: 503 });
     }
 
-    // 1. Fetch project
-    const { data: project, error: projectError } = await db
-      .from('projects')
-      .select('*')
-      .eq('id', projectId)
-      .maybeSingle();
+    // 1. Fetch project with resilient matching (exact UUID, project_number, UUID prefix, active creator assignment)
+    const cleanProjId = (projectId || '').trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanProjId);
+    let project: any = null;
 
-    if (projectError || !project) {
+    if (isUuid) {
+      const { data } = await db.from('projects').select('*').eq('id', cleanProjId).maybeSingle();
+      if (data) project = data;
+    }
+
+    if (!project) {
+      const { data } = await db.from('projects').select('*').eq('project_number', cleanProjId).maybeSingle();
+      if (data) project = data;
+    }
+
+    if (!project && cleanProjId.length >= 8) {
+      const prefix = cleanProjId.slice(0, 8).toLowerCase();
+      const { data: candidates } = await db.from('projects').select('*').order('created_at', { ascending: false }).limit(10);
+      const matched = (candidates || []).find((c: any) => c.id.toLowerCase().startsWith(prefix));
+      if (matched) project = matched;
+    }
+
+    if (!project) {
+      const { data: creatorAssign } = await db
+        .from('assignments')
+        .select('project_id')
+        .eq('creator_id', authUser.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (creatorAssign?.project_id) {
+        const { data } = await db.from('projects').select('*').eq('id', creatorAssign.project_id).maybeSingle();
+        if (data) project = data;
+      }
+    }
+
+    if (!project) {
+      const { data } = await db.from('projects').select('*').eq('assigned_creator_id', authUser.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (data) project = data;
+    }
+
+    if (!project) {
       return NextResponse.json({ success: true, project: null });
     }
 
@@ -211,7 +246,7 @@ export async function GET(
       snap.deliverable_url ||
       snap.draft_cut_url ||
       null;
-    const deliverableUploaded = Boolean(deliverableUrl || project.status === 'review_ready');
+    const deliverableUploaded = Boolean(deliverableUrl || project.status === 'client_review' || project.status === 'review_ready');
 
     const enrichedProject = {
       ...project,
@@ -291,6 +326,54 @@ export async function PATCH(
       return NextResponse.json({ error: 'Database service unavailable' }, { status: 503 });
     }
 
+    // Authoritative resilient project lookup for creator actions
+    const cleanProjId = (projectId || '').trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanProjId);
+    let resolvedProject: any = null;
+
+    if (isUuid) {
+      const { data } = await db.from('projects').select('id, order_id, client_id, project_number, title, status').eq('id', cleanProjId).maybeSingle();
+      if (data) resolvedProject = data;
+    }
+
+    if (!resolvedProject) {
+      const { data } = await db.from('projects').select('id, order_id, client_id, project_number, title, status').eq('project_number', cleanProjId).maybeSingle();
+      if (data) resolvedProject = data;
+    }
+
+    if (!resolvedProject && cleanProjId.length >= 8) {
+      const prefix = cleanProjId.slice(0, 8).toLowerCase();
+      const { data: candidates } = await db.from('projects').select('id, order_id, client_id, project_number, title, status').order('created_at', { ascending: false }).limit(10);
+      const matched = (candidates || []).find((c: any) => c.id.toLowerCase().startsWith(prefix));
+      if (matched) resolvedProject = matched;
+    }
+
+    if (!resolvedProject) {
+      const { data: creatorAssign } = await db
+        .from('assignments')
+        .select('project_id')
+        .eq('creator_id', authUser.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (creatorAssign?.project_id) {
+        const { data } = await db.from('projects').select('id, order_id, client_id, project_number, title, status').eq('id', creatorAssign.project_id).maybeSingle();
+        if (data) resolvedProject = data;
+      }
+    }
+
+    if (!resolvedProject) {
+      const { data } = await db.from('projects').select('id, order_id, client_id, project_number, title, status').eq('assigned_creator_id', authUser.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (data) resolvedProject = data;
+    }
+
+    const realProjectId = resolvedProject ? resolvedProject.id : cleanProjId;
+    const realOrderId = resolvedProject?.order_id || null;
+    const realClientId = resolvedProject?.client_id || null;
+    const realProjectNumber = resolvedProject?.project_number || cleanProjId;
+    const realProjectTitle = resolvedProject?.title || 'Master Cut Draft';
+
     const STAGE_NAMES: Record<number, string> = {
       1: 'Ingest & Selects',
       2: 'Story Assembly',
@@ -313,9 +396,8 @@ export async function PATCH(
       const nowIso = new Date().toISOString();
 
       // 1. Fetch current order requirements snapshot
-      const { data: currentProj } = await db.from('projects').select('id, order_id').eq('id', projectId).single();
-      if (currentProj?.order_id) {
-        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', currentProj.order_id).single();
+      if (realOrderId) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', realOrderId).single();
         const snap = ord?.requirements_snapshot || {};
         snap.editing_progress = {
           stage: validStage,
@@ -328,7 +410,7 @@ export async function PATCH(
         await db.from('orders').update({
           requirements_snapshot: snap,
           updated_at: nowIso,
-        }).eq('id', currentProj.order_id);
+        }).eq('id', realOrderId);
       }
 
       // Try updating projects table if columns exist
@@ -338,7 +420,7 @@ export async function PATCH(
           progress_percentage: percentage,
           stage_notes: stageNotes,
           updated_at: nowIso,
-        }).eq('id', projectId);
+        }).eq('id', realProjectId);
       } catch {}
 
       // Log in audit_logs
@@ -347,7 +429,7 @@ export async function PATCH(
           action: 'creator_milestone_progress',
           user_id: authUser.id,
           entity_type: 'project',
-          entity_id: projectId,
+          entity_id: realProjectId,
           new_values: {
             stage: validStage,
             percentage,
@@ -391,15 +473,14 @@ export async function PATCH(
         status: 'open',
       };
 
-      const { data: currentProj } = await db.from('projects').select('id, order_id, project_number').eq('id', projectId).single();
-      if (currentProj?.order_id) {
-        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', currentProj.order_id).single();
+      if (realOrderId) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', realOrderId).single();
         const snap = ord?.requirements_snapshot || {};
         snap.creator_issue = issueObj;
         await db.from('orders').update({
           requirements_snapshot: snap,
           updated_at: nowIso,
-        }).eq('id', currentProj.order_id);
+        }).eq('id', realOrderId);
       }
 
       try {
@@ -407,7 +488,7 @@ export async function PATCH(
           issue_flagged: true,
           issue_details: issueObj,
           updated_at: nowIso,
-        }).eq('id', projectId);
+        }).eq('id', realProjectId);
       } catch {}
 
       // Audit log
@@ -416,7 +497,7 @@ export async function PATCH(
           action: 'creator_roadblock_raised',
           user_id: authUser.id,
           entity_type: 'project',
-          entity_id: projectId,
+          entity_id: realProjectId,
           new_values: issueObj,
         }]);
       } catch {}
@@ -427,7 +508,7 @@ export async function PATCH(
           user_id: authUser.id,
           event_number: 99,
           title: `⚠️ Creator Roadblock: ${title}`,
-          message: `${creatorName} reported missing details on ${currentProj?.project_number || 'Project'}: "${title}". What is needed: ${missingDetails.slice(0, 100)}`,
+          message: `${creatorName} reported missing details on ${realProjectNumber || 'Project'}: "${title}". What is needed: ${missingDetails.slice(0, 100)}`,
           action_url: '/admin',
           read: false,
           created_at: nowIso,
@@ -443,9 +524,8 @@ export async function PATCH(
 
     if (action === 'resolve_issue') {
       const nowIso = new Date().toISOString();
-      const { data: currentProj } = await db.from('projects').select('id, order_id').eq('id', projectId).single();
-      if (currentProj?.order_id) {
-        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', currentProj.order_id).single();
+      if (realOrderId) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', realOrderId).single();
         const snap = ord?.requirements_snapshot || {};
         if (snap.creator_issue) {
           snap.creator_issue.flagged = false;
@@ -455,14 +535,14 @@ export async function PATCH(
         await db.from('orders').update({
           requirements_snapshot: snap,
           updated_at: nowIso,
-        }).eq('id', currentProj.order_id);
+        }).eq('id', realOrderId);
       }
 
       try {
         await db.from('projects').update({
           issue_flagged: false,
           updated_at: nowIso,
-        }).eq('id', projectId);
+        }).eq('id', realProjectId);
       } catch {}
 
       // Audit log
@@ -471,7 +551,7 @@ export async function PATCH(
           action: 'creator_roadblock_resolved',
           user_id: authUser.id,
           entity_type: 'project',
-          entity_id: projectId,
+          entity_id: realProjectId,
           new_values: { resolvedAt: nowIso },
         }]);
       } catch {}
@@ -489,7 +569,7 @@ export async function PATCH(
           action: 'creator_daily_checkin',
           user_id: authUser.id,
           entity_type: 'project',
-          entity_id: projectId,
+          entity_id: realProjectId,
           new_values: {
             checkin_status,
             notes: notes || '',
@@ -508,49 +588,21 @@ export async function PATCH(
         return NextResponse.json({ error: 'Deliverable URL is required' }, { status: 400 });
       }
 
-      const cleanProjId = (projectId || '').trim();
       const nowIso = new Date().toISOString();
 
-      // Resolve project by id or project_number
-      let targetProjectId = cleanProjId;
-      let orderId: string | null = null;
-      let clientId: string | null = null;
-      let projectNumber: string = cleanProjId;
-      let projectTitle: string = 'Master Cut Draft';
-
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanProjId);
-      let currentProject: any = null;
-
-      if (isUuid) {
-        const { data } = await db.from('projects').select('id, order_id, client_id, project_number, title').eq('id', cleanProjId).maybeSingle();
-        if (data) currentProject = data;
-      }
-      if (!currentProject) {
-        const { data } = await db.from('projects').select('id, order_id, client_id, project_number, title').eq('project_number', cleanProjId).maybeSingle();
-        if (data) currentProject = data;
-      }
-
-      if (currentProject) {
-        targetProjectId = currentProject.id;
-        orderId = currentProject.order_id;
-        clientId = currentProject.client_id;
-        projectNumber = currentProject.project_number || cleanProjId;
-        projectTitle = currentProject.title || 'Master Cut Draft';
-      }
-
-      // 1. Update project status and final_download_url
+      // 1. Update project status and final_download_url (client_review is canonical 32-status)
       await db
         .from('projects')
         .update({
-          status: 'review_ready',
+          status: 'client_review',
           final_download_url: deliverableUrl.trim(),
           updated_at: nowIso,
         })
-        .eq('id', targetProjectId);
+        .eq('id', realProjectId);
 
       // 2. Also update associated order work_status & snapshot
-      if (orderId) {
-        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', orderId).maybeSingle();
+      if (realOrderId) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', realOrderId).maybeSingle();
         const snap = ord?.requirements_snapshot || {};
         snap.deliverable_url = deliverableUrl.trim();
         snap.draft_cut_url = deliverableUrl.trim();
@@ -560,11 +612,11 @@ export async function PATCH(
         await db
           .from('orders')
           .update({
-            work_status: 'review_ready',
+            work_status: 'substantial_progress',
             requirements_snapshot: snap,
             updated_at: nowIso,
           })
-          .eq('id', orderId);
+          .eq('id', realOrderId);
       }
 
       // 3. Record audit log
@@ -573,7 +625,7 @@ export async function PATCH(
           action: 'creator_deliverable_submitted',
           user_id: authUser.id,
           entity_type: 'project',
-          entity_id: targetProjectId,
+          entity_id: realProjectId,
           new_values: {
             deliverable_url: deliverableUrl.trim(),
             submitted_at: nowIso,
@@ -584,11 +636,11 @@ export async function PATCH(
       // 4. Dispatch multi-channel notification to client (In-App, WhatsApp, Email)
       try {
         const { dispatchNotification } = await import('@/lib/whatsapp/dispatcher');
-        if (clientId) {
+        if (realClientId) {
           const { data: clientUser } = await db
             .from('users')
             .select('id, full_name, email, phone')
-            .eq('id', clientId)
+            .eq('id', realClientId)
             .maybeSingle();
 
           if (clientUser) {
@@ -599,10 +651,10 @@ export async function PATCH(
               recipientEmail: clientUser.email || undefined,
               variables: {
                 name: clientUser.full_name || 'Client Partner',
-                projectId: projectNumber,
-                title: projectTitle,
+                projectId: realProjectNumber,
+                title: realProjectTitle,
               },
-              actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/client/projects/${targetProjectId}`,
+              actionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://artsyproduction.com'}/client/projects/${realProjectId}`,
             });
           }
         }
@@ -614,6 +666,7 @@ export async function PATCH(
         success: true,
         message: 'Deliverable submitted for client review',
         deliverableUrl: deliverableUrl.trim(),
+        projectId: realProjectId,
       });
     }
 

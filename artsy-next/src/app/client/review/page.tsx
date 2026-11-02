@@ -8,6 +8,7 @@ import ClientSidebar from '../components/ClientSidebar';
 import ClientHeader from '../components/ClientHeader';
 import { createChangeOrder } from '@/lib/changeOrders/engine';
 import { logRefundRequest } from '@/lib/activity/logger';
+import { parseVideoEmbedUrl, VideoEmbedInfo } from '@/lib/video/embed';
 
 interface RevisionItem {
   id: string;
@@ -141,6 +142,11 @@ export default function ClientReviewPage() {
     }
   }, []);
 
+  // Parse deliverable link into embeddable format
+  const videoEmbed = useMemo(() => {
+    return parseVideoEmbedUrl(project?.deliverableUrl);
+  }, [project?.deliverableUrl]);
+
   // Keyboard shortcut listener: Space toggles play/pause, M focuses feedback textarea
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -154,6 +160,7 @@ export default function ClientReviewPage() {
 
       if (e.code === 'Space') {
         e.preventDefault();
+        if (!videoEmbed) return; // Prevent phantom timer when video is not submitted yet
         if (videoRef.current) {
           if (videoRef.current.paused) {
             videoRef.current.play();
@@ -173,11 +180,11 @@ export default function ClientReviewPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [videoEmbed]);
 
   // Timer simulation for non-native video players
   useEffect(() => {
-    if (!isPlaying || videoRef.current) return;
+    if (!isPlaying || !videoEmbed || videoRef.current) return;
     const interval = setInterval(() => {
       setCurrentSeconds((prev) => {
         const next = prev + 1;
@@ -189,7 +196,7 @@ export default function ClientReviewPage() {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, videoEmbed]);
 
   // Native HTML5 video time tracking
   const handleNativeTimeUpdate = () => {
@@ -204,6 +211,7 @@ export default function ClientReviewPage() {
   };
 
   const handleSeek = (seconds: number) => {
+    if (!videoEmbed) return;
     setCurrentSeconds(seconds);
     const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
     const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
@@ -214,69 +222,6 @@ export default function ClientReviewPage() {
       videoRef.current.currentTime = seconds;
     }
   };
-
-  // Parse deliverable link into embeddable format
-  const videoEmbed = useMemo(() => {
-    const raw = (project?.deliverableUrl || '').trim();
-    if (!raw) return null;
-
-    // YouTube
-    const ytMatch = raw.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
-    if (ytMatch) {
-      return {
-        type: 'youtube' as const,
-        embedUrl: `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&enablejsapi=1`,
-        originalUrl: raw,
-      };
-    }
-
-    // Google Drive video
-    const gDriveMatch = raw.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/i);
-    if (gDriveMatch && !raw.includes('/folders/')) {
-      return {
-        type: 'gdrive' as const,
-        embedUrl: `https://drive.google.com/file/d/${gDriveMatch[1]}/preview`,
-        originalUrl: raw,
-      };
-    }
-
-    // Vimeo
-    const vimeoMatch = raw.match(/vimeo\.com\/(?:video\/)?([0-9]+)/i);
-    if (vimeoMatch) {
-      return {
-        type: 'vimeo' as const,
-        embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}`,
-        originalUrl: raw,
-      };
-    }
-
-    // Loom
-    const loomMatch = raw.match(/loom\.com\/share\/([a-zA-Z0-9]+)/i);
-    if (loomMatch) {
-      return {
-        type: 'loom' as const,
-        embedUrl: `https://www.loom.com/embed/${loomMatch[1]}`,
-        originalUrl: raw,
-      };
-    }
-
-    // Direct Video (MP4 / WebM / M4V / Bunny CDN)
-    const isDirect = /\.(mp4|webm|m4v|mov|m3u8)(\?.*)?$/i.test(raw) || raw.includes('b-cdn.net') || raw.includes('bunnycdn');
-    if (isDirect) {
-      return {
-        type: 'direct' as const,
-        embedUrl: raw,
-        originalUrl: raw,
-      };
-    }
-
-    // Fallback Cloud Storage (Google Drive folder, Dropbox, Frame.io)
-    return {
-      type: 'cloud' as const,
-      embedUrl: null,
-      originalUrl: raw,
-    };
-  }, [project?.deliverableUrl]);
 
   // Handle adding a timestamped review note
   const handleAddAnnotation = async (e: React.FormEvent) => {
@@ -741,67 +686,78 @@ export default function ClientReviewPage() {
                       </div>
 
                       {/* TIMELINE & SCRUBBER MODULE */}
-                      <div className="mt-5 bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3">
-                        {/* Interactive Playbar */}
-                        <div
-                          className="relative w-full h-3 bg-[#E5E5E7] rounded-full cursor-pointer overflow-hidden group"
-                          onClick={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                            const targetSecs = Math.floor(ratio * 180); // 3-min scale
-                            handleSeek(targetSecs);
-                          }}
-                          title="Click to scrub timeline"
-                        >
+                      {videoEmbed ? (
+                        <div className="mt-5 bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3">
+                          {/* Interactive Playbar */}
                           <div
-                            className="h-full bg-[#3B82F6] rounded-full transition-all"
-                            style={{ width: `${Math.min(100, Math.max(5, (currentSeconds / 180) * 100))}%` }}
-                          />
-                        </div>
-
-                        {/* Controller Row */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                          {/* Left: Quick Scrub Buttons */}
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleSeek(Math.max(0, currentSeconds - 5))}
-                              className="px-2.5 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
-                              title="Rewind 5 seconds"
-                            >
-                              -5s
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleSeek(currentSeconds + 5)}
-                              className="px-2.5 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
-                              title="Forward 5 seconds"
-                            >
-                              +5s
-                            </button>
-                          </div>
-
-                          {/* Timecode Display */}
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] uppercase font-bold text-[#86868B]">Current Timecode:</span>
-                            <div className="px-3 py-1 bg-white rounded-lg border border-[#E5E5E7] font-mono text-xs font-extrabold text-[#3B82F6]">
-                              {currentTimecode}
-                            </div>
-                          </div>
-
-                          {/* Capture Current Time Button */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              showToast(`Captured timecode: ${currentTimecode}`);
-                              noteTextareaRef.current?.focus();
+                            className="relative w-full h-3 bg-[#E5E5E7] rounded-full cursor-pointer overflow-hidden group"
+                            onClick={(e) => {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                              const targetSecs = Math.floor(ratio * 180); // 3-min scale
+                              handleSeek(targetSecs);
                             }}
-                            className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                            title="Click to scrub timeline"
                           >
-                            📍 Tag at {currentTimecode}
-                          </button>
+                            <div
+                              className="h-full bg-[#3B82F6] rounded-full transition-all"
+                              style={{ width: `${Math.min(100, Math.max(5, (currentSeconds / 180) * 100))}%` }}
+                            />
+                          </div>
+
+                          {/* Controller Row */}
+                          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                            {/* Left: Quick Scrub Buttons */}
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleSeek(Math.max(0, currentSeconds - 5))}
+                                className="px-2.5 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
+                                title="Rewind 5 seconds"
+                              >
+                                -5s
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSeek(currentSeconds + 5)}
+                                className="px-2.5 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
+                                title="Forward 5 seconds"
+                              >
+                                +5s
+                              </button>
+                            </div>
+
+                            {/* Timecode Display */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] uppercase font-bold text-[#86868B]">Current Timecode:</span>
+                              <div className="px-3 py-1 bg-white rounded-lg border border-[#E5E5E7] font-mono text-xs font-extrabold text-[#3B82F6]">
+                                {currentTimecode}
+                              </div>
+                            </div>
+
+                            {/* Capture Current Time Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                showToast(`Captured timecode: ${currentTimecode}`);
+                                noteTextareaRef.current?.focus();
+                              }}
+                              className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold rounded-lg cursor-pointer transition-colors"
+                            >
+                              📍 Tag at {currentTimecode}
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="mt-5 p-4 bg-[#F5F5F7] rounded-xl border border-dashed border-[#E5E5E7] text-center space-y-1">
+                          <div className="text-xs font-bold text-[#1D1D1F]">
+                            Interactive Timeline Scrubbing &amp; Frame Tagging
+                          </div>
+                          <p className="text-[11px] text-[#86868B]">
+                            This playback bar and frame note tagger will unlock immediately once your editor posts your draft cut.
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Hotkeys Bar */}

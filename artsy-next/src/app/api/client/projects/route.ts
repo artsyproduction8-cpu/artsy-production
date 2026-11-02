@@ -90,7 +90,7 @@ export async function GET(request: Request) {
       ...p,
       creatorName,
       deliverableUrl: p.final_download_url || snap.deliverable_url || snap.draft_cut_url || null,
-      isReviewReady: Boolean(p.status === 'review_ready' || p.final_download_url || snap.deliverable_url),
+      isReviewReady: Boolean(p.status === 'client_review' || p.status === 'review_ready' || p.final_download_url || snap.deliverable_url),
       preferredCreatorName: ord.preferred_creator_id ? (creatorNameMap[ord.preferred_creator_id] || 'Requested Editor') : null,
       isCreatorDeclined: Boolean(ord.preferred_creator_rejection_reason && !ord.preferred_creator_assigned),
       declineReason: ord.preferred_creator_rejection_reason || null,

@@ -67,6 +67,21 @@ export async function GET(
       if (data) project = data;
     }
 
+    // Resilient prefix match (e.g. first 8 characters of UUID)
+    if (!project && cleanId.length >= 8) {
+      const prefix = cleanId.slice(0, 8).toLowerCase();
+      let fallbackQuery = db.from('projects').select(`
+        id, project_number, title, status, client_id, order_id, assigned_creator_id, raw_footage_b2_prefix, final_download_url, current_revision_round, max_free_revisions, created_at, updated_at,
+        orders:order_id ( id, order_number, gross_amount, status, service_key, requirements_snapshot, client_name, client_phone, client_email, paid_at )
+      `);
+      if (authUser.role === 'client') {
+        fallbackQuery = fallbackQuery.eq('client_id', authUser.id);
+      }
+      const { data: candidates } = await fallbackQuery.order('created_at', { ascending: false }).limit(10);
+      const matched = (candidates || []).find((c: any) => c.id?.toLowerCase().startsWith(prefix));
+      if (matched) project = matched;
+    }
+
     // If still not found and user is client, fallback to user's latest active project
     if (!project && authUser.role === 'client') {
       const { data: latestProj } = await query
@@ -256,6 +271,28 @@ export async function POST(
     if (!project) {
       const { data } = await db.from('projects').select('*, orders(*)').eq('project_number', cleanId).maybeSingle();
       if (data) project = data;
+    }
+
+    if (!project && cleanId.length >= 8) {
+      const prefix = cleanId.slice(0, 8).toLowerCase();
+      let fallbackQuery = db.from('projects').select('*, orders(*)');
+      if (authUser.role === 'client') {
+        fallbackQuery = fallbackQuery.eq('client_id', authUser.id);
+      }
+      const { data: candidates } = await fallbackQuery.order('created_at', { ascending: false }).limit(10);
+      const matched = (candidates || []).find((c: any) => c.id?.toLowerCase().startsWith(prefix));
+      if (matched) project = matched;
+    }
+
+    if (!project && authUser.role === 'client') {
+      const { data: latestProj } = await db
+        .from('projects')
+        .select('*, orders(*)')
+        .eq('client_id', authUser.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestProj) project = latestProj;
     }
 
     if (!project) {
@@ -474,3 +511,4 @@ export async function POST(
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
+

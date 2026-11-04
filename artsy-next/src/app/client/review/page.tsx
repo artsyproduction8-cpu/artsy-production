@@ -1031,30 +1031,8 @@ export default function ClientReviewPage() {
                     </div>
                   </div>
 
-                  {/* COMPACT REVISION STATUS BAR */}
-                  <div className="mt-4 pt-4 border-t border-[#E5E5E7] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[#86868B]">Revision Status:</span>
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
-                        isApproved
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : isRevisionLocked
-                          ? 'bg-amber-100 text-amber-900'
-                          : isRevisionRequested
-                          ? 'bg-amber-50 text-amber-800'
-                          : 'bg-blue-50 text-blue-700'
-                      }`}>
-                        {isApproved
-                          ? '✓ Final Master Approved'
-                          : isRevisionLocked
-                          ? '🔒 All 2 Included Rounds Ended'
-                          : isRevisionRequested
-                          ? `Round ${currentRound - 1} Submitted (Editor Cutting v${currentRound}.0)`
-                          : `Round ${currentRound} of ${includedRounds} Active`}
-                      </span>
-                      <span className="text-[#86868B] text-[11px] hidden md:inline">({includedRounds} Rounds Included Free)</span>
-                    </div>
-
+                  {/* COMPACT REVISION STEPPER */}
+                  <div className="mt-4 pt-4 border-t border-[#E5E5E7] flex items-center justify-end text-xs">
                     {/* Stepper Steps */}
                     <div className="flex items-center gap-2 text-[11px] font-medium text-[#86868B]">
                       <span className={`flex items-center gap-1 ${currentRound >= 1 ? 'text-[#1D1D1F] font-semibold' : ''}`}>
@@ -1178,14 +1156,23 @@ export default function ClientReviewPage() {
                       )}
 
                       {!isApproved ? (
-                        <button
-                          type="button"
-                          onClick={handleApproveCut}
-                          disabled={isApproving}
-                          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
-                        >
-                          <span>{isApproving ? 'Approving...' : '✓ I Like It! Approve Video Cut'}</span>
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleRequestRevision}
+                            className="px-4 py-2.5 bg-white hover:bg-slate-50 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-2xs"
+                          >
+                            Request Changes →
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleApproveCut}
+                            disabled={isApproving}
+                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                          >
+                            <span>{isApproving ? 'Approving...' : '✓ I Like It! Approve Video Cut'}</span>
+                          </button>
+                        </div>
                       ) : (
                         <div className="flex items-center gap-2">
                           <div className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs">
@@ -1512,51 +1499,9 @@ export default function ClientReviewPage() {
                               ✓ {addressedNotesCount} Addressed
                             </span>
                           )}
-                          <span className="px-2.5 py-0.5 bg-[#3B82F6]/10 text-[#3B82F6] text-xs font-bold rounded-full">
-                            {project.reviewNotes.length} {project.reviewNotes.length === 1 ? 'Note' : 'Notes'}
-                          </span>
+
                         </div>
                       </div>
-
-                      {/* PROMINENT SUBMIT REVISION ACTION PANEL */}
-                      {!isApproved && !isRevisionLocked && (
-                        <div className="mt-3.5 p-3.5 bg-blue-50/90 border border-blue-200 rounded-xl space-y-2">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-extrabold text-blue-900">
-                              {isRevisionRequested
-                                ? `⏳ Round ${currentRound - 1} Feedback Submitted`
-                                : `Send Round ${currentRound} Notes to Editor`}
-                            </span>
-                            <span className="text-[10px] font-mono text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full font-bold">
-                              Round {currentRound} of {includedRounds}
-                            </span>
-                          </div>
-                          
-                          {isRevisionRequested ? (
-                            <p className="text-[11px] text-blue-800 leading-relaxed font-medium">
-                              ✓ Your Round {currentRound - 1} review notes have been dispatched. Your editor is currently assembling Cut v{currentRound}.0.
-                            </p>
-                          ) : (
-                            <>
-                              <p className="text-[11px] text-blue-800/80 leading-relaxed">
-                                Logged notes are queued below. Once you finish reviewing this cut, click below to deliver all feedback to your editor.
-                              </p>
-                              <button
-                                type="button"
-                                onClick={handleRequestRevision}
-                                disabled={unaddressedNotesCount === 0}
-                                className="w-full py-2.5 px-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-                              >
-                                <span>
-                                  {unaddressedNotesCount > 0
-                                    ? `Send Round ${currentRound} Notes to Editor (${unaddressedNotesCount} Notes Logged) →`
-                                    : `Log notes on the timeline to send Round ${currentRound} review`}
-                                </span>
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      )}
 
                       {/* REVISION LIST */}
                       <div className="mt-4 space-y-3 overflow-y-auto max-h-[380px] pr-1">

@@ -594,36 +594,74 @@ export async function PATCH(
 
       const nowIso = new Date().toISOString();
 
-      // 1. Update project status and final_download_url (client_review is canonical 32-status)
+      // Fetch current project to check round & history
+      const { data: currentProj } = await db
+        .from('projects')
+        .select('id, current_revision_round, max_free_revisions, final_download_url, order_id')
+        .eq('id', realProjectId)
+        .maybeSingle();
+
+      let snap: any = {};
+      if (realOrderId) {
+        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', realOrderId).maybeSingle();
+        snap = ord?.requirements_snapshot || {};
+      }
+
+      const deliverableHistory = Array.isArray(snap.deliverable_history) ? [...snap.deliverable_history] : [];
+      const hasPreviousCut = Boolean(
+        snap.deliverable_url ||
+        currentProj?.final_download_url ||
+        deliverableHistory.length > 0
+      );
+
+      // Determine next round: if previous cut existed, advance round
+      let nextRound = Number(currentProj?.current_revision_round) || 1;
+      if (hasPreviousCut) {
+        const count = deliverableHistory.length > 0 ? deliverableHistory.length : 1;
+        nextRound = Math.max(nextRound, count + 1);
+      } else {
+        nextRound = 1;
+      }
+
+      deliverableHistory.push({
+        url: deliverableUrl.trim(),
+        submittedAt: nowIso,
+        submittedBy: authUser.full_name || 'Creator',
+        round: nextRound,
+        cutVersion: `v${nextRound}.0`,
+      });
+
+      snap.deliverable_history = deliverableHistory;
+      snap.current_revision_round = nextRound;
+      snap.deliverable_url = deliverableUrl.trim();
+      snap.draft_cut_url = deliverableUrl.trim();
+      snap.deliverable_submitted_at = nowIso;
+      snap.deliverable_submitted_by = authUser.full_name || 'Creator';
+
+      // Auto-mark any pending client review notes as addressed in the new cut!
+      if (Array.isArray(snap.client_review_notes) && snap.client_review_notes.length > 0) {
+        snap.client_review_notes = snap.client_review_notes.map((n: any) => ({
+          ...n,
+          status: 'addressed',
+          addressedAt: nowIso,
+          addressedInCutUrl: deliverableUrl.trim(),
+          addressedBy: authUser.full_name || 'Creator',
+        }));
+      }
+
+      // 1. Update project status, final_download_url and current_revision_round
       await db
         .from('projects')
         .update({
           status: 'client_review',
           final_download_url: deliverableUrl.trim(),
+          current_revision_round: nextRound,
           updated_at: nowIso,
         })
         .eq('id', realProjectId);
 
       // 2. Also update associated order work_status & snapshot
       if (realOrderId) {
-        const { data: ord } = await db.from('orders').select('requirements_snapshot').eq('id', realOrderId).maybeSingle();
-        const snap = ord?.requirements_snapshot || {};
-        snap.deliverable_url = deliverableUrl.trim();
-        snap.draft_cut_url = deliverableUrl.trim();
-        snap.deliverable_submitted_at = nowIso;
-        snap.deliverable_submitted_by = authUser.full_name || 'Creator';
-
-        // Auto-mark any pending client review notes as addressed in the new cut!
-        if (Array.isArray(snap.client_review_notes) && snap.client_review_notes.length > 0) {
-          snap.client_review_notes = snap.client_review_notes.map((n: any) => ({
-            ...n,
-            status: 'addressed',
-            addressedAt: nowIso,
-            addressedInCutUrl: deliverableUrl.trim(),
-            addressedBy: authUser.full_name || 'Creator',
-          }));
-        }
-
         await db
           .from('orders')
           .update({

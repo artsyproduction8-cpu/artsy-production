@@ -244,7 +244,10 @@ export async function GET(
     const totalAmountPaidPaise = Number(ord.gross_amount) || 100000;
     const extraRevisionFeePaise = Math.round(totalAmountPaidPaise * 0.5);
     const includedRounds = Math.max(Number(project.max_free_revisions) || 0, 2);
-    const currentRound = Math.max(Number(project.current_revision_round) || 1, 1);
+    const snapRound = Number(snap.current_revision_round) || 0;
+    const historyCount = Array.isArray(snap.deliverable_history) ? snap.deliverable_history.length : 0;
+    const dbRound = Number(project.current_revision_round) || 1;
+    const currentRound = Math.max(dbRound, snapRound, historyCount, 1);
     const isRevisionLocked = currentRound > includedRounds;
 
     // Explicit Round Lifecycle Phase Identification
@@ -498,11 +501,13 @@ export async function POST(
         approvedBy: authUser.full_name || 'Client',
       };
 
-      await db.from('orders').update({
-        work_status: 'approved',
-        requirements_snapshot: snap,
-        updated_at: nowIso,
-      }).eq('id', project.order_id);
+      if (project.order_id) {
+        await db.from('orders').update({
+          work_status: 'approved',
+          requirements_snapshot: snap,
+          updated_at: nowIso,
+        }).eq('id', project.order_id);
+      }
 
       // 3. Log in audit_logs
       try {

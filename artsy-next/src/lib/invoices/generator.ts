@@ -295,3 +295,6 @@ export function generateStatutoryInvoiceHtml(invoice: InvoiceData): string {
 </body>
 </html>`;
 }
+
+export { generateStatutoryInvoicePdfBuffer } from './pdfGenerator';
+

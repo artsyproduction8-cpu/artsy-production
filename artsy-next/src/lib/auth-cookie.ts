@@ -297,3 +297,25 @@ export async function getAuthenticatedUser(request: NextRequest | Request): Prom
     return null;
   }
 }
+
+/**
+ * Generates an HMAC-SHA256 tamper-proof token for secure email invoice access on mobile devices.
+ */
+export function generateInvoiceAccessToken(orderId: string): string {
+  const secret = getSigningSecret();
+  return createHmac('sha256', secret).update(`invoice_access_${orderId}`).digest('hex').slice(0, 32);
+}
+
+/**
+ * Validates an HMAC-SHA256 access token for invoice viewing in constant time.
+ */
+export function verifyInvoiceAccessToken(orderId: string, token?: string | null): boolean {
+  if (!token || typeof token !== 'string' || token.length !== 32) return false;
+  const expected = generateInvoiceAccessToken(orderId);
+  try {
+    return timingSafeEqual(Buffer.from(token, 'utf-8'), Buffer.from(expected, 'utf-8'));
+  } catch {
+    return false;
+  }
+}
+

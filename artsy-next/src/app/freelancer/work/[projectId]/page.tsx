@@ -466,6 +466,9 @@ export default function FreelancerWorkView() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-full border border-purple-200">
+                  Revision Round {project.current_revision_round || 1} of {project.max_free_revisions || 2}
+                </span>
                 <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-200 uppercase">
                   {project.status?.replace('_', ' ')}
                 </span>
@@ -1073,6 +1076,9 @@ export default function FreelancerWorkView() {
                                 </span>
                                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
                                   {note.tag || note.category || 'NOTE'}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                                  Round {note.round || (isNoteAddressed ? 1 : (project.current_revision_round || 1))}
                                 </span>
                                 {isNoteAddressed ? (
                                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1">

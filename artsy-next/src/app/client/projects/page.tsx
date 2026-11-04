@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import ClientHeader from '../components/ClientHeader';
 import ClientSidebar from '../components/ClientSidebar';
@@ -34,6 +35,16 @@ interface ClientProject {
 
 export default function ClientProjectsPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const queryProjectId = searchParams.get('p') || searchParams.get('id');
+
+  useEffect(() => {
+    if (queryProjectId) {
+      router.replace(`/client/projects/${encodeURIComponent(queryProjectId)}`);
+    }
+  }, [queryProjectId, router]);
+
   const [projects, setProjects] = useState<ClientProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [resolvingId, setResolvingId] = useState<string | null>(null);

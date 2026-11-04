@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import ClientSidebar from '../components/ClientSidebar';
 import ClientHeader from '../components/ClientHeader';
@@ -23,6 +23,7 @@ interface RevisionItem {
   status: string;
   statusColor: string;
   isAddressed?: boolean;
+  round?: number;
 }
 
 interface LoadedProject {
@@ -37,6 +38,8 @@ interface LoadedProject {
   creatorName: string;
   currentRound: number;
   includedRounds: number;
+  roundPhase?: 'round_1_active' | 'round_1_submitted' | 'round_2_active' | 'round_2_submitted' | 'all_rounds_ended' | 'extra_round_unlocked' | 'approved';
+  isRevisionRequested?: boolean;
   totalAmountPaidPaise?: number;
   extraRevisionFeePaise?: number;
   isRevisionLocked?: boolean;
@@ -63,7 +66,8 @@ function loadRazorpayScript(): Promise<boolean> {
 export default function ClientReviewPage() {
   const { user } = useAuth();
   const routeParams = useParams<{ id?: string; projectId?: string }>();
-  const targetProjectId = routeParams?.id || routeParams?.projectId || null;
+  const searchParams = useSearchParams();
+  const targetProjectId = routeParams?.id || routeParams?.projectId || searchParams?.get('p') || searchParams?.get('id') || null;
 
   const [project, setProject] = useState<LoadedProject | null>(null);
   const [loadingProject, setLoadingProject] = useState<boolean>(true);
@@ -184,6 +188,13 @@ export default function ClientReviewPage() {
 
   // Requirement 2 & 3: Lock revisions / comments when client has completed included review rounds
   const isRevisionLocked = currentRound > includedRounds;
+  const isRevisionRequested = Boolean(project?.isRevisionRequested || project?.status === 'client_revision_requested');
+  const unaddressedNotesCount = useMemo(() => {
+    if (!project?.reviewNotes) return 0;
+    return project.reviewNotes.filter(
+      (n) => !n.isAddressed && !String(n.status || '').toLowerCase().includes('addressed') && !String(n.status || '').toLowerCase().includes('resolved')
+    ).length;
+  }, [project?.reviewNotes]);
 
   // Keyboard shortcut listener: Space toggles play/pause, M focuses feedback textarea
   useEffect(() => {
@@ -628,6 +639,134 @@ export default function ClientReviewPage() {
                       <span>{isApproved ? '✓' : '🔒'}</span>
                     </div>
                   </div>
+
+                  {/* REVISION ROUND LIFECYCLE STEPPER */}
+                  <div className="mt-6 pt-6 border-t border-[#F5F5F7]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                      <div>
+                        <div className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">
+                          Revision Rounds &amp; Creative Iteration Flow
+                        </div>
+                        <div className="text-sm font-bold text-[#1D1D1F] flex items-center gap-2 mt-0.5">
+                          <span>Active Round Status:</span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+                            isApproved
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : isRevisionLocked
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                              : isRevisionRequested
+                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                              : 'bg-blue-100 text-blue-800 border border-blue-200'
+                          }`}>
+                            {isApproved
+                              ? '✓ Final Master Approved'
+                              : isRevisionLocked
+                              ? '🔒 All 2 Included Rounds Ended'
+                              : isRevisionRequested
+                              ? `⏳ Round ${currentRound - 1} Submitted (Editor Cutting v${currentRound}.0)`
+                              : `🟢 Round ${currentRound} of ${includedRounds} Active`}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-[11px] font-medium text-[#86868B]">
+                        {includedRounds} Rounds Included Free with Project
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {/* Stage 1: Round 1 */}
+                      <div className={`p-4 rounded-xl border transition-all ${
+                        currentRound === 1 && !isRevisionRequested && !isApproved
+                          ? 'bg-blue-50/80 border-blue-300 shadow-xs ring-1 ring-blue-400/30'
+                          : currentRound > 1 || (currentRound === 1 && isRevisionRequested) || isApproved
+                          ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900'
+                          : 'bg-[#F5F5F7] border-[#E5E5E7] opacity-80'
+                      }`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wide">
+                            ROUND 01 • CUT v1.0
+                          </span>
+                          <span className="text-xs font-bold">
+                            {currentRound > 1 || (currentRound === 1 && isRevisionRequested) || isApproved ? '✓ Completed' : currentRound === 1 ? '🟢 Active' : '⏳ Pending'}
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-[#1D1D1F]">
+                          First Master Cut Review
+                        </div>
+                        <p className="text-[11px] text-[#86868B] mt-1 leading-relaxed">
+                          {currentRound === 1 && !isRevisionRequested
+                            ? 'Add your timestamped notes on the player. Click Send Notes when done.'
+                            : 'First round feedback submitted to editor.'}
+                        </p>
+                      </div>
+
+                      {/* Stage 2: Round 2 */}
+                      <div className={`p-4 rounded-xl border transition-all ${
+                        currentRound === 2 && !isRevisionRequested && !isApproved
+                          ? 'bg-blue-50/80 border-blue-300 shadow-xs ring-1 ring-blue-400/30'
+                          : currentRound > 2 || (currentRound === 2 && isRevisionRequested) || isApproved
+                          ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900'
+                          : currentRound === 1
+                          ? 'bg-[#F5F5F7] border-[#E5E5E7] opacity-75'
+                          : 'bg-[#F5F5F7] border-[#E5E5E7]'
+                      }`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wide">
+                            ROUND 02 • CUT v2.0
+                          </span>
+                          <span className="text-xs font-bold">
+                            {currentRound > 2 || (currentRound === 2 && isRevisionRequested) || isApproved
+                              ? '✓ Completed'
+                              : currentRound === 2 && !isRevisionRequested
+                              ? '🟢 Active (Final Free)'
+                              : currentRound === 1 && isRevisionRequested
+                              ? '⏳ Editor Cutting'
+                              : '⏳ Upcoming'}
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-[#1D1D1F]">
+                          Second Cut Review &amp; Polishing
+                        </div>
+                        <p className="text-[11px] text-[#86868B] mt-1 leading-relaxed">
+                          {currentRound === 2 && !isRevisionRequested
+                            ? 'Inspect addressed changes. Leave any remaining tweaks before final sign-off.'
+                            : currentRound === 1 && isRevisionRequested
+                            ? 'Editor is assembling Cut v2.0 with your Round 1 notes implemented.'
+                            : currentRound > 2
+                            ? 'Second included revision completed.'
+                            : 'Included free. Unlocks automatically when editor posts Cut v2.0.'}
+                        </p>
+                      </div>
+
+                      {/* Stage 3: Approval / Extra Pass */}
+                      <div className={`p-4 rounded-xl border transition-all ${
+                        isApproved
+                          ? 'bg-emerald-50 border-emerald-300 text-emerald-950 shadow-xs'
+                          : isRevisionLocked
+                          ? 'bg-amber-50 border-amber-300 text-amber-950 shadow-xs'
+                          : 'bg-[#F5F5F7] border-[#E5E5E7] opacity-75'
+                      }`}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wide">
+                            {isRevisionLocked ? 'EXTRA PASS REQUIRED' : 'FINAL STAGE'}
+                          </span>
+                          <span className="text-xs font-bold">
+                            {isApproved ? '🎉 Approved' : isRevisionLocked ? '🔒 Locked' : '⏳ Pending'}
+                          </span>
+                        </div>
+                        <div className="text-xs font-bold text-[#1D1D1F]">
+                          {isApproved ? 'Final Master Delivered' : isRevisionLocked ? 'Extra Round 3 Pass' : 'Master Sign-Off'}
+                        </div>
+                        <p className="text-[11px] text-[#86868B] mt-1 leading-relaxed">
+                          {isApproved
+                            ? 'Clean 4K ProRes master unlocked for instant download.'
+                            : isRevisionLocked
+                            ? `All ${includedRounds} included rounds finished. Unlock Round 3 (+50%) or approve cut.`
+                            : 'Click "Approve Video Cut" when satisfied to unlock unwatermarked master.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </section>
 
@@ -636,21 +775,53 @@ export default function ClientReviewPage() {
                 
                 {/* TOP REVIEW ACTION BAR */}
                 {videoEmbed && (
-                  <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200/80 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+                  <div className={`border rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs ${
+                    isApproved
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : isRevisionRequested
+                      ? 'bg-amber-50/70 border-amber-200'
+                      : isRevisionLocked
+                      ? 'bg-amber-50 border-amber-300'
+                      : 'bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border-emerald-200/80'
+                  }`}>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-base">🎬</span>
                         <h3 className="text-sm font-extrabold text-[#1D1D1F]">
-                          {isApproved ? 'Video Cut Approved & Ready!' : 'Master Cut Submitted by Editor'}
+                          {isApproved
+                            ? 'Video Cut Approved & Ready!'
+                            : isRevisionRequested
+                            ? `Round ${currentRound - 1} Notes Submitted — Editor is Cutting v${currentRound}.0`
+                            : isRevisionLocked
+                            ? 'All 2 Included Rounds Completed'
+                            : `Round ${currentRound} of ${includedRounds} Active: Master Cut Submitted by Editor`}
                         </h3>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-emerald-100 text-emerald-800">
-                          {isApproved ? 'APPROVED' : 'ACTION REQUIRED'}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                          isApproved
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : isRevisionRequested
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                            : isRevisionLocked
+                            ? 'bg-amber-100 text-amber-900'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {isApproved
+                            ? 'APPROVED'
+                            : isRevisionRequested
+                            ? `EDITOR CUTTING v${currentRound}.0`
+                            : isRevisionLocked
+                            ? 'ALL ROUNDS ENDED'
+                            : `ROUND ${currentRound} ACTIVE`}
                         </span>
                       </div>
                       <p className="text-xs text-[#86868B]">
                         {isApproved
                           ? 'You have approved this cut! You can download your final unwatermarked master below.'
-                          : 'Watch the video preview below. If you love it, click "Approve Video Cut". If you want changes, pause at any second and type your note.'}
+                          : isRevisionRequested
+                          ? `Your editor has received your Round ${currentRound - 1} revision notes and is cutting updated version v${currentRound}.0. You will be notified the instant it is ready.`
+                          : isRevisionLocked
+                          ? `You have completed all ${includedRounds} included review rounds. You can approve this cut or unlock Round ${currentRound} with a 50% extra revision pass.`
+                          : `Watch the video preview below. If you love it, click "Approve Video Cut". If you want changes, pause at any second, log your notes, and click "Send Round ${currentRound} Notes to Editor".`}
                       </p>
                       {!isApproved && addressedNotesCount > 0 && (
                         <div className="pt-1 flex items-center gap-1.5">
@@ -951,6 +1122,46 @@ export default function ClientReviewPage() {
                         </div>
                       </div>
 
+                      {/* PROMINENT SUBMIT REVISION ACTION PANEL */}
+                      {!isApproved && !isRevisionLocked && (
+                        <div className="mt-3.5 p-3.5 bg-blue-50/90 border border-blue-200 rounded-xl space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-extrabold text-blue-900">
+                              {isRevisionRequested
+                                ? `⏳ Round ${currentRound - 1} Feedback Submitted`
+                                : `Send Round ${currentRound} Notes to Editor`}
+                            </span>
+                            <span className="text-[10px] font-mono text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-full font-bold">
+                              Round {currentRound} of {includedRounds}
+                            </span>
+                          </div>
+                          
+                          {isRevisionRequested ? (
+                            <p className="text-[11px] text-blue-800 leading-relaxed font-medium">
+                              ✓ Your Round {currentRound - 1} review notes have been dispatched. Your editor is currently assembling Cut v{currentRound}.0.
+                            </p>
+                          ) : (
+                            <>
+                              <p className="text-[11px] text-blue-800/80 leading-relaxed">
+                                Logged notes are queued below. Once you finish reviewing this cut, click below to deliver all feedback to your editor.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={handleRequestRevision}
+                                disabled={unaddressedNotesCount === 0}
+                                className="w-full py-2.5 px-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                <span>
+                                  {unaddressedNotesCount > 0
+                                    ? `Send Round ${currentRound} Notes to Editor (${unaddressedNotesCount} Notes Logged) →`
+                                    : `Log notes on the timeline to send Round ${currentRound} review`}
+                                </span>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+
                       {/* REVISION LIST */}
                       <div className="mt-4 space-y-3 overflow-y-auto max-h-[380px] pr-1">
                         {project.reviewNotes.length === 0 ? (
@@ -976,6 +1187,9 @@ export default function ClientReviewPage() {
                                     </span>
                                     <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md">
                                       {rev.tag}
+                                    </span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                                      Round {rev.round || (rev.isAddressed ? 1 : currentRound)}
                                     </span>
                                   </div>
                                 </div>

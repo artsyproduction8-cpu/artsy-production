@@ -208,6 +208,7 @@ export async function GET(
           status: isAddressed ? '✓ Addressed in New Cut' : 'Queued for editor',
           statusColor: isAddressed ? 'text-emerald-700' : 'text-[#3B82F6]',
           isAddressed,
+          round: Number(r.round_number) || 1,
         });
       });
     } catch {}
@@ -229,6 +230,7 @@ export async function GET(
           status: isAddressed ? '✓ Addressed in New Cut' : 'Queued for editor',
           statusColor: isAddressed ? 'text-emerald-700' : 'text-[#3B82F6]',
           isAddressed,
+          round: Number(sn.round || sn.round_number) || 1,
         });
       }
     });
@@ -244,6 +246,22 @@ export async function GET(
     const includedRounds = Math.max(Number(project.max_free_revisions) || 0, 2);
     const currentRound = Math.max(Number(project.current_revision_round) || 1, 1);
     const isRevisionLocked = currentRound > includedRounds;
+
+    // Explicit Round Lifecycle Phase Identification
+    const isRevisionRequested = project.status === 'client_revision_requested';
+    let roundPhase: 'round_1_active' | 'round_1_submitted' | 'round_2_active' | 'round_2_submitted' | 'all_rounds_ended' | 'extra_round_unlocked' | 'approved';
+
+    if (isApproved) {
+      roundPhase = 'approved';
+    } else if (isRevisionLocked) {
+      roundPhase = 'all_rounds_ended';
+    } else if (currentRound === 1) {
+      roundPhase = isRevisionRequested ? 'round_1_submitted' : 'round_1_active';
+    } else if (currentRound === 2) {
+      roundPhase = isRevisionRequested ? 'round_2_submitted' : 'round_2_active';
+    } else {
+      roundPhase = isRevisionRequested ? 'round_2_submitted' : 'extra_round_unlocked';
+    }
 
     return NextResponse.json({
       success: true,
@@ -262,6 +280,8 @@ export async function GET(
         totalAmountPaidPaise,
         extraRevisionFeePaise,
         isRevisionLocked,
+        roundPhase,
+        isRevisionRequested,
         turnaround: turnaroundLabel,
         isApproved,
         reviewNotes,
@@ -372,7 +392,7 @@ export async function POST(
       try {
         await db.from('revisions').insert([{
           project_id: project.id,
-          round_number: project.current_revision_round || 1,
+          round_number: currentRound,
           author_id: authUser.id,
           timecode_seconds: cleanSeconds,
           comment: `[${cleanCategory}] ${text.trim()}`,
@@ -394,6 +414,7 @@ export async function POST(
         author: authUser.full_name || 'Client',
         createdAt: nowIso,
         status: 'queued',
+        round: currentRound,
       };
       snap.client_review_notes = [newNoteObj, ...existingNotes];
 

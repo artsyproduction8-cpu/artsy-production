@@ -15,3 +15,4 @@ WHERE max_free_revisions < 2 OR max_free_revisions IS NULL;
 -- 3. Ensure change_orders table has appropriate index for fast lookup by project_id and status
 CREATE INDEX IF NOT EXISTS idx_change_orders_project_status 
 ON public.change_orders (project_id, status);
+

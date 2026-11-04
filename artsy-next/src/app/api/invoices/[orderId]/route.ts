@@ -3,7 +3,8 @@ import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { generateInvoiceData } from '@/lib/invoices/generator';
 import { archiveInvoiceToVault } from '@/lib/invoices/vault';
 import { sendInvoiceEmail } from '@/lib/email/dispatcher';
-import { getAuthenticatedUser } from '@/lib/auth-cookie';
+import { generateStatutoryInvoicePdfBuffer } from '@/lib/invoices/pdfGenerator';
+import { getAuthenticatedUser, verifyInvoiceAccessToken, generateInvoiceAccessToken } from '@/lib/auth-cookie';
 
 async function resolveOrderDetails(orderId: string) {
   let totalPaise = 800000;
@@ -66,26 +67,31 @@ export async function GET(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    // Fix 10: Require authenticated user
-    const authUser = await getAuthenticatedUser(request);
-    if (!authUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { orderId } = await params;
     const format = request.nextUrl.searchParams.get('format') || 'html';
+    const token = request.nextUrl.searchParams.get('token');
     const shouldSendEmail = request.nextUrl.searchParams.get('sendEmail') === 'true';
 
     const orderDetails = await resolveOrderDetails(orderId);
-
-    // Fix 10: Verify ownership (client_id matches authUser.id OR authUser is admin)
-    if (orderDetails.orderFound) {
-      const isOwner = (orderDetails.clientId && authUser.id === orderDetails.clientId) || ['admin', 'super_admin'].includes(authUser.role);
-      if (!isOwner) {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-      }
-    } else {
+    if (!orderDetails.orderFound) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // Verify Authorization: Check HMAC token from email link OR session cookie
+    const isTokenAuthorized = verifyInvoiceAccessToken(orderId, token);
+    const authUser = await getAuthenticatedUser(request);
+    const isSessionAuthorized = Boolean(authUser && (
+      (orderDetails.clientId && authUser.id === orderDetails.clientId) ||
+      ['admin', 'super_admin'].includes(authUser.role)
+    ));
+
+    if (!isTokenAuthorized && !isSessionAuthorized) {
+      if (format === 'html') {
+        const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('redirect', `/client/invoices`);
+        return NextResponse.redirect(loginUrl);
+      }
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const invoice = generateInvoiceData(orderDetails);
 
@@ -96,6 +102,19 @@ export async function GET(
 
     if (format === 'json') {
       return NextResponse.json(invoice);
+    }
+
+    if (format === 'pdf' || format === 'download') {
+      const pdfBuffer = generateStatutoryInvoicePdfBuffer(invoice);
+      const cleanFileName = `Tax-Invoice-${invoice.invoiceNumber.replace(/[^a-zA-Z0-9_-]/g, '-')}.pdf`;
+      return new NextResponse(new Uint8Array(pdfBuffer), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="${cleanFileName}"`,
+          'Cache-Control': 'private, max-age=3600',
+        },
+      });
     }
 
     // Return statutory styled HTML Tax Invoice
@@ -128,8 +147,11 @@ export async function GET(
   </style>
 </head>
 <body>
-  <div class="no-print" style="max-width: 800px; margin: 0 auto 20px; text-align: right;">
-    <button onclick="window.print()" style="background: #1d1d1f; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Print / Save as PDF</button>
+  <div class="no-print" style="max-width: 800px; margin: 0 auto 20px; display: flex; justify-content: flex-end; gap: 10px;">
+    <a href="?format=pdf${token ? `&token=${encodeURIComponent(token)}` : ''}" download style="background: #2563eb; color: #fff; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+      &darr; Download Official PDF
+    </a>
+    <button onclick="window.print()" style="background: #1d1d1f; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">Print Invoice</button>
   </div>
   <div class="invoice-card">
     <div class="header">

@@ -10,6 +10,8 @@
 import { supabase, supabaseAdmin } from '@/lib/supabase';
 const dbClient = supabaseAdmin || supabase;
 import { InvoiceData, generateStatutoryInvoiceHtml } from '@/lib/invoices/generator';
+import { generateStatutoryInvoicePdfBuffer } from '@/lib/invoices/pdfGenerator';
+import { generateInvoiceAccessToken } from '@/lib/auth-cookie';
 
 export interface EmailAttachment {
   filename: string;
@@ -42,8 +44,10 @@ const SANDBOX_OWNER_EMAIL = 'artsyproduction8@gmail.com';
  * Strictly avoids localhost:3000 in production delivery.
  */
 export function resolveProductionBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '');
+  const custom = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL;
+  if (custom && !custom.includes('localhost') && !custom.includes('127.0.0.1')) {
+    return custom.replace(/\/$/, '');
+  }
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
   return 'https://artsyproduction.com';
@@ -246,13 +250,25 @@ export async function sendOtpEmail(toEmail: string, otpCode: string): Promise<Em
 export async function sendInvoiceEmail(toEmail: string, invoice: InvoiceData): Promise<EmailResult> {
   const subject = `Tax Invoice #${invoice.invoiceNumber} — Artsy Production`;
   const baseUrl = resolveProductionBaseUrl();
-  const viewInvoiceUrl = `${baseUrl}/api/invoices/${invoice.orderDetails.orderId}`;
+  const invoiceToken = generateInvoiceAccessToken(invoice.orderDetails.orderId);
+  const viewInvoiceUrl = `${baseUrl}/api/invoices/${invoice.orderDetails.orderId}?token=${invoiceToken}`;
+  const downloadPdfUrl = `${baseUrl}/api/invoices/${invoice.orderDetails.orderId}?format=pdf&token=${invoiceToken}`;
   const clientInvoicesPortalUrl = `${baseUrl}/client/invoices`;
 
-  // Generate complete, self-contained statutory invoice HTML document
+  // Generate authentic statutory GST Invoice PDF Buffer (Rule 46 CGST)
+  let pdfBase64 = '';
+  try {
+    const pdfBuf = generateStatutoryInvoicePdfBuffer(invoice);
+    pdfBase64 = pdfBuf.toString('base64');
+  } catch (pdfErr) {
+    console.warn('[Invoice PDF Warning]: Failed to compile PDF buffer, falling back to HTML attachment:', pdfErr);
+  }
+
+  // Also compile self-contained statutory invoice HTML document as fallback
   const invoiceDocHtml = generateStatutoryInvoiceHtml(invoice);
-  const invoiceBase64 = Buffer.from(invoiceDocHtml, 'utf-8').toString('base64');
-  const cleanInvoiceFileName = `Tax-Invoice-${invoice.invoiceNumber.replace(/[^a-zA-Z0-9_-]/g, '-')}.html`;
+  const invoiceHtmlBase64 = Buffer.from(invoiceDocHtml, 'utf-8').toString('base64');
+  const cleanPdfFileName = `Tax-Invoice-${invoice.invoiceNumber.replace(/[^a-zA-Z0-9_-]/g, '-')}.pdf`;
+  const cleanHtmlFileName = `Tax-Invoice-${invoice.invoiceNumber.replace(/[^a-zA-Z0-9_-]/g, '-')}.html`;
 
   const html = `
 <!DOCTYPE html>
@@ -281,7 +297,7 @@ export async function sendInvoiceEmail(toEmail: string, invoice: InvoiceData): P
 
               <!-- Attached Notice Banner -->
               <div style="background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin-bottom:24px;font-size:12px;line-height:1.5;color:#1e40af;">
-                <strong>📎 Official Invoice Attached:</strong> Your statutory tax invoice (<span style="font-family:monospace;font-weight:700;">${cleanInvoiceFileName}</span>) is attached to this email. You can open and print it directly for tax deduction and input credit filing.
+                <strong>📎 Official PDF Invoice Attached:</strong> Your official GST tax invoice (<span style="font-family:monospace;font-weight:700;">${cleanPdfFileName}</span>) is attached to this email. You can open and save it directly on any device for accounting and input tax credit filing.
               </div>
 
               <table width="100%" style="border-collapse:collapse;margin-bottom:24px;font-size:12px;">
@@ -317,11 +333,14 @@ export async function sendInvoiceEmail(toEmail: string, invoice: InvoiceData): P
 
               <div style="text-align:center;margin:32px 0;">
                 <a href="${viewInvoiceUrl}" style="background-color:#1d1d1f;color:#ffffff;text-decoration:none;padding:12px 26px;border-radius:10px;font-size:13px;font-weight:700;display:inline-block;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-                  View &amp; Download GST Invoice PDF &rarr;
+                  View &amp; Print GST Invoice Online &rarr;
                 </a>
                 <div style="margin-top:12px;">
-                  <a href="${clientInvoicesPortalUrl}" style="font-size:11px;color:#3b82f6;text-decoration:underline;">
-                    Or view in your Artsy Client Invoices Portal &rarr;
+                  <a href="${downloadPdfUrl}" style="font-size:12px;color:#2563eb;font-weight:600;text-decoration:underline;margin-right:16px;">
+                    Download Official PDF Direct &darr;
+                  </a>
+                  <a href="${clientInvoicesPortalUrl}" style="font-size:11px;color:#86868b;text-decoration:underline;">
+                    Client Portal Invoices &rarr;
                   </a>
                 </div>
               </div>
@@ -340,19 +359,27 @@ export async function sendInvoiceEmail(toEmail: string, invoice: InvoiceData): P
 </html>
   `.trim();
 
-  const text = `Tax Invoice #${invoice.invoiceNumber}\nOrder ID: ${invoice.orderDetails.orderId}\nTotal Paid: ₹${(invoice.orderDetails.totalPaidPaise / 100).toFixed(2)}\n\nAn official statutory HTML tax invoice is attached to this email.\nView online: ${viewInvoiceUrl}`;
+  const text = `Tax Invoice #${invoice.invoiceNumber}\nOrder ID: ${invoice.orderDetails.orderId}\nTotal Paid: ₹${(invoice.orderDetails.totalPaidPaise / 100).toFixed(2)}\n\nAn official statutory PDF tax invoice is attached to this email.\nView online: ${viewInvoiceUrl}\nDownload PDF: ${downloadPdfUrl}`;
+
+  const attachments: EmailAttachment[] = [];
+  if (pdfBase64) {
+    attachments.push({
+      filename: cleanPdfFileName,
+      content: pdfBase64,
+    });
+  } else {
+    attachments.push({
+      filename: cleanHtmlFileName,
+      content: invoiceHtmlBase64,
+    });
+  }
 
   return sendEmail({
     to: toEmail,
     subject,
     html,
     text,
-    attachments: [
-      {
-        filename: cleanInvoiceFileName,
-        content: invoiceBase64,
-      },
-    ],
+    attachments,
   });
 }
 

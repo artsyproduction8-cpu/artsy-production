@@ -314,6 +314,13 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
      - The comment section in the client portal is **automatically and immediately re-enabled** (`isRevisionLocked = false`).
      - Header badges and quick metrics update to `Round X of X (Extra Pass Active)`.
      - Assigned creator receives an instant in-app notification.
+5. **Revision Round Lifecycle Stepper & Round State Identification Invariant:**
+   - The client portal (`/client/projects/[id]`, `/client/review`) renders an authoritative 3-stage visual progress stepper:
+     - **Stage 1 (Round 01 • Cut v1.0):** Active (`🟢 Active`) during first cut inspection $\to$ Completed (`✓ Completed`) once notes are submitted to editor.
+     - **Stage 2 (Round 02 • Cut v2.0):** Upcoming (`⏳ Upcoming`) during cut v1.0 $\to$ In Progress (`⏳ Editor Cutting v2.0`) when Round 1 notes are submitted $\to$ Active (`🟢 Active • Final Included Round`) once Cut v2.0 is uploaded $\to$ Completed (`✓ Completed`) when Round 2 notes are submitted.
+     - **Stage 3 (Final Stage / Extra Pass):** Pending (`⏳ Pending`) during active rounds $\to$ Locked (`🔒 All 2 Included Rounds Ended • 50% Extra Pass Required`) when included rounds finish $\to$ Approved (`🎉 Final Master Approved & Delivered`) once approved.
+   - **Per-Note Round Tagging:** Every review note card displays a dedicated round pill (`Round 1`, `Round 2`) across both client review suite and creator workstation desk.
+   - **Prominent Notes Dispatch Button:** The Notes & Feedback panel features a prominent primary CTA button (`Send Round X Notes to Editor (N Notes Logged) →`) directly below the card header, eliminating the need to search the page footer.
 
 ### 3.8 Client Downloads, Invoicing & Creator Payout Ledgers
 1. **Client Final Downloads (`/client/masters`):**
@@ -331,9 +338,11 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
    - Canonical status `'client_review'` is strictly included in "Drafts to Review" counts and "Review Ready" badges across `/client` and `/client/projects`.
    - Dashboard project cards strictly route to `/client/projects/${project.id}`.
    - Creator dashboard dynamically aggregates active project counts and in-flight payout valuations.
-5. **Statutory Tax Invoice Email Delivery & Direct File Attachment Invariant:**
-   - **Production Base URL Resolution:** Email generation and transactional dispatchers must strictly resolve public base URLs via `resolveProductionBaseUrl()` (`NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_SITE_URL` / `VERCEL_URL` / `https://artsyproduction.com`). Transactional emails must NEVER contain `http://localhost:3000` links, preventing `ERR_CONNECTION_REFUSED` on mobile clients.
-   - **Direct File Attachment:** Every invoice confirmation email dispatched via Resend must attach the standalone, print-ready statutory tax invoice document directly (`attachments: [{ filename: 'Tax-Invoice-...html', content: base64 }]`) alongside the in-body summary and interactive CTA button, allowing clients to download, archive, and print their tax bill immediately offline.
+5. **Statutory Tax Invoice PDF Delivery & Mobile Auth Signature Invariant:**
+   - **Production Base URL Resolution:** Email generation and transactional dispatchers strictly resolve public base URLs via `resolveProductionBaseUrl()` (`NEXT_PUBLIC_APP_URL` / `NEXT_PUBLIC_SITE_URL` / `VERCEL_URL` / `https://artsyproduction.com`). Transactional emails must NEVER contain `http://localhost:3000` or `127.0.0.1` links, completely preventing `ERR_CONNECTION_REFUSED` on mobile clients.
+   - **Authentic Binary PDF Attachment:** Every invoice confirmation email dispatched via Resend compiles and attaches an authentic, print-perfect binary PDF document (`generateStatutoryInvoicePdfBuffer`, `Tax-Invoice-[Number].pdf`) alongside the in-body summary, displaying the standard PDF download pill in mobile email clients (Gmail, Apple Mail).
+   - **Cryptographic Mobile Token Signatures:** Email invoice links embed a tamper-proof HMAC-SHA256 access token (`?token=...`) validated in constant time by `verifyInvoiceAccessToken(orderId, token)`. This allows mobile users tapping "View & Download GST Invoice PDF" from their email to immediately inspect and download their official statutory invoice without being blocked by 401 Unauthorized or cookie session drops.
+
 
 ---
 

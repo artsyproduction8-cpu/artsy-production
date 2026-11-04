@@ -475,12 +475,6 @@ export default function ClientDashboardPage() {
                         </div>
                       )}
 
-                      {/* Watermark Overlay for In-Progress Cuts */}
-                      {embed && !isProjectApproved && (
-                        <div className="absolute bottom-3 right-3 bg-black/80 text-amber-300 text-[10px] font-bold px-2.5 py-1 rounded-md tracking-wider border border-amber-400/40 backdrop-blur-xs pointer-events-none shadow-md z-20">
-                          DRAFT PREVIEW — ARTSY
-                        </div>
-                      )}
 
                       {/* Approved Badge Overlay */}
                       {isProjectApproved && (

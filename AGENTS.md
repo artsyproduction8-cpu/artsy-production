@@ -300,6 +300,10 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
    - **Timeline Timecode (`⏱ HH:MM:SS`):** The video playback position where feedback applies is prominently displayed on review note badges for both clients and creators to guide precise video revisions.
    - **Submission Date & Calendar Time Privacy:** Calendar day, date, and clock time of submission (e.g. `2 Nov, 02:09 pm`) are strictly hidden from client and creator card views to keep the creative review interface clean and focused solely on creative notes. Calendar timestamps are strictly reserved for and visible to Studio Administrators only (`/admin/*`) via order snapshots and audit logs.
 
+5. **Content-Security-Policy & Embed Source Permissibility:**
+   - `next.config.ts` Content-Security-Policy `frame-src` explicitly permits `https://drive.google.com https://docs.google.com https://player.vimeo.com https://www.loom.com https://www.youtube.com https://www.youtube-nocookie.com https://api.razorpay.com 'self'`. This prevents browser iframe security blocks on Google Drive previews and cloud-hosted deliverables.
+   - Video preview containers maintain an unobstructed viewing area without static watermark overlays (`DRAFT PREVIEW — ARTSY`).
+
 ### 3.7 Client Revision Rounds (2 Included Rounds Standard & 50% Extra Revision Sizing)
 1. **Included Rounds Standard (Migration 018):**
    - Every creative service booking strictly includes **2 Revision Rounds** (`max_free_revisions = 2`).
@@ -326,6 +330,9 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
    - Player controls toolbar is compact: `▶ Play / ⏸ Pause`, `-5s` / `+5s` precision seek buttons, single-click speed toggle (`1x`, `1.25x`, `1.5x`), clean subtle timecode (`00:00 / 04:40`), and `Tag at [Timecode]` button without noisy shadows or bulky containers.
    - Feedback note cards use clean, compact text headers (`00:00:00 · category · Round X`) and omit noisy pulsing `PLAYING NOW` badges across simultaneous notes.
    - Add Note header features a simple, normal timecode label.
+6. **Automatic 2-Day (+48h) Delivery SLA Extension on Extra Revision Passes:**
+   - When a client unlocks or requests an additional revision round (Round 3, Round 4, etc.), the project delivery deadline (`projects.client_deadline`) is automatically extended by at least **2 days (+48 hours)**.
+   - `orders.requirements_snapshot.extended_delivery_days` tracks cumulative extension days (e.g. +2d, +4d), updating both client turnaround labels (`${turnaroundLabel} (+2d Extended)`) and creator delivery SLAs in the workroom so editors are allocated adequate assembly and grading time without SLA penalties.
 
 ### 3.8 Unified Client Files & Footage Aggregator Invariant (`/client/files` & `/api/client/files`)
 To ensure clients never struggle to find project assets or raw footage links, the platform provides a centralized Files repository:

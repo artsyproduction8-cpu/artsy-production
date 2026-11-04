@@ -166,14 +166,36 @@ export async function POST(
       const nowIso = new Date().toISOString();
       const newIncludedRounds = Math.max(currentMax + 1, currentRound);
 
-      // 1. Update project: increment max_free_revisions to unlock comment section
+      // Automatic +2 Days (48 Hours) Delivery Extension on Extra Revision Passes (§Requirement)
+      const baseDeadline = project.client_deadline ? new Date(project.client_deadline) : new Date();
+      const effectiveBase = baseDeadline.getTime() > Date.now() ? baseDeadline : new Date();
+      const extendedDeadline = new Date(effectiveBase.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString();
+
+      // 1. Update project: increment max_free_revisions and extend client_deadline
       await db
         .from('projects')
         .update({
           max_free_revisions: newIncludedRounds,
+          client_deadline: extendedDeadline,
           updated_at: nowIso,
         })
         .eq('id', project.id);
+
+      // 1b. Update orders requirements_snapshot with extended delivery days
+      try {
+        const { data: orderRow } = await db.from('orders').select('requirements_snapshot').eq('id', project.order_id).maybeSingle();
+        const snap = orderRow?.requirements_snapshot || {};
+        snap.extended_delivery_days = (Number(snap.extended_delivery_days) || 0) + 2;
+        snap.client_deadline = extendedDeadline;
+        snap.last_extension_reason = `Extra Revision Round ${currentRound} (+2 Days)`;
+        snap.last_extended_at = nowIso;
+        await db.from('orders').update({
+          requirements_snapshot: snap,
+          updated_at: nowIso,
+        }).eq('id', project.order_id);
+      } catch (ordErr) {
+        console.warn('[Order Snapshot Extension Update Warning]:', ordErr);
+      }
 
       // 2. Append to public.change_orders table
       try {
@@ -237,8 +259,8 @@ export async function POST(
           await db.from('notifications').insert([{
             user_id: project.assigned_creator_id,
             event_number: 19,
-            title: `🎬 Revision Round ${currentRound} Unlocked`,
-            message: `${authUser.full_name || 'Client'} has unlocked Revision Round ${currentRound} for ${project.title}. Detailed feedback notes will be submitted shortly.`,
+            title: `🎬 Revision Round ${currentRound} Unlocked (+2 Days Delivery Extension)`,
+            message: `${authUser.full_name || 'Client'} has unlocked Revision Round ${currentRound} for ${project.title}. Delivery timeline automatically extended by +2 days (+48 hours). Detailed feedback notes will be submitted shortly.`,
             action_url: `/freelancer/work/${project.id}`,
             read: false,
             created_at: nowIso,
@@ -248,9 +270,10 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        message: `Revision Round ${currentRound} unlocked successfully! Comment section enabled.`,
+        message: `Revision Round ${currentRound} unlocked successfully! (+2 Days Delivery Extension applied).`,
         includedRounds: newIncludedRounds,
         currentRound,
+        clientDeadline: extendedDeadline,
       });
     }
 

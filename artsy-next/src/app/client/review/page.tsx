@@ -44,6 +44,8 @@ interface LoadedProject {
   extraRevisionFeePaise?: number;
   isRevisionLocked?: boolean;
   turnaround: string;
+  extendedDeliveryDays?: number;
+  clientDeadline?: string | null;
   isApproved: boolean;
   reviewNotes: RevisionItem[];
   editingProgress?: any;
@@ -968,7 +970,11 @@ export default function ClientReviewPage() {
                       <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] min-w-[130px]">
                         <div className="text-[10px] uppercase font-bold text-[#86868B]">Turnaround SLA</div>
                         <div className="text-base font-extrabold text-[#1D1D1F] mt-1">{project.turnaround}</div>
-                        <div className="text-[10px] text-[#86868B] mt-0.5">For revision updates</div>
+                        <div className="text-[10px] text-[#86868B] mt-0.5">
+                          {project.extendedDeliveryDays && project.extendedDeliveryDays > 0
+                            ? `+${project.extendedDeliveryDays}d added for extra rounds`
+                            : 'For revision updates'}
+                        </div>
                       </div>
                       <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] min-w-[130px]">
                         <div className="text-[10px] uppercase font-bold text-[#86868B]">Revisions</div>
@@ -1249,7 +1255,7 @@ export default function ClientReviewPage() {
                           <iframe
                             src={videoEmbed.embedUrl}
                             title={project.title}
-                            allow="autoplay"
+                            allow="autoplay; encrypted-media; fullscreen"
                             allowFullScreen
                             className="w-full h-full border-0"
                           />
@@ -1321,12 +1327,6 @@ export default function ClientReviewPage() {
                           </div>
                         )}
 
-                        {/* Watermark Overlay for In-Progress Cuts */}
-                        {videoEmbed && !isApproved && (
-                          <div className="absolute bottom-4 right-4 bg-black/80 text-amber-300 text-[10px] font-bold px-3 py-1 rounded-md tracking-wider border border-amber-400/40 backdrop-blur-xs pointer-events-none shadow-md z-20">
-                            DRAFT PREVIEW — ARTSY
-                          </div>
-                        )}
 
                         {/* Approved Badge Overlay */}
                         {isApproved && (
@@ -1977,8 +1977,12 @@ export default function ClientReviewPage() {
                 <span>Revision Round {currentRound}</span>
               </div>
               <div className="flex justify-between text-xs font-semibold text-[#1D1D1F]">
+                <span>Delivery Extension:</span>
+                <span className="text-emerald-700 font-bold">+2 Days SLA Extension</span>
+              </div>
+              <div className="flex justify-between text-xs font-semibold text-[#1D1D1F]">
                 <span>Turnaround Time:</span>
-                <span>Within 48 Hours</span>
+                <span>Within 48 Hours (+2 Working Days)</span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-[#1D1D1F] pt-2 border-t border-[#E5E5E7]">
                 <span>Amount (50%):</span>

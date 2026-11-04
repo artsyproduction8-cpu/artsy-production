@@ -155,12 +155,17 @@ export async function GET(
 
     // Dynamic SLA turnaround
     const turnaround = snap.turnaround || 'standard';
-    const turnaroundLabel =
+    let turnaroundLabel =
       turnaround === 'rush' || turnaround === 'express'
         ? '48 Hours Express'
         : turnaround === 'priority'
         ? '4–5 Working Days Priority'
         : '7–10 Working Days Standard';
+
+    const extendedDays = Number(snap.extended_delivery_days) || 0;
+    if (extendedDays > 0) {
+      turnaroundLabel = `${turnaroundLabel} (+${extendedDays}d Extended)`;
+    }
 
     // Resolving deliverable URL (Check projects.final_download_url, snap.deliverable_url, snap.draft_cut_url)
     const deliverableUrl =
@@ -296,6 +301,8 @@ export async function GET(
         roundPhase,
         isRevisionRequested,
         turnaround: turnaroundLabel,
+        extendedDeliveryDays: extendedDays,
+        clientDeadline: project.client_deadline || snap.client_deadline || null,
         isApproved,
         reviewNotes,
         editingProgress: snap.editing_progress || null,
@@ -558,9 +565,20 @@ export async function POST(
 
       const nextRound = currentRound + 1;
 
+      // Automatically extend delivery deadline by at least 2 days (+48 hours) when Round 3 or higher is requested
+      let extendedDeadline = project.client_deadline;
+      if (nextRound >= 3) {
+        const baseDeadline = project.client_deadline ? new Date(project.client_deadline) : new Date();
+        const effectiveBase = baseDeadline.getTime() > Date.now() ? baseDeadline : new Date();
+        extendedDeadline = new Date(effectiveBase.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString();
+        snap.extended_delivery_days = (Number(snap.extended_delivery_days) || 0) + 2;
+        snap.client_deadline = extendedDeadline;
+      }
+
       await db.from('projects').update({
         status: 'client_revision_requested',
         current_revision_round: nextRound,
+        ...(extendedDeadline ? { client_deadline: extendedDeadline } : {}),
         updated_at: nowIso,
       }).eq('id', project.id);
 
@@ -580,7 +598,7 @@ export async function POST(
           user_id: authUser.id,
           entity_type: 'project',
           entity_id: project.id,
-          new_values: { round: nextRound, requestedAt: nowIso },
+          new_values: { round: nextRound, requestedAt: nowIso, extendedDeadline },
         }]);
       } catch {}
 
@@ -590,8 +608,8 @@ export async function POST(
           await db.from('notifications').insert([{
             user_id: project.assigned_creator_id,
             event_number: 18,
-            title: `🎬 Client Requested Revision Round ${nextRound}`,
-            message: `${authUser.full_name || 'Client'} has submitted review notes and requested Revision Round ${nextRound} for ${project.title}.`,
+            title: `🎬 Client Requested Revision Round ${nextRound}${nextRound >= 3 ? ' (+2 Days Delivery Extension)' : ''}`,
+            message: `${authUser.full_name || 'Client'} has submitted review notes and requested Revision Round ${nextRound} for ${project.title}.${nextRound >= 3 ? ' Delivery deadline extended by +2 days.' : ''}`,
             action_url: `/freelancer/work/${project.id}`,
             read: false,
             created_at: nowIso,

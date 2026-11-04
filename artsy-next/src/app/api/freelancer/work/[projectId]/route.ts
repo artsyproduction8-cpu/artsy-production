@@ -138,23 +138,26 @@ export async function GET(
 
     // 6. Resolve Project & Delivery Specifications
     const turnaround = snap.turnaround || 'standard';
+    const extraDays = Number(snap.extended_delivery_days) || 0;
+    const extraDaysLabel = extraDays > 0 ? ` (+${extraDays}d Extra Revisions)` : '';
+
     const clientTurnaroundLabel =
-      turnaround === 'rush' || turnaround === 'express'
+      (turnaround === 'rush' || turnaround === 'express'
         ? '48 Hours Express'
         : turnaround === 'priority'
         ? '4–5 Working Days'
-        : '7–10 Working Days Standard';
+        : '7–10 Working Days Standard') + extraDaysLabel;
 
     // Creator Delivery SLA:
     // - Standard (Client 7-10d) -> strictly 5 Working Days
     // - Priority (Client 4-5d) -> strictly 2-3 Working Days
     // - Rush (Client 48h) -> strictly 24 Hours
     const creatorTurnaroundLabel =
-      turnaround === 'rush' || turnaround === 'express'
+      (turnaround === 'rush' || turnaround === 'express'
         ? '24 Hours'
         : turnaround === 'priority'
         ? '2–3 Working Days'
-        : '5 Working Days';
+        : '5 Working Days') + extraDaysLabel;
 
     const rawSub = snap.subCategory || snap.serviceId;
     let displayTitle = project.title || 'Cinematic Edit';

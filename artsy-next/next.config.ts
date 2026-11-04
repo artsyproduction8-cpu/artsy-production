@@ -64,7 +64,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https://images.unsplash.com https://*.b2.backblazeb2.com https://*.bunnycdn.com https://img.youtube.com https://i.ytimg.com",
               "media-src 'self' blob: https://*.b-cdn.net https://video.bunnycdn.com https://commondatastorage.googleapis.com",
               `connect-src 'self' ${isDev ? 'http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:*' : ''} https://api.razorpay.com https://*.supabase.co https://*.backblazeb2.com https://www.youtube.com https://*.google.com`.trim(),
-              "frame-src 'self' https://api.razorpay.com https://www.youtube.com https://www.youtube-nocookie.com",
+              "frame-src 'self' https://api.razorpay.com https://www.youtube.com https://www.youtube-nocookie.com https://drive.google.com https://docs.google.com https://player.vimeo.com https://www.loom.com",
               "frame-ancestors 'none'",
               "object-src 'none'",
               "base-uri 'self'"

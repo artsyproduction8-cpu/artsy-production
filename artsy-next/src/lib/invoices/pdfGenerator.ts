@@ -263,3 +263,4 @@ export function generateStatutoryInvoicePdfBuffer(invoice: InvoiceData): Buffer 
   const arrayBuffer = doc.output('arraybuffer');
   return Buffer.from(arrayBuffer);
 }
+

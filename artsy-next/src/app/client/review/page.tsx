@@ -196,6 +196,76 @@ export default function ClientReviewPage() {
     ).length;
   }, [project?.reviewNotes]);
 
+  // Synchronize playback timestamp state
+  const updateCurrentTime = (secs: number) => {
+    const s = Math.max(0, Math.floor(secs || 0));
+    setCurrentSeconds(s);
+    setCurrentTimecode(formatTimecode(s));
+  };
+
+  // Toggle play/pause across all player backends (HTML5, YouTube, Vimeo)
+  const handleTogglePlayPause = () => {
+    if (!videoEmbed) return;
+
+    // 1. Direct HTML5 video
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+        setIsPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+      return;
+    }
+
+    // 2. YouTube via YT.Player API
+    if (ytPlayerRef.current && typeof ytPlayerRef.current.getPlayerState === 'function') {
+      try {
+        const state = ytPlayerRef.current.getPlayerState();
+        if (state === 1) {
+          ytPlayerRef.current.pauseVideo();
+          setIsPlaying(false);
+        } else {
+          ytPlayerRef.current.playVideo();
+          setIsPlaying(true);
+        }
+        return;
+      } catch {}
+    }
+
+    // 3. YouTube postMessage fallback
+    if (videoEmbed.type === 'youtube' && iframeRef.current?.contentWindow) {
+      const nextPlay = !isPlaying;
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: nextPlay ? 'playVideo' : 'pauseVideo',
+            args: [],
+          }),
+          '*'
+        );
+      } catch {}
+      setIsPlaying(nextPlay);
+      return;
+    }
+
+    // 4. Vimeo postMessage
+    if (videoEmbed.type === 'vimeo' && iframeRef.current?.contentWindow) {
+      const nextPlay = !isPlaying;
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            method: nextPlay ? 'play' : 'pause',
+          }),
+          '*'
+        );
+      } catch {}
+      setIsPlaying(nextPlay);
+    }
+  };
+
   // Keyboard shortcut listener: Space toggles play/pause, M focuses feedback textarea
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -209,18 +279,7 @@ export default function ClientReviewPage() {
 
       if (e.code === 'Space') {
         e.preventDefault();
-        if (!videoEmbed) return; // Prevent phantom timer when video is not submitted yet
-        if (videoRef.current) {
-          if (videoRef.current.paused) {
-            videoRef.current.play();
-            setIsPlaying(true);
-          } else {
-            videoRef.current.pause();
-            setIsPlaying(false);
-          }
-        } else {
-          setIsPlaying((prev) => !prev);
-        }
+        handleTogglePlayPause();
       } else if (e.key === 'm' || e.key === 'M') {
         e.preventDefault();
         noteTextareaRef.current?.focus();
@@ -229,46 +288,290 @@ export default function ClientReviewPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [videoEmbed]);
+  }, [videoEmbed, isPlaying]);
 
-  // Timer simulation for non-native video players
+  // Dynamically load YouTube IFrame API script once
   useEffect(() => {
-    if (!isPlaying || !videoEmbed || videoRef.current) return;
+    if (typeof window === 'undefined') return;
+    if ((window as any).YT && (window as any).YT.Player) return;
+
+    const existingScript = document.getElementById('artsy-youtube-api');
+    if (!existingScript) {
+      const tag = document.createElement('script');
+      tag.id = 'artsy-youtube-api';
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      if (firstScriptTag && firstScriptTag.parentNode) {
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      } else {
+        document.body.appendChild(tag);
+      }
+    }
+  }, []);
+
+  // Initialize YouTube IFrame Player API controller
+  useEffect(() => {
+    if (videoEmbed?.type !== 'youtube') {
+      ytPlayerRef.current = null;
+      return;
+    }
+
+    let isSubscribed = true;
+    let pollTimer: NodeJS.Timeout | null = null;
+
+    const createPlayer = () => {
+      if (!isSubscribed) return;
+      const YT = (window as any).YT;
+      const iframeEl = document.getElementById('artsy-yt-player');
+      if (!YT || !YT.Player || !iframeEl) {
+        pollTimer = setTimeout(createPlayer, 200);
+        return;
+      }
+
+      try {
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === 'function') {
+          try {
+            ytPlayerRef.current.destroy();
+          } catch {}
+        }
+
+        ytPlayerRef.current = new YT.Player('artsy-yt-player', {
+          events: {
+            onReady: (event: any) => {
+              if (!isSubscribed) return;
+              try {
+                const dur = event.target.getDuration();
+                if (typeof dur === 'number' && dur > 0 && !isNaN(dur)) {
+                  setTotalDuration(Math.floor(dur));
+                }
+                const cur = event.target.getCurrentTime();
+                if (typeof cur === 'number' && !isNaN(cur)) {
+                  updateCurrentTime(Math.floor(cur));
+                }
+              } catch {}
+            },
+            onStateChange: (event: any) => {
+              if (!isSubscribed) return;
+              const playerState = event.data;
+              if (playerState === 1) {
+                setIsPlaying(true);
+              } else if (playerState === 2 || playerState === 0) {
+                setIsPlaying(false);
+              }
+
+              try {
+                const cur = event.target.getCurrentTime();
+                if (typeof cur === 'number' && !isNaN(cur)) {
+                  updateCurrentTime(Math.floor(cur));
+                }
+                const dur = event.target.getDuration();
+                if (typeof dur === 'number' && dur > 0 && !isNaN(dur)) {
+                  setTotalDuration(Math.floor(dur));
+                }
+              } catch {}
+            },
+          },
+        });
+      } catch (err) {
+        console.warn('Failed to attach YouTube player controller:', err);
+      }
+    };
+
+    if ((window as any).YT && (window as any).YT.Player) {
+      createPlayer();
+    } else {
+      const prevCallback = (window as any).onYouTubeIframeAPIReady;
+      (window as any).onYouTubeIframeAPIReady = () => {
+        if (typeof prevCallback === 'function') prevCallback();
+        createPlayer();
+      };
+      pollTimer = setTimeout(createPlayer, 300);
+    }
+
+    return () => {
+      isSubscribed = false;
+      if (pollTimer) clearTimeout(pollTimer);
+    };
+  }, [videoEmbed?.videoId, videoEmbed?.type]);
+
+  // High-resolution active polling loop (250ms) during video playback for fluid synchronization
+  useEffect(() => {
+    if (!isPlaying || videoEmbed?.type !== 'youtube') return;
+
     const interval = setInterval(() => {
-      setCurrentSeconds((prev) => {
-        const next = prev + 1;
-        const h = String(Math.floor(next / 3600)).padStart(2, '0');
-        const m = String(Math.floor((next % 3600) / 60)).padStart(2, '0');
-        const s = String(Math.floor(next % 60)).padStart(2, '0');
-        setCurrentTimecode(`${h}:${m}:${s}`);
-        return next;
-      });
-    }, 1000);
+      if (ytPlayerRef.current) {
+        try {
+          if (typeof ytPlayerRef.current.getCurrentTime === 'function') {
+            const cur = ytPlayerRef.current.getCurrentTime();
+            if (typeof cur === 'number' && !isNaN(cur)) {
+              updateCurrentTime(Math.floor(cur));
+            }
+          }
+          if (typeof ytPlayerRef.current.getDuration === 'function') {
+            const dur = ytPlayerRef.current.getDuration();
+            if (typeof dur === 'number' && dur > 0 && !isNaN(dur)) {
+              setTotalDuration(Math.floor(dur));
+            }
+          }
+        } catch {}
+      }
+    }, 250);
+
     return () => clearInterval(interval);
-  }, [isPlaying, videoEmbed]);
+  }, [isPlaying, videoEmbed?.type]);
+
+  // Dual-layer window postMessage listener for real-time iframe timeline synchronization
+  useEffect(() => {
+    const handleWindowMessage = (event: MessageEvent) => {
+      try {
+        if (!event.data) return;
+        let data = event.data;
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch {
+            return;
+          }
+        }
+
+        if (!data || typeof data !== 'object') return;
+
+        // 1. YouTube postMessage events (infoDelivery, initialDelivery, onStateChange)
+        if (data.event === 'infoDelivery' && data.info) {
+          if (typeof data.info.currentTime === 'number' && !isNaN(data.info.currentTime)) {
+            updateCurrentTime(Math.floor(data.info.currentTime));
+          }
+          if (typeof data.info.duration === 'number' && data.info.duration > 0 && !isNaN(data.info.duration)) {
+            setTotalDuration(Math.floor(data.info.duration));
+          }
+          if (typeof data.info.playerState === 'number') {
+            if (data.info.playerState === 1) {
+              setIsPlaying(true);
+            } else if (data.info.playerState === 2 || data.info.playerState === 0) {
+              setIsPlaying(false);
+            }
+          }
+        } else if (data.event === 'initialDelivery' && data.info) {
+          if (typeof data.info.currentTime === 'number' && !isNaN(data.info.currentTime)) {
+            updateCurrentTime(Math.floor(data.info.currentTime));
+          }
+          if (typeof data.info.duration === 'number' && data.info.duration > 0 && !isNaN(data.info.duration)) {
+            setTotalDuration(Math.floor(data.info.duration));
+          }
+        } else if (data.event === 'onStateChange') {
+          if (data.info === 1) {
+            setIsPlaying(true);
+          } else if (data.info === 2 || data.info === 0) {
+            setIsPlaying(false);
+          }
+        }
+
+        // 2. Vimeo postMessage events
+        if (data.event === 'timeupdate' && data.data) {
+          if (typeof data.data.seconds === 'number' && !isNaN(data.data.seconds)) {
+            updateCurrentTime(Math.floor(data.data.seconds));
+          }
+          if (typeof data.data.duration === 'number' && data.data.duration > 0 && !isNaN(data.data.duration)) {
+            setTotalDuration(Math.floor(data.data.duration));
+          }
+        } else if (data.event === 'play') {
+          setIsPlaying(true);
+        } else if (data.event === 'pause' || data.event === 'finish') {
+          setIsPlaying(false);
+        }
+      } catch {}
+    };
+
+    window.addEventListener('message', handleWindowMessage);
+    return () => window.removeEventListener('message', handleWindowMessage);
+  }, []);
+
+  // Iframe onLoad handshake: registers listeners with YouTube and Vimeo embed players
+  const handleIframeLoad = () => {
+    if (iframeRef.current?.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'listening',
+            id: 1,
+            channel: 'widget',
+          }),
+          '*'
+        );
+      } catch {}
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            method: 'addEventListener',
+            value: 'timeupdate',
+          }),
+          '*'
+        );
+      } catch {}
+    }
+  };
 
   // Native HTML5 video time tracking
   const handleNativeTimeUpdate = () => {
     if (videoRef.current) {
       const cur = Math.floor(videoRef.current.currentTime);
-      setCurrentSeconds(cur);
-      const h = String(Math.floor(cur / 3600)).padStart(2, '0');
-      const m = String(Math.floor((cur % 3600) / 60)).padStart(2, '0');
-      const s = String(Math.floor(cur % 60)).padStart(2, '0');
-      setCurrentTimecode(`${h}:${m}:${s}`);
+      updateCurrentTime(cur);
+      if (videoRef.current.duration && !isNaN(videoRef.current.duration)) {
+        setTotalDuration(Math.floor(videoRef.current.duration));
+      }
     }
   };
 
+  const handleNativeLoadedMetadata = () => {
+    if (videoRef.current && videoRef.current.duration && !isNaN(videoRef.current.duration)) {
+      setTotalDuration(Math.floor(videoRef.current.duration));
+    }
+  };
+
+  // Universal timeline seek handler across all players
   const handleSeek = (seconds: number) => {
     if (!videoEmbed) return;
-    setCurrentSeconds(seconds);
-    const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
-    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-    const s = String(Math.floor(seconds % 60)).padStart(2, '0');
-    setCurrentTimecode(`${h}:${m}:${s}`);
+    const maxDur = totalDuration > 0 ? totalDuration : 999999;
+    const clamped = Math.max(0, Math.min(maxDur, seconds));
+    updateCurrentTime(clamped);
 
+    // 1. Direct HTML5 video
     if (videoRef.current) {
-      videoRef.current.currentTime = seconds;
+      videoRef.current.currentTime = clamped;
+    }
+
+    // 2. YouTube via YT.Player API
+    if (ytPlayerRef.current && typeof ytPlayerRef.current.seekTo === 'function') {
+      try {
+        ytPlayerRef.current.seekTo(clamped, true);
+      } catch {}
+    }
+
+    // 3. YouTube postMessage fallback
+    if (videoEmbed.type === 'youtube' && iframeRef.current?.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: 'seekTo',
+            args: [clamped, true],
+          }),
+          '*'
+        );
+      } catch {}
+    }
+
+    // 4. Vimeo postMessage
+    if (videoEmbed.type === 'vimeo' && iframeRef.current?.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            method: 'seekTo',
+            value: clamped,
+          }),
+          '*'
+        );
+      } catch {}
     }
   };
 
@@ -282,6 +585,22 @@ export default function ClientReviewPage() {
     if (!noteText.trim()) return;
     if (!project) return;
 
+    // Sample latest frame timestamp directly from active player backend
+    let finalSeconds = currentSeconds;
+    if (videoEmbed?.type === 'youtube' && ytPlayerRef.current?.getCurrentTime) {
+      try {
+        const cur = ytPlayerRef.current.getCurrentTime();
+        if (typeof cur === 'number' && !isNaN(cur)) {
+          finalSeconds = Math.floor(cur);
+          updateCurrentTime(finalSeconds);
+        }
+      } catch {}
+    } else if (videoRef.current) {
+      finalSeconds = Math.floor(videoRef.current.currentTime);
+      updateCurrentTime(finalSeconds);
+    }
+    const finalTimecode = formatTimecode(finalSeconds);
+
     setIsSubmittingNote(true);
     try {
       const res = await fetch(`/api/client/projects/${encodeURIComponent(project.id)}`, {
@@ -289,8 +608,8 @@ export default function ClientReviewPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'add_note',
-          timecode: currentTimecode,
-          timecodeSeconds: currentSeconds,
+          timecode: finalTimecode,
+          timecodeSeconds: finalSeconds,
           category: activeCategory,
           text: noteText.trim(),
         }),
@@ -306,7 +625,7 @@ export default function ClientReviewPage() {
           };
         });
         setNoteText('');
-        showToast(`✓ Note saved at ${currentTimecode}! Your editor can see this timestamped note.`);
+        showToast(`✓ Note saved at ${finalTimecode}! Your editor can see this timestamped note.`);
       } else {
         alert(data.error || 'Failed to save note');
       }
@@ -906,6 +1225,7 @@ export default function ClientReviewPage() {
                             controls
                             className="w-full h-full object-contain bg-black"
                             onTimeUpdate={handleNativeTimeUpdate}
+                            onLoadedMetadata={handleNativeLoadedMetadata}
                             onPlay={() => setIsPlaying(true)}
                             onPause={() => setIsPlaying(false)}
                           />
@@ -914,11 +1234,14 @@ export default function ClientReviewPage() {
                         {/* 2. YouTube Embed */}
                         {videoEmbed?.type === 'youtube' && (
                           <iframe
+                            id="artsy-yt-player"
+                            ref={iframeRef}
                             src={videoEmbed.embedUrl}
                             title={project.title}
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                             className="w-full h-full border-0"
+                            onLoad={handleIframeLoad}
                           />
                         )}
 
@@ -936,11 +1259,14 @@ export default function ClientReviewPage() {
                         {/* 4. Vimeo Embed */}
                         {videoEmbed?.type === 'vimeo' && (
                           <iframe
+                            id="artsy-vimeo-player"
+                            ref={iframeRef}
                             src={videoEmbed.embedUrl}
                             title={project.title}
                             allow="autoplay; fullscreen; picture-in-picture"
                             allowFullScreen
                             className="w-full h-full border-0"
+                            onLoad={handleIframeLoad}
                           />
                         )}
 
@@ -1016,25 +1342,35 @@ export default function ClientReviewPage() {
                         <div className="mt-5 bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3">
                           {/* Interactive Playbar */}
                           <div
-                            className="relative w-full h-3 bg-[#E5E5E7] rounded-full cursor-pointer overflow-hidden group"
+                            className="relative w-full h-3.5 bg-[#E5E5E7] hover:bg-[#DEDEE0] rounded-full cursor-pointer overflow-hidden group transition-all"
                             onClick={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
                               const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                              const targetSecs = Math.floor(ratio * 180); // 3-min scale
+                              const targetSecs = Math.floor(ratio * (totalDuration > 0 ? totalDuration : 180));
                               handleSeek(targetSecs);
                             }}
-                            title="Click to scrub timeline"
+                            title="Click anywhere to scrub timeline"
                           >
                             <div
-                              className="h-full bg-[#3B82F6] rounded-full transition-all"
-                              style={{ width: `${Math.min(100, Math.max(5, (currentSeconds / 180) * 100))}%` }}
+                              className="h-full bg-[#3B82F6] rounded-full transition-all relative"
+                              style={{
+                                width: `${totalDuration > 0 ? Math.min(100, Math.max(1, (currentSeconds / totalDuration) * 100)) : 0}%`,
+                              }}
                             />
                           </div>
 
                           {/* Controller Row */}
                           <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                            {/* Left: Quick Scrub Buttons */}
+                            {/* Left: Play/Pause & Quick Scrub Buttons */}
                             <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={handleTogglePlayPause}
+                                className="px-3 py-1.5 bg-[#1D1D1F] hover:bg-[#3B82F6] text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                                title="Play / Pause video"
+                              >
+                                <span>{isPlaying ? '⏸ Pause' : '▶ Play'}</span>
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => handleSeek(Math.max(0, currentSeconds - 5))}
@@ -1045,7 +1381,7 @@ export default function ClientReviewPage() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleSeek(currentSeconds + 5)}
+                                onClick={() => handleSeek(Math.min(totalDuration > 0 ? totalDuration : 999999, currentSeconds + 5))}
                                 className="px-2.5 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
                                 title="Forward 5 seconds"
                               >
@@ -1056,8 +1392,9 @@ export default function ClientReviewPage() {
                             {/* Timecode Display */}
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] uppercase font-bold text-[#86868B]">Current Timecode:</span>
-                              <div className="px-3 py-1 bg-white rounded-lg border border-[#E5E5E7] font-mono text-xs font-extrabold text-[#3B82F6]">
-                                {currentTimecode}
+                              <div className="px-3 py-1.5 bg-white rounded-lg border border-[#E5E5E7] font-mono text-xs font-extrabold text-[#3B82F6] shadow-2xs flex items-center gap-1.5">
+                                <span>⏱ {currentTimecode}</span>
+                                <span className="text-[#86868B] font-medium text-[11px]">/ {formatTimecode(totalDuration)}</span>
                               </div>
                             </div>
 
@@ -1065,6 +1402,16 @@ export default function ClientReviewPage() {
                             <button
                               type="button"
                               onClick={() => {
+                                if (videoEmbed?.type === 'youtube' && ytPlayerRef.current?.getCurrentTime) {
+                                  try {
+                                    const cur = ytPlayerRef.current.getCurrentTime();
+                                    if (typeof cur === 'number' && !isNaN(cur)) {
+                                      updateCurrentTime(Math.floor(cur));
+                                    }
+                                  } catch {}
+                                } else if (videoRef.current) {
+                                  updateCurrentTime(Math.floor(videoRef.current.currentTime));
+                                }
                                 showToast(`Captured timecode: ${currentTimecode}`);
                                 noteTextareaRef.current?.focus();
                               }}

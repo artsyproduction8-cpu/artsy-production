@@ -5,19 +5,21 @@ export interface VideoEmbedInfo {
   videoId?: string;
 }
 
-export function parseVideoEmbedUrl(rawUrl: string | null | undefined): VideoEmbedInfo | null {
+export function parseVideoEmbedUrl(rawUrl: string | null | undefined, origin?: string): VideoEmbedInfo | null {
   const raw = (rawUrl || '').trim();
   if (!raw) return null;
 
-  // 1. YouTube (watch, shorts, embed, youtu.be)
+  // 1. YouTube (watch, shorts, embed, youtu.be, youtube-nocookie)
   const ytMatch = raw.match(
-    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/i
+    /(?:(?:www\.)?youtube(?:-nocookie)?\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/i
   );
   if (ytMatch && ytMatch[1]) {
     const videoId = ytMatch[1];
+    const clientOrigin = origin || (typeof window !== 'undefined' && window.location.origin ? window.location.origin : '');
+    const originParam = clientOrigin ? `&origin=${encodeURIComponent(clientOrigin)}` : '';
     return {
       type: 'youtube',
-      embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1`,
+      embedUrl: `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1&widgetid=1${originParam}`,
       originalUrl: raw,
       videoId,
     };

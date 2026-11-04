@@ -63,6 +63,42 @@ function loadRazorpayScript(): Promise<boolean> {
   });
 }
 
+function formatCategoryLabel(tag?: string): string {
+  const t = String(tag || '').toUpperCase();
+  switch (t) {
+    case 'COLOR': return 'Color';
+    case 'AUDIO': return 'Audio';
+    case 'PACING': return 'Pacing';
+    case 'TITLES': return 'Titles';
+    case 'FOOTAGE': return 'Cut / B-Roll';
+    case 'VFX': return 'VFX';
+    case 'FRAMING': return 'Framing';
+    case 'GENERAL': return 'General';
+    default: return tag ? tag.charAt(0).toUpperCase() + tag.slice(1).toLowerCase() : 'Note';
+  }
+}
+
+function getCategoryPlaceholder(category: string): string {
+  switch (category) {
+    case 'COLOR':
+      return 'e.g., Skin tones look too warm here, please cool them down and lift shadows...';
+    case 'AUDIO':
+      return 'e.g., Lower the background music volume during dialogue, sound effects too loud...';
+    case 'PACING':
+      return 'e.g., Cut this shot 1 second earlier, hold on the reaction shot longer...';
+    case 'TITLES':
+      return 'e.g., Fix spelling typo in speaker name, make subtitle font slightly larger...';
+    case 'FOOTAGE':
+      return 'e.g., Swap this b-roll clip with the drone landscape shot from raw footage...';
+    case 'VFX':
+      return 'e.g., Add a subtle zoom-in here, make transition into next scene smoother...';
+    case 'FRAMING':
+      return 'e.g., Reframe shot to center the subject, stabilize handheld camera shake...';
+    default:
+      return 'e.g., Add your creative notes for this specific timestamp...';
+  }
+}
+
 export default function ClientReviewPage() {
   const { user } = useAuth();
   const routeParams = useParams<{ id?: string; projectId?: string }>();
@@ -1554,8 +1590,8 @@ export default function ClientReviewPage() {
                                       {rev.timecode}
                                     </button>
                                     <span className="text-[#86868B] text-[11px]">·</span>
-                                    <span className="text-[11px] font-sans font-medium text-[#86868B] capitalize">
-                                      {rev.tag.toLowerCase()}
+                                    <span className="text-[11px] font-sans font-medium text-[#86868B]">
+                                      {formatCategoryLabel(rev.tag)}
                                     </span>
                                     <span className="text-[#86868B] text-[11px]">·</span>
                                     <span className="text-[11px] font-sans font-medium text-[#86868B]">
@@ -1657,28 +1693,32 @@ export default function ClientReviewPage() {
                           </span>
                         </div>
 
-                        {/* Category Matrix */}
+                        {/* Category Dropdown */}
                         <div>
-                          <div className="grid grid-cols-4 gap-1.5">
-                            {[
-                              { key: 'COLOR', label: '🎨 Color' },
-                              { key: 'AUDIO', label: '🔊 Audio' },
-                              { key: 'PACING', label: '⏱ Pacing' },
-                              { key: 'TITLES', label: '✏️ Titles' },
-                            ].map((cat) => (
-                              <button
-                                key={cat.key}
-                                type="button"
-                                onClick={() => setActiveCategory(cat.key)}
-                                className={`py-1.5 text-center text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${
-                                  activeCategory === cat.key
-                                    ? 'bg-[#1D1D1F] text-white border-[#1D1D1F]'
-                                    : 'bg-white text-[#1D1D1F] border-[#E5E5E7] hover:bg-[#F5F5F7]'
-                                }`}
-                              >
-                                {cat.label}
-                              </button>
-                            ))}
+                          <label htmlFor="note-category-select" className="block text-[11px] font-semibold text-[#86868B] mb-1">
+                            Category
+                          </label>
+                          <div className="relative">
+                            <select
+                              id="note-category-select"
+                              value={activeCategory}
+                              onChange={(e) => setActiveCategory(e.target.value)}
+                              className="w-full bg-white border border-[#E5E5E7] text-[#1D1D1F] rounded-lg pl-3 pr-8 py-2 text-xs font-semibold focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] outline-none cursor-pointer appearance-none transition-colors shadow-2xs"
+                            >
+                              <option value="COLOR">🎨 Color &amp; Grading (Exposure, tones, contrast)</option>
+                              <option value="AUDIO">🔊 Audio &amp; Music (Volume, dialogue, SFX, sync)</option>
+                              <option value="PACING">⏱ Pacing &amp; Timing (Cut speed, rhythm, timing)</option>
+                              <option value="TITLES">✏️ Titles &amp; Subtitles (Typo, font, lower thirds)</option>
+                              <option value="FOOTAGE">✂️ Cut &amp; B-Roll (Alternate takes, swap shot, trim)</option>
+                              <option value="VFX">✨ VFX &amp; Transitions (Zooms, motion, effects)</option>
+                              <option value="FRAMING">💡 Lighting &amp; Framing (Crop, stabilization, reframe)</option>
+                              <option value="GENERAL">💬 General Feedback (Storyline, direction, note)</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-[#86868B]">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </div>
                           </div>
                         </div>
 
@@ -1690,7 +1730,7 @@ export default function ClientReviewPage() {
                             rows={3}
                             value={noteText}
                             onChange={(e) => setNoteText(e.target.value)}
-                            placeholder="e.g., Make this transition smoother, lower background music volume, or brighten this scene..."
+                            placeholder={getCategoryPlaceholder(activeCategory)}
                             className="w-full bg-white rounded-lg border border-[#E5E5E7] p-2.5 text-xs text-[#1D1D1F] focus:border-[#3B82F6] outline-none resize-none"
                           ></textarea>
                           <button

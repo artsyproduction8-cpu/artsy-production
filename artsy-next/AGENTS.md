@@ -121,6 +121,12 @@ sequenceDiagram
 1. **Existing Users:** When an existing user enters their credentials, the system verifies that the submitted phone and email belong to the exact same account row in `public.users`. If a phone number is registered to User A but the email belongs to User B (or does not match User A), the API rejects the request with an HTTP 400 error.
 2. **New Users:** New users must provide both a valid 10-digit Indian mobile number (+91) and a valid email address. The OTP is dispatched to both channels simultaneously.
 3. **No Premature DB Row Creation:** Initial OTP generation or login for a new creator must NOT insert a premature row with `approval_status: 'pending'` into `creator_profiles`. The creator profile is instantiated strictly upon submitting the onboarding form.
+4. **Strict Role Isolation Firewall & Mutual Exclusivity Invariant:**
+   - Account roles in `public.users` are strictly immutable across authentication portals.
+   - An existing user with `role: 'client'` attempting to request or verify an OTP with creator intent (`role === 'freelancer'`) is rejected with HTTP 403 Forbidden. The backend strictly forbids mutating an existing client account into a freelancer in-place.
+   - Conversely, an existing user with `role: 'freelancer'` attempting to log in on the client portal is rejected with HTTP 403 Forbidden.
+   - Edge Middleware (`src/middleware.ts`) enforces mutual exclusivity across portals: an active Client session navigating to `/freelancer/*` is redirected to `/client`, and an active Creator session navigating to `/client/*` is redirected to `/freelancer`.
+   - The creator onboarding form (`/freelancer/onboarding`) and API (`/api/freelancer/onboard`) strictly decouple client business/domain names (`.com`, `.in`, studio brand names) from creator personal legal KYC/PAN records and reject submissions from active Client sessions.
 
 ### 2.3 Strict Rate Limiting & Abuse Prevention
 - **Send OTP Limit:** Maximum 5 OTP send requests per 10 minutes per identifier (phone or email) and per IP address.

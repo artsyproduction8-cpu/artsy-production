@@ -280,15 +280,17 @@ export async function POST(request: NextRequest) {
         if (isSuperAdminIdentifier) {
           resolvedUser.role = 'super_admin';
         } else if (existingUser.role === 'client' && isFreelancerRequest) {
-          // If an existing client logs in with creator intent, update their role to freelancer
-          resolvedUser.role = 'freelancer';
-          if (isSupabaseConfigured && dbClient) {
-            try {
-              await dbClient.from('users').update({ role: 'freelancer', updated_at: new Date().toISOString() }).eq('id', existingUser.id);
-            } catch (rErr) {
-              console.warn('[OTP Route] Error updating user role to freelancer:', rErr);
-            }
-          }
+          // Strict Role Firewall: Block Client from verifying as a Freelancer
+          return NextResponse.json(
+            { error: 'This account is registered as a Client account. A creator account requires distinct creator credentials. Cross-role login is blocked.' },
+            { status: 403 }
+          );
+        } else if (existingUser.role === 'freelancer' && !isFreelancerRequest && !isSuperAdminIdentifier) {
+          // Strict Role Firewall: Block Freelancer from verifying as a Client
+          return NextResponse.json(
+            { error: 'This account is registered as a Creator account. Cross-role login as a Client is blocked. Please sign in to the Creator Workstation.' },
+            { status: 403 }
+          );
         }
         if (isSupabaseConfigured && dbClient) {
           try {
@@ -829,6 +831,28 @@ export async function POST(request: NextRequest) {
               { error: 'Invalid credentials. This mobile number and email belong to two separate accounts. Please log in with matching credentials.' },
               { status: 401 }
             );
+          }
+
+          // Strict Role Isolation Firewall: Prevent Cross-Role Authentication Collisions
+          const matchedUser = userByPhone || userByEmail;
+          const isSuperAdminIdentifier = Boolean(
+            isSuperAdminAccount({ phone: cleanPhone, email: cleanEmail }) ||
+            isSuperAdminAccount(matchedUser)
+          );
+
+          if (!isSuperAdminIdentifier && matchedUser) {
+            if (matchedUser.role === 'client' && isFreelancerRoleOrIntent) {
+              return NextResponse.json(
+                { error: 'This phone number and email are registered as a Client account. A creator account requires distinct creator credentials. Please sign in as a Client, or use separate credentials for creator onboarding.' },
+                { status: 403 }
+              );
+            }
+            if (matchedUser.role === 'freelancer' && !isFreelancerRoleOrIntent) {
+              return NextResponse.json(
+                { error: 'This phone number and email are registered as a Creator account. Please sign in to the Creator Workstation, or use separate credentials for your client account.' },
+                { status: 403 }
+              );
+            }
           }
         } else {
           isNewUser = true;

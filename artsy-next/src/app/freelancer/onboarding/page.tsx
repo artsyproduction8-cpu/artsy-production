@@ -132,10 +132,27 @@ export default function FreelancerOnboarding() {
         router.replace('/freelancer/rejected');
         return;
       }
-      if (user.full_name && !legalName && user.full_name !== 'Creator Partner' && user.full_name !== 'Creator') {
+      const isDomainOrBusinessName = (name: string) => {
+        if (!name) return true;
+        const lower = name.toLowerCase().trim();
+        return (
+          lower.includes('.com') ||
+          lower.includes('.in') ||
+          lower.includes('.io') ||
+          lower.includes('.net') ||
+          lower.includes('.org') ||
+          lower.includes('.co') ||
+          lower === 'creator partner' ||
+          lower === 'creator' ||
+          lower === 'client partner' ||
+          lower === 'client'
+        );
+      };
+
+      if (user.full_name && !legalName && !isDomainOrBusinessName(user.full_name)) {
         setLegalName(user.full_name);
       }
-      if (user.display_name && !alias && user.display_name !== 'Creator Partner' && user.display_name !== 'Creator') {
+      if (user.display_name && !alias && !isDomainOrBusinessName(user.display_name)) {
         setAlias(user.display_name);
       }
       if (user.tracking_id) {

@@ -270,7 +270,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Exempt public onboarding / login subroutes
-  if (pathname === '/admin/login' || pathname === '/freelancer/onboarding') {
+  if (pathname === '/admin/login') {
     return NextResponse.next();
   }
 
@@ -292,6 +292,9 @@ export async function middleware(request: NextRequest) {
 
       if (!authCookie || !authCookie.value) {
         const loginUrl = new URL(pathname.startsWith('/admin') ? '/admin/login' : '/auth/login', request.url);
+        if (pathname.startsWith('/freelancer')) {
+          loginUrl.searchParams.set('intent', 'freelancer');
+        }
         loginUrl.searchParams.set('redirect', pathname);
         return NextResponse.redirect(loginUrl);
       }
@@ -306,6 +309,13 @@ export async function middleware(request: NextRequest) {
       }
 
       if (!user.role || !route.allowedRoles.includes(user.role)) {
+        // Cross-role session firewall: redirect active client away from creator routes, and active freelancer away from client routes
+        if (user.role === 'client' && pathname.startsWith('/freelancer')) {
+          return NextResponse.redirect(new URL('/client?notice=client_role', request.url));
+        }
+        if (user.role === 'freelancer' && (pathname.startsWith('/client') || pathname.startsWith('/client-dashboard'))) {
+          return NextResponse.redirect(new URL('/freelancer?notice=freelancer_role', request.url));
+        }
         // Unauthorized role -> redirect to login with error notice
         const loginUrl = new URL(pathname.startsWith('/admin') ? '/admin/login' : '/auth/login', request.url);
         loginUrl.searchParams.set('unauthorized', 'true');

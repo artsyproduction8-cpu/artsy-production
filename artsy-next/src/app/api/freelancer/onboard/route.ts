@@ -38,6 +38,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized: Please log in before submitting creator application.' }, { status: 401 });
   }
 
+  // Strict Role Firewall: Block clients from submitting creator onboarding and mutating their client account
+  if (authUser.role === 'client') {
+    return NextResponse.json(
+      { error: 'Forbidden: Your active session is registered as a Client. A creator profile cannot overwrite a client account. Please log out and sign up with dedicated creator credentials.' },
+      { status: 403 }
+    );
+  }
+
   const ip = getClientIp(req);
   const rateKey = authUser ? `freelancer_onboard_${authUser.id}` : `freelancer_onboard_ip_${ip}`;
   const limit = await checkRateLimit(rateKey, 'api', 10, 600);

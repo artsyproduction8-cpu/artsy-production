@@ -238,6 +238,13 @@ export async function GET(
       project.status === 'completed' ||
       Boolean(snap.client_approval?.approvedAt);
 
+    // Calculate revision rounds and extra revision fee (strictly 50% of total amount paid)
+    const totalAmountPaidPaise = Number(ord.gross_amount) || 100000;
+    const extraRevisionFeePaise = Math.round(totalAmountPaidPaise * 0.5);
+    const includedRounds = Math.max(Number(project.max_free_revisions) || 0, 2);
+    const currentRound = Math.max(Number(project.current_revision_round) || 1, 1);
+    const isRevisionLocked = currentRound > includedRounds;
+
     return NextResponse.json({
       success: true,
       project: {
@@ -250,8 +257,11 @@ export async function GET(
         deliverableUrl,
         rawFootageUrl: project.raw_footage_b2_prefix || snap.rawFootageUrl || null,
         creatorName: creatorName || 'Senior Editor',
-        currentRound: project.current_revision_round || 1,
-        includedRounds: project.max_free_revisions || 1,
+        currentRound,
+        includedRounds,
+        totalAmountPaidPaise,
+        extraRevisionFeePaise,
+        isRevisionLocked,
         turnaround: turnaroundLabel,
         isApproved,
         reviewNotes,
@@ -333,6 +343,22 @@ export async function POST(
     const snap = ord.requirements_snapshot || {};
 
     if (action === 'add_note') {
+      const currentRound = Math.max(Number(project.current_revision_round) || 1, 1);
+      const includedRounds = Math.max(Number(project.max_free_revisions) || 0, 2);
+
+      // Requirement 3: Strictly lock / disable review notes submission when included rounds are completed
+      if (currentRound > includedRounds) {
+        return NextResponse.json(
+          {
+            error: `Revision Round ${currentRound} is locked. You have completed your ${includedRounds} included revision rounds. Please unlock Round ${currentRound} to add notes.`,
+            isRevisionLocked: true,
+            currentRound,
+            includedRounds,
+          },
+          { status: 403 }
+        );
+      }
+
       if (!text || !text.trim()) {
         return NextResponse.json({ error: 'Note text is required' }, { status: 400 });
       }
@@ -480,7 +506,21 @@ export async function POST(
     }
 
     if (action === 'request_revision') {
-      const nextRound = (project.current_revision_round || 0) + 1;
+      const currentRound = Math.max(Number(project.current_revision_round) || 1, 1);
+      const includedRounds = Math.max(Number(project.max_free_revisions) || 0, 2);
+
+      // Guard: If current round is already past included rounds without unlock
+      if (currentRound > includedRounds) {
+        return NextResponse.json(
+          {
+            error: `Revision Round ${currentRound} is locked. Please unlock Round ${currentRound} with the 50% extra revision pass.`,
+            isRevisionLocked: true,
+          },
+          { status: 403 }
+        );
+      }
+
+      const nextRound = currentRound + 1;
 
       await db.from('projects').update({
         status: 'client_revision_requested',

@@ -37,10 +37,27 @@ interface LoadedProject {
   creatorName: string;
   currentRound: number;
   includedRounds: number;
+  totalAmountPaidPaise?: number;
+  extraRevisionFeePaise?: number;
+  isRevisionLocked?: boolean;
   turnaround: string;
   isApproved: boolean;
   reviewNotes: RevisionItem[];
   editingProgress?: any;
+}
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 }
 
 export default function ClientReviewPage() {
@@ -62,7 +79,10 @@ export default function ClientReviewPage() {
   const [isApproved, setIsApproved] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
-  const [includedRounds, setIncludedRounds] = useState(1);
+  const [includedRounds, setIncludedRounds] = useState(2);
+  const [totalAmountPaidPaise, setTotalAmountPaidPaise] = useState(100000);
+  const [extraRevisionFeePaise, setExtraRevisionFeePaise] = useState(50000);
+  const [isUnlockingRound, setIsUnlockingRound] = useState(false);
 
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [showChangeOrderModal, setShowChangeOrderModal] = useState(false);
@@ -120,7 +140,9 @@ export default function ClientReviewPage() {
         setHasProjects(true);
         setIsApproved(Boolean(p.isApproved));
         setCurrentRound(p.currentRound || 1);
-        setIncludedRounds(p.includedRounds || 1);
+        setIncludedRounds(p.includedRounds || 2);
+        if (p.totalAmountPaidPaise) setTotalAmountPaidPaise(p.totalAmountPaidPaise);
+        if (p.extraRevisionFeePaise) setExtraRevisionFeePaise(p.extraRevisionFeePaise);
       } else {
         setHasProjects(false);
       }
@@ -159,6 +181,9 @@ export default function ClientReviewPage() {
       (n) => n.isAddressed || String(n.status || '').toLowerCase().includes('addressed') || String(n.status || '').toLowerCase().includes('resolved')
     ).length;
   }, [project?.reviewNotes]);
+
+  // Requirement 2 & 3: Lock revisions / comments when client has completed included review rounds
+  const isRevisionLocked = currentRound > includedRounds;
 
   // Keyboard shortcut listener: Space toggles play/pause, M focuses feedback textarea
   useEffect(() => {
@@ -239,6 +264,10 @@ export default function ClientReviewPage() {
   // Handle adding a timestamped review note
   const handleAddAnnotation = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isRevisionLocked) {
+      setShowChangeOrderModal(true);
+      return;
+    }
     if (!noteText.trim()) return;
     if (!project) return;
 
@@ -311,7 +340,7 @@ export default function ClientReviewPage() {
     if (!project) return;
 
     if (currentRound < includedRounds) {
-      if (!confirm(`Submit these revision notes to your editor for Round ${currentRound + 1}?\n\nYour editor will implement all timestamped feedback notes and deliver an updated cut.`)) {
+      if (!confirm(`Submit these revision notes to your editor for Round ${currentRound + 1} of ${includedRounds}?\n\nYour editor will implement all timestamped feedback notes and deliver an updated cut.`)) {
         return;
       }
       try {
@@ -337,23 +366,112 @@ export default function ClientReviewPage() {
     }
   };
 
-  const handleApproveChangeOrder = () => {
+  // Requirement 2 & 3: Unlock Extra Revision Pass via 50% Fee Payment
+  const handleUnlockExtraRevision = async () => {
     if (!project) return;
-    createChangeOrder({
-      projectId: project.id,
-      orderId: project.orderNumber,
-      changeType: 'extra_revisions',
-      description: `Additional Creative Revision Round ${currentRound + 1} (Beyond included ${includedRounds} rounds)`,
-      originalScope: { includedRounds },
-      requestedScope: { includedRounds: includedRounds + 1 },
-      additionalPricePaise: 150000,
-      createdBy: 'client',
-    });
+    try {
+      setIsUnlockingRound(true);
+      const isLoaded = await loadRazorpayScript();
+      const RazorpayClass = typeof window !== 'undefined' ? (window as any).Razorpay : null;
 
-    setIncludedRounds((prev) => prev + 1);
-    setCurrentRound((prev) => prev + 1);
-    setShowChangeOrderModal(false);
-    showToast(`✓ Extra revision approved: ₹1,500 added. Revision Round ${currentRound + 1} unlocked!`);
+      // 1. Create order on server
+      const res = await fetch(`/api/client/projects/${encodeURIComponent(project.id)}/extra-revision`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create_order' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        alert(data.error || 'Failed to initialize extra revision pass');
+        setIsUnlockingRound(false);
+        return;
+      }
+
+      // If simulated mock order (e.g. offline dev or mock test)
+      if (data.razorpayOrderId?.startsWith('order_mock_') || !RazorpayClass) {
+        const verifyRes = await fetch(`/api/client/projects/${encodeURIComponent(project.id)}/extra-revision`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'verify_payment',
+            razorpay_order_id: data.razorpayOrderId,
+            razorpay_payment_id: `pay_mock_${Date.now()}`,
+            razorpay_signature: 'mock_sig',
+          }),
+        });
+        const verifyData = await verifyRes.json();
+        if (verifyRes.ok && verifyData.success) {
+          const nextIncluded = verifyData.includedRounds || (includedRounds + 1);
+          setIncludedRounds(nextIncluded);
+          setProject((prev) => prev ? { ...prev, includedRounds: nextIncluded } : prev);
+          setShowChangeOrderModal(false);
+          showToast(`✓ Revision Round ${currentRound} unlocked! Comment section enabled.`);
+        } else {
+          alert(verifyData.error || 'Verification failed');
+        }
+        setIsUnlockingRound(false);
+        return;
+      }
+
+      // 2. Real Razorpay modal
+      const rzp = new RazorpayClass({
+        key: data.razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: data.amount,
+        currency: data.currency || 'INR',
+        name: 'Artsy Production',
+        description: `Additional Revision Pass — Round ${currentRound}`,
+        order_id: data.razorpayOrderId,
+        prefill: {
+          name: user?.full_name || '',
+          email: user?.email || '',
+          contact: user?.phone || '',
+        },
+        theme: { color: '#1D1D1F' },
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await fetch(`/api/client/projects/${encodeURIComponent(project.id)}/extra-revision`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'verify_payment',
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok && verifyData.success) {
+              const nextIncluded = verifyData.includedRounds || (includedRounds + 1);
+              setIncludedRounds(nextIncluded);
+              setProject((prev) => prev ? { ...prev, includedRounds: nextIncluded } : prev);
+              setShowChangeOrderModal(false);
+              showToast(`✓ Revision Round ${currentRound} unlocked! Comment section enabled.`);
+            } else {
+              alert(verifyData.error || 'Payment verification failed');
+            }
+          } catch (err: any) {
+            alert(err.message || 'Payment processing error');
+          } finally {
+            setIsUnlockingRound(false);
+          }
+        },
+        modal: {
+          ondismiss: function () {
+            setIsUnlockingRound(false);
+          },
+        },
+      });
+
+      rzp.on('payment.failed', function (failResp: any) {
+        alert(failResp?.error?.description || 'Payment was unsuccessful. Please try again.');
+        setIsUnlockingRound(false);
+      });
+
+      rzp.open();
+    } catch (e: any) {
+      alert(e.message || 'Payment failed to initialize');
+      setIsUnlockingRound(false);
+    }
   };
 
   const handleSaveStudioProfile = (e: React.FormEvent) => {
@@ -431,7 +549,7 @@ export default function ClientReviewPage() {
                         </span>
                         <span className="text-xs text-[#86868B]">•</span>
                         <span className="text-xs font-semibold text-[#3B82F6]">
-                          Draft v{currentRound}.0
+                          Draft v{currentRound}.0 • Round {currentRound} of {includedRounds}
                         </span>
                         <span className="text-xs text-[#86868B]">•</span>
                         <span className="text-xs text-[#86868B]">
@@ -452,8 +570,16 @@ export default function ClientReviewPage() {
                       </div>
                       <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] min-w-[130px]">
                         <div className="text-[10px] uppercase font-bold text-[#86868B]">Revisions</div>
-                        <div className="text-base font-extrabold text-[#3B82F6] mt-1">Round {currentRound} of {includedRounds}</div>
-                        <div className="text-[10px] text-[#86868B] mt-0.5">{currentRound <= includedRounds ? 'Free revision included' : 'Extra pass active'}</div>
+                        <div className={`text-base font-extrabold mt-1 ${isRevisionLocked ? 'text-amber-600' : 'text-[#3B82F6]'}`}>
+                          Round {currentRound} of {includedRounds}
+                        </div>
+                        <div className="text-[10px] text-[#86868B] mt-0.5">
+                          {isRevisionLocked
+                            ? `Extra pass required (+₹${(extraRevisionFeePaise / 100).toLocaleString('en-IN')})`
+                            : currentRound < includedRounds
+                            ? 'Free revision included'
+                            : 'Final included round'}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -887,63 +1013,112 @@ export default function ClientReviewPage() {
                       </div>
                     </div>
 
-                    {/* NEW ANNOTATION FORM */}
-                    <form
-                      onSubmit={handleAddAnnotation}
-                      className="bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-[#1D1D1F]">Add Note at This Moment</span>
-                        <span className="text-xs font-mono font-bold text-[#3B82F6] bg-white px-2 py-0.5 rounded-md border border-[#E5E5E7]">
-                          ⏱ {currentTimecode}
-                        </span>
-                      </div>
-
-                      {/* Category Matrix */}
-                      <div>
-                        <div className="grid grid-cols-4 gap-1.5">
-                          {[
-                            { key: 'COLOR', label: '🎨 Color' },
-                            { key: 'AUDIO', label: '🔊 Audio' },
-                            { key: 'PACING', label: '⏱ Pacing' },
-                            { key: 'TITLES', label: '✏️ Titles' },
-                          ].map((cat) => (
-                            <button
-                              key={cat.key}
-                              type="button"
-                              onClick={() => setActiveCategory(cat.key)}
-                              className={`py-1.5 text-center text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${
-                                activeCategory === cat.key
-                                  ? 'bg-[#1D1D1F] text-white border-[#1D1D1F]'
-                                  : 'bg-white text-[#1D1D1F] border-[#E5E5E7] hover:bg-[#F5F5F7]'
-                              }`}
-                            >
-                              {cat.label}
-                            </button>
-                          ))}
+                    {/* NEW ANNOTATION FORM OR LOCKED REVISION SLATE */}
+                    {isRevisionLocked ? (
+                      <div className="bg-[#1D1D1F] rounded-2xl p-5 border border-white/10 text-white space-y-4 shadow-xl relative overflow-hidden animate-fade-in">
+                        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
+                              🔒
+                            </span>
+                            <span className="text-xs font-bold text-white tracking-wide">
+                              Comment Section Disabled
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-950/80 border border-amber-800/80 px-2 py-0.5 rounded-full">
+                            Round {currentRound} Locked
+                          </span>
                         </div>
-                      </div>
 
-                      {/* Feedback Input */}
-                      <div className="space-y-2">
-                        <textarea
-                          ref={noteTextareaRef}
-                          required
-                          rows={3}
-                          value={noteText}
-                          onChange={(e) => setNoteText(e.target.value)}
-                          placeholder="e.g., Make this transition smoother, lower background music volume, or brighten this scene..."
-                          className="w-full bg-white rounded-lg border border-[#E5E5E7] p-2.5 text-xs text-[#1D1D1F] focus:border-[#3B82F6] outline-none resize-none"
-                        ></textarea>
+                        <p className="text-[11px] text-white/75 leading-relaxed">
+                          Your <strong>{includedRounds} included revision rounds</strong> have been completed. To write timestamped review notes and request changes for Round {currentRound}, unlock this pass below.
+                        </p>
+
+                        {/* Fee breakdown box */}
+                        <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
+                          <div>
+                            <div className="text-[10px] uppercase font-bold text-white/50">Extra Pass Fee (50%)</div>
+                            <div className="text-xs text-white/80 mt-0.5">50% of ₹{(totalAmountPaidPaise / 100).toLocaleString('en-IN')} total paid</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-base font-extrabold text-amber-400 font-mono">
+                              ₹{(extraRevisionFeePaise / 100).toLocaleString('en-IN')}
+                            </div>
+                            <div className="text-[9px] text-white/50">GST inclusive</div>
+                          </div>
+                        </div>
+
                         <button
-                          type="submit"
-                          disabled={isSubmittingNote}
-                          className="w-full py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-sm"
+                          type="button"
+                          onClick={handleUnlockExtraRevision}
+                          disabled={isUnlockingRound}
+                          className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 text-center"
                         >
-                          {isSubmittingNote ? 'Saving Note...' : `Save Note at ${currentTimecode}`}
+                          <span>
+                            {isUnlockingRound
+                              ? 'Connecting to Gateway...'
+                              : `Unlock Round ${currentRound} (+₹${(extraRevisionFeePaise / 100).toLocaleString('en-IN')}) via Razorpay →`}
+                          </span>
                         </button>
                       </div>
-                    </form>
+                    ) : (
+                      <form
+                        onSubmit={handleAddAnnotation}
+                        className="bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-[#1D1D1F]">Add Note at This Moment</span>
+                          <span className="text-xs font-mono font-bold text-[#3B82F6] bg-white px-2 py-0.5 rounded-md border border-[#E5E5E7]">
+                            ⏱ {currentTimecode}
+                          </span>
+                        </div>
+
+                        {/* Category Matrix */}
+                        <div>
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {[
+                              { key: 'COLOR', label: '🎨 Color' },
+                              { key: 'AUDIO', label: '🔊 Audio' },
+                              { key: 'PACING', label: '⏱ Pacing' },
+                              { key: 'TITLES', label: '✏️ Titles' },
+                            ].map((cat) => (
+                              <button
+                                key={cat.key}
+                                type="button"
+                                onClick={() => setActiveCategory(cat.key)}
+                                className={`py-1.5 text-center text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${
+                                  activeCategory === cat.key
+                                    ? 'bg-[#1D1D1F] text-white border-[#1D1D1F]'
+                                    : 'bg-white text-[#1D1D1F] border-[#E5E5E7] hover:bg-[#F5F5F7]'
+                                }`}
+                              >
+                                {cat.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Feedback Input */}
+                        <div className="space-y-2">
+                          <textarea
+                            ref={noteTextareaRef}
+                            required
+                            rows={3}
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            placeholder="e.g., Make this transition smoother, lower background music volume, or brighten this scene..."
+                            className="w-full bg-white rounded-lg border border-[#E5E5E7] p-2.5 text-xs text-[#1D1D1F] focus:border-[#3B82F6] outline-none resize-none"
+                          ></textarea>
+                          <button
+                            type="submit"
+                            disabled={isSubmittingNote}
+                            className="w-full py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-sm"
+                          >
+                            {isSubmittingNote ? 'Saving Note...' : `Save Note at ${currentTimecode}`}
+                          </button>
+                        </div>
+                      </form>
+                    )}
                   </div>
                 </div>
 
@@ -1106,12 +1281,19 @@ export default function ClientReviewPage() {
                         <>
                           <button
                             type="button"
-                            onClick={handleRequestRevision}
-                            className="text-xs font-semibold px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all text-center cursor-pointer"
+                            onClick={isRevisionLocked ? handleUnlockExtraRevision : handleRequestRevision}
+                            disabled={isUnlockingRound}
+                            className={`text-xs font-semibold px-4 py-3 rounded-xl transition-all text-center cursor-pointer ${
+                              isRevisionLocked
+                                ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
+                                : 'bg-white/10 hover:bg-white/20 text-white'
+                            }`}
                           >
-                            {currentRound < includedRounds
-                              ? `Request Changes (Round ${currentRound + 1})`
-                              : 'Request Extra Changes (+₹1,500)'}
+                            {isRevisionLocked
+                              ? (isUnlockingRound ? 'Opening Gateway...' : `Unlock Round ${currentRound} (+₹${(extraRevisionFeePaise / 100).toLocaleString('en-IN')})`)
+                              : currentRound < includedRounds
+                              ? `Request Changes (Round ${currentRound + 1} of ${includedRounds})`
+                              : `Request Extra Changes (+₹${(extraRevisionFeePaise / 100).toLocaleString('en-IN')})`}
                           </button>
                           <button
                             type="button"
@@ -1203,40 +1385,57 @@ export default function ClientReviewPage() {
       {showChangeOrderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <div className="bg-white max-w-md w-full rounded-2xl border border-[#E5E5E7] shadow-2xl p-6 sm:p-8 flex flex-col gap-4">
-            <h3 className="text-lg font-extrabold text-[#1D1D1F]">
-              Unlock Extra Revision Pass
-            </h3>
+            <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-3">
+              <h3 className="text-lg font-extrabold text-[#1D1D1F]">
+                Unlock Extra Revision Pass
+              </h3>
+              <span className="text-xs font-mono font-bold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                Round {currentRound}
+              </span>
+            </div>
+
             <p className="text-xs text-[#86868B] leading-relaxed">
-              Your free included revision round has been completed. You can easily add an extra full revision pass with your editor for ₹1,500.
+              Your {includedRounds} free included revision rounds have been completed. You can unlock an additional creative revision round with your editor for 50% of your project order total.
             </p>
 
             <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] space-y-2">
               <div className="flex justify-between text-xs font-semibold text-[#1D1D1F]">
+                <span>Service Total Paid:</span>
+                <span className="font-mono">₹{(totalAmountPaidPaise / 100).toLocaleString('en-IN')}</span>
+              </div>
+              <div className="flex justify-between text-xs font-semibold text-[#1D1D1F]">
                 <span>Extra Pass:</span>
-                <span>Revision Round {currentRound + 1}</span>
+                <span>Revision Round {currentRound}</span>
               </div>
               <div className="flex justify-between text-xs font-semibold text-[#1D1D1F]">
                 <span>Turnaround Time:</span>
                 <span>Within 48 Hours</span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-[#1D1D1F] pt-2 border-t border-[#E5E5E7]">
-                <span>Amount:</span>
-                <span className="font-mono text-[#3B82F6]">₹1,500</span>
+                <span>Amount (50%):</span>
+                <span className="font-mono text-[#3B82F6]">
+                  ₹{(extraRevisionFeePaise / 100).toLocaleString('en-IN')}
+                </span>
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={handleApproveChangeOrder}
-                className="flex-1 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold py-3 px-4 rounded-xl transition-all cursor-pointer shadow-sm text-center"
+                onClick={handleUnlockExtraRevision}
+                disabled={isUnlockingRound}
+                className="flex-1 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white text-xs font-bold py-3 px-4 rounded-xl transition-all cursor-pointer shadow-sm text-center flex items-center justify-center gap-2"
               >
-                Add Revision Round (₹1,500)
+                <span>
+                  {isUnlockingRound
+                    ? 'Connecting...'
+                    : `Pay ₹${(extraRevisionFeePaise / 100).toLocaleString('en-IN')} via Razorpay`}
+                </span>
               </button>
               <button
                 type="button"
                 onClick={() => setShowChangeOrderModal(false)}
-                className="px-4 bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold rounded-xl border border-[#E5E5E7] cursor-pointer"
+                className="px-4 bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] text-xs font-semibold rounded-xl border border-[#E5E5E7] cursor-pointer"
               >
                 Cancel
               </button>

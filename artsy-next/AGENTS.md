@@ -294,7 +294,28 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
    - **Timeline Timecode (`⏱ HH:MM:SS`):** The video playback position where feedback applies is prominently displayed on review note badges for both clients and creators to guide precise video revisions.
    - **Submission Date & Calendar Time Privacy:** Calendar day, date, and clock time of submission (e.g. `2 Nov, 02:09 pm`) are strictly hidden from client and creator card views to keep the creative review interface clean and focused solely on creative notes. Calendar timestamps are strictly reserved for and visible to Studio Administrators only (`/admin/*`) via order snapshots and audit logs.
 
-### 3.6 Client Downloads, Invoicing & Creator Payout Ledgers
+### 3.7 Client Revision Rounds (2 Included Rounds Standard & 50% Extra Revision Sizing)
+1. **Included Rounds Standard (Migration 018):**
+   - Every creative service booking strictly includes **2 Revision Rounds** (`max_free_revisions = 2`).
+   - **Round 1:** Client receives 1st cut (v1.0), writes timestamped review notes, and requests Round 2 changes (`currentRound = 1`).
+   - **Round 2:** Creator addresses notes and delivers cut v2.0. Client reviews in Round 2 of 2 (`currentRound = 2`).
+2. **Comment Section Locking on Round Exhaustion:**
+   - When the client's 2 included rounds have been used and Cut v3.0 is delivered (or whenever `currentRound > includedRounds`), the timestamped note form and comment section are **strictly disabled and locked** to prevent uncompensated scope creep.
+   - The comment form is replaced with a locked revision card stating that the 2 included rounds are completed and shows the exact 50% unlock fee.
+   - Server route `POST /api/client/projects/[id]` (`action: 'add_note'`) rejects note insertions with `HTTP 403` while `currentRound > includedRounds`.
+3. **Dynamic 50% Service Sizing Formula:**
+   - Extra revision passes (Round 3, Round 4, etc.) are strictly sized at **50% of the total amount paid** for the service/order (`Math.round(orders.gross_amount * 0.5)`).
+   - E.g.: Personal Reel ₹1,000 paid $\to$ 50% = ₹500; Corporate Event ₹5,500 paid $\to$ 50% = ₹2,750; Wedding Highlight ₹8,000 paid $\to$ 50% = ₹4,000.
+4. **Instant Razorpay Payment & Automatic Comment Re-enabling:**
+   - Client clicks `"Unlock Round X via Razorpay"` directly on the locked card or bottom bar (`POST /api/client/projects/[id]/extra-revision`).
+   - Upon SHA-256 HMAC verification:
+     - `projects.max_free_revisions` is incremented.
+     - Append-only records are created in `public.payments` (WORM table) and `public.change_orders` (`status = 'paid'`).
+     - The comment section in the client portal is **automatically and immediately re-enabled** (`isRevisionLocked = false`).
+     - Header badges and quick metrics update to `Round X of X (Extra Pass Active)`.
+     - Assigned creator receives an instant in-app notification.
+
+### 3.8 Client Downloads, Invoicing & Creator Payout Ledgers
 1. **Client Final Downloads (`/client/masters`):**
    - Must dynamically fetch verified deliverables from `/api/client/projects`.
    - Filters for approved or completed cuts (`p.status === 'completed' || p.status === 'approved'` or active `final_download_url`).

@@ -194,6 +194,8 @@ export async function POST(request: NextRequest) {
                   status: rawFootageCloudLink ? 'creator_assigned' : 'awaiting_upload',
                   raw_footage_b2_prefix: rawFootageCloudLink,
                   priority: 1,
+                  current_revision_round: 1,
+                  max_free_revisions: 2, // Default 2 included review rounds
                   created_at: new Date().toISOString(),
                   updated_at: new Date().toISOString(),
                 },

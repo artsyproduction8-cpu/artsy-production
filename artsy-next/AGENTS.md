@@ -320,15 +320,26 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
      - The comment section in the client portal is **automatically and immediately re-enabled** (`isRevisionLocked = false`).
      - Header badges and quick metrics update to `Round X of X (Extra Pass Active)`.
      - Assigned creator receives an instant in-app notification.
-5. **Revision Round Lifecycle Stepper & Round State Identification Invariant:**
-   - The client portal (`/client/projects/[id]`, `/client/review`) renders an authoritative 3-stage visual progress stepper:
-     - **Stage 1 (Round 01 • Cut v1.0):** Active (`🟢 Active`) during first cut inspection $\to$ Completed (`✓ Completed`) once notes are submitted to editor.
-     - **Stage 2 (Round 02 • Cut v2.0):** Upcoming (`⏳ Upcoming`) during cut v1.0 $\to$ In Progress (`⏳ Editor Cutting v2.0`) when Round 1 notes are submitted $\to$ Active (`🟢 Active • Final Included Round`) once Cut v2.0 is uploaded $\to$ Completed (`✓ Completed`) when Round 2 notes are submitted.
-     - **Stage 3 (Final Stage / Extra Pass):** Pending (`⏳ Pending`) during active rounds $\to$ Locked (`🔒 All 2 Included Rounds Ended • 50% Extra Pass Required`) when included rounds finish $\to$ Approved (`🎉 Final Master Approved & Delivered`) once approved.
-   - **Per-Note Round Tagging:** Every review note card displays a dedicated round pill (`Round 1`, `Round 2`) across both client review suite and creator workstation desk.
-   - **Prominent Notes Dispatch Button:** The Notes & Feedback panel features a prominent primary CTA button (`Send Round X Notes to Editor (N Notes Logged) →`) directly below the card header, eliminating the need to search the page footer.
+5. **Compact & Normal Revision Stepper & Review Suite Standard (November 2026):**
+   - The client portal (`/client/projects/[id]`, `/client/review`) enforces a clean, compact, normal revision status bar instead of oversized multi-paragraph bento boxes.
+   - Displays `Revision Status: Round X of Y Active` alongside a compact horizontal progress stepper: `Round 1 → Round 2 → Final Sign-off`.
+   - Player controls toolbar is compact: `▶ Play / ⏸ Pause`, `-5s` / `+5s` precision seek buttons, single-click speed toggle (`1x`, `1.25x`, `1.5x`), clean subtle timecode (`00:00 / 04:40`), and `Tag at [Timecode]` button without noisy shadows or bulky containers.
+   - Feedback note cards use clean, compact text headers (`00:00:00 · category · Round X`) and omit noisy pulsing `PLAYING NOW` badges across simultaneous notes.
+   - Add Note header features a simple, normal timecode label.
 
-### 3.8 Client Downloads, Invoicing & Creator Payout Ledgers
+### 3.8 Unified Client Files & Footage Aggregator Invariant (`/client/files` & `/api/client/files`)
+To ensure clients never struggle to find project assets or raw footage links, the platform provides a centralized Files repository:
+1. **Multi-Source Link Aggregation:** Server endpoint `GET /api/client/files` queries both `file_records` and client project orders, synthesising complete entries for:
+   - **Original Camera Raw Footage:** Resolves from `orders.requirements_snapshot.rawFootageUrl`, `project.raw_footage_b2_prefix`, or `users.studio_details.ingestLink` (Google Drive, Dropbox, Backblaze B2).
+   - **Final Master 4K Video Deliverable:** Resolves from `project.final_download_url` or `requirements_snapshot.deliverable_url`.
+   - **Draft Preview Review Cut:** Resolves from `requirements_snapshot.draft_cut_url`.
+   - **Storage File Records:** Physical footage assets and proxies recorded in `public.file_records`.
+2. **Action-Oriented Client UI (`/client/files`):**
+   - Organized into project cards with direct quick actions: `Open Raw Footage Link ↗`, `Watch / Download Final Video ↗`, `Open in Review Suite ↗`.
+   - Filter tabs: `All Files & Links`, `Raw Footage`, `Final Videos`, `Drafts`, and `Expiring Soon`.
+   - Clear storage lifecycle banners (15-day raw footage / 30-day final master retention) with WhatsApp extension CTA.
+
+### 3.9 Client Downloads, Invoicing & Creator Payout Ledgers
 1. **Client Final Downloads (`/client/masters`):**
    - Must dynamically fetch verified deliverables from `/api/client/projects`.
    - Filters for approved or completed cuts (`p.status === 'completed' || p.status === 'approved'` or active `final_download_url`).

@@ -263,6 +263,16 @@ export async function GET(
       roundPhase = isRevisionRequested ? 'round_2_submitted' : 'extra_round_unlocked';
     }
 
+    let clientIngestLink: string | null = null;
+    if (project.client_id) {
+      try {
+        const { data: clientUser } = await db.from('users').select('studio_details').eq('id', project.client_id).maybeSingle();
+        if (clientUser?.studio_details?.ingestLink) {
+          clientIngestLink = clientUser.studio_details.ingestLink;
+        }
+      } catch {}
+    }
+
     return NextResponse.json({
       success: true,
       project: {
@@ -273,7 +283,7 @@ export async function GET(
         category: snap.category || ord.service_key || 'Personal',
         status: project.status,
         deliverableUrl,
-        rawFootageUrl: project.raw_footage_b2_prefix || snap.rawFootageUrl || null,
+        rawFootageUrl: project.raw_footage_b2_prefix || snap.rawFootageUrl || snap.raw_footage_link || clientIngestLink || null,
         creatorName: creatorName || 'Senior Editor',
         currentRound,
         includedRounds,

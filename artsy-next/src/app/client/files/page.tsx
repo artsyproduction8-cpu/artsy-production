@@ -10,21 +10,23 @@ interface FileRecordItem {
   id: string;
   project_id: string;
   project_title?: string;
+  project_number?: string;
   file_name: string;
   file_size_bytes: number;
   file_type: 'raw_footage' | 'master_delivery' | 'proxy' | 'audio_stem' | string;
   storage_provider: string;
+  download_url?: string;
   b2_key?: string;
   retention_delete_at?: string;
   is_soft_deleted?: boolean;
-  status?: 'delivered' | 'in_progress' | 'expiring_soon';
+  status?: 'delivered' | 'in_progress' | 'expiring_soon' | 'ready';
   created_at: string;
 }
 
 const FALLBACK_FILES: FileRecordItem[] = [];
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (!bytes || bytes === 0) return '';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -42,7 +44,7 @@ export default function ClientFilesPage() {
   const { user } = useAuth();
   const [files, setFiles] = useState<FileRecordItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'delivered' | 'in_progress' | 'expiring_soon'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'raw_footage' | 'delivered' | 'in_progress' | 'expiring_soon'>('all');
 
   useEffect(() => {
     async function loadFiles() {
@@ -73,8 +75,9 @@ export default function ClientFilesPage() {
   // Filtered files
   const filteredFiles = useMemo(() => {
     return files.filter((f) => {
+      if (activeFilter === 'raw_footage') return f.file_type === 'raw_footage';
       if (activeFilter === 'delivered') return f.file_type === 'master_delivery' || f.status === 'delivered';
-      if (activeFilter === 'in_progress') return f.status === 'in_progress';
+      if (activeFilter === 'in_progress') return f.file_type === 'proxy' || f.status === 'in_progress';
       if (activeFilter === 'expiring_soon') {
         return isFileExpiring(f.retention_delete_at);
       }
@@ -84,12 +87,13 @@ export default function ClientFilesPage() {
 
   // Grouped by Project
   const groupedFiles = useMemo(() => {
-    const map = new Map<string, { title: string; files: FileRecordItem[] }>();
+    const map = new Map<string, { title: string; number?: string; files: FileRecordItem[] }>();
     filteredFiles.forEach((file) => {
       const projId = file.project_id || 'general';
       const title = file.project_title || `Project #${projId}`;
+      const number = file.project_number;
       if (!map.has(projId)) {
-        map.set(projId, { title, files: [] });
+        map.set(projId, { title, number, files: [] });
       }
       map.get(projId)!.files.push(file);
     });
@@ -102,15 +106,24 @@ export default function ClientFilesPage() {
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen">
-          <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
+          <div className="p-4 sm:p-6 lg:p-8 space-y-6 w-full max-w-[1600px] mx-auto">
             {/* Header */}
-            <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
-                Files &amp; Footage
-              </h1>
-              <p className="text-sm text-[#86868B] mt-1">
-                View and download your raw footage, preview drafts, and final 4K video exports.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
+                  Files &amp; Footage
+                </h1>
+                <p className="text-xs sm:text-sm text-[#86868B] mt-0.5">
+                  Direct access to your camera raw footage links, draft preview videos, and final 4K master exports.
+                </p>
+              </div>
+              <Link
+                href="/client/review"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-semibold text-[#1D1D1F] rounded-xl transition-colors shrink-0 shadow-2xs"
+              >
+                <span>Interactive Review Player</span>
+                <span>→</span>
+              </Link>
             </div>
 
             {/* Retention Warning Banner (if files expiring within 7 days) */}
@@ -150,23 +163,24 @@ export default function ClientFilesPage() {
             )}
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-2 border-b border-[#E5E5E7] pb-3">
+            <div className="flex flex-wrap items-center gap-2 border-b border-[#E5E5E7] pb-3">
               {(
                 [
-                  { key: 'all', label: 'All Files' },
+                  { key: 'all', label: `All Files & Links (${files.length})` },
+                  { key: 'raw_footage', label: 'Raw Footage' },
                   { key: 'delivered', label: 'Final Videos' },
-                  { key: 'in_progress', label: 'Drafts & Proxies' },
-                  { key: 'expiring_soon', label: `Expiring Soon (${expiringFiles.length})` },
+                  { key: 'in_progress', label: 'Drafts' },
+                  ...(expiringFiles.length > 0 ? [{ key: 'expiring_soon' as const, label: `Expiring Soon (${expiringFiles.length})` }] : []),
                 ] as const
               ).map((tab) => (
                 <button
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveFilter(tab.key)}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     activeFilter === tab.key
-                      ? 'bg-[#3B82F6] text-white shadow-xs'
-                      : 'text-[#86868B] hover:text-[#1D1D1F] hover:bg-white'
+                      ? 'bg-[#1D1D1F] text-white shadow-2xs'
+                      : 'bg-white border border-[#E5E5E7] text-[#86868B] hover:text-[#1D1D1F] hover:bg-white'
                   }`}
                 >
                   {tab.label}
@@ -177,49 +191,52 @@ export default function ClientFilesPage() {
             {/* Projects and File Cards */}
             {loading ? (
               <div className="text-center py-16 text-xs text-[#86868B]">
-                Loading files...
+                Loading files and video links...
               </div>
             ) : files.length === 0 ? (
-              <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8 space-y-3">
-                <div className="text-4xl mb-3">📁</div>
-                <h3 className="text-lg font-semibold text-[#1D1D1F]">No files uploaded yet</h3>
-                <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-                  Your raw video footage, draft previews, and final video downloads will appear here once your project starts.
+              <div className="text-center py-16 border border-dashed border-[#E5E5E7] rounded-2xl bg-white p-8 space-y-3">
+                <div className="text-3xl mb-2">📁</div>
+                <h3 className="text-base font-bold text-[#1D1D1F]">No files or links registered yet</h3>
+                <p className="text-xs text-[#86868B] max-w-md mx-auto leading-relaxed">
+                  Your raw camera footage links, draft preview videos, and final 4K master downloads will appear here automatically as your project progresses.
                 </p>
                 <Link
                   href="/book"
-                  className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm"
+                  className="inline-block px-5 py-2.5 bg-[#3B82F6] hover:bg-blue-600 text-white rounded-xl text-xs font-semibold transition-all shadow-xs"
                 >
                   Start New Project →
                 </Link>
               </div>
             ) : groupedFiles.length === 0 ? (
-              <div className="bg-white border border-[#E5E5E7] rounded-2xl p-12 text-center space-y-2">
-                <div className="text-base font-bold text-[#1D1D1F]">No files found</div>
+              <div className="bg-white border border-[#E5E5E7] rounded-2xl p-10 text-center space-y-2">
+                <div className="text-sm font-bold text-[#1D1D1F]">No items in this category</div>
                 <p className="text-xs text-[#86868B]">
-                  No file records match your selected filter.
+                  No files match your selected filter tab. Try clicking &quot;All Files &amp; Links&quot; above.
                 </p>
               </div>
             ) : (
-              <div className="space-y-8">
-                {groupedFiles.map(([projectId, { title, files: projectFiles }]) => (
-                  <div key={projectId} className="space-y-4">
-                    <div className="flex items-center justify-between px-1">
+              <div className="space-y-6">
+                {groupedFiles.map(([projectId, { title, number, files: projectFiles }]) => (
+                  <div key={projectId} className="bg-white rounded-2xl border border-[#E5E5E7] p-5 sm:p-6 space-y-4 shadow-2xs">
+                    {/* Project Group Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F5F5F7] gap-2">
                       <div>
-                        <h2 className="text-sm font-bold text-[#1D1D1F]">{title}</h2>
+                        <h2 className="text-base font-bold text-[#1D1D1F]">{title}</h2>
                         <span className="text-[11px] text-[#86868B] font-mono">
-                          Project ID: {projectId} • {projectFiles.length} item{projectFiles.length > 1 ? 's' : ''}
+                          {number ? `Order #${number}` : `ID: ${projectId.slice(0, 8)}`} • {projectFiles.length} item{projectFiles.length > 1 ? 's' : ''} available
                         </span>
                       </div>
                       <Link
-                        href={`/client/projects`}
-                        className="text-xs font-semibold text-[#3B82F6] hover:underline"
+                        href={`/client/review?project=${encodeURIComponent(projectId)}`}
+                        className="text-xs font-semibold text-[#3B82F6] hover:underline flex items-center gap-1"
                       >
-                        Project Details →
+                        <span>Open Video Review Suite</span>
+                        <span>→</span>
                       </Link>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
                       {projectFiles.map((file) => {
                         const now = Date.now();
                         const isExpiring =
@@ -234,71 +251,109 @@ export default function ClientFilesPage() {
                             )
                           : null;
 
+                        const isRaw = file.file_type === 'raw_footage';
+                        const isFinal = file.file_type === 'master_delivery';
+                        const isDraft = file.file_type === 'proxy';
+
                         return (
                           <div
                             key={file.id}
-                            className={`bg-white border rounded-2xl p-5 shadow-xs flex flex-col justify-between transition-all hover:shadow-md ${
-                              isExpiring ? 'border-amber-300 bg-amber-50/10' : 'border-[#E5E5E7]'
+                            className={`rounded-xl p-4 border transition-all flex flex-col justify-between ${
+                              isFinal
+                                ? 'bg-blue-50/30 border-blue-200'
+                                : isRaw
+                                ? 'bg-purple-50/20 border-purple-200'
+                                : isExpiring
+                                ? 'bg-amber-50/20 border-amber-300'
+                                : 'bg-[#F5F5F7] border-[#E5E5E7]'
                             }`}
                           >
-                            <div className="space-y-3">
-                              <div className="flex items-start justify-between gap-2">
+                            <div className="space-y-2">
+                              {/* Top Badge */}
+                              <div className="flex items-center justify-between gap-2">
                                 <span
-                                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                                    file.file_type === 'master_delivery'
-                                      ? 'bg-blue-50 text-blue-700'
-                                      : file.file_type === 'raw_footage'
-                                      ? 'bg-purple-50 text-purple-700'
-                                      : 'bg-zinc-100 text-zinc-700'
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                                    isFinal
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : isRaw
+                                      ? 'bg-purple-100 text-purple-800'
+                                      : isDraft
+                                      ? 'bg-amber-100 text-amber-900'
+                                      : 'bg-zinc-200 text-zinc-800'
                                   }`}
                                 >
-                                  {file.file_type === 'master_delivery'
-                                    ? 'Final Video'
-                                    : file.file_type === 'raw_footage'
+                                  {isFinal
+                                    ? 'Final Approved Video'
+                                    : isRaw
                                     ? 'Raw Footage'
+                                    : isDraft
+                                    ? 'Draft Preview'
                                     : file.file_type.replace('_', ' ')}
                                 </span>
                                 {isExpiring && (
-                                  <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
+                                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
                                     {daysLeft}d left
                                   </span>
                                 )}
                               </div>
 
+                              {/* Title */}
                               <div>
-                                <h3
-                                  className="text-xs font-bold text-[#1D1D1F] break-all leading-snug line-clamp-2"
-                                  title={file.file_name}
-                                >
+                                <h3 className="text-xs font-bold text-[#1D1D1F] leading-snug line-clamp-2" title={file.file_name}>
                                   {file.file_name}
                                 </h3>
-                                <div className="flex items-center gap-2 mt-1 text-[11px] text-[#86868B]">
-                                  <span>{formatBytes(file.file_size_bytes)}</span>
-                                  <span>•</span>
-                                  <span>Cloud Storage</span>
+                                <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#86868B]">
+                                  <span>{file.storage_provider || 'Cloud Storage'}</span>
+                                  {file.file_size_bytes > 0 && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{formatBytes(file.file_size_bytes)}</span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>
 
-                            <div className="pt-4 mt-3 border-t border-[#F5F5F7] space-y-2">
-                              {file.retention_delete_at && (
-                                <div className="text-[10px] text-[#86868B]">
-                                  Available until:{' '}
-                                  <span className="font-semibold text-[#1D1D1F]">
-                                    {new Date(file.retention_delete_at).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-2">
+                            {/* Action CTA */}
+                            <div className="pt-3 mt-3 border-t border-[#E5E5E7] flex items-center justify-between gap-2">
+                              {file.download_url ? (
                                 <a
-                                  href={`/api/storage/download?fileId=${file.id}`}
+                                  href={file.download_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex-1 py-1.5 px-3 bg-[#3B82F6] hover:bg-blue-600 text-white rounded-xl text-center text-xs font-bold transition-colors cursor-pointer"
+                                  className={`w-full py-2 px-3 text-white rounded-lg text-center text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${
+                                    isFinal
+                                      ? 'bg-[#3B82F6] hover:bg-blue-600'
+                                      : isRaw
+                                      ? 'bg-[#1D1D1F] hover:bg-black'
+                                      : 'bg-[#3B82F6] hover:bg-blue-600'
+                                  }`}
                                 >
-                                  Download File
+                                  {isFinal ? (
+                                    <>
+                                      <span>Watch / Download Final Video</span>
+                                      <span>↗</span>
+                                    </>
+                                  ) : isRaw ? (
+                                    <>
+                                      <span>Open Raw Footage Link</span>
+                                      <span>↗</span>
+                                    </>
+                                  ) : isDraft ? (
+                                    <>
+                                      <span>Open Draft Video</span>
+                                      <span>↗</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span>Download File</span>
+                                      <span>↓</span>
+                                    </>
+                                  )}
                                 </a>
-                              </div>
+                              ) : (
+                                <span className="text-xs text-[#86868B]">Processing file...</span>
+                              )}
                             </div>
                           </div>
                         );

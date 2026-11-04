@@ -995,132 +995,72 @@ export default function ClientReviewPage() {
                     </div>
                   </div>
 
-                  {/* REVISION ROUND LIFECYCLE STEPPER */}
-                  <div className="mt-6 pt-6 border-t border-[#F5F5F7]">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                      <div>
-                        <div className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">
-                          Revision Rounds &amp; Creative Iteration Flow
-                        </div>
-                        <div className="text-sm font-bold text-[#1D1D1F] flex items-center gap-2 mt-0.5">
-                          <span>Active Round Status:</span>
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
-                            isApproved
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                              : isRevisionLocked
-                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                              : isRevisionRequested
-                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                              : 'bg-blue-100 text-blue-800 border border-blue-200'
-                          }`}>
-                            {isApproved
-                              ? '✓ Final Master Approved'
-                              : isRevisionLocked
-                              ? '🔒 All 2 Included Rounds Ended'
-                              : isRevisionRequested
-                              ? `⏳ Round ${currentRound - 1} Submitted (Editor Cutting v${currentRound}.0)`
-                              : `🟢 Round ${currentRound} of ${includedRounds} Active`}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-[11px] font-medium text-[#86868B]">
-                        {includedRounds} Rounds Included Free with Project
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {/* Stage 1: Round 1 */}
-                      <div className={`p-4 rounded-xl border transition-all ${
-                        currentRound === 1 && !isRevisionRequested && !isApproved
-                          ? 'bg-blue-50/80 border-blue-300 shadow-xs ring-1 ring-blue-400/30'
-                          : currentRound > 1 || (currentRound === 1 && isRevisionRequested) || isApproved
-                          ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900'
-                          : 'bg-[#F5F5F7] border-[#E5E5E7] opacity-80'
-                      }`}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wide">
-                            ROUND 01 • CUT v1.0
-                          </span>
-                          <span className="text-xs font-bold">
-                            {currentRound > 1 || (currentRound === 1 && isRevisionRequested) || isApproved ? '✓ Completed' : currentRound === 1 ? '🟢 Active' : '⏳ Pending'}
-                          </span>
-                        </div>
-                        <div className="text-xs font-bold text-[#1D1D1F]">
-                          First Master Cut Review
-                        </div>
-                        <p className="text-[11px] text-[#86868B] mt-1 leading-relaxed">
-                          {currentRound === 1 && !isRevisionRequested
-                            ? 'Add your timestamped notes on the player. Click Send Notes when done.'
-                            : 'First round feedback submitted to editor.'}
-                        </p>
-                      </div>
-
-                      {/* Stage 2: Round 2 */}
-                      <div className={`p-4 rounded-xl border transition-all ${
-                        currentRound === 2 && !isRevisionRequested && !isApproved
-                          ? 'bg-blue-50/80 border-blue-300 shadow-xs ring-1 ring-blue-400/30'
-                          : currentRound > 2 || (currentRound === 2 && isRevisionRequested) || isApproved
-                          ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900'
-                          : currentRound === 1
-                          ? 'bg-[#F5F5F7] border-[#E5E5E7] opacity-75'
-                          : 'bg-[#F5F5F7] border-[#E5E5E7]'
-                      }`}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wide">
-                            ROUND 02 • CUT v2.0
-                          </span>
-                          <span className="text-xs font-bold">
-                            {currentRound > 2 || (currentRound === 2 && isRevisionRequested) || isApproved
-                              ? '✓ Completed'
-                              : currentRound === 2 && !isRevisionRequested
-                              ? '🟢 Active (Final Free)'
-                              : currentRound === 1 && isRevisionRequested
-                              ? '⏳ Editor Cutting'
-                              : '⏳ Upcoming'}
-                          </span>
-                        </div>
-                        <div className="text-xs font-bold text-[#1D1D1F]">
-                          Second Cut Review &amp; Polishing
-                        </div>
-                        <p className="text-[11px] text-[#86868B] mt-1 leading-relaxed">
-                          {currentRound === 2 && !isRevisionRequested
-                            ? 'Inspect addressed changes. Leave any remaining tweaks before final sign-off.'
-                            : currentRound === 1 && isRevisionRequested
-                            ? 'Editor is assembling Cut v2.0 with your Round 1 notes implemented.'
-                            : currentRound > 2
-                            ? 'Second included revision completed.'
-                            : 'Included free. Unlocks automatically when editor posts Cut v2.0.'}
-                        </p>
-                      </div>
-
-                      {/* Stage 3: Approval / Extra Pass */}
-                      <div className={`p-4 rounded-xl border transition-all ${
+                  {/* COMPACT REVISION STATUS BAR */}
+                  <div className="mt-4 pt-4 border-t border-[#E5E5E7] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-[#86868B]">Revision Status:</span>
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                         isApproved
-                          ? 'bg-emerald-50 border-emerald-300 text-emerald-950 shadow-xs'
+                          ? 'bg-emerald-100 text-emerald-800'
                           : isRevisionLocked
-                          ? 'bg-amber-50 border-amber-300 text-amber-950 shadow-xs'
-                          : 'bg-[#F5F5F7] border-[#E5E5E7] opacity-75'
+                          ? 'bg-amber-100 text-amber-900'
+                          : isRevisionRequested
+                          ? 'bg-amber-50 text-amber-800'
+                          : 'bg-blue-50 text-blue-700'
                       }`}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wide">
-                            {isRevisionLocked ? 'EXTRA PASS REQUIRED' : 'FINAL STAGE'}
-                          </span>
-                          <span className="text-xs font-bold">
-                            {isApproved ? '🎉 Approved' : isRevisionLocked ? '🔒 Locked' : '⏳ Pending'}
-                          </span>
-                        </div>
-                        <div className="text-xs font-bold text-[#1D1D1F]">
-                          {isApproved ? 'Final Master Delivered' : isRevisionLocked ? 'Extra Round 3 Pass' : 'Master Sign-Off'}
-                        </div>
-                        <p className="text-[11px] text-[#86868B] mt-1 leading-relaxed">
-                          {isApproved
-                            ? 'Clean 4K ProRes master unlocked for instant download.'
-                            : isRevisionLocked
-                            ? `All ${includedRounds} included rounds finished. Unlock Round 3 (+50%) or approve cut.`
-                            : 'Click "Approve Video Cut" when satisfied to unlock unwatermarked master.'}
-                        </p>
-                      </div>
+                        {isApproved
+                          ? '✓ Final Master Approved'
+                          : isRevisionLocked
+                          ? '🔒 All 2 Included Rounds Ended'
+                          : isRevisionRequested
+                          ? `Round ${currentRound - 1} Submitted (Editor Cutting v${currentRound}.0)`
+                          : `Round ${currentRound} of ${includedRounds} Active`}
+                      </span>
+                      <span className="text-[#86868B] text-[11px] hidden md:inline">({includedRounds} Rounds Included Free)</span>
                     </div>
+
+                    {/* Stepper Steps */}
+                    <div className="flex items-center gap-2 text-[11px] font-medium text-[#86868B]">
+                      <span className={`flex items-center gap-1 ${currentRound >= 1 ? 'text-[#1D1D1F] font-semibold' : ''}`}>
+                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
+                          currentRound > 1 || (currentRound === 1 && isRevisionRequested) || isApproved
+                            ? 'bg-emerald-500 text-white'
+                            : currentRound === 1
+                            ? 'bg-[#1D1D1F] text-white'
+                            : 'bg-[#E5E5E7] text-[#86868B]'
+                        }`}>
+                          {currentRound > 1 || (currentRound === 1 && isRevisionRequested) || isApproved ? '✓' : '1'}
+                        </span>
+                        <span>Round 1</span>
+                      </span>
+
+                      <span className="text-[#E5E5E7]">→</span>
+
+                      <span className={`flex items-center gap-1 ${currentRound >= 2 ? 'text-[#1D1D1F] font-semibold' : ''}`}>
+                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
+                          currentRound > 2 || (currentRound === 2 && isRevisionRequested) || isApproved
+                            ? 'bg-emerald-500 text-white'
+                            : currentRound === 2
+                            ? 'bg-[#1D1D1F] text-white'
+                            : 'bg-[#E5E5E7] text-[#86868B]'
+                        }`}>
+                          {currentRound > 2 || (currentRound === 2 && isRevisionRequested) || isApproved ? '✓' : '2'}
+                        </span>
+                        <span>Round 2</span>
+                      </span>
+
+                      <span className="text-[#E5E5E7]">→</span>
+
+                      <span className={`flex items-center gap-1 ${isApproved ? 'text-emerald-700 font-semibold' : ''}`}>
+                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
+                          isApproved ? 'bg-emerald-500 text-white' : 'bg-[#E5E5E7] text-[#86868B]'
+                        }`}>
+                          {isApproved ? '✓' : '3'}
+                        </span>
+                        <span>Final Sign-off</span>
+                      </span>
+                    </div>
+
                   </div>
                 </div>
               </section>
@@ -1419,85 +1359,58 @@ export default function ClientReviewPage() {
                           </div>
 
                           {/* Controller Row */}
-                          <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
-                            {/* Left: Play/Pause, Precision Nudge & Scrub Buttons, Speed Control */}
-                            <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                            {/* Left: Play/Pause, Rewind/Forward, Speed */}
+                            <div className="flex items-center gap-1.5">
                               <button
                                 type="button"
                                 onClick={handleTogglePlayPause}
-                                className="px-3 py-1.5 bg-[#1D1D1F] hover:bg-[#3B82F6] text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+                                className="px-2.5 py-1 bg-[#1D1D1F] hover:bg-black text-white rounded-md text-xs font-semibold cursor-pointer transition-colors"
                                 title="Play / Pause video (Spacebar)"
                               >
-                                <span>{isPlaying ? '⏸ Pause' : '▶ Play'}</span>
+                                {isPlaying ? '⏸ Pause' : '▶ Play'}
                               </button>
 
-                              <div className="flex items-center bg-white border border-[#E5E5E7] rounded-lg p-0.5 shadow-2xs">
+                              <div className="flex items-center bg-white border border-[#E5E5E7] rounded-md px-1 py-0.5">
                                 <button
                                   type="button"
                                   onClick={() => handleSeek(Math.max(0, currentSeconds - 5))}
-                                  className="px-2 py-1 text-[#1D1D1F] rounded hover:bg-[#F5F5F7] text-xs font-bold cursor-pointer transition-colors"
+                                  className="px-1.5 py-0.5 text-xs font-medium text-[#1D1D1F] hover:bg-[#F5F5F7] rounded cursor-pointer"
                                   title="Rewind 5s (Left Arrow)"
                                 >
                                   -5s
                                 </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleSeek(Math.max(0, currentSeconds - 1))}
-                                  className="px-1.5 py-1 text-[#86868B] hover:text-[#1D1D1F] rounded hover:bg-[#F5F5F7] text-[11px] font-bold cursor-pointer transition-colors"
-                                  title="Micro-rewind 1s (Shift + Left Arrow)"
-                                >
-                                  -1s
-                                </button>
-                                <span className="w-px h-3.5 bg-[#E5E5E7] mx-0.5"></span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleSeek(Math.min(totalDuration > 0 ? totalDuration : 999999, currentSeconds + 1))}
-                                  className="px-1.5 py-1 text-[#86868B] hover:text-[#1D1D1F] rounded hover:bg-[#F5F5F7] text-[11px] font-bold cursor-pointer transition-colors"
-                                  title="Micro-forward 1s (Shift + Right Arrow)"
-                                >
-                                  +1s
-                                </button>
+                                <span className="w-px h-3 bg-[#E5E5E7] mx-0.5"></span>
                                 <button
                                   type="button"
                                   onClick={() => handleSeek(Math.min(totalDuration > 0 ? totalDuration : 999999, currentSeconds + 5))}
-                                  className="px-2 py-1 text-[#1D1D1F] rounded hover:bg-[#F5F5F7] text-xs font-bold cursor-pointer transition-colors"
+                                  className="px-1.5 py-0.5 text-xs font-medium text-[#1D1D1F] hover:bg-[#F5F5F7] rounded cursor-pointer"
                                   title="Forward 5s (Right Arrow)"
                                 >
                                   +5s
                                 </button>
                               </div>
 
-                              {/* Playback Speed Pill */}
-                              <div className="flex items-center bg-white border border-[#E5E5E7] rounded-lg p-0.5 shadow-2xs">
-                                {[1, 1.25, 1.5].map((speed) => (
-                                  <button
-                                    key={`speed-${speed}`}
-                                    type="button"
-                                    onClick={() => handleSpeedChange(speed)}
-                                    className={`px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer ${
-                                      playbackSpeed === speed
-                                        ? 'bg-[#1D1D1F] text-white shadow-2xs'
-                                        : 'text-[#86868B] hover:text-[#1D1D1F]'
-                                    }`}
-                                    title={`Playback speed ${speed}x`}
-                                  >
-                                    {speed}x
-                                  </button>
-                                ))}
-                              </div>
+                              {/* Simple Speed Toggle */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const nextSpeed = playbackSpeed === 1 ? 1.25 : playbackSpeed === 1.25 ? 1.5 : 1;
+                                  handleSpeedChange(nextSpeed);
+                                }}
+                                className="px-2 py-1 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-medium text-[#1D1D1F] rounded-md cursor-pointer"
+                                title="Click to cycle playback speed (1x / 1.25x / 1.5x)"
+                              >
+                                {playbackSpeed}x
+                              </button>
                             </div>
 
-                            {/* Right: Timecode Display & Tag Button */}
+                            {/* Right: Clean Timecode & Tag Button */}
                             <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] uppercase font-bold text-[#86868B] hidden sm:inline">Current Timecode:</span>
-                                <div className="px-3 py-1.5 bg-white rounded-lg border border-[#E5E5E7] font-mono text-xs font-extrabold text-[#3B82F6] shadow-2xs flex items-center gap-1.5">
-                                  <span>⏱ {currentTimecode}</span>
-                                  <span className="text-[#86868B] font-medium text-[11px]">/ {formatTimecode(totalDuration)}</span>
-                                </div>
-                              </div>
+                              <span className="font-mono text-xs text-[#1D1D1F]">
+                                {currentTimecode} <span className="text-[#86868B]">/ {formatTimecode(totalDuration)}</span>
+                              </span>
 
-                              {/* Capture Current Time Button */}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1514,10 +1427,9 @@ export default function ClientReviewPage() {
                                   showToast(`Captured timecode: ${currentTimecode}`);
                                   noteTextareaRef.current?.focus();
                                 }}
-                                className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold rounded-lg cursor-pointer transition-colors shadow-2xs flex items-center gap-1"
+                                className="px-2.5 py-1 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-medium text-[#1D1D1F] rounded-md cursor-pointer transition-colors"
                               >
-                                <span>📍 Tag at</span>
-                                <span className="font-mono">{currentTimecode}</span>
+                                Tag at {currentTimecode}
                               </button>
                             </div>
                           </div>
@@ -1619,7 +1531,7 @@ export default function ClientReviewPage() {
                         ) : (
                           project.reviewNotes.map((rev) => {
                             const isNoteAddressed = rev.isAddressed || String(rev.status || '').toLowerCase().includes('addressed') || String(rev.status || '').toLowerCase().includes('resolved');
-                            const isNoteActive = typeof rev.timecodeSeconds === 'number' && Math.abs(currentSeconds - rev.timecodeSeconds) <= 2;
+                            const isNoteActive = isPlaying && typeof rev.timecodeSeconds === 'number' && Math.abs(currentSeconds - rev.timecodeSeconds) <= 1;
                             return (
                               <div
                                 key={rev.id}
@@ -1631,22 +1543,24 @@ export default function ClientReviewPage() {
                                     : 'bg-[#F5F5F7] border-[#E5E5E7] hover:border-[#3B82F6]/40'
                                 }`}
                               >
-                                <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-[#E5E5E7]/70">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[11px] font-mono font-bold text-white px-2 py-0.5 rounded-md bg-[#1D1D1F]">
-                                      ⏱ {rev.timecode}
+                                <div className="flex items-center justify-between gap-2 pb-1 border-b border-[#E5E5E7]/70 text-xs">
+                                  <div className="flex items-center gap-1.5 font-mono text-xs">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSeek(rev.timecodeSeconds || 0)}
+                                      className="font-bold text-[#1D1D1F] hover:text-[#3B82F6] cursor-pointer"
+                                      title="Jump to this time"
+                                    >
+                                      {rev.timecode}
+                                    </button>
+                                    <span className="text-[#86868B] text-[11px]">·</span>
+                                    <span className="text-[11px] font-sans font-medium text-[#86868B] capitalize">
+                                      {rev.tag.toLowerCase()}
                                     </span>
-                                    <span className="text-[10px] font-bold px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md">
-                                      {rev.tag}
-                                    </span>
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                                    <span className="text-[#86868B] text-[11px]">·</span>
+                                    <span className="text-[11px] font-sans font-medium text-[#86868B]">
                                       Round {rev.round || (rev.isAddressed ? 1 : currentRound)}
                                     </span>
-                                    {isNoteActive && (
-                                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#3B82F6] text-white shadow-2xs animate-pulse">
-                                        ▶ PLAYING NOW
-                                      </span>
-                                    )}
                                   </div>
                                 </div>
                                 <p className="text-xs text-[#1D1D1F] leading-relaxed font-medium">
@@ -1737,9 +1651,9 @@ export default function ClientReviewPage() {
                         className="bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-[#1D1D1F]">Add Note at This Moment</span>
-                          <span className="text-xs font-mono font-bold text-[#3B82F6] bg-white px-2 py-0.5 rounded-md border border-[#E5E5E7]">
-                            ⏱ {currentTimecode}
+                          <span className="text-xs font-semibold text-[#1D1D1F]">Add Note at This Moment</span>
+                          <span className="text-xs font-mono text-[#86868B]">
+                            {currentTimecode}
                           </span>
                         </div>
 

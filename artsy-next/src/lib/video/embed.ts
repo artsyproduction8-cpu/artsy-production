@@ -3,11 +3,19 @@ export interface VideoEmbedInfo {
   embedUrl: string;
   originalUrl: string;
   videoId?: string;
+  initialSeconds?: number;
 }
 
 export function parseVideoEmbedUrl(rawUrl: string | null | undefined, origin?: string): VideoEmbedInfo | null {
   const raw = (rawUrl || '').trim();
   if (!raw) return null;
+
+  // Extract optional initial timestamp (e.g. t=120 or t=2m15s)
+  let initialSeconds = 0;
+  const timeSecMatch = raw.match(/[?&]t=([0-9]+)s?/i);
+  if (timeSecMatch && timeSecMatch[1]) {
+    initialSeconds = Number(timeSecMatch[1]) || 0;
+  }
 
   // 1. YouTube (watch, shorts, embed, youtu.be, youtube-nocookie)
   const ytMatch = raw.match(
@@ -17,11 +25,13 @@ export function parseVideoEmbedUrl(rawUrl: string | null | undefined, origin?: s
     const videoId = ytMatch[1];
     const clientOrigin = origin || (typeof window !== 'undefined' && window.location.origin ? window.location.origin : '');
     const originParam = clientOrigin ? `&origin=${encodeURIComponent(clientOrigin)}` : '';
+    const startParam = initialSeconds > 0 ? `&start=${initialSeconds}` : '';
     return {
       type: 'youtube',
-      embedUrl: `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1&widgetid=1${originParam}`,
+      embedUrl: `https://www.youtube.com/embed/${videoId}?enablejsapi=1&rel=0&modestbranding=1&widgetid=1${originParam}${startParam}`,
       originalUrl: raw,
       videoId,
+      initialSeconds,
     };
   }
 

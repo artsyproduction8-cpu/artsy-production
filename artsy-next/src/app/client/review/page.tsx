@@ -175,8 +175,16 @@ export default function ClientReviewPage() {
 
   // Parse deliverable link into embeddable format
   const videoEmbed = useMemo(() => {
-    return parseVideoEmbedUrl(project?.deliverableUrl);
+    const origin = typeof window !== 'undefined' ? window.location.origin : undefined;
+    return parseVideoEmbedUrl(project?.deliverableUrl, origin);
   }, [project?.deliverableUrl]);
+
+  // Apply initial timestamp if specified in deliverable URL
+  useEffect(() => {
+    if (videoEmbed?.initialSeconds && currentSeconds === 0) {
+      updateCurrentTime(videoEmbed.initialSeconds);
+    }
+  }, [videoEmbed?.initialSeconds]);
 
   // Track how many feedback notes have been addressed in the current video cut
   const addressedNotesCount = useMemo(() => {
@@ -195,6 +203,9 @@ export default function ClientReviewPage() {
       (n) => !n.isAddressed && !String(n.status || '').toLowerCase().includes('addressed') && !String(n.status || '').toLowerCase().includes('resolved')
     ).length;
   }, [project?.reviewNotes]);
+
+  // Playback speed state (1x, 1.25x, 1.5x)
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
 
   // Synchronize playback timestamp state
   const updateCurrentTime = (secs: number) => {
@@ -266,7 +277,32 @@ export default function ClientReviewPage() {
     }
   };
 
-  // Keyboard shortcut listener: Space toggles play/pause, M focuses feedback textarea
+  // Change playback speed across players
+  const handleSpeedChange = (speed: number) => {
+    setPlaybackSpeed(speed);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+    }
+    if (ytPlayerRef.current && typeof ytPlayerRef.current.setPlaybackRate === 'function') {
+      try {
+        ytPlayerRef.current.setPlaybackRate(speed);
+      } catch {}
+    }
+    if (videoEmbed?.type === 'youtube' && iframeRef.current?.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: 'setPlaybackRate',
+            args: [speed],
+          }),
+          '*'
+        );
+      } catch {}
+    }
+  };
+
+  // Keyboard shortcut listener: Space toggles play/pause, Arrow keys scrub, M focuses feedback textarea
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
@@ -280,6 +316,12 @@ export default function ClientReviewPage() {
       if (e.code === 'Space') {
         e.preventDefault();
         handleTogglePlayPause();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        handleSeek(Math.max(0, currentSeconds - (e.shiftKey ? 1 : 5)));
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        handleSeek(Math.min(totalDuration > 0 ? totalDuration : 999999, currentSeconds + (e.shiftKey ? 1 : 5)));
       } else if (e.key === 'm' || e.key === 'M') {
         e.preventDefault();
         noteTextareaRef.current?.focus();
@@ -288,7 +330,7 @@ export default function ClientReviewPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [videoEmbed, isPlaying]);
+  }, [videoEmbed, isPlaying, currentSeconds, totalDuration]);
 
   // Dynamically load YouTube IFrame API script once
   useEffect(() => {
@@ -329,12 +371,6 @@ export default function ClientReviewPage() {
       }
 
       try {
-        if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === 'function') {
-          try {
-            ytPlayerRef.current.destroy();
-          } catch {}
-        }
-
         ytPlayerRef.current = new YT.Player('artsy-yt-player', {
           events: {
             onReady: (event: any) => {
@@ -1339,10 +1375,10 @@ export default function ClientReviewPage() {
 
                       {/* TIMELINE & SCRUBBER MODULE */}
                       {videoEmbed ? (
-                        <div className="mt-5 bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3">
-                          {/* Interactive Playbar */}
+                        <div className="mt-5 bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3.5">
+                          {/* Interactive Playbar with Note Markers */}
                           <div
-                            className="relative w-full h-3.5 bg-[#E5E5E7] hover:bg-[#DEDEE0] rounded-full cursor-pointer overflow-hidden group transition-all"
+                            className="relative w-full h-4 bg-[#E5E5E7] hover:bg-[#DEDEE0] rounded-full cursor-pointer group transition-all"
                             onClick={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
                               const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -1351,74 +1387,139 @@ export default function ClientReviewPage() {
                             }}
                             title="Click anywhere to scrub timeline"
                           >
+                            {/* Blue Progress Bar */}
                             <div
-                              className="h-full bg-[#3B82F6] rounded-full transition-all relative"
+                              className="h-full bg-[#3B82F6] rounded-full transition-all relative pointer-events-none"
                               style={{
                                 width: `${totalDuration > 0 ? Math.min(100, Math.max(1, (currentSeconds / totalDuration) * 100)) : 0}%`,
                               }}
                             />
+
+                            {/* Timestamp Note Markers along the Playbar */}
+                            {totalDuration > 0 && project.reviewNotes.map((rev) => {
+                              if (typeof rev.timecodeSeconds !== 'number') return null;
+                              const markerPct = Math.min(99.2, Math.max(0.8, (rev.timecodeSeconds / totalDuration) * 100));
+                              const isAddressed = rev.isAddressed || String(rev.status || '').toLowerCase().includes('addressed');
+                              return (
+                                <button
+                                  key={`marker-${rev.id}`}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSeek(rev.timecodeSeconds || 0);
+                                  }}
+                                  style={{ left: `${markerPct}%` }}
+                                  className={`absolute top-1/2 -translate-y-1/2 -ml-[4px] w-2.5 h-2.5 rounded-full cursor-pointer z-10 transition-transform hover:scale-175 shadow-xs border-2 border-white ${
+                                    isAddressed ? 'bg-emerald-500' : 'bg-amber-400'
+                                  }`}
+                                  title={`⏱ ${rev.timecode} [${rev.tag}]: "${rev.text}" (Click to jump)`}
+                                />
+                              );
+                            })}
                           </div>
 
                           {/* Controller Row */}
-                          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                            {/* Left: Play/Pause & Quick Scrub Buttons */}
-                            <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
+                            {/* Left: Play/Pause, Precision Nudge & Scrub Buttons, Speed Control */}
+                            <div className="flex flex-wrap items-center gap-2">
                               <button
                                 type="button"
                                 onClick={handleTogglePlayPause}
                                 className="px-3 py-1.5 bg-[#1D1D1F] hover:bg-[#3B82F6] text-white rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                                title="Play / Pause video"
+                                title="Play / Pause video (Spacebar)"
                               >
                                 <span>{isPlaying ? '⏸ Pause' : '▶ Play'}</span>
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => handleSeek(Math.max(0, currentSeconds - 5))}
-                                className="px-2.5 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
-                                title="Rewind 5 seconds"
-                              >
-                                -5s
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleSeek(Math.min(totalDuration > 0 ? totalDuration : 999999, currentSeconds + 5))}
-                                className="px-2.5 py-1.5 bg-white text-[#1D1D1F] border border-[#E5E5E7] rounded-lg text-xs font-bold hover:bg-[#F5F5F7] cursor-pointer"
-                                title="Forward 5 seconds"
-                              >
-                                +5s
-                              </button>
-                            </div>
 
-                            {/* Timecode Display */}
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] uppercase font-bold text-[#86868B]">Current Timecode:</span>
-                              <div className="px-3 py-1.5 bg-white rounded-lg border border-[#E5E5E7] font-mono text-xs font-extrabold text-[#3B82F6] shadow-2xs flex items-center gap-1.5">
-                                <span>⏱ {currentTimecode}</span>
-                                <span className="text-[#86868B] font-medium text-[11px]">/ {formatTimecode(totalDuration)}</span>
+                              <div className="flex items-center bg-white border border-[#E5E5E7] rounded-lg p-0.5 shadow-2xs">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSeek(Math.max(0, currentSeconds - 5))}
+                                  className="px-2 py-1 text-[#1D1D1F] rounded hover:bg-[#F5F5F7] text-xs font-bold cursor-pointer transition-colors"
+                                  title="Rewind 5s (Left Arrow)"
+                                >
+                                  -5s
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSeek(Math.max(0, currentSeconds - 1))}
+                                  className="px-1.5 py-1 text-[#86868B] hover:text-[#1D1D1F] rounded hover:bg-[#F5F5F7] text-[11px] font-bold cursor-pointer transition-colors"
+                                  title="Micro-rewind 1s (Shift + Left Arrow)"
+                                >
+                                  -1s
+                                </button>
+                                <span className="w-px h-3.5 bg-[#E5E5E7] mx-0.5"></span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSeek(Math.min(totalDuration > 0 ? totalDuration : 999999, currentSeconds + 1))}
+                                  className="px-1.5 py-1 text-[#86868B] hover:text-[#1D1D1F] rounded hover:bg-[#F5F5F7] text-[11px] font-bold cursor-pointer transition-colors"
+                                  title="Micro-forward 1s (Shift + Right Arrow)"
+                                >
+                                  +1s
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSeek(Math.min(totalDuration > 0 ? totalDuration : 999999, currentSeconds + 5))}
+                                  className="px-2 py-1 text-[#1D1D1F] rounded hover:bg-[#F5F5F7] text-xs font-bold cursor-pointer transition-colors"
+                                  title="Forward 5s (Right Arrow)"
+                                >
+                                  +5s
+                                </button>
+                              </div>
+
+                              {/* Playback Speed Pill */}
+                              <div className="flex items-center bg-white border border-[#E5E5E7] rounded-lg p-0.5 shadow-2xs">
+                                {[1, 1.25, 1.5].map((speed) => (
+                                  <button
+                                    key={`speed-${speed}`}
+                                    type="button"
+                                    onClick={() => handleSpeedChange(speed)}
+                                    className={`px-2 py-1 rounded text-[10px] font-bold transition-colors cursor-pointer ${
+                                      playbackSpeed === speed
+                                        ? 'bg-[#1D1D1F] text-white shadow-2xs'
+                                        : 'text-[#86868B] hover:text-[#1D1D1F]'
+                                    }`}
+                                    title={`Playback speed ${speed}x`}
+                                  >
+                                    {speed}x
+                                  </button>
+                                ))}
                               </div>
                             </div>
 
-                            {/* Capture Current Time Button */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (videoEmbed?.type === 'youtube' && ytPlayerRef.current?.getCurrentTime) {
-                                  try {
-                                    const cur = ytPlayerRef.current.getCurrentTime();
-                                    if (typeof cur === 'number' && !isNaN(cur)) {
-                                      updateCurrentTime(Math.floor(cur));
-                                    }
-                                  } catch {}
-                                } else if (videoRef.current) {
-                                  updateCurrentTime(Math.floor(videoRef.current.currentTime));
-                                }
-                                showToast(`Captured timecode: ${currentTimecode}`);
-                                noteTextareaRef.current?.focus();
-                              }}
-                              className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold rounded-lg cursor-pointer transition-colors"
-                            >
-                              📍 Tag at {currentTimecode}
-                            </button>
+                            {/* Right: Timecode Display & Tag Button */}
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] uppercase font-bold text-[#86868B] hidden sm:inline">Current Timecode:</span>
+                                <div className="px-3 py-1.5 bg-white rounded-lg border border-[#E5E5E7] font-mono text-xs font-extrabold text-[#3B82F6] shadow-2xs flex items-center gap-1.5">
+                                  <span>⏱ {currentTimecode}</span>
+                                  <span className="text-[#86868B] font-medium text-[11px]">/ {formatTimecode(totalDuration)}</span>
+                                </div>
+                              </div>
+
+                              {/* Capture Current Time Button */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (videoEmbed?.type === 'youtube' && ytPlayerRef.current?.getCurrentTime) {
+                                    try {
+                                      const cur = ytPlayerRef.current.getCurrentTime();
+                                      if (typeof cur === 'number' && !isNaN(cur)) {
+                                        updateCurrentTime(Math.floor(cur));
+                                      }
+                                    } catch {}
+                                  } else if (videoRef.current) {
+                                    updateCurrentTime(Math.floor(videoRef.current.currentTime));
+                                  }
+                                  showToast(`Captured timecode: ${currentTimecode}`);
+                                  noteTextareaRef.current?.focus();
+                                }}
+                                className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-bold rounded-lg cursor-pointer transition-colors shadow-2xs flex items-center gap-1"
+                              >
+                                <span>📍 Tag at</span>
+                                <span className="font-mono">{currentTimecode}</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ) : (
@@ -1518,11 +1619,14 @@ export default function ClientReviewPage() {
                         ) : (
                           project.reviewNotes.map((rev) => {
                             const isNoteAddressed = rev.isAddressed || String(rev.status || '').toLowerCase().includes('addressed') || String(rev.status || '').toLowerCase().includes('resolved');
+                            const isNoteActive = typeof rev.timecodeSeconds === 'number' && Math.abs(currentSeconds - rev.timecodeSeconds) <= 2;
                             return (
                               <div
                                 key={rev.id}
-                                className={`p-4 rounded-xl border transition-colors space-y-2 ${
-                                  isNoteAddressed
+                                className={`p-4 rounded-xl border transition-all space-y-2 ${
+                                  isNoteActive
+                                    ? 'ring-2 ring-[#3B82F6] shadow-md bg-blue-50/70 border-[#3B82F6]/60'
+                                    : isNoteAddressed
                                     ? 'bg-emerald-50/40 border-emerald-200/90 hover:border-emerald-300'
                                     : 'bg-[#F5F5F7] border-[#E5E5E7] hover:border-[#3B82F6]/40'
                                 }`}
@@ -1538,6 +1642,11 @@ export default function ClientReviewPage() {
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
                                       Round {rev.round || (rev.isAddressed ? 1 : currentRound)}
                                     </span>
+                                    {isNoteActive && (
+                                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#3B82F6] text-white shadow-2xs animate-pulse">
+                                        ▶ PLAYING NOW
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                                 <p className="text-xs text-[#1D1D1F] leading-relaxed font-medium">

@@ -761,17 +761,16 @@ function LoginFormContent() {
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-tight">
                   Verify <span className="text-[#3B82F6]">Passcode</span>
                 </h1>
-                <p className="text-xs text-[#86868B] mt-1 leading-normal">
-                  Enter the 6-digit code sent to both your phone and email.
+                <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
+                  Enter the 6-digit code sent to{' '}
+                  <span className="inline-block text-[11px] font-medium text-[#1D1D1F] bg-[#F5F5F7] px-2 py-0.5 rounded border border-[#E5E5E7] mt-0.5">
+                    +91 {phoneInput}
+                  </span>{' '}
+                  and{' '}
+                  <span className="inline-block text-[11px] font-medium text-[#1D1D1F] bg-[#F5F5F7] px-2 py-0.5 rounded border border-[#E5E5E7] break-all mt-0.5">
+                    {emailInput}
+                  </span>
                 </p>
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  <span className="text-[10px] font-mono font-medium bg-[#F5F5F7] text-[#1D1D1F] px-2 py-0.5 rounded-md border border-[#E5E5E7]">
-                    📱 +91 {phoneInput}
-                  </span>
-                  <span className="text-[10px] font-medium bg-[#F5F5F7] text-[#1D1D1F] px-2 py-0.5 rounded-md border border-[#E5E5E7] truncate max-w-[180px]">
-                    ✉️ {emailInput}
-                  </span>
-                </div>
               </>
             )}
           </div>

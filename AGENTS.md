@@ -302,7 +302,14 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
 
 5. **Content-Security-Policy & Embed Source Permissibility:**
    - `next.config.ts` Content-Security-Policy `frame-src` explicitly permits `https://drive.google.com https://docs.google.com https://player.vimeo.com https://www.loom.com https://www.youtube.com https://www.youtube-nocookie.com https://api.razorpay.com 'self'`. This prevents browser iframe security blocks on Google Drive previews and cloud-hosted deliverables.
+   - `media-src` permits `https://*.googleusercontent.com https://*.google.com https://drive.google.com https://drive.usercontent.google.com` alongside BunnyCDN and Cloud Storage.
    - Video preview containers maintain an unobstructed viewing area without static watermark overlays (`DRAFT PREVIEW — ARTSY`).
+6. **Google Drive Native Stream & Bidirectional Timeline Synchronization Invariant (`/api/video/stream`):**
+   - Google Drive preview iframes (`/file/d/.../preview`) do not emit cross-origin `postMessage` timecode events. To guarantee seamless timeline scrubbing, frame seeking, and frame-accurate timestamp note tagging, the system features a dedicated streaming resolver: `GET /api/video/stream?id=[fileId]`.
+   - The resolver discovers the direct Google CDN video binary (parsing the `confirm` and `uuid` tokens for large video files >25MB) and returns a `307 Temporary Redirect` to `https://drive.usercontent.google.com/download?...`.
+   - The client portal (`/client/projects/[id]` and `/client/review`) embeds this stream inside a native HTML5 `<video ref={videoRef}>` tag with `playsInline` and hardware acceleration.
+   - **Full Timeline Interactivity:** Enables native `onTimeUpdate`, `onLoadedMetadata`, Spacebar play/pause, precision seeking (`-5s`, `-1s`, `+1s`, `+5s`), scrubber progress bar fill, speed scaling (`1x`, `1.25x`, `1.5x`), and instant note tagging at the exact paused frame.
+   - **Seamless Dual-Mode Fallback:** If the direct stream cannot be fetched (e.g. corporate SSO or restricted permissions), the player automatically falls back to the Google Drive preview iframe (`setUseDriveIframeFallback(true)`), with an active interval timer ensuring the timeline counter continues advancing during playback. A clean header toggle allows clients to switch between "Synced Player 🎬" and "Drive Embed ↗" at any time.
 
 ### 3.7 Client Revision Rounds (2 Included Rounds Standard & 50% Extra Revision Sizing)
 1. **Included Rounds Standard (Migration 018):**

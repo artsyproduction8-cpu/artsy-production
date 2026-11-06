@@ -405,11 +405,11 @@ export default function ClientDashboardPage() {
                         />
                       )}
                       {embed?.type === 'gdrive' && (
-                        <iframe
-                          src={embed.embedUrl}
-                          title={displayTitle}
-                          allowFullScreen
-                          className="w-full h-full border-0"
+                        <video
+                          src={embed.streamUrl || `/api/video/stream?id=${embed.videoId}`}
+                          controls
+                          playsInline
+                          className="w-full h-full object-contain bg-black"
                         />
                       )}
                       {embed?.type === 'vimeo' && (

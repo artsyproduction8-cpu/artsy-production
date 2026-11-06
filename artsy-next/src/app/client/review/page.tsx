@@ -120,6 +120,7 @@ export default function ClientReviewPage() {
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [useDriveIframeFallback, setUseDriveIframeFallback] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
   const [includedRounds, setIncludedRounds] = useState(2);
   const [totalAmountPaidPaise, setTotalAmountPaidPaise] = useState(100000);
@@ -312,8 +313,32 @@ export default function ClientReviewPage() {
         );
       } catch {}
       setIsPlaying(nextPlay);
+      return;
     }
+
+    // 5. Fallback timer toggle for opaque iframes (Drive Embed, Loom, Cloud)
+    setIsPlaying((prev) => !prev);
   };
+
+  // Timer simulation for non-native iframe playback when active
+  useEffect(() => {
+    if (!isPlaying) return;
+    // If native video element exists, handleNativeTimeUpdate handles it with hardware precision
+    if (videoRef.current) return;
+    // If YouTube API is active, its 250ms polling loop handles it
+    if (videoEmbed?.type === 'youtube') return;
+
+    const timer = setInterval(() => {
+      setCurrentSeconds((prev) => {
+        const maxDur = totalDuration > 0 ? totalDuration : 999999;
+        const next = Math.min(maxDur, prev + 1);
+        setCurrentTimecode(formatTimecode(next));
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isPlaying, totalDuration, videoEmbed?.type]);
 
   // Change playback speed across players
   const handleSpeedChange = (speed: number) => {
@@ -1210,12 +1235,24 @@ export default function ClientReviewPage() {
                           </span>
                           {videoEmbed && (
                             <span className="text-[10px] uppercase font-bold text-[#86868B] bg-[#F5F5F7] px-2 py-0.5 rounded">
-                              {videoEmbed.type}
+                              {videoEmbed.type === 'gdrive' ? (useDriveIframeFallback ? 'Drive Embed' : 'GDrive (Synced)') : videoEmbed.type}
                             </span>
+                          )}
+                          {videoEmbed?.type === 'gdrive' && (
+                            <button
+                              type="button"
+                              onClick={() => setUseDriveIframeFallback((prev) => !prev)}
+                              className="text-[10px] font-semibold text-[#3B82F6] hover:underline cursor-pointer ml-1"
+                              title="Toggle between synchronized player and Google Drive viewer"
+                            >
+                              {useDriveIframeFallback ? 'Switch to Synced Player 🎬' : 'Switch to Drive Embed ↗'}
+                            </button>
                           )}
                         </div>
                         <span className="text-xs text-[#86868B]">
-                          {videoEmbed?.type === 'direct' ? 'Space to play/pause • Click anywhere on timeline' : 'Click to play/pause'}
+                          {videoEmbed?.type === 'direct' || (videoEmbed?.type === 'gdrive' && !useDriveIframeFallback)
+                            ? 'Space to play/pause • Click anywhere on timeline'
+                            : 'Click to play/pause'}
                         </span>
                       </div>
 
@@ -1250,8 +1287,26 @@ export default function ClientReviewPage() {
                           />
                         )}
 
-                        {/* 3. Google Drive Video Preview Embed */}
-                        {videoEmbed?.type === 'gdrive' && (
+                        {/* 3. Google Drive Video Preview Player (Native Synced Stream with Iframe Fallback) */}
+                        {videoEmbed?.type === 'gdrive' && !useDriveIframeFallback && (
+                          <video
+                            ref={videoRef}
+                            src={videoEmbed.streamUrl || `/api/video/stream?id=${videoEmbed.videoId}`}
+                            controls
+                            playsInline
+                            className="w-full h-full object-contain bg-black"
+                            onTimeUpdate={handleNativeTimeUpdate}
+                            onLoadedMetadata={handleNativeLoadedMetadata}
+                            onPlay={() => setIsPlaying(true)}
+                            onPause={() => setIsPlaying(false)}
+                            onError={() => {
+                              console.warn('Native Google Drive stream unavailable, falling back to Drive embed iframe');
+                              setUseDriveIframeFallback(true);
+                            }}
+                          />
+                        )}
+
+                        {videoEmbed?.type === 'gdrive' && useDriveIframeFallback && (
                           <iframe
                             src={videoEmbed.embedUrl}
                             title={project.title}

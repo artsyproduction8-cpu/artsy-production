@@ -4,6 +4,7 @@ export interface VideoEmbedInfo {
   originalUrl: string;
   videoId?: string;
   initialSeconds?: number;
+  streamUrl?: string;
 }
 
 export function parseVideoEmbedUrl(rawUrl: string | null | undefined, origin?: string): VideoEmbedInfo | null {
@@ -44,6 +45,7 @@ export function parseVideoEmbedUrl(rawUrl: string | null | undefined, origin?: s
     return {
       type: 'gdrive',
       embedUrl: `https://drive.google.com/file/d/${videoId}/preview`,
+      streamUrl: `/api/video/stream?id=${videoId}`,
       originalUrl: raw,
       videoId,
     };

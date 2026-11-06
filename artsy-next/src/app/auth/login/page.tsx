@@ -761,16 +761,27 @@ function LoginFormContent() {
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-tight">
                   Verify <span className="text-[#3B82F6]">Passcode</span>
                 </h1>
-                <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                  Enter the 6-digit code sent to{' '}
-                  <span className="inline-block text-[11px] font-medium text-[#1D1D1F] bg-[#F5F5F7] px-2 py-0.5 rounded border border-[#E5E5E7] mt-0.5">
-                    +91 {phoneInput}
-                  </span>{' '}
-                  and{' '}
-                  <span className="inline-block text-[11px] font-medium text-[#1D1D1F] bg-[#F5F5F7] px-2 py-0.5 rounded border border-[#E5E5E7] break-all mt-0.5">
-                    {emailInput}
-                  </span>
+                <p className="text-xs text-[#86868B] mt-1 leading-normal">
+                  Enter the 6-digit code sent to your credentials:
                 </p>
+
+                {/* Clean Credential Bar with direct Edit trigger */}
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#F8F9FA] border border-[#E5E5E7] mt-2">
+                  <div className="flex flex-col min-w-0 pr-2 text-left">
+                    <span className="text-xs font-semibold text-[#1D1D1F] truncate">+91 {phoneInput}</span>
+                    <span className="text-[11px] text-[#6E6E73] truncate">{emailInput}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep('credentials');
+                      setError(null);
+                    }}
+                    className="text-xs font-medium text-[#3B82F6] hover:text-[#2563EB] hover:underline shrink-0 cursor-pointer px-1 py-0.5"
+                  >
+                    Edit
+                  </button>
+                </div>
               </>
             )}
           </div>

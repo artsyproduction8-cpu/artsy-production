@@ -340,6 +340,14 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
 6. **Automatic 2-Day (+48h) Delivery SLA Extension on Extra Revision Passes:**
    - When a client unlocks or requests an additional revision round (Round 3, Round 4, etc.), the project delivery deadline (`projects.client_deadline`) is automatically extended by at least **2 days (+48 hours)**.
    - `orders.requirements_snapshot.extended_delivery_days` tracks cumulative extension days (e.g. +2d, +4d), updating both client turnaround labels (`${turnaroundLabel} (+2d Extended)`) and creator delivery SLAs in the workroom so editors are allocated adequate assembly and grading time without SLA penalties.
+7. **Creative Review Suite Simple English & Concise Copy Standard (November 2026):**
+   - User-facing copy across `/client/projects/[id]` and `/client/review` strictly adheres to simple, clear English with minimal words, eliminating robotic, bulky paragraphs and technical jargon:
+     - Metric cards use `Delivery Time` and `Revisions` with clear subtitles (`Included with project` / `Last included round`).
+     - 4-step progress stepper uses concise labels: `1. Footage` (`Received ✓`), `2. Editing` (`Draft Ready ✓`), `3. Review` (`In Review`), and `4. Final Master` (`Unlocks on approval 🔒`).
+     - Mint action banner uses clear titles (`Draft vX.0 Ready for Review`) and direct copy: *"Watch your video below. Approve if you love it, or leave notes on the timeline to request changes."*
+     - CTAs are concise and punchy: `✓ Approve Video`, `Request Changes →`, and `Open Link ↗`.
+     - Player header and controls use clean labels: `Video Preview`, `Tag Time`, and clean category options (`Color & Grading`, `Audio & Music`, `Pacing & Timing`, `Titles & Text`, `Cut & B-Roll`, `Effects & VFX`, `Framing & Lighting`, `General Note`) without clunky parenthetical explanations.
+     - Visual structure, cards, colors, and layout remain preserved to maintain an elite studio aesthetic.
 
 ### 3.8 Unified Client Files & Footage Aggregator Invariant (`/client/files` & `/api/client/files`)
 To ensure clients never struggle to find project assets or raw footage links, the platform provides a centralized Files repository:

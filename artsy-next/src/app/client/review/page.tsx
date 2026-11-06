@@ -1294,14 +1294,18 @@ export default function ClientReviewPage() {
                             src={videoEmbed.streamUrl || `/api/video/stream?id=${videoEmbed.videoId}`}
                             controls
                             playsInline
+                            preload="metadata"
                             className="w-full h-full object-contain bg-black"
                             onTimeUpdate={handleNativeTimeUpdate}
                             onLoadedMetadata={handleNativeLoadedMetadata}
                             onPlay={() => setIsPlaying(true)}
                             onPause={() => setIsPlaying(false)}
-                            onError={() => {
-                              console.warn('Native Google Drive stream unavailable, falling back to Drive embed iframe');
-                              setUseDriveIframeFallback(true);
+                            onError={(e) => {
+                              const err = e.currentTarget.error;
+                              if (err && err.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+                                console.warn('[Native Video Stream Unsupported, falling back to Drive Embed]:', err);
+                                setUseDriveIframeFallback(true);
+                              }
                             }}
                           />
                         )}

@@ -967,43 +967,43 @@ export default function ClientReviewPage() {
             <div className="flex flex-col w-full max-w-full overflow-x-hidden">
               
               {/* ORDER BANNER */}
-              <section className="p-4 sm:p-6 lg:p-8 pb-0 max-w-[1600px] mx-auto w-full">
-                <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-                  <div className="flex flex-col xl:flex-row xl:items-stretch justify-between gap-6">
+              <section className="p-4 sm:p-5 lg:p-6 pb-0 max-w-[1400px] mx-auto w-full">
+                <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E7]/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+                  <div className="flex flex-col xl:flex-row xl:items-stretch justify-between gap-4">
                     {/* Title & Details */}
-                    <div className="space-y-3 flex-1">
+                    <div className="space-y-1.5 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-[#3B82F6] bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-100">
+                        <span className="font-mono text-[11px] font-bold text-[#3B82F6] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
                           {project.orderNumber}
                         </span>
                         <span className="text-xs text-[#86868B]">•</span>
-                        <span className="text-xs font-semibold text-[#3B82F6]">
+                        <span className="text-[11px] font-semibold text-[#3B82F6]">
                           Draft v{currentRound}.0 • Round {currentRound} of {includedRounds}
                         </span>
                         <span className="text-xs text-[#86868B]">•</span>
-                        <span className="text-xs text-[#86868B]">
+                        <span className="text-[11px] text-[#86868B]">
                           Editor: <strong className="text-[#1D1D1F]">{project.creatorName ? formatPublicCreatorName(project.creatorName) : 'Senior Lead Editor'}</strong>
                         </span>
                       </div>
-                      <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-[-0.03em] leading-tight">
+                      <h1 className="text-xl sm:text-2xl font-bold text-[#1D1D1F] tracking-tight leading-tight">
                         {project.title}
                       </h1>
                     </div>
 
                     {/* Quick Metrics */}
-                    <div className="flex items-stretch gap-3 self-start xl:self-auto">
-                      <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] min-w-[130px]">
+                    <div className="flex items-stretch gap-2.5 self-start xl:self-auto">
+                      <div className="bg-[#F5F5F7] p-3 rounded-xl border border-[#E5E5E7] min-w-[115px]">
                         <div className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">Delivery Time</div>
-                        <div className="text-base font-extrabold text-[#1D1D1F] mt-1">{project.turnaround}</div>
+                        <div className="text-sm font-bold text-[#1D1D1F] mt-0.5">{project.turnaround}</div>
                         <div className="text-[10px] text-[#86868B] mt-0.5">
                           {project.extendedDeliveryDays && project.extendedDeliveryDays > 0
                             ? `+${project.extendedDeliveryDays}d for extra rounds`
                             : 'Estimated delivery'}
                         </div>
                       </div>
-                      <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] min-w-[130px]">
+                      <div className="bg-[#F5F5F7] p-3 rounded-xl border border-[#E5E5E7] min-w-[115px]">
                         <div className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">Revisions</div>
-                        <div className={`text-base font-extrabold mt-1 ${isRevisionLocked ? 'text-amber-600' : 'text-[#3B82F6]'}`}>
+                        <div className={`text-sm font-bold mt-0.5 ${isRevisionLocked ? 'text-amber-600' : 'text-[#3B82F6]'}`}>
                           Round {currentRound} of {includedRounds}
                         </div>
                         <div className="text-[10px] text-[#86868B] mt-0.5">
@@ -1018,8 +1018,8 @@ export default function ClientReviewPage() {
                   </div>
 
                   {/* PROGRESS STEPPER */}
-                  <div className="mt-6 pt-6 border-t border-[#F5F5F7] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div className="p-3.5 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex items-center justify-between">
+                  <div className="mt-4 pt-4 border-t border-[#F5F5F7] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    <div className="p-2.5 sm:p-3 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex items-center justify-between">
                       <div>
                         <div className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">1. Footage</div>
                         <div className="text-xs font-semibold text-[#1D1D1F]">Received ✓</div>
@@ -1027,7 +1027,7 @@ export default function ClientReviewPage() {
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                     </div>
 
-                    <div className="p-3.5 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex items-center justify-between">
+                    <div className="p-2.5 sm:p-3 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex items-center justify-between">
                       <div>
                         <div className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">2. Editing</div>
                         <div className="text-xs font-semibold text-[#1D1D1F]">
@@ -1037,7 +1037,7 @@ export default function ClientReviewPage() {
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                     </div>
 
-                    <div className={`p-3.5 rounded-xl border flex items-center justify-between ${
+                    <div className={`p-2.5 sm:p-3 rounded-xl border flex items-center justify-between ${
                       videoEmbed && !isApproved ? 'bg-[#3B82F6]/10 border-[#3B82F6]/30' : 'bg-[#F5F5F7] border-[#E5E5E7]'
                     }`}>
                       <div>
@@ -1051,7 +1051,7 @@ export default function ClientReviewPage() {
                       <span className={`w-2 h-2 rounded-full ${isApproved ? 'bg-emerald-500' : videoEmbed ? 'bg-[#3B82F6] animate-ping' : 'bg-gray-400'}`}></span>
                     </div>
 
-                    <div className={`p-3.5 rounded-xl border flex items-center justify-between ${
+                    <div className={`p-2.5 sm:p-3 rounded-xl border flex items-center justify-between ${
                       isApproved ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-[#F5F5F7] border-[#E5E5E7] text-[#86868B]'
                     }`}>
                       <div>
@@ -1063,7 +1063,7 @@ export default function ClientReviewPage() {
                   </div>
 
                   {/* COMPACT REVISION STEPPER */}
-                  <div className="mt-4 pt-4 border-t border-[#E5E5E7] flex items-center justify-end text-xs">
+                  <div className="mt-3 pt-3 border-t border-[#E5E5E7] flex items-center justify-end text-xs">
                     {/* Stepper Steps */}
                     <div className="flex items-center gap-2 text-[11px] font-medium text-[#86868B]">
                       <span className={`flex items-center gap-1 ${currentRound >= 1 ? 'text-[#1D1D1F] font-semibold' : ''}`}>
@@ -1111,11 +1111,11 @@ export default function ClientReviewPage() {
               </section>
 
               {/* MAIN WORKSPACE */}
-              <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-[1600px] mx-auto w-full">
+              <div className="p-4 sm:p-5 lg:p-6 space-y-5 max-w-[1400px] mx-auto w-full">
                 
                 {/* TOP REVIEW ACTION BAR */}
                 {videoEmbed && (
-                  <div className={`border rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs ${
+                  <div className={`border rounded-xl p-3.5 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs ${
                     isApproved
                       ? 'bg-emerald-50 border-emerald-200'
                       : isRevisionRequested
@@ -1124,10 +1124,10 @@ export default function ClientReviewPage() {
                       ? 'bg-amber-50 border-amber-300'
                       : 'bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border-emerald-200/80'
                   }`}>
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-base">🎬</span>
-                        <h3 className="text-sm font-extrabold text-[#1D1D1F]">
+                        <span className="text-sm">🎬</span>
+                        <h3 className="text-xs sm:text-sm font-extrabold text-[#1D1D1F]">
                           {isApproved
                             ? 'Video Cut Approved'
                             : isRevisionRequested
@@ -1154,7 +1154,7 @@ export default function ClientReviewPage() {
                             : `ROUND ${currentRound}`}
                         </span>
                       </div>
-                      <p className="text-xs text-[#86868B]">
+                      <p className="text-[11px] sm:text-xs text-[#86868B]">
                         {isApproved
                           ? 'Your video is approved! You can download your final unwatermarked files below.'
                           : isRevisionRequested
@@ -1164,8 +1164,8 @@ export default function ClientReviewPage() {
                           : 'Watch your video below. Approve if you love it, or leave notes on the timeline to request changes.'}
                       </p>
                       {!isApproved && addressedNotesCount > 0 && (
-                        <div className="pt-1 flex items-center gap-1.5">
-                          <span className="text-[11px] font-bold text-emerald-800 bg-white/90 border border-emerald-300 px-2.5 py-0.5 rounded-md shadow-2xs inline-flex items-center gap-1">
+                        <div className="pt-0.5 flex items-center gap-1.5">
+                          <span className="text-[10px] sm:text-[11px] font-bold text-emerald-800 bg-white/90 border border-emerald-300 px-2 py-0.5 rounded-md shadow-2xs inline-flex items-center gap-1">
                             <span className="text-emerald-600 font-extrabold">✓</span>
                             <span>{addressedNotesCount} {addressedNotesCount === 1 ? 'change' : 'changes'} addressed in this cut</span>
                           </span>
@@ -1173,13 +1173,13 @@ export default function ClientReviewPage() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2.5 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       {videoEmbed.originalUrl && (
                         <a
                           href={videoEmbed.originalUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-3.5 py-2.5 bg-white hover:bg-slate-50 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-xl transition-all inline-flex items-center gap-1.5 shadow-2xs"
+                          className="px-3 py-1.5 bg-white hover:bg-slate-50 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-lg transition-all inline-flex items-center gap-1 shadow-2xs"
                         >
                           <span>Open Link</span>
                           <span>↗</span>
@@ -1191,7 +1191,7 @@ export default function ClientReviewPage() {
                           <button
                             type="button"
                             onClick={handleRequestRevision}
-                            className="px-4 py-2.5 bg-white hover:bg-slate-50 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-2xs"
+                            className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-2xs"
                           >
                             Request Changes →
                           </button>
@@ -1199,19 +1199,19 @@ export default function ClientReviewPage() {
                             type="button"
                             onClick={handleApproveCut}
                             disabled={isApproving}
-                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
+                            className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1 shadow-sm cursor-pointer disabled:opacity-50"
                           >
                             <span>{isApproving ? 'Approving...' : '✓ Approve Video'}</span>
                           </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <div className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs">
+                          <div className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow-xs">
                             <span>✓ Video Approved</span>
                           </div>
                           <Link
                             href="/client/masters"
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-xs"
+                            className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 transition-all shadow-xs"
                           >
                             <span>Download Final Files →</span>
                           </Link>
@@ -1221,13 +1221,13 @@ export default function ClientReviewPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                   
                   {/* LEFT 8 COLS: UNIVERSAL VIDEO PLAYER & TIMELINE */}
-                  <div className="lg:col-span-8 min-w-0 bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between">
+                  <div className="lg:col-span-8 min-w-0 bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E7]/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between">
                     <div>
                       {/* Player Header Bar */}
-                      <div className="flex flex-wrap items-center justify-between pb-3 mb-4 border-b border-[#F5F5F7] gap-2">
+                      <div className="flex flex-wrap items-center justify-between pb-2 mb-3 border-b border-[#F5F5F7] gap-2">
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${videoEmbed ? 'bg-emerald-500' : 'bg-amber-400'}`}></span>
                           <span className="text-xs font-bold text-[#1D1D1F]">
@@ -1249,7 +1249,7 @@ export default function ClientReviewPage() {
                             </button>
                           )}
                         </div>
-                        <span className="text-xs text-[#86868B]">
+                        <span className="text-[11px] text-[#86868B]">
                           Press Space to play/pause
                         </span>
                       </div>
@@ -1395,10 +1395,10 @@ export default function ClientReviewPage() {
 
                       {/* TIMELINE & SCRUBBER MODULE */}
                       {videoEmbed ? (
-                        <div className="mt-5 bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3.5">
+                        <div className="mt-3.5 bg-[#F5F5F7] rounded-xl p-3 border border-[#E5E5E7] space-y-2.5">
                           {/* Interactive Playbar with Note Markers */}
                           <div
-                            className="relative w-full h-4 bg-[#E5E5E7] hover:bg-[#DEDEE0] rounded-full cursor-pointer group transition-all"
+                            className="relative w-full h-2.5 hover:h-3 bg-[#E5E5E7] hover:bg-[#DEDEE0] rounded-full cursor-pointer group transition-all"
                             onClick={(e) => {
                               const rect = e.currentTarget.getBoundingClientRect();
                               const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
@@ -1429,7 +1429,7 @@ export default function ClientReviewPage() {
                                     handleSeek(rev.timecodeSeconds || 0);
                                   }}
                                   style={{ left: `${markerPct}%` }}
-                                  className={`absolute top-1/2 -translate-y-1/2 -ml-[4px] w-2.5 h-2.5 rounded-full cursor-pointer z-10 transition-transform hover:scale-175 shadow-xs border-2 border-white ${
+                                  className={`absolute top-1/2 -translate-y-1/2 -ml-[3.5px] w-2 h-2 rounded-full cursor-pointer z-10 transition-transform hover:scale-175 shadow-xs border-2 border-white ${
                                     isAddressed ? 'bg-emerald-500' : 'bg-amber-400'
                                   }`}
                                   title={`⏱ ${rev.timecode} [${rev.tag}]: "${rev.text}" (Click to jump)`}
@@ -1439,13 +1439,13 @@ export default function ClientReviewPage() {
                           </div>
 
                           {/* Controller Row */}
-                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
                             {/* Left: Play/Pause, Rewind/Forward, Speed */}
                             <div className="flex items-center gap-1.5">
                               <button
                                 type="button"
                                 onClick={handleTogglePlayPause}
-                                className="px-2.5 py-1 bg-[#1D1D1F] hover:bg-black text-white rounded-md text-xs font-semibold cursor-pointer transition-colors"
+                                className="px-2 py-0.5 bg-[#1D1D1F] hover:bg-black text-white rounded-md text-xs font-semibold cursor-pointer transition-colors"
                                 title="Play / Pause video (Spacebar)"
                               >
                                 {isPlaying ? '⏸ Pause' : '▶ Play'}
@@ -1478,7 +1478,7 @@ export default function ClientReviewPage() {
                                   const nextSpeed = playbackSpeed === 1 ? 1.25 : playbackSpeed === 1.25 ? 1.5 : 1;
                                   handleSpeedChange(nextSpeed);
                                 }}
-                                className="px-2 py-1 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-medium text-[#1D1D1F] rounded-md cursor-pointer"
+                                className="px-2 py-0.5 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-medium text-[#1D1D1F] rounded-md cursor-pointer"
                                 title="Click to cycle playback speed (1x / 1.25x / 1.5x)"
                               >
                                 {playbackSpeed}x
@@ -1507,7 +1507,7 @@ export default function ClientReviewPage() {
                                   showToast(`Captured time: ${currentTimecode}`);
                                   noteTextareaRef.current?.focus();
                                 }}
-                                className="px-2.5 py-1 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-medium text-[#1D1D1F] rounded-md cursor-pointer transition-colors"
+                                className="px-2.5 py-0.5 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-medium text-[#1D1D1F] rounded-md cursor-pointer transition-colors"
                               >
                                 Tag Time
                               </button>
@@ -1515,7 +1515,7 @@ export default function ClientReviewPage() {
                           </div>
                         </div>
                       ) : (
-                        <div className="mt-5 p-4 bg-[#F5F5F7] rounded-xl border border-dashed border-[#E5E5E7] text-center space-y-1">
+                        <div className="mt-3.5 p-3.5 bg-[#F5F5F7] rounded-xl border border-dashed border-[#E5E5E7] text-center space-y-1">
                           <div className="text-xs font-bold text-[#1D1D1F]">
                             Interactive Timeline &amp; Notes
                           </div>
@@ -1527,8 +1527,8 @@ export default function ClientReviewPage() {
                     </div>
 
                     {/* Hotkeys Bar */}
-                    <div className="mt-5 pt-3 border-t border-[#F5F5F7] flex flex-wrap items-center justify-between gap-2 text-xs text-[#86868B]">
-                      <div className="flex items-center gap-2">
+                    <div className="mt-3 pt-2 border-t border-[#F5F5F7] flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#86868B]">
+                      <div className="flex items-center gap-1.5">
                         <span className="font-semibold text-[#1D1D1F]">Tip:</span>
                         <span>Pause anytime to leave a note at that exact second.</span>
                       </div>
@@ -1539,11 +1539,11 @@ export default function ClientReviewPage() {
                   </div>
 
                   {/* RIGHT 4 COLS: NOTES & FEEDBACK */}
-                  <div className="lg:col-span-4 min-w-0 bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col justify-between space-y-6">
+                  <div className="lg:col-span-4 min-w-0 bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E7]/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between space-y-3.5">
                     <div>
-                      <div className="flex items-center justify-between pb-3 border-b border-[#F5F5F7]">
+                      <div className="flex items-center justify-between pb-2 border-b border-[#F5F5F7]">
                         <div>
-                          <h2 className="text-base font-bold text-[#1D1D1F]">Notes &amp; Feedback</h2>
+                          <h2 className="text-sm sm:text-base font-bold text-[#1D1D1F]">Notes &amp; Feedback</h2>
                           <p className="text-[11px] text-[#86868B]">
                             {addressedNotesCount > 0
                               ? `${addressedNotesCount} of ${project.reviewNotes.length} notes addressed in this cut`
@@ -1561,9 +1561,9 @@ export default function ClientReviewPage() {
                       </div>
 
                       {/* REVISION LIST */}
-                      <div className="mt-4 space-y-3 overflow-y-auto max-h-[380px] pr-1">
+                      <div className="mt-2.5 space-y-2 overflow-y-auto max-h-[300px] sm:max-h-[340px] pr-1">
                         {project.reviewNotes.length === 0 ? (
-                          <div className="text-center py-8 text-xs text-[#86868B] bg-[#F5F5F7] rounded-xl border border-dashed border-[#E5E5E7] p-4">
+                          <div className="text-center py-6 text-xs text-[#86868B] bg-[#F5F5F7] rounded-xl border border-dashed border-[#E5E5E7] p-3">
                             No notes yet. Pause the video anytime to leave a timestamped note.
                           </div>
                         ) : (
@@ -1573,7 +1573,7 @@ export default function ClientReviewPage() {
                             return (
                               <div
                                 key={rev.id}
-                                className={`p-4 rounded-xl border transition-all space-y-2 ${
+                                className={`p-2.5 sm:p-3 rounded-lg border transition-all space-y-1 ${
                                   isNoteActive
                                     ? 'ring-2 ring-[#3B82F6] shadow-md bg-blue-50/70 border-[#3B82F6]/60'
                                     : isNoteAddressed
@@ -1601,19 +1601,19 @@ export default function ClientReviewPage() {
                                     </span>
                                   </div>
                                 </div>
-                                <p className="text-xs text-[#1D1D1F] leading-relaxed font-medium">
+                                <p className="text-xs text-[#1D1D1F] leading-snug font-medium">
                                   &ldquo;{rev.text}&rdquo;
                                 </p>
-                                <div className="pt-1.5 flex items-center justify-between text-xs">
+                                <div className="pt-1 flex items-center justify-between text-xs">
                                   {isNoteAddressed ? (
-                                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full shadow-2xs">
-                                      <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full shadow-2xs">
+                                      <svg className="w-2.5 h-2.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                       </svg>
                                       <span>✓ Done in this cut</span>
                                     </span>
                                   ) : (
-                                    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
                                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
                                       <span>Queued for editor</span>
                                     </span>
@@ -1637,10 +1637,10 @@ export default function ClientReviewPage() {
 
                     {/* NEW ANNOTATION FORM OR LOCKED REVISION SLATE */}
                     {isRevisionLocked ? (
-                      <div className="bg-[#1D1D1F] rounded-2xl p-5 border border-white/10 text-white space-y-4 shadow-xl relative overflow-hidden animate-fade-in">
-                        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                      <div className="bg-[#1D1D1F] rounded-2xl p-4 border border-white/10 text-white space-y-3 shadow-xl relative overflow-hidden animate-fade-in">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
                           <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
+                            <span className="w-5 h-5 rounded-md bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
                               🔒
                             </span>
                             <span className="text-xs font-bold text-white tracking-wide">
@@ -1657,13 +1657,13 @@ export default function ClientReviewPage() {
                         </p>
 
                         {/* Fee breakdown box */}
-                        <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
+                        <div className="p-2.5 bg-white/5 rounded-lg border border-white/10 flex items-center justify-between">
                           <div>
                             <div className="text-[10px] uppercase font-bold text-white/50">Extra Round Fee (50%)</div>
-                            <div className="text-xs text-white/80 mt-0.5">50% of ₹{(totalAmountPaidPaise / 100).toLocaleString('en-IN')} order total</div>
+                            <div className="text-[11px] text-white/80 mt-0.5">50% of ₹{(totalAmountPaidPaise / 100).toLocaleString('en-IN')} order total</div>
                           </div>
                           <div className="text-right">
-                            <div className="text-base font-extrabold text-amber-400 font-mono">
+                            <div className="text-sm font-extrabold text-amber-400 font-mono">
                               ₹{(extraRevisionFeePaise / 100).toLocaleString('en-IN')}
                             </div>
                             <div className="text-[9px] text-white/50">GST inclusive</div>
@@ -1674,7 +1674,7 @@ export default function ClientReviewPage() {
                           type="button"
                           onClick={handleUnlockExtraRevision}
                           disabled={isUnlockingRound}
-                          className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 text-white text-xs font-extrabold rounded-xl transition-all cursor-pointer shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 text-center"
+                          className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5 text-center"
                         >
                           <span>
                             {isUnlockingRound
@@ -1686,7 +1686,7 @@ export default function ClientReviewPage() {
                     ) : (
                       <form
                         onSubmit={handleAddAnnotation}
-                        className="bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3"
+                        className="bg-[#F5F5F7] rounded-xl p-3 border border-[#E5E5E7] space-y-2"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-semibold text-[#1D1D1F]">Add a Note</span>
@@ -1697,7 +1697,7 @@ export default function ClientReviewPage() {
 
                         {/* Category Dropdown */}
                         <div>
-                          <label htmlFor="note-category-select" className="block text-[11px] font-semibold text-[#86868B] mb-1">
+                          <label htmlFor="note-category-select" className="block text-[10px] font-semibold text-[#86868B] mb-0.5">
                             Category
                           </label>
                           <div className="relative">
@@ -1705,7 +1705,7 @@ export default function ClientReviewPage() {
                               id="note-category-select"
                               value={activeCategory}
                               onChange={(e) => setActiveCategory(e.target.value)}
-                              className="w-full bg-white border border-[#E5E5E7] text-[#1D1D1F] rounded-lg pl-3 pr-8 py-2 text-xs font-semibold focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] outline-none cursor-pointer appearance-none transition-colors shadow-2xs"
+                              className="w-full bg-white border border-[#E5E5E7] text-[#1D1D1F] rounded-lg pl-2.5 pr-7 py-1.5 text-xs font-semibold focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] outline-none cursor-pointer appearance-none transition-colors shadow-2xs"
                             >
                               <option value="COLOR">🎨 Color &amp; Grading</option>
                               <option value="AUDIO">🔊 Audio &amp; Music</option>
@@ -1716,8 +1716,8 @@ export default function ClientReviewPage() {
                               <option value="FRAMING">💡 Framing &amp; Lighting</option>
                               <option value="GENERAL">💬 General Note</option>
                             </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-[#86868B]">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-[#86868B]">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                               </svg>
                             </div>
@@ -1725,20 +1725,20 @@ export default function ClientReviewPage() {
                         </div>
 
                         {/* Feedback Input */}
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           <textarea
                             ref={noteTextareaRef}
                             required
-                            rows={3}
+                            rows={2}
                             value={noteText}
                             onChange={(e) => setNoteText(e.target.value)}
                             placeholder={getCategoryPlaceholder(activeCategory)}
-                            className="w-full bg-white rounded-lg border border-[#E5E5E7] p-2.5 text-xs text-[#1D1D1F] focus:border-[#3B82F6] outline-none resize-none"
+                            className="w-full bg-white rounded-lg border border-[#E5E5E7] p-2 text-xs text-[#1D1D1F] focus:border-[#3B82F6] outline-none resize-none"
                           ></textarea>
                           <button
                             type="submit"
                             disabled={isSubmittingNote}
-                            className="w-full py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-sm"
+                            className="w-full py-2 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-xs"
                           >
                             {isSubmittingNote ? 'Saving...' : `Save Note at ${currentTimecode}`}
                           </button>
@@ -1749,28 +1749,28 @@ export default function ClientReviewPage() {
                 </div>
 
                 {/* BOTTOM SUITE: ASSET & DELIVERABLES */}
-                <section className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-[#F5F5F7] gap-3">
+                <section className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E7]/60 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between pb-3 border-b border-[#F5F5F7] gap-2">
                     <div>
-                      <h3 className="text-lg font-bold text-[#1D1D1F]">
+                      <h3 className="text-base sm:text-lg font-bold text-[#1D1D1F]">
                         Project Files &amp; Deliverables
                       </h3>
                       <p className="text-xs text-[#86868B] mt-0.5">
                         Download draft files or view project assets.
                       </p>
                     </div>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full">
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                       Storage Active
                     </span>
                   </div>
 
                   {/* 4-Tile Bento Asset Matrix */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     {/* Asset 1: Master Video Cut */}
-                    <div className="bg-[#F5F5F7] p-5 rounded-xl border border-[#E5E5E7] flex flex-col justify-between">
+                    <div className="bg-[#F5F5F7] p-3.5 sm:p-4 rounded-xl border border-[#E5E5E7] flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-1.5">
                           <span className="text-[10px] font-bold px-2 py-0.5 bg-[#3B82F6]/10 text-[#3B82F6] rounded-md">
                             MASTER CUT
                           </span>
@@ -1778,16 +1778,16 @@ export default function ClientReviewPage() {
                             {isApproved ? 'FINAL 4K' : 'DRAFT'}
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-[#1D1D1F] leading-snug">
+                        <h4 className="text-xs sm:text-sm font-bold text-[#1D1D1F] leading-snug">
                           {project.title}
                         </h4>
-                        <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
+                        <p className="text-[11px] text-[#86868B] mt-1 leading-relaxed">
                           {project.deliverableUrl
                             ? 'High-resolution cut uploaded for your review.'
                             : 'Your editor is preparing this video cut.'}
                         </p>
                       </div>
-                      <div className="mt-4 pt-3 border-t border-[#E5E5E7] flex items-center justify-between">
+                      <div className="mt-3 pt-2.5 border-t border-[#E5E5E7] flex items-center justify-between">
                         <span className="text-xs font-semibold text-emerald-600">
                           {project.deliverableUrl ? 'Ready' : 'Pending'}
                         </span>
@@ -1807,22 +1807,22 @@ export default function ClientReviewPage() {
                     </div>
 
                     {/* Asset 2: Raw Footage */}
-                    <div className="bg-[#F5F5F7] p-5 rounded-xl border border-[#E5E5E7] flex flex-col justify-between">
+                    <div className="bg-[#F5F5F7] p-3.5 sm:p-4 rounded-xl border border-[#E5E5E7] flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-1.5">
                           <span className="text-[10px] font-bold px-2 py-0.5 bg-[#1D1D1F] text-white rounded-md">
                             RAW FOOTAGE
                           </span>
                           <span className="text-[11px] text-[#86868B] font-mono">VAULT</span>
                         </div>
-                        <h4 className="text-sm font-bold text-[#1D1D1F] leading-snug">
+                        <h4 className="text-xs sm:text-sm font-bold text-[#1D1D1F] leading-snug">
                           Raw Camera Files
                         </h4>
-                        <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
+                        <p className="text-[11px] text-[#86868B] mt-1 leading-relaxed">
                           Original footage uploaded during project booking.
                         </p>
                       </div>
-                      <div className="mt-4 pt-3 border-t border-[#E5E5E7] flex items-center justify-between">
+                      <div className="mt-3 pt-2.5 border-t border-[#E5E5E7] flex items-center justify-between">
                         <span className="text-xs font-semibold text-[#86868B]">Cloud Storage</span>
                         {project.rawFootageUrl ? (
                           <a
@@ -1840,44 +1840,44 @@ export default function ClientReviewPage() {
                     </div>
 
                     {/* Asset 3: Audio & Music */}
-                    <div className="bg-[#F5F5F7] p-5 rounded-xl border border-[#E5E5E7] flex flex-col justify-between">
+                    <div className="bg-[#F5F5F7] p-3.5 sm:p-4 rounded-xl border border-[#E5E5E7] flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-1.5">
                           <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-50 text-amber-700 rounded-md border border-amber-200">
                             AUDIO
                           </span>
                           <span className="text-[11px] text-[#86868B] font-mono">SYNCED</span>
                         </div>
-                        <h4 className="text-sm font-bold text-[#1D1D1F] leading-snug">
+                        <h4 className="text-xs sm:text-sm font-bold text-[#1D1D1F] leading-snug">
                           Music &amp; Audio Mix
                         </h4>
-                        <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
+                        <p className="text-[11px] text-[#86868B] mt-1 leading-relaxed">
                           Clean dialogue, background music, and sound design.
                         </p>
                       </div>
-                      <div className="mt-4 pt-3 border-t border-[#E5E5E7] flex items-center justify-between">
+                      <div className="mt-3 pt-2.5 border-t border-[#E5E5E7] flex items-center justify-between">
                         <span className="text-xs font-semibold text-emerald-600">Active</span>
                         <span className="text-xs text-[#86868B]">Conformed</span>
                       </div>
                     </div>
 
                     {/* Asset 4: Color Look */}
-                    <div className="bg-[#F5F5F7] p-5 rounded-xl border border-[#E5E5E7] flex flex-col justify-between">
+                    <div className="bg-[#F5F5F7] p-3.5 sm:p-4 rounded-xl border border-[#E5E5E7] flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-1.5">
                           <span className="text-[10px] font-bold px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md border border-purple-200">
                             COLOR
                           </span>
                           <span className="text-[11px] text-[#86868B] font-mono">REC.709</span>
                         </div>
-                        <h4 className="text-sm font-bold text-[#1D1D1F] leading-snug">
+                        <h4 className="text-xs sm:text-sm font-bold text-[#1D1D1F] leading-snug">
                           Color Grade
                         </h4>
-                        <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
+                        <p className="text-[11px] text-[#86868B] mt-1 leading-relaxed">
                           Natural skin tones and cinematic finish.
                         </p>
                       </div>
-                      <div className="mt-4 pt-3 border-t border-[#E5E5E7] flex items-center justify-between">
+                      <div className="mt-3 pt-2.5 border-t border-[#E5E5E7] flex items-center justify-between">
                         <span className="text-xs font-semibold text-[#86868B]">Studio Grade</span>
                         <span className="text-xs text-emerald-600 font-semibold">Conformed</span>
                       </div>
@@ -1885,14 +1885,14 @@ export default function ClientReviewPage() {
                   </div>
 
                   {/* CALL-TO-ACTION APPROVAL GATE */}
-                  <div className="bg-[#1D1D1F] text-white rounded-2xl p-6 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-6">
-                    <div className="space-y-1.5 text-left">
+                  <div className="bg-[#1D1D1F] text-white rounded-xl p-4 sm:p-5 flex flex-col lg:flex-row items-center justify-between gap-4">
+                    <div className="space-y-1 text-left">
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-[#3B82F6] uppercase tracking-wider">
+                        <span className="text-[10px] font-bold text-[#3B82F6] uppercase tracking-wider">
                           FINAL APPROVAL
                         </span>
                       </div>
-                      <h3 className="text-xl font-bold text-white tracking-tight">
+                      <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
                         {isApproved ? 'Video Approved' : 'Ready to approve this video?'}
                       </h3>
                       <p className="text-xs text-[#86868B] max-w-2xl leading-relaxed">
@@ -1902,14 +1902,14 @@ export default function ClientReviewPage() {
                       </p>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto shrink-0">
                       {!isApproved ? (
                         <>
                           <button
                             type="button"
                             onClick={isRevisionLocked ? handleUnlockExtraRevision : handleRequestRevision}
                             disabled={isUnlockingRound}
-                            className={`text-xs font-semibold px-4 py-3 rounded-xl transition-all text-center cursor-pointer ${
+                            className={`text-xs font-semibold px-3.5 py-2 rounded-lg transition-all text-center cursor-pointer ${
                               isRevisionLocked
                                 ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
                                 : 'bg-white/10 hover:bg-white/20 text-white'
@@ -1925,7 +1925,7 @@ export default function ClientReviewPage() {
                             type="button"
                             onClick={handleApproveCut}
                             disabled={isApproving}
-                            className="text-xs font-semibold px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+                            className="text-xs font-semibold px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50"
                           >
                             <span>{isApproving ? 'Approving...' : '✓ Approve Video'}</span>
                           </button>
@@ -1936,7 +1936,7 @@ export default function ClientReviewPage() {
                             href={project.deliverableUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs font-bold px-6 py-3 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
+                            className="text-xs font-bold px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-sm"
                           >
                             <span>Open Final Files</span>
                             <span>↗</span>

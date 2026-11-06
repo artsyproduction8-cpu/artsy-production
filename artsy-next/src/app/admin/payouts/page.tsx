@@ -206,10 +206,10 @@ export default function AdminPayoutsPage() {
   });
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-5">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-8 z-50 p-4 rounded-2xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-xl border border-white/10 flex items-center gap-3 animate-fade-in">
+        <div className="fixed top-20 right-8 z-50 p-3 sm:p-4 rounded-xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-xl border border-white/10 flex items-center gap-3 animate-fade-in">
           <span>{toastMessage}</span>
           <button onClick={() => setToastMessage(null)} className="text-white/60 hover:text-white ml-2 cursor-pointer">
             ✕
@@ -218,7 +218,7 @@ export default function AdminPayoutsPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <Link href="/admin" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
@@ -227,18 +227,18 @@ export default function AdminPayoutsPage() {
             <span className="text-xs text-[#86868B]">/</span>
             <span className="text-xs font-bold text-[#1D1D1F]">Creator Payouts</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
-            Creator Payouts & Disbursements
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
+            Creator Payouts
           </h1>
-          <p className="text-sm text-[#86868B] mt-1">
-            Autonomous multi-party creator settlements, Section 194J/194C TDS withholding, and RBI NEFT batch clearing.
+          <p className="text-xs text-[#86868B] mt-0.5">
+            Creator milestone settlements, TDS withholding, and NEFT transfers.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={fetchPayouts}
-            className="p-2.5 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] transition-all shadow-xs cursor-pointer"
+            className="p-2 rounded-lg bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] transition-all shadow-xs cursor-pointer"
             title="Refresh Payouts"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -248,51 +248,51 @@ export default function AdminPayoutsPage() {
           <button
             onClick={handleDownloadGstr1}
             disabled={isExportingGstr1}
-            className="px-4 py-2.5 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            className="px-3.5 py-1.5 rounded-lg bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             <span>📄</span>
-            <span>{isExportingGstr1 ? 'Generating...' : 'Export GSTR-1'}</span>
+            <span>{isExportingGstr1 ? 'Exporting...' : 'Export GSTR-1'}</span>
           </button>
           <button
             onClick={handleDispatchBatchNeft}
             disabled={isExportingBatch}
-            className="px-4 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+            className="px-3.5 py-1.5 rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
           >
             <span>⚡</span>
-            <span>{isExportingBatch ? 'Exporting Batch...' : 'Dispatch Batch NEFT (CSV)'}</span>
+            <span>{isExportingBatch ? 'Exporting...' : 'Batch NEFT (CSV)'}</span>
           </button>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E5E7] shadow-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="bg-white p-4 rounded-xl border border-[#E5E5E7] shadow-xs">
           <div className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider">Pending Payouts</div>
-          <div className="text-2xl font-extrabold text-amber-600 mt-2">{formatInr(summary.pendingAmount)}</div>
-          <div className="text-xs text-[#86868B] mt-1">{summary.pendingCount} creator disbursement(s) pending</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-amber-600 mt-1.5">{formatInr(summary.pendingAmount)}</div>
+          <div className="text-[11px] text-[#86868B] mt-0.5">{summary.pendingCount} pending disbursement(s)</div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E5E7] shadow-xs">
-          <div className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider">Dispatched (In Transit)</div>
-          <div className="text-2xl font-extrabold text-blue-600 mt-2">{formatInr(summary.dispatchedAmount)}</div>
-          <div className="text-xs text-[#86868B] mt-1">{summary.dispatchedCount} NEFT transaction(s) batched</div>
+        <div className="bg-white p-4 rounded-xl border border-[#E5E5E7] shadow-xs">
+          <div className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider">In Transit</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-blue-600 mt-1.5">{formatInr(summary.dispatchedAmount)}</div>
+          <div className="text-[11px] text-[#86868B] mt-0.5">{summary.dispatchedCount} NEFT transaction(s) batched</div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E5E7] shadow-xs">
-          <div className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider">Settled & Reconciled</div>
-          <div className="text-2xl font-extrabold text-emerald-600 mt-2">{formatInr(summary.reconciledAmount)}</div>
-          <div className="text-xs text-[#86868B] mt-1">{summary.reconciledCount} reconciled with bank UTR</div>
+        <div className="bg-white p-4 rounded-xl border border-[#E5E5E7] shadow-xs">
+          <div className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider">Settled &amp; Reconciled</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-emerald-600 mt-1.5">{formatInr(summary.reconciledAmount)}</div>
+          <div className="text-[11px] text-[#86868B] mt-0.5">{summary.reconciledCount} reconciled with bank UTR</div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E5E7] shadow-xs">
-          <div className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider">TDS Withheld (194J/194C)</div>
-          <div className="text-2xl font-extrabold text-[#1D1D1F] mt-2">{formatInr(summary.totalTdsWithheld)}</div>
-          <div className="text-xs text-[#86868B] mt-1">Direct deposit to Govt treasury</div>
+        <div className="bg-white p-4 rounded-xl border border-[#E5E5E7] shadow-xs">
+          <div className="text-[10px] font-bold text-[#86868B] uppercase tracking-wider">TDS Withheld</div>
+          <div className="text-xl sm:text-2xl font-extrabold text-[#1D1D1F] mt-1.5">{formatInr(summary.totalTdsWithheld)}</div>
+          <div className="text-[11px] text-[#86868B] mt-0.5">Direct deposit to Govt treasury</div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-[#E5E5E7] flex flex-wrap items-center justify-between gap-4 shadow-2xs">
+      <div className="bg-white p-3 rounded-xl border border-[#E5E5E7] flex flex-wrap items-center justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-3 flex-1 min-w-[260px]">
           <div className="relative flex-1">
             <input
@@ -332,22 +332,22 @@ export default function AdminPayoutsPage() {
       </div>
 
       {/* Payouts Table */}
-      <div className="bg-white border border-[#E5E5E7] rounded-2xl overflow-hidden shadow-xs">
+      <div className="bg-white border border-[#E5E5E7] rounded-xl overflow-hidden shadow-xs">
         {loading ? (
-          <div className="py-20 text-center">
-            <div className="inline-block w-8 h-8 border-2 border-[#1D1D1F] border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs text-[#86868B] mt-3">Loading creator payouts...</p>
+          <div className="py-16 text-center">
+            <div className="inline-block w-6 h-6 border-2 border-[#1D1D1F] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs text-[#86868B] mt-2">Loading payouts...</p>
           </div>
         ) : filteredPayouts.length === 0 ? (
-          <div className="py-20 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-[#F5F5F7] text-xl flex items-center justify-center mx-auto text-[#86868B]">
+          <div className="py-16 text-center space-y-2">
+            <div className="w-10 h-10 rounded-full bg-[#F5F5F7] text-lg flex items-center justify-center mx-auto text-[#86868B]">
               💳
             </div>
-            <h3 className="text-base font-bold text-[#1D1D1F]">No creator payouts found</h3>
+            <h3 className="text-sm font-bold text-[#1D1D1F]">No creator payouts found</h3>
             <p className="text-xs text-[#86868B] max-w-md mx-auto">
               {searchTerm || statusFilter !== 'all'
-                ? 'No payout records match your active search or status filters.'
-                : 'All creator project milestones are cleared. Newly completed client deliverables will automatically appear here for NEFT disbursement.'}
+                ? 'No payout records match your filters.'
+                : 'All creator project milestones are cleared.'}
             </p>
           </div>
         ) : (
@@ -355,15 +355,15 @@ export default function AdminPayoutsPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#E5E5E7] bg-[#FAFAFA] text-[10px] uppercase font-bold text-[#86868B] tracking-wider">
-                  <th className="py-3 px-4 whitespace-nowrap">Payout Ref / Date</th>
-                  <th className="py-3 px-4 whitespace-nowrap">Creator / Beneficiary</th>
-                  <th className="py-3 px-4 whitespace-nowrap">Banking Coordinates</th>
-                  <th className="py-3 px-4 whitespace-nowrap">Project</th>
-                  <th className="py-3 px-4 text-right whitespace-nowrap">Gross Amount</th>
-                  <th className="py-3 px-4 text-right whitespace-nowrap">TDS (10%/2%)</th>
-                  <th className="py-3 px-4 text-right whitespace-nowrap">Net Payout</th>
-                  <th className="py-3 px-4 whitespace-nowrap">Status / UTR</th>
-                  <th className="py-3 px-4 text-center whitespace-nowrap">Actions</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Payout Ref / Date</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Creator</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Bank Details</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Project</th>
+                  <th className="py-2.5 px-3 text-right whitespace-nowrap">Gross</th>
+                  <th className="py-2.5 px-3 text-right whitespace-nowrap">TDS (2%)</th>
+                  <th className="py-2.5 px-3 text-right whitespace-nowrap">Net Payout</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Status</th>
+                  <th className="py-2.5 px-3 text-center whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E7] text-xs text-[#1D1D1F]">
@@ -377,12 +377,12 @@ export default function AdminPayoutsPage() {
 
                   return (
                     <tr key={p.id} className="hover:bg-[#F5F5F7]/60 transition-colors">
-                      <td className="py-3 px-4 font-mono font-medium">
+                      <td className="py-2.5 px-3 font-mono font-medium">
                         <div className="font-semibold text-[#1D1D1F]">{p.id.slice(0, 10).toUpperCase()}</div>
                         <div className="text-[10px] text-[#86868B]">{new Date(p.createdAt).toLocaleDateString('en-IN')}</div>
                       </td>
 
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3">
                         <div className="font-bold text-[#1D1D1F]">{p.creatorName}</div>
                         <div className="text-[10px] text-[#86868B]">{p.creatorEmail || p.creatorPhone || '—'}</div>
                         {p.panNumber && (
@@ -390,51 +390,51 @@ export default function AdminPayoutsPage() {
                         )}
                       </td>
 
-                      <td className="py-3 px-4 font-mono text-[11px]">
+                      <td className="py-2.5 px-3 font-mono text-[11px]">
                         <div className="text-[#1D1D1F] font-semibold">{p.bankName}</div>
                         <div className="text-[10px] text-[#86868B]">A/C: {p.bankAccountNumber || '••••••••'}</div>
                         <div className="text-[9px] text-[#86868B]">IFSC: {p.bankIfsc || '—'}</div>
                       </td>
 
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3">
                         <span className="font-mono text-[11px] bg-[#F5F5F7] px-2 py-0.5 rounded text-[#1D1D1F] border border-[#E5E5E7]">
                           {p.projectId}
                         </span>
                       </td>
 
-                      <td className="py-3 px-4 text-right font-semibold text-[#86868B]">
+                      <td className="py-2.5 px-3 text-right font-semibold text-[#86868B]">
                         {formatInr(p.grossAmount)}
                       </td>
 
-                      <td className="py-3 px-4 text-right font-mono text-red-600">
+                      <td className="py-2.5 px-3 text-right font-mono text-red-600">
                         -{formatInr(p.tdsAmount)}
                       </td>
 
-                      <td className="py-3 px-4 text-right font-extrabold text-[#1D1D1F] text-sm">
+                      <td className="py-2.5 px-3 text-right font-extrabold text-[#1D1D1F] text-xs sm:text-sm">
                         {formatInr(p.netPayout)}
                       </td>
 
-                      <td className="py-3 px-4">
+                      <td className="py-2.5 px-3">
                         <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border capitalize ${
+                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border capitalize ${
                             statusColors[p.status] || 'bg-gray-100 text-gray-700'
                           }`}
                         >
                           {p.status}
                         </span>
                         {p.utrReference && (
-                          <div className="text-[9px] font-mono text-[#86868B] mt-1 truncate max-w-[120px]" title={p.utrReference}>
+                          <div className="text-[9px] font-mono text-[#86868B] mt-0.5 truncate max-w-[120px]" title={p.utrReference}>
                             UTR: {p.utrReference}
                           </div>
                         )}
                       </td>
 
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
+                      <td className="py-2.5 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
                           {p.status === 'pending' && (
                             <button
                               onClick={() => handleUpdateStatus(p.id, 'dispatched')}
-                              className="px-2 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-[10px] transition-colors cursor-pointer"
+                              className="px-2 py-1 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-[10px] transition-colors cursor-pointer"
                               title="Mark as Dispatched via NEFT"
                             >
                               Dispatch
@@ -446,7 +446,7 @@ export default function AdminPayoutsPage() {
                                 setActiveReconcilePayout(p);
                                 setUtrInput(p.utrReference || '');
                               }}
-                              className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-[10px] transition-colors cursor-pointer"
+                              className="px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-[10px] transition-colors cursor-pointer"
                               title="Enter Bank UTR & Reconcile"
                             >
                               Reconcile

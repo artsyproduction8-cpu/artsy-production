@@ -230,93 +230,93 @@ export default function FreelancerDashboard() {
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto pt-32 pb-20 px-6">
-          <div className="space-y-6">
+        <main className="max-w-3xl mx-auto pt-24 pb-12 px-4">
+          <div className="space-y-4">
             {/* Top Review Banner */}
-            <div className="bg-white rounded-3xl p-8 sm:p-10 border border-[#E5E5E7] shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-8 border-b border-[#F5F5F7]">
-                <div className="space-y-3">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold rounded-full">
-                    <span>STAGE 2 OF 3: STUDIO DIRECTOR MANUAL CURATION</span>
+            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E5E5E7] shadow-[0_4px_24px_rgba(0,0,0,0.03)]">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-5 border-b border-[#F5F5F7]">
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold rounded-full">
+                    <span>APPLICATION UNDER REVIEW</span>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
-                    Candidate Profile &amp; Reel Vetting In Progress
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-[#1D1D1F] tracking-tight">
+                    Candidate Profile &amp; Reel Vetting
                   </h1>
-                  <p className="text-sm text-[#86868B] max-w-2xl leading-relaxed">
-                    Welcome, <strong className="text-[#1D1D1F]">{creatorName}</strong>. Your creator portfolio, software proficiency, and categorical sample cuts have been dispatched to our Studio Director. Artsy operates an invite-only vetted roster to maintain boutique cinematic standards for commercial and wedding clients.
+                  <p className="text-xs text-[#86868B] max-w-xl leading-relaxed">
+                    Welcome, <strong className="text-[#1D1D1F]">{creatorName}</strong>. We are currently reviewing your portfolio, software setup, and sample video links. We will notify you within 24 hours.
                   </p>
                 </div>
 
-                <div className="bg-[#F5F5F7] p-5 rounded-2xl border border-[#E5E5E7] shrink-0 text-right md:min-w-[190px]">
-                  <div className="text-[10px] uppercase font-bold text-[#86868B]">ESTIMATED REVIEW TIME</div>
-                  <div className="text-2xl font-extrabold text-[#1D1D1F] mt-1">~24 Hours</div>
-                  <div className="text-[11px] text-emerald-600 font-semibold mt-1">Curation Queue Active</div>
+                <div className="bg-[#F5F5F7] p-3.5 rounded-xl border border-[#E5E5E7] shrink-0 text-right md:min-w-[160px]">
+                  <div className="text-[10px] uppercase font-bold text-[#86868B]">ESTIMATED TIME</div>
+                  <div className="text-xl font-extrabold text-[#1D1D1F] mt-0.5">~24 Hours</div>
+                  <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">Queue Active</div>
                 </div>
               </div>
 
               {/* 3-Stage Progress Pipeline */}
-              <div className="pt-8">
-                <div className="text-xs uppercase font-bold text-[#86868B] mb-4 tracking-wider">
-                  Vetting Lifecycle
+              <div className="pt-5">
+                <div className="text-[11px] uppercase font-bold text-[#86868B] mb-3 tracking-wider">
+                  Review Steps
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col gap-1.5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col gap-1">
                     <div className="flex items-center justify-between text-xs font-bold text-emerald-700">
-                      <span>01. Application Ingest</span>
-                      <span>✓ Completed</span>
+                      <span>01. Application</span>
+                      <span>✓ Received</span>
                     </div>
                     <p className="text-[11px] text-emerald-600 leading-snug">
-                      Reels, NLE tools, NDA &amp; PAN/banking credentials saved.
+                      Reels, editing tools, and banking details saved.
                     </p>
                   </div>
 
-                  <div className="p-4 bg-amber-50/80 border border-amber-300 rounded-2xl flex flex-col gap-1.5 relative overflow-hidden shadow-xs">
+                  <div className="p-3 bg-amber-50/80 border border-amber-300 rounded-xl flex flex-col gap-1 relative overflow-hidden shadow-xs">
                     <div className="flex items-center justify-between text-xs font-bold text-amber-900">
                       <span className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                        02. Editorial Review
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                        02. Portfolio Review
                       </span>
-                      <span className="text-[10px] uppercase bg-amber-200/80 px-2 py-0.5 rounded font-extrabold text-amber-800">Active</span>
+                      <span className="text-[10px] uppercase bg-amber-200/80 px-1.5 py-0.5 rounded font-extrabold text-amber-800">In Review</span>
                     </div>
                     <p className="text-[11px] text-amber-800 leading-snug">
-                      Studio Director evaluates pacing, audio ducking &amp; color conform.
+                      Evaluating editing style, pacing, and video samples.
                     </p>
                   </div>
 
-                  <div className="p-4 bg-[#F5F5F7] border border-[#E5E5E7] rounded-2xl flex flex-col gap-1.5 opacity-75">
+                  <div className="p-3 bg-[#F5F5F7] border border-[#E5E5E7] rounded-xl flex flex-col gap-1 opacity-75">
                     <div className="flex items-center justify-between text-xs font-bold text-[#86868B]">
-                      <span>03. Roster Dispatch</span>
-                      <span>🔒 Locked</span>
+                      <span>03. Workstation</span>
+                      <span>Pending</span>
                     </div>
                     <p className="text-[11px] text-[#86868B] leading-snug">
-                      Automated Resend Email + WhatsApp activation link dispatched.
+                      WhatsApp and email notification sent upon approval.
                     </p>
                   </div>
                 </div>
               </div>
 
               {/* Candidate Info Slate */}
-              <div className="mt-8 p-5 bg-[#F5F5F7] rounded-2xl border border-[#E5E5E7] flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-xs">
+              <div className="mt-5 p-3.5 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-xs">
                     {creatorInitials}
                   </div>
                   <div>
                     <div className="text-xs font-bold text-[#1D1D1F]">{creatorName}</div>
-                    <div className="text-[11px] text-[#86868B]">Tracking: ART-2026-VET-8841</div>
+                    <div className="text-[10px] text-[#86868B]">Tracking: ART-2026-VET-8841</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Link
                     href="/freelancer/onboarding"
-                    className="px-4 py-2 bg-white hover:bg-slate-50 text-[#1D1D1F] text-xs font-semibold rounded-xl border border-[#E5E5E7] transition-all"
+                    className="px-3 py-1.5 bg-white hover:bg-slate-50 text-[#1D1D1F] text-xs font-semibold rounded-xl border border-[#E5E5E7] transition-all"
                   >
-                    Edit Submitted Portfolio
+                    Edit Submitted Info
                   </Link>
                   <button
                     type="button"
                     onClick={() => logout()}
-                    className="px-4 py-2 bg-white hover:bg-red-50 text-red-600 text-xs font-semibold rounded-xl border border-red-200 transition-all"
+                    className="px-3 py-1.5 bg-white hover:bg-red-50 text-red-600 text-xs font-semibold rounded-xl border border-red-200 transition-all"
                   >
                     Sign Out
                   </button>
@@ -342,10 +342,10 @@ export default function FreelancerDashboard() {
           <div className="flex flex-col w-full max-w-full overflow-x-hidden">
             
 
-            <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
+            <div className="p-4 sm:p-5 space-y-5 w-full max-w-[1400px] mx-auto">
               {toastMessage && (
                 <div
-                  className={`p-4 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-between ${
+                  className={`p-3.5 rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-between ${
                     toastMessage.type === 'success'
                       ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
                       : 'bg-red-50 border border-red-200 text-red-800'
@@ -364,94 +364,94 @@ export default function FreelancerDashboard() {
 
               {/* Agreement Pending Banner */}
               {!hasAcceptedAgreement(user) && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">⚠️</span>
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">⚠️</span>
                     <div>
-                      <h3 className="text-sm font-bold text-amber-900">
-                        Action Required: Creator Master Services Agreement &amp; NDA
+                      <h3 className="text-xs font-bold text-amber-900">
+                        Action Required: Creator Agreement &amp; NDA
                       </h3>
-                      <p className="text-xs text-amber-700 mt-0.5">
-                        You must execute the Creator Agreement before accepting jobs or downloading client raw footage proxies.
+                      <p className="text-[11px] text-amber-700 mt-0.5">
+                        Please review and sign the agreement to unlock incoming projects.
                       </p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setShowAgreementModal(true)}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-all shrink-0 cursor-pointer shadow-sm"
+                    className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-all shrink-0 cursor-pointer shadow-xs"
                   >
-                    Review &amp; Sign Agreement
+                    Sign Agreement
                   </button>
                 </div>
               )}
               
               {/* 1. CREATOR STATUS HEADER */}
-              <section className="w-full bg-white rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] overflow-hidden">
+              <section className="w-full bg-white rounded-2xl border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-hidden">
                 <div className="grid grid-cols-1 lg:grid-cols-12">
                   {/* Left Identity Column */}
-                  <div className="lg:col-span-4 bg-[#1D1D1F] p-6 sm:p-8 text-white flex flex-col justify-between">
+                  <div className="lg:col-span-4 bg-[#1D1D1F] p-4 sm:p-5 text-white flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-2 mb-2">
                         <span className="text-[10px] uppercase tracking-widest text-[#3B82F6] font-bold">
                           CREATOR PROFILE
                         </span>
                       </div>
-                      <h1 className="text-3xl font-extrabold tracking-tight text-white">
+                      <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
                         {creatorName}
                       </h1>
-                      <p className="text-xs tracking-wider text-[#86868B] mt-1 font-medium">
+                      <p className="text-xs tracking-wider text-[#86868B] mt-0.5 font-medium">
                         Creator Network
                       </p>
                     </div>
-                    <div className="mt-8 pt-4 border-t border-white/10 space-y-1">
-                      <div className="text-[10px] uppercase text-[#86868B] font-semibold tracking-wider">VERIFIED CREATIVE ROLE</div>
-                      <div className="text-xs font-bold text-white bg-white/10 px-3 py-1.5 rounded-lg inline-block">
+                    <div className="mt-5 pt-3 border-t border-white/10 space-y-1">
+                      <div className="text-[10px] uppercase text-[#86868B] font-semibold tracking-wider">CREATIVE ROLE</div>
+                      <div className="text-xs font-bold text-white bg-white/10 px-2.5 py-1 rounded-lg inline-block">
                         {(user as any)?.public_specialty || (user as any)?.creator_profile?.public_specialty || (user as any)?.studio_details?.specialty || 'Commercial & Narrative Film Editor'}
                       </div>
                     </div>
                   </div>
 
                   {/* Right Stats Grid */}
-                  <div className="lg:col-span-8 p-6 sm:p-8 bg-white flex flex-col justify-between">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="rounded-2xl p-5 bg-[#F5F5F7] border border-[#E5E5E7]">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] uppercase text-[#86868B] font-semibold">
-                            ACTIVE PAYOUT VALUE
+                  <div className="lg:col-span-8 p-4 sm:p-5 bg-white flex flex-col justify-between">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="rounded-xl p-3.5 bg-[#F5F5F7] border border-[#E5E5E7]">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] uppercase text-[#86868B] font-bold">
+                            IN-PROGRESS EARNINGS
                           </span>
-                          <span className="text-emerald-600 text-xs font-bold">In-Flight</span>
+                          <span className="text-emerald-600 text-[10px] font-bold">In-Flight</span>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-extrabold text-[#1D1D1F] leading-none">
+                        <div className="text-2xl font-extrabold text-[#1D1D1F] leading-none">
                           ₹{activeProjects.reduce((sum, p) => sum + (p.payoutInr || 0), 0).toLocaleString('en-IN')}
                         </div>
-                        <div className="text-xs text-[#86868B] mt-2">
+                        <div className="text-[11px] text-[#86868B] mt-1.5">
                           {activeProjects.length} {activeProjects.length === 1 ? 'Active Project' : 'Active Projects'}
                         </div>
                       </div>
 
-                      <div className="rounded-2xl p-5 bg-[#F5F5F7] border border-[#E5E5E7]">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] uppercase text-[#86868B] font-semibold">
+                      <div className="rounded-xl p-3.5 bg-[#F5F5F7] border border-[#E5E5E7]">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] uppercase text-[#86868B] font-bold">
                             ACTIVE PROJECTS
                           </span>
                           <span className={`w-2 h-2 rounded-full ${activeProjects.length > 0 ? 'bg-emerald-500' : 'bg-zinc-400'}`}></span>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-extrabold text-[#1D1D1F] leading-none">
+                        <div className="text-2xl font-extrabold text-[#1D1D1F] leading-none">
                           {String(activeProjects.length).padStart(2, '0')}
                         </div>
-                        <div className="text-xs text-[#86868B] mt-2">
+                        <div className="text-[11px] text-[#86868B] mt-1.5">
                           {activeProjects.length > 0 ? `${activeProjects.length} In Progress` : 'None In Progress'}
                         </div>
                       </div>
 
-                      <div className="rounded-2xl p-5 bg-[#F5F5F7] border border-[#E5E5E7]">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[11px] uppercase text-[#86868B] font-semibold">PERFORMANCE RATING</span>
-                          <span className="text-emerald-600 text-xs font-bold">Verified Partner</span>
+                      <div className="rounded-xl p-3.5 bg-[#F5F5F7] border border-[#E5E5E7]">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] uppercase text-[#86868B] font-bold">ON-TIME DELIVERY</span>
+                          <span className="text-emerald-600 text-[10px] font-bold">Verified</span>
                         </div>
-                        <div className="text-3xl sm:text-4xl font-extrabold text-emerald-600 leading-none">100%</div>
-                        <div className="text-xs text-[#86868B] mt-2">On-Time Delivery Target</div>
+                        <div className="text-2xl font-extrabold text-emerald-600 leading-none">100%</div>
+                        <div className="text-[11px] text-[#86868B] mt-1.5">Delivery Target</div>
                       </div>
                     </div>
                   </div>
@@ -460,70 +460,70 @@ export default function FreelancerDashboard() {
 
               {/* 2. INCOMING CLIENT PROJECT OFFERS (HIGH PRIORITY) */}
               {offeredJobs.length > 0 && (
-                <section className="space-y-4">
+                <section className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping"></span>
-                      <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-tight">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                      <h2 className="text-base font-extrabold text-[#1D1D1F] tracking-tight">
                         New Project Offers ({offeredJobs.length})
                       </h2>
                     </div>
-                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200">
+                    <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
                       24h Response Window
                     </span>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {offeredJobs.map((job) => (
                       <div
                         key={job.assignmentId || job.projectId}
-                        className="bg-white rounded-2xl border-2 border-[#3B82F6]/60 p-6 sm:p-7 shadow-[0_8px_30px_rgba(59,130,246,0.08)] flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+                        className="bg-white rounded-2xl border-2 border-[#3B82F6]/60 p-4 sm:p-5 shadow-[0_4px_20px_rgba(59,130,246,0.06)] flex flex-col lg:flex-row lg:items-center justify-between gap-4"
                       >
-                        <div className="space-y-2.5 flex-1 min-w-0">
-                          <div className="flex flex-wrap items-center gap-2.5">
-                            <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded bg-blue-100 text-blue-800">
+                        <div className="space-y-1.5 flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
                               {job.orderNumber}
                             </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-                              Direct Client Request
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                              Direct Request
                             </span>
-                            <span className="text-xs text-[#86868B]">
+                            <span className="text-[11px] text-[#86868B]">
                               • {job.category} Production
                             </span>
                           </div>
 
-                          <h3 className="text-xl font-extrabold text-[#1D1D1F] tracking-tight">
+                          <h3 className="text-base font-extrabold text-[#1D1D1F] tracking-tight">
                             {job.title}
                           </h3>
 
-                          <div className="flex flex-wrap items-center gap-4 text-xs text-[#6E6E73]">
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-[#6E6E73]">
                             <span>🎥 {job.angles}</span>
                             <span>⏳ {job.turnaround}</span>
                             <span>👤 Client: {job.clientName}</span>
                           </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-4 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-[#F5F5F7]">
+                        <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-3 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-[#F5F5F7]">
                           <div className="text-left lg:text-right">
-                            <div className="text-xs uppercase font-bold text-[#86868B]">Net Creator Payout</div>
-                            <div className="font-mono text-2xl font-extrabold text-emerald-600">
+                            <div className="text-[10px] uppercase font-bold text-[#86868B]">Net Payout</div>
+                            <div className="font-mono text-xl font-extrabold text-emerald-600">
                               ₹{job.payoutInr.toLocaleString('en-IN')} INR
                             </div>
-                            <div className="text-[11px] text-[#86868B]">70% Available Split (TDS Deducted at Source)</div>
+                            <div className="text-[10px] text-[#86868B]">70% Split (TDS Deducted)</div>
                           </div>
 
-                          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                          <div className="flex items-center gap-2 w-full sm:w-auto">
                             <button
                               type="button"
                               onClick={() => handleDeclineJob(job.projectId)}
-                              className="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs"
+                              className="w-full sm:w-auto px-3 py-1.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs"
                             >
                               Decline
                             </button>
                             <button
                               type="button"
                               onClick={() => handleAcceptJob(job.projectId)}
-                              className="w-full sm:w-auto px-6 py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm"
+                              className="w-full sm:w-auto px-4 py-1.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm"
                             >
                               Accept Project →
                             </button>
@@ -536,10 +536,10 @@ export default function FreelancerDashboard() {
               )}
 
               {/* 3. ACTIVE PROJECTS & WORKROOM */}
-              <section className="space-y-4">
+              <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-extrabold text-[#1D1D1F] tracking-[-0.03em]">
-                    Active Projects &amp; Daily Updates
+                  <h2 className="text-base font-extrabold text-[#1D1D1F] tracking-tight">
+                    Active Projects
                   </h2>
                   <span className="text-xs font-semibold text-[#86868B]">
                     {activeProjects.length} Active {activeProjects.length === 1 ? 'Project' : 'Projects'}
@@ -547,49 +547,49 @@ export default function FreelancerDashboard() {
                 </div>
 
                 {activeProjects.length === 0 ? (
-                  <div className="bg-white rounded-2xl border border-dashed border-[#E5E5E7] p-12 text-center space-y-3 shadow-xs">
+                  <div className="bg-white rounded-2xl border border-dashed border-[#E5E5E7] p-10 text-center space-y-2 shadow-xs">
                     <div className="text-3xl">🎬</div>
-                    <h3 className="text-base font-bold text-[#1D1D1F]">No active project assigned yet</h3>
-                    <p className="text-xs text-[#86868B] max-w-md mx-auto leading-relaxed">
-                      When a client order is matched with your skills, our Studio Director will assign it to your queue. You will receive real-time alerts via WhatsApp and email with footage ingest links and turnaround milestones.
+                    <h3 className="text-sm font-bold text-[#1D1D1F]">No active project assigned yet</h3>
+                    <p className="text-xs text-[#86868B] max-w-sm mx-auto leading-relaxed">
+                      When a project is assigned to you, you will receive an alert on WhatsApp and email with footage links and delivery deadlines.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {activeProjects.map((proj) => (
                       <div
                         key={proj.projectId}
-                        className="bg-white rounded-2xl border border-[#E5E5E7] p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+                        className="bg-white rounded-2xl border border-[#E5E5E7] p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3"
                       >
-                        <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                            <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
                               {proj.orderNumber}
                             </span>
-                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 uppercase">
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 uppercase">
                               In Production
                             </span>
                           </div>
-                          <h3 className="text-lg font-bold text-[#1D1D1F]">{proj.title}</h3>
-                          <div className="text-xs text-[#86868B] flex items-center gap-3">
+                          <h3 className="text-base font-bold text-[#1D1D1F]">{proj.title}</h3>
+                          <div className="text-xs text-[#86868B] flex items-center gap-2.5">
                             <span>Client: {proj.clientName}</span>
                             <span>•</span>
                             <span>SLA: {proj.turnaround}</span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 shrink-0">
+                        <div className="flex items-center gap-3 shrink-0">
                           <div className="text-right">
-                            <div className="text-xs text-[#86868B]">Payout</div>
-                            <div className="font-mono text-base font-bold text-[#1D1D1F]">
+                            <div className="text-[10px] text-[#86868B]">Payout</div>
+                            <div className="font-mono text-sm font-bold text-[#1D1D1F]">
                               ₹{proj.payoutInr.toLocaleString('en-IN')}
                             </div>
                           </div>
                           <Link
                             href={`/freelancer/work/${proj.projectId}`}
-                            className="px-4 py-2 bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                            className="px-3.5 py-1.5 bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
                           >
-                            Open Workstation →
+                            Open Workroom →
                           </Link>
                         </div>
                       </div>

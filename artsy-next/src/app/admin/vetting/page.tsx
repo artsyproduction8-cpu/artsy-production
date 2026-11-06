@@ -131,38 +131,38 @@ export default function AdminVettingPage() {
   });
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-5">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-8 z-50 p-4 rounded-2xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-xl border border-white/10 flex items-center gap-3 animate-fade-in">
+        <div className="fixed top-20 right-8 z-50 p-3 sm:p-4 rounded-xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-xl border border-white/10 flex items-center gap-3 animate-fade-in">
           <span>{toastMessage}</span>
           <button onClick={() => setToastMessage(null)} className="text-white/60 hover:text-white ml-2">✕</button>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <Link href="/admin" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
               Dashboard
             </Link>
             <span className="text-xs text-[#86868B]">/</span>
-            <span className="text-xs font-bold text-[#1D1D1F]">Roster Vetting</span>
+            <span className="text-xs font-bold text-[#1D1D1F]">Candidate Vetting</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
-            Candidate Vetting Matrix
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
+            Candidate Vetting
           </h1>
-          <p className="text-sm text-[#86868B] mt-1">
-            Review applicant portfolios, technical software mastery, and assign orders to verified talent.
+          <p className="text-xs text-[#86868B] mt-0.5">
+            Review applicant portfolios, workstation specs, and video samples.
           </p>
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 p-1 bg-white rounded-xl border border-[#E5E5E7] shadow-xs">
+        <div className="flex items-center gap-1 p-1 bg-white rounded-lg border border-[#E5E5E7] shadow-xs">
           <button
             onClick={() => setFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
               filter === 'all'
                 ? 'bg-[#1D1D1F] text-white shadow-xs'
                 : 'text-[#86868B] hover:text-[#1D1D1F]'
@@ -172,7 +172,7 @@ export default function AdminVettingPage() {
           </button>
           <button
             onClick={() => setFilter('colorists')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
               filter === 'colorists'
                 ? 'bg-[#1D1D1F] text-white shadow-xs'
                 : 'text-[#86868B] hover:text-[#1D1D1F]'
@@ -182,7 +182,7 @@ export default function AdminVettingPage() {
           </button>
           <button
             onClick={() => setFilter('editors')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
               filter === 'editors'
                 ? 'bg-[#1D1D1F] text-white shadow-xs'
                 : 'text-[#86868B] hover:text-[#1D1D1F]'
@@ -193,17 +193,17 @@ export default function AdminVettingPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
         {/* Candidate List (2 cols) */}
-        <div className="xl:col-span-2 space-y-4">
+        <div className="xl:col-span-2 space-y-3.5">
           {filteredCandidates.length === 0 ? (
-            <div className="bg-white rounded-2xl p-10 border border-[#E5E5E7] text-center space-y-2">
+            <div className="bg-white rounded-xl p-8 border border-[#E5E5E7] text-center space-y-2">
               <div className="w-10 h-10 mx-auto rounded-full bg-[#F5F5F7] flex items-center justify-center text-[#86868B]">
                 ✓
               </div>
               <h3 className="text-sm font-bold text-[#1D1D1F]">No Pending Candidates</h3>
               <p className="text-xs text-[#86868B]">
-                All applicant submissions have been reviewed and vetted. New applications will appear here.
+                All applicant submissions have been reviewed. New applications will appear here.
               </p>
             </div>
           ) : (
@@ -213,7 +213,7 @@ export default function AdminVettingPage() {
             return (
               <div
                 key={candidate.ref}
-                className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-xs space-y-4 transition-all hover:border-[#3B82F6]/50"
+                className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs space-y-3.5 transition-all hover:border-[#3B82F6]/50"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -399,19 +399,19 @@ export default function AdminVettingPage() {
         </div>
 
         {/* Project Dispatch Station (1 col) */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-xs">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold text-[#1D1D1F]">Manual Assignment &amp; Dispatch</h2>
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold text-[#1D1D1F]">Manual Assignment</h2>
               <span className="text-[10px] uppercase font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
-                ● Live Dispatcher
+                ● Live
               </span>
             </div>
-            <p className="text-xs text-[#86868B] mb-5">
-              Lock unassigned client orders to verified roster members based on camera profile and timeline NLE.
+            <p className="text-xs text-[#86868B] mb-3">
+              Assign unassigned client orders directly to verified talent.
             </p>
 
-            <div className="p-6 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-center space-y-1">
+            <div className="p-4 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] text-center space-y-1">
               <div className="text-xs font-bold text-[#1D1D1F]">No Unassigned Orders</div>
               <p className="text-[11px] text-[#86868B]">
                 All client orders are currently assigned to active creators or completed.
@@ -419,20 +419,20 @@ export default function AdminVettingPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-xs">
-            <h3 className="text-sm font-bold text-[#1D1D1F] mb-2">Automated Dispatch Gateways</h3>
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs">
+            <h3 className="text-sm font-bold text-[#1D1D1F] mb-2">Automated Notifications</h3>
             <div className="space-y-2 text-xs text-[#86868B]">
               <div className="flex items-center justify-between p-2 rounded-lg bg-[#F5F5F7]">
-                <span>WhatsApp Template SLA</span>
-                <span className="font-bold text-emerald-600">Active (Meta Cloud API)</span>
+                <span>WhatsApp Template</span>
+                <span className="font-bold text-emerald-600">Active</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-[#F5F5F7]">
-                <span>Acceptance Timeout</span>
+                <span>Offer SLA Window</span>
                 <span className="font-bold text-[#1D1D1F]">24 Hours</span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-[#F5F5F7]">
-                <span>Backblaze Vault Ingest</span>
-                <span className="font-bold text-blue-600">Auto-Provisioned</span>
+                <span>Cloud Storage Ingest</span>
+                <span className="font-bold text-blue-600">Auto-Linked</span>
               </div>
             </div>
           </div>

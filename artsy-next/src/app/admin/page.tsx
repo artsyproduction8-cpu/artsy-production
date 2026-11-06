@@ -331,10 +331,10 @@ export default function UnifiedAdminDashboard() {
     .reduce((sum, p) => sum + p.netPayout, 0);
 
   return (
-    <div className="w-full space-y-6 sm:space-y-8">
+    <div className="w-full space-y-5">
       {/* Toast Feedback */}
       {toastMessage && (
-        <div className="fixed top-20 right-4 sm:right-8 z-50 p-4 rounded-2xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-2xl border border-white/10 flex items-center gap-3 animate-fade-in max-w-md">
+        <div className="fixed top-20 right-4 sm:right-8 z-50 p-3 sm:p-4 rounded-xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-2xl border border-white/10 flex items-center gap-3 animate-fade-in max-w-md">
           <span className="flex-1">{toastMessage}</span>
           <button
             onClick={() => setToastMessage(null)}
@@ -346,29 +346,29 @@ export default function UnifiedAdminDashboard() {
       )}
 
       {/* Top Operations Header */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E5E5E7] shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="text-[11px] uppercase font-bold text-[#86868B] tracking-wider">
-              Admin Operations Dashboard
+              Studio Admin
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
             Welcome, {adminName}
           </h1>
-          <p className="text-xs sm:text-sm text-[#86868B] mt-1 max-w-2xl">
-            Admin control center. Manage projects, creator applications, payouts, pricing, and system health in real time.
+          <p className="text-xs text-[#86868B] mt-0.5 max-w-2xl">
+            Manage projects, creator vetting, payouts, pricing, and system status in real time.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             onClick={() => {
               setActiveTab('vetting');
               showToast('Switched to Creator Applications.');
             }}
-            className="px-3.5 py-2 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
           >
             <span>Review Creators</span>
             <span className="bg-white/20 text-white px-1.5 py-0.5 rounded text-[10px]">
@@ -380,7 +380,7 @@ export default function UnifiedAdminDashboard() {
               setActiveTab('vault');
               showToast('Switched to Payments & Payouts.');
             }}
-            className="px-3.5 py-2 rounded-xl bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
           >
             <span>Payouts</span>
             <span className="text-emerald-400 font-mono text-[11px]">
@@ -389,20 +389,20 @@ export default function UnifiedAdminDashboard() {
           </button>
           <Link
             href="/admin/freelancers"
-            className="px-3.5 py-2 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
           >
-            <span>Creator Network →</span>
+            <span>Creators →</span>
           </Link>
           <Link
             href="/admin/clients"
-            className="px-3.5 py-2 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
           >
-            <span>Clients &amp; Projects →</span>
+            <span>Clients →</span>
           </Link>
           <button
             onClick={handlePingNodes}
             disabled={isPinging}
-            className="px-3.5 py-2 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] text-xs font-semibold transition-all shadow-2xs cursor-pointer flex items-center gap-1.5"
           >
             <span className={`w-2 h-2 rounded-full ${isPinging ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'}`}></span>
             <span>{isPinging ? 'Checking...' : 'Check Status'}</span>
@@ -411,14 +411,14 @@ export default function UnifiedAdminDashboard() {
       </div>
 
       {/* TASK 1: Real-Time Operational & Fiscal Widgets (Direct DB Queries) */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-xs font-bold uppercase tracking-wider text-[#1D1D1F]">
-              Live Fiscal & Production Telemetry (Real-time DB)
+              Live Studio Overview
             </h2>
             <span className="text-[10px] font-bold bg-[#3B82F6]/10 text-[#3B82F6] px-2 py-0.5 rounded-full">
-              supabaseAdmin
+              Real Time
             </span>
           </div>
           <button
@@ -426,14 +426,14 @@ export default function UnifiedAdminDashboard() {
             className="text-[11px] font-semibold text-[#3B82F6] hover:underline cursor-pointer flex items-center gap-1"
           >
             <span>↻</span>
-            <span>Refresh Real-Time Data</span>
+            <span>Refresh Data</span>
           </button>
         </div>
 
         {/* 7 Widgets Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           {/* Widget 1: Revenue Today / Week / Month */}
-          <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
+          <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] uppercase font-bold text-[#86868B]">Paid Orders Revenue</span>
@@ -465,7 +465,7 @@ export default function UnifiedAdminDashboard() {
           </div>
 
           {/* Widget 2: Money Owed to Creators */}
-          <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
+          <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] uppercase font-bold text-[#86868B]">Owed to Creators</span>
@@ -477,10 +477,10 @@ export default function UnifiedAdminDashboard() {
                 <div className="text-2xl font-extrabold text-[#1D1D1F]">
                   ₹{((realtime?.moneyOwedCreators || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                 </div>
-                <div className="text-[11px] text-[#86868B] mt-0.5">Pending NEFT Disbursements</div>
+                <div className="text-[11px] text-[#86868B] mt-0.5">Pending NEFT Payments</div>
               </div>
             </div>
-            <div className="pt-3 mt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+            <div className="pt-2.5 mt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
               <span className="text-[#86868B]">Status:</span>
               <Link href="/admin/payments" className="text-[#3B82F6] font-semibold hover:underline">
                 View Ledger →
@@ -489,12 +489,12 @@ export default function UnifiedAdminDashboard() {
           </div>
 
           {/* Widget 3: GST Liability this Month */}
-          <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
+          <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] uppercase font-bold text-[#86868B]">GST Liability (18%)</span>
                 <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold rounded-full">
-                  GSTR-1 Incurred
+                  GST Incurred
                 </span>
               </div>
               <div className="mt-3">
@@ -504,19 +504,19 @@ export default function UnifiedAdminDashboard() {
                 <div className="text-[11px] text-[#86868B] mt-0.5">Current Month Collections</div>
               </div>
             </div>
-            <div className="pt-3 mt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+            <div className="pt-2.5 mt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
               <span className="text-[#86868B]">Tax Portal:</span>
               <span className="font-semibold text-emerald-600">Reconciled</span>
             </div>
           </div>
 
           {/* Widget 4: TDS Withheld */}
-          <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
+          <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] uppercase font-bold text-[#86868B]">TDS Withheld (194C)</span>
+                <span className="text-[11px] uppercase font-bold text-[#86868B]">TDS Withheld</span>
                 <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold rounded-full">
-                  Form 26Q
+                  Sec 194J
                 </span>
               </div>
               <div className="mt-3">
@@ -526,14 +526,14 @@ export default function UnifiedAdminDashboard() {
                 <div className="text-[11px] text-[#86868B] mt-0.5">Creator Tax Withheld</div>
               </div>
             </div>
-            <div className="pt-3 mt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+            <div className="pt-2.5 mt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
               <span className="text-[#86868B]">Compliance:</span>
-              <span className="font-semibold text-[#1D1D1F]">Sec 194C Deducted</span>
+              <span className="font-semibold text-[#1D1D1F]">Sec 194J Deducted</span>
             </div>
           </div>
 
           {/* Widget 5: Refunds Issued this Month */}
-          <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
+          <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] uppercase font-bold text-[#86868B]">Refunds this Month</span>
@@ -545,10 +545,10 @@ export default function UnifiedAdminDashboard() {
                 <div className="text-2xl font-extrabold text-red-600">
                   ₹{((realtime?.refundsMonth || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                 </div>
-                <div className="text-[11px] text-[#86868B] mt-0.5">Processed Reversals</div>
+                <div className="text-[11px] text-[#86868B] mt-0.5">Processed Refunds</div>
               </div>
             </div>
-            <div className="pt-3 mt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+            <div className="pt-2.5 mt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
               <Link href="/admin/refunds" className="text-[#3B82F6] font-semibold hover:underline">
                 Inspect Refunds →
               </Link>
@@ -556,7 +556,7 @@ export default function UnifiedAdminDashboard() {
           </div>
 
           {/* Widget 6: Open Disputes */}
-          <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
+          <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] uppercase font-bold text-[#86868B]">Open Disputes</span>
@@ -568,18 +568,18 @@ export default function UnifiedAdminDashboard() {
                 <div className="text-2xl font-extrabold text-[#1D1D1F]">
                   ₹{((realtime?.disputes?.totalValue || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                 </div>
-                <div className="text-[11px] text-[#86868B] mt-0.5">At Risk Under Arbitration</div>
+                <div className="text-[11px] text-[#86868B] mt-0.5">Under Review</div>
               </div>
             </div>
-            <div className="pt-3 mt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+            <div className="pt-2.5 mt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
               <Link href="/admin/disputes" className="text-[#3B82F6] font-semibold hover:underline">
-                Mediate Disputes →
+                View Disputes →
               </Link>
             </div>
           </div>
 
           {/* Widget 7: Active Projects (Group by Status) */}
-          <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs sm:col-span-2 flex flex-col justify-between">
+          <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs sm:col-span-2 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-[11px] uppercase font-bold text-[#86868B]">Active Projects by Status</span>
@@ -587,26 +587,26 @@ export default function UnifiedAdminDashboard() {
                   {realtime?.projects?.total || 0} Total in Pipeline
                 </span>
               </div>
-              <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="p-2 bg-[#F5F5F7] rounded-xl text-center">
+              <div className="mt-2.5 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="p-2 bg-[#F5F5F7] rounded-lg text-center">
                   <div className="text-base font-bold text-[#1D1D1F]">
                     {realtime?.projects?.byStatus?.unassigned || 0}
                   </div>
                   <div className="text-[10px] text-[#86868B]">Unassigned</div>
                 </div>
-                <div className="p-2 bg-[#F5F5F7] rounded-xl text-center">
+                <div className="p-2 bg-[#F5F5F7] rounded-lg text-center">
                   <div className="text-base font-bold text-blue-600">
                     {realtime?.projects?.byStatus?.creator_assigned || 0}
                   </div>
                   <div className="text-[10px] text-[#86868B]">Assigned</div>
                 </div>
-                <div className="p-2 bg-[#F5F5F7] rounded-xl text-center">
+                <div className="p-2 bg-[#F5F5F7] rounded-lg text-center">
                   <div className="text-base font-bold text-amber-600">
                     {(realtime?.projects?.byStatus?.in_production || 0) + (realtime?.projects?.byStatus?.review_ready || 0)}
                   </div>
                   <div className="text-[10px] text-[#86868B]">In Production</div>
                 </div>
-                <div className="p-2 bg-[#F5F5F7] rounded-xl text-center">
+                <div className="p-2 bg-[#F5F5F7] rounded-lg text-center">
                   <div className="text-base font-bold text-emerald-600">
                     {(realtime?.projects?.byStatus?.approved || 0) + (realtime?.projects?.byStatus?.completed || 0)}
                   </div>
@@ -615,31 +615,31 @@ export default function UnifiedAdminDashboard() {
               </div>
             </div>
             <div className="pt-2 mt-2 border-t border-[#F5F5F7] text-right text-xs">
-              <span className="text-[#86868B] text-[11px]">Direct PostgreSQL project query</span>
+              <span className="text-[#86868B] text-[11px]">Direct database sync</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* TASK 11: Cron, Webhook, Backup & Uptime Health Section */}
-      <div className="bg-white rounded-3xl p-6 border border-[#E5E5E7] shadow-xs space-y-4">
+      <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <h2 className="text-xs font-bold uppercase tracking-wider text-[#1D1D1F]">
-              Infrastructure Health, Webhooks & Automated Cron Engine
+              System Health &amp; Automated Services
             </h2>
           </div>
           <span className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-            All Systems Operational
+            All Systems Healthy
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
           {/* Health 1: Cron Jobs */}
-          <div className="p-3.5 bg-[#F5F5F7] rounded-2xl space-y-2">
+          <div className="p-3 bg-[#F5F5F7] rounded-xl space-y-1.5">
             <div className="font-bold text-[#1D1D1F] flex items-center justify-between">
-              <span>Automated Crons</span>
+              <span>Background Tasks</span>
               <span className="text-emerald-600 font-mono text-[10px]">Active</span>
             </div>
             <div className="space-y-1 text-[#86868B] text-[11px]">
@@ -650,48 +650,48 @@ export default function UnifiedAdminDashboard() {
           </div>
 
           {/* Health 2: Webhooks */}
-          <div className="p-3.5 bg-[#F5F5F7] rounded-2xl space-y-2">
+          <div className="p-3 bg-[#F5F5F7] rounded-xl space-y-1.5">
             <div className="font-bold text-[#1D1D1F] flex items-center justify-between">
-              <span>Inbound Webhooks</span>
+              <span>Webhooks</span>
               <span className="text-emerald-600 font-mono text-[10px]">Connected</span>
             </div>
             <div className="space-y-1 text-[#86868B] text-[11px]">
               <div>• Razorpay: <span className="text-[#1D1D1F] font-mono">{realtime?.health?.webhooks?.razorpay?.status || 'Active'}</span></div>
-              <div>• Meta WhatsApp: <span className="text-[#1D1D1F] font-mono">{realtime?.health?.webhooks?.whatsapp?.status || 'Active'}</span></div>
+              <div>• WhatsApp: <span className="text-[#1D1D1F] font-mono">{realtime?.health?.webhooks?.whatsapp?.status || 'Active'}</span></div>
               <div>• HMAC Guard: <span className="text-emerald-600 font-mono">Enforced</span></div>
             </div>
           </div>
 
           {/* Health 3: Database Backups */}
-          <div className="p-3.5 bg-[#F5F5F7] rounded-2xl space-y-2">
+          <div className="p-3 bg-[#F5F5F7] rounded-xl space-y-1.5">
             <div className="font-bold text-[#1D1D1F] flex items-center justify-between">
-              <span>Database Recovery</span>
-              <span className="text-emerald-600 font-mono text-[10px]">PITR WAL</span>
+              <span>Database Backups</span>
+              <span className="text-emerald-600 font-mono text-[10px]">Continuous</span>
             </div>
             <div className="space-y-1 text-[#86868B] text-[11px]">
               <div>• Mode: <span className="font-mono text-[#1D1D1F]">Continuous WAL</span></div>
-              <div>• RLS Isolation: <span className="font-mono text-[#1D1D1F]">21 Tables Enforced</span></div>
-              <div>• Super Admin Trigger: <span className="text-purple-700 font-mono font-bold">Active</span></div>
+              <div>• Security: <span className="font-mono text-[#1D1D1F]">RLS Enforced</span></div>
+              <div>• Server Role: <span className="text-purple-700 font-mono font-bold">Active</span></div>
             </div>
           </div>
 
           {/* Health 4: Production Uptime */}
-          <div className="p-3.5 bg-[#F5F5F7] rounded-2xl space-y-2">
+          <div className="p-3 bg-[#F5F5F7] rounded-xl space-y-1.5">
             <div className="font-bold text-[#1D1D1F] flex items-center justify-between">
-              <span>Production Uptime</span>
+              <span>Uptime</span>
               <span className="text-emerald-600 font-mono text-[10px]">99.99%</span>
             </div>
             <div className="space-y-1 text-[#86868B] text-[11px]">
               <div>• Host: <span className="font-mono text-[#1D1D1F]">artsyproduction.com</span></div>
-              <div>• Edge CDN: <span className="font-mono text-[#1D1D1F]">Vercel Anycast</span></div>
-              <div>• Edge Latency: <span className="text-emerald-600 font-mono">~42ms</span></div>
+              <div>• Edge CDN: <span className="font-mono text-[#1D1D1F]">Vercel Edge</span></div>
+              <div>• Latency: <span className="text-emerald-600 font-mono">~42ms</span></div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Unified Tab Navigation Bar */}
-      <div className="bg-white rounded-2xl p-2 border border-[#E5E5E7] shadow-xs flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+      <div className="bg-white rounded-xl p-1.5 border border-[#E5E5E7] shadow-xs flex items-center gap-1.5 overflow-x-auto no-scrollbar">
         {[
           { id: 'overview', label: 'Overview', icon: '⚡' },
           { id: 'dispatch', label: `Projects (${orders.length})`, icon: '🎬' },
@@ -703,7 +703,7 @@ export default function UnifiedAdminDashboard() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as typeof activeTab)}
-            className={`shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            className={`shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === tab.id
                 ? 'bg-[#1D1D1F] text-white shadow-xs'
                 : 'text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#F5F5F7]'
@@ -831,36 +831,36 @@ export default function UnifiedAdminDashboard() {
           )}
 
           {/* Quick Hub Grids: Station Operations Desks */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
               <h2 className="text-xs uppercase font-bold text-[#86868B] tracking-wider">
-                Station Operations Desks
+                Operations Quick Links
               </h2>
-              <span className="text-xs text-[#86868B]">6 Modular Sub-Systems</span>
+              <span className="text-xs text-[#86868B]">6 Departments</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {/* Desk 1: Vetting */}
               <div
                 onClick={() => setActiveTab('vetting')}
-                className="group bg-white rounded-2xl p-6 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                className="group bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#3B82F6] flex items-center justify-center font-bold text-lg mb-4 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 text-[#3B82F6] flex items-center justify-center font-bold text-base mb-3 group-hover:scale-105 transition-transform">
                     📋
                   </div>
-                  <h3 className="text-base font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
-                    Roster Vetting Queue
+                  <h3 className="text-sm font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
+                    Creator Applications
                   </h3>
-                  <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                    Screen candidate portfolios, evaluate 4K timelines, and approve editors with automated WhatsApp contract links.
+                  <p className="text-xs text-[#86868B] mt-1 leading-relaxed">
+                    Review applicant portfolios, test clips, and approve verified editors.
                   </p>
                 </div>
-                <div className="mt-5 pt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+                <div className="mt-4 pt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
                   <span className="font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md">
                     {pendingCandidatesCount} Pending Review
                   </span>
                   <span className="text-[#3B82F6] font-bold group-hover:translate-x-1 transition-transform">
-                    Open Queue →
+                    Review →
                   </span>
                 </div>
               </div>
@@ -868,25 +868,25 @@ export default function UnifiedAdminDashboard() {
               {/* Desk 2: Verified Freelancers */}
               <Link
                 href="/admin/freelancers"
-                className="group bg-white rounded-2xl p-6 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                className="group bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg mb-4 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base mb-3 group-hover:scale-105 transition-transform">
                     🎖️
                   </div>
-                  <h3 className="text-base font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
-                    Verified Freelancers Roster
+                  <h3 className="text-sm font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
+                    Verified Creators
                   </h3>
-                  <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                    Directory of certified DaVinci colorists, narrative editors, reliability metrics, and active timeline loads.
+                  <p className="text-xs text-[#86868B] mt-1 leading-relaxed">
+                    Browse active editors and colorists, skill sets, and work status.
                   </p>
                 </div>
-                <div className="mt-5 pt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+                <div className="mt-4 pt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
                   <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                    Active Talent Roster
+                    Active Roster
                   </span>
                   <span className="text-[#3B82F6] font-bold group-hover:translate-x-1 transition-transform">
-                    View Directory →
+                    Directory →
                   </span>
                 </div>
               </Link>
@@ -894,25 +894,25 @@ export default function UnifiedAdminDashboard() {
               {/* Desk 3: Pricing & SLAs */}
               <div
                 onClick={() => setActiveTab('pricing')}
-                className="group bg-white rounded-2xl p-6 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                className="group bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-lg mb-4 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-base mb-3 group-hover:scale-105 transition-transform">
                     ⚙️
                   </div>
-                  <h3 className="text-base font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
-                    Pricing &amp; Catalog SLAs
+                  <h3 className="text-sm font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
+                    Pricing &amp; Delivery Times
                   </h3>
-                  <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                    Fine-tune tier rates, adjust 70/30 creator revenue split, calculate GST liabilities, and configure turnaround windows.
+                  <p className="text-xs text-[#86868B] mt-1 leading-relaxed">
+                    Set base rates, creator revenue splits, taxes, and turnaround times.
                   </p>
                 </div>
-                <div className="mt-5 pt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+                <div className="mt-4 pt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
                   <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md">
-                    Waterfall Simulator
+                    Rate Simulator
                   </span>
                   <span className="text-[#3B82F6] font-bold group-hover:translate-x-1 transition-transform">
-                    Simulate Rates →
+                    Configure →
                   </span>
                 </div>
               </div>
@@ -920,25 +920,25 @@ export default function UnifiedAdminDashboard() {
               {/* Desk 4: Production Vault */}
               <div
                 onClick={() => setActiveTab('vault')}
-                className="group bg-white rounded-2xl p-6 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                className="group bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg mb-4 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-base mb-3 group-hover:scale-105 transition-transform">
                     🏦
                   </div>
-                  <h3 className="text-base font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
-                    Production Vault Ledger
+                  <h3 className="text-sm font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
+                    Payments &amp; Payouts
                   </h3>
-                  <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                    Authorize batch NEFT creator disbursements, manage Section 194C TDS deductions, and download GSTR-1 returns.
+                  <p className="text-xs text-[#86868B] mt-1 leading-relaxed">
+                    Process creator NEFT bank transfers and track platform fees and taxes.
                   </p>
                 </div>
-                <div className="mt-5 pt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+                <div className="mt-4 pt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
                   <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">
-                    ₹{readyPayoutTotal.toLocaleString('en-IN')} Ready for NEFT
+                    ₹{readyPayoutTotal.toLocaleString('en-IN')} Ready
                   </span>
                   <span className="text-[#3B82F6] font-bold group-hover:translate-x-1 transition-transform">
-                    Manage Vault →
+                    Open Vault →
                   </span>
                 </div>
               </div>
@@ -946,25 +946,25 @@ export default function UnifiedAdminDashboard() {
               {/* Desk 5: Production Catalog */}
               <Link
                 href="/admin/catalog"
-                className="group bg-white rounded-2xl p-6 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                className="group bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg mb-4 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-base mb-3 group-hover:scale-105 transition-transform">
                     📦
                   </div>
-                  <h3 className="text-base font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
-                    Production Catalog
+                  <h3 className="text-sm font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
+                    Services Catalog
                   </h3>
-                  <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                    Manage internal service offerings, timeline conform rules, audio stem mastering specs, and multi-cam standards.
+                  <p className="text-xs text-[#86868B] mt-1 leading-relaxed">
+                    Manage service packages, scope rules, and deliverable specs.
                   </p>
                 </div>
-                <div className="mt-5 pt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+                <div className="mt-4 pt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
-                    3 Core Service Lines
+                    Catalog Items
                   </span>
                   <span className="text-[#3B82F6] font-bold group-hover:translate-x-1 transition-transform">
-                    Specs &amp; Formats →
+                    View Catalog →
                   </span>
                 </div>
               </Link>
@@ -972,26 +972,26 @@ export default function UnifiedAdminDashboard() {
               {/* Desk 6: Pipeline Telemetry */}
               <div
                 onClick={() => setActiveTab('telemetry')}
-                className="group bg-white rounded-2xl p-6 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                className="group bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] hover:border-[#3B82F6] hover:shadow-xs transition-all cursor-pointer flex flex-col justify-between"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-lg mb-4 group-hover:scale-105 transition-transform">
+                  <div className="w-9 h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-base mb-3 group-hover:scale-105 transition-transform">
                     📡
                   </div>
-                  <h3 className="text-base font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
-                    Pipeline Telemetry
+                  <h3 className="text-sm font-bold text-[#1D1D1F] group-hover:text-[#3B82F6] transition-colors">
+                    System Telemetry
                   </h3>
-                  <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                    Real-time monitoring of Backblaze B2 raw ingest vaults, BunnyCDN video proxies, and WhatsApp Meta Cloud API dispatch health.
+                  <p className="text-xs text-[#86868B] mt-1 leading-relaxed">
+                    Live status for video storage, streaming CDNs, WhatsApp API, and database.
                   </p>
                 </div>
-                <div className="mt-5 pt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+                <div className="mt-4 pt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
                   <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    5 Gateways Online
+                    Gateways Online
                   </span>
                   <span className="text-[#3B82F6] font-bold group-hover:translate-x-1 transition-transform">
-                    Live Nodes →
+                    Check Status →
                   </span>
                 </div>
               </div>
@@ -999,33 +999,33 @@ export default function UnifiedAdminDashboard() {
           </div>
 
           {/* Quick Dual Columns: Active Slate Preview + System Audit Stream */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
             {/* Active Slate Preview (2 cols) */}
-            <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-[#E5E5E7] shadow-xs space-y-4">
+            <div className="lg:col-span-2 bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs space-y-3.5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-[#1D1D1F]">Active Project Dispatch Slate</h3>
-                  <p className="text-xs text-[#86868B] mt-0.5">High-priority client orders requiring editor lock</p>
+                  <h3 className="text-sm sm:text-base font-bold text-[#1D1D1F]">Active Projects</h3>
+                  <p className="text-xs text-[#86868B] mt-0.5">Orders requiring editor assignment or QA</p>
                 </div>
                 <button
                   onClick={() => setActiveTab('dispatch')}
                   className="text-xs font-bold text-[#3B82F6] hover:underline cursor-pointer"
                 >
-                  View All Orders ({orders.length}) →
+                  View All ({orders.length}) →
                 </button>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {orders.length === 0 ? (
-                  <div className="p-8 text-center bg-[#F5F5F7] rounded-2xl border border-dashed border-[#E5E5E7]">
-                    <div className="text-2xl mb-1">🎬</div>
-                    <div className="text-xs font-semibold text-[#86868B]">No production orders registered yet.</div>
+                  <div className="p-6 text-center bg-[#F5F5F7] rounded-xl border border-dashed border-[#E5E5E7]">
+                    <div className="text-xl mb-1">🎬</div>
+                    <div className="text-xs font-semibold text-[#86868B]">No active projects yet.</div>
                   </div>
                 ) : (
                   orders.slice(0, 3).map((order) => (
                     <div
                       key={order.id}
-                      className="p-4 rounded-2xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                      className="p-3 sm:p-3.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
                       <div>
                         <div className="flex items-center gap-2">
@@ -1034,18 +1034,18 @@ export default function UnifiedAdminDashboard() {
                           </span>
                           <span className="text-xs font-bold text-[#1D1D1F]">{order.title}</span>
                         </div>
-                        <div className="text-[11px] text-[#86868B] mt-1">
-                          Client: {order.client} • {order.cameraProfile} • ₹{order.amount.toLocaleString('en-IN')} INR
+                        <div className="text-[11px] text-[#86868B] mt-0.5">
+                          Client: {order.client} • {order.cameraProfile} • ₹{order.amount.toLocaleString('en-IN')}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
                         {order.assignedEditor ? (
-                          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                             Assigned ({order.assignedEditor})
                           </span>
                         ) : (
-                          <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                          <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                             Unassigned
                           </span>
                         )}
@@ -1054,7 +1054,7 @@ export default function UnifiedAdminDashboard() {
                             setActiveTab('dispatch');
                             setAssigningOrderId(order.id);
                           }}
-                          className="text-xs font-bold px-3 py-1.5 rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white cursor-pointer transition-colors shadow-2xs"
+                          className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white cursor-pointer transition-colors shadow-2xs"
                         >
                           {order.assignedEditor ? 'Reassign' : 'Assign'}
                         </button>
@@ -1066,39 +1066,39 @@ export default function UnifiedAdminDashboard() {
             </div>
 
             {/* Audit Stream Console (1 col) */}
-            <div className="bg-white rounded-3xl p-6 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
+            <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-bold text-[#1D1D1F]">Audit Stream</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm sm:text-base font-bold text-[#1D1D1F]">Audit Stream</h3>
                   <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded font-bold">
-                    WORM Active
+                    Active
                   </span>
                 </div>
-                <div className="space-y-3">
-                  <div className="text-xs p-3 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7]">
+                <div className="space-y-2.5">
+                  <div className="text-xs p-2.5 rounded-lg bg-[#F5F5F7] border border-[#E5E5E7]">
                     <div className="text-[10px] text-[#86868B]">Active</div>
-                    <div className="font-semibold text-[#1D1D1F] mt-0.5">WORM Ledger Monitored</div>
-                    <div className="text-[#86868B] text-[11px]">System operating in production mode. Zero tampering detected.</div>
+                    <div className="font-semibold text-[#1D1D1F] mt-0.5">Security Audit Logged</div>
+                    <div className="text-[#86868B] text-[11px]">System operating normally with zero violations.</div>
                   </div>
-                  <div className="text-xs p-3 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7]">
+                  <div className="text-xs p-2.5 rounded-lg bg-[#F5F5F7] border border-[#E5E5E7]">
                     <div className="text-[10px] text-[#86868B]">Live</div>
                     <div className="font-semibold text-[#1D1D1F] mt-0.5">Vault Inflow Secured</div>
-                    <div className="text-[#86868B] text-[11px]">Webhook gateways active and listening for payment events.</div>
+                    <div className="text-[#86868B] text-[11px]">Payment webhooks active and listening.</div>
                   </div>
-                  <div className="text-xs p-3 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7]">
-                    <div className="text-[10px] text-[#86868B]">1 hr ago</div>
+                  <div className="text-xs p-2.5 rounded-lg bg-[#F5F5F7] border border-[#E5E5E7]">
+                    <div className="text-[10px] text-[#86868B]">1h ago</div>
                     <div className="font-semibold text-[#1D1D1F] mt-0.5">SLA Check Passed</div>
-                    <div className="text-[#86868B] text-[11px]">Zero delivery breaches recorded for 24h cycle.</div>
+                    <div className="text-[#86868B] text-[11px]">Zero delivery breaches recorded.</div>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-[#F5F5F7] text-center">
+              <div className="pt-3 border-t border-[#F5F5F7] text-center">
                 <button
                   onClick={() => setActiveTab('telemetry')}
                   className="text-xs font-bold text-[#3B82F6] hover:underline cursor-pointer"
                 >
-                  View Full Telemetry &amp; Logs →
+                  View System Status →
                 </button>
               </div>
             </div>
@@ -1110,14 +1110,14 @@ export default function UnifiedAdminDashboard() {
       {/* TAB 2: DISPATCH SLATE */}
       {/* ========================================================================= */}
       {activeTab === 'dispatch' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-extrabold text-[#1D1D1F]">
-                Active Project Dispatch Slate
+              <h2 className="text-lg sm:text-xl font-extrabold text-[#1D1D1F]">
+                Active Projects &amp; Assignments
               </h2>
               <p className="text-xs text-[#86868B] mt-0.5">
-                Match verified editors to client orders, track delivery countdowns, and supervise timeline conform.
+                Assign editors to client orders, monitor turnaround deadlines, and review cuts.
               </p>
             </div>
 
@@ -1125,17 +1125,17 @@ export default function UnifiedAdminDashboard() {
             <div className="flex flex-wrap items-center gap-2">
               <input
                 type="text"
-                placeholder="Search orders, clients, or editors..."
+                placeholder="Search orders, clients, editors..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-[#E5E5E7] bg-white text-xs text-[#1D1D1F] focus:outline-none focus:border-[#3B82F6] w-64"
+                className="px-3 py-1.5 rounded-lg border border-[#E5E5E7] bg-white text-xs text-[#1D1D1F] focus:outline-none focus:border-[#3B82F6] w-56 sm:w-64"
               />
-              <div className="flex items-center gap-1 bg-[#F5F5F7] p-1 rounded-xl border border-[#E5E5E7]">
+              <div className="flex items-center gap-1 bg-[#F5F5F7] p-1 rounded-lg border border-[#E5E5E7]">
                 {(['all', 'unassigned', 'in_progress', 'review_ready'] as const).map((filterKey) => (
                   <button
                     key={filterKey}
                     onClick={() => setOrderFilter(filterKey)}
-                    className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-colors cursor-pointer capitalize ${
+                    className={`px-2.5 py-1 text-[11px] font-bold rounded-md transition-colors cursor-pointer capitalize ${
                       orderFilter === filterKey
                         ? 'bg-white text-[#1D1D1F] shadow-2xs'
                         : 'text-[#86868B] hover:text-[#1D1D1F]'
@@ -1149,16 +1149,16 @@ export default function UnifiedAdminDashboard() {
           </div>
 
           {/* Orders List */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {filteredOrders.length === 0 ? (
-              <div className="p-12 text-center bg-white rounded-3xl border border-[#E5E5E7]">
-                <p className="text-sm font-semibold text-[#86868B]">No orders found matching current criteria.</p>
+              <div className="p-8 text-center bg-white rounded-xl border border-[#E5E5E7]">
+                <p className="text-xs font-semibold text-[#86868B]">No orders found matching current criteria.</p>
               </div>
             ) : (
               filteredOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 hover:border-[#3B82F6]/50 transition-colors"
+                  className="bg-white rounded-xl p-3.5 sm:p-4 border border-[#E5E5E7] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-[#3B82F6]/50 transition-colors"
                 >
                   <div className="space-y-1.5 flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -1238,29 +1238,29 @@ export default function UnifiedAdminDashboard() {
       {/* TAB 3: VETTING QUEUE */}
       {/* ========================================================================= */}
       {activeTab === 'vetting' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-extrabold text-[#1D1D1F]">
-                Creator Roster Vetting Queue
+              <h2 className="text-lg sm:text-xl font-extrabold text-[#1D1D1F]">
+                Creator Applications
               </h2>
               <p className="text-xs text-[#86868B] mt-0.5">
-                Review applicant showreels, ACES color grades, and timeline conform capabilities.
+                Review applicant portfolios, software skills, and video samples.
               </p>
             </div>
             <Link
               href="/admin/freelancers"
               className="text-xs font-bold text-[#3B82F6] hover:underline"
             >
-              View Active Roster Directory →
+              Active Creators Directory →
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {candidates.map((cand) => (
               <div
                 key={cand.ref}
-                className={`bg-white rounded-2xl p-6 border transition-all shadow-xs flex flex-col justify-between ${
+                className={`bg-white rounded-xl p-4 sm:p-5 border transition-all shadow-xs flex flex-col justify-between ${
                   cand.status === 'approved'
                     ? 'border-emerald-300 bg-emerald-50/10'
                     : cand.status === 'rejected'
@@ -1369,14 +1369,14 @@ export default function UnifiedAdminDashboard() {
       {/* TAB 4: PRODUCTION VAULT & PAYOUTS */}
       {/* ========================================================================= */}
       {activeTab === 'vault' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-extrabold text-[#1D1D1F]">
-                Production Vault Ledger &amp; Creator Disbursements
+              <h2 className="text-lg sm:text-xl font-extrabold text-[#1D1D1F]">
+                Payments &amp; Creator Payouts
               </h2>
               <p className="text-xs text-[#86868B] mt-0.5">
-                Execute batch NEFT settlements, track Section 194C TDS compliance, and audit corporate banking balances.
+                Send creator payouts via NEFT, track TDS deductions, and review platform balances.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -1384,52 +1384,52 @@ export default function UnifiedAdminDashboard() {
                 href="/admin/vault"
                 className="text-xs font-bold text-[#3B82F6] hover:underline"
               >
-                Deep Vault Explorer →
+                Full Ledger →
               </Link>
             </div>
           </div>
 
           {/* Ledger Overview Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs">
-              <div className="text-[10px] uppercase font-bold text-[#86868B]">Vault Inflow Pool</div>
-              <div className="text-2xl font-mono font-extrabold text-[#1D1D1F] mt-2">₹1,42,000</div>
-              <div className="text-[11px] text-emerald-600 font-semibold mt-1">Direct NEFT Holding Active</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs">
+              <div className="text-[10px] uppercase font-bold text-[#86868B]">Total Pool</div>
+              <div className="text-2xl font-mono font-extrabold text-[#1D1D1F] mt-1.5">₹1,42,000</div>
+              <div className="text-[11px] text-emerald-600 font-semibold mt-0.5">Holding in Escrow</div>
             </div>
-            <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs">
-              <div className="text-[10px] uppercase font-bold text-[#86868B]">Ready for Creator Release</div>
-              <div className="text-2xl font-mono font-extrabold text-emerald-600 mt-2">
+            <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs">
+              <div className="text-[10px] uppercase font-bold text-[#86868B]">Ready for Payout</div>
+              <div className="text-2xl font-mono font-extrabold text-emerald-600 mt-1.5">
                 ₹{readyPayoutTotal.toLocaleString('en-IN')}
               </div>
-              <div className="text-[11px] text-[#86868B] mt-1">Pending Client Approval: ₹84,000</div>
+              <div className="text-[11px] text-[#86868B] mt-0.5">Pending Approval: ₹84,000</div>
             </div>
-            <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs">
-              <div className="text-[10px] uppercase font-bold text-[#86868B]">TDS Retained (Sec 194C)</div>
-              <div className="text-2xl font-mono font-extrabold text-[#1D1D1F] mt-2">₹1,420</div>
-              <div className="text-[11px] text-[#86868B] mt-1">1% PAN-Compliant Withholding</div>
+            <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs">
+              <div className="text-[10px] uppercase font-bold text-[#86868B]">TDS Retained (2%)</div>
+              <div className="text-2xl font-mono font-extrabold text-[#1D1D1F] mt-1.5">₹1,420</div>
+              <div className="text-[11px] text-[#86868B] mt-0.5">Sec 194J Compliant</div>
             </div>
-            <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs">
+            <div className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs">
               <div className="text-[10px] uppercase font-bold text-[#86868B]">GST Liability (18%)</div>
-              <div className="text-2xl font-mono font-extrabold text-[#1D1D1F] mt-2">₹21,661</div>
-              <div className="text-[11px] text-[#86868B] mt-1">GSTR-1 JSON Export Ready</div>
+              <div className="text-2xl font-mono font-extrabold text-[#1D1D1F] mt-1.5">₹21,661</div>
+              <div className="text-[11px] text-[#86868B] mt-0.5">GSTR-1 Ready</div>
             </div>
           </div>
 
           {/* Batch NEFT Execution Console */}
-          <div className="bg-white rounded-3xl p-6 border border-[#E5E5E7] shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base font-bold text-[#1D1D1F]">Pending Creator Disbursements</h3>
-                <p className="text-xs text-[#86868B] mt-0.5">Approved client masters ready for Direct NEFT transmission</p>
+                <h3 className="text-sm sm:text-base font-bold text-[#1D1D1F]">Pending Creator Payouts</h3>
+                <p className="text-xs text-[#86868B] mt-0.5">Approved milestones ready for NEFT bank transfer</p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={handleBatchNeftRelease}
                   disabled={isDispatchingNeft || readyPayoutTotal === 0}
-                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-2"
+                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
-                  <span>{isDispatchingNeft ? 'Connecting Gateway...' : 'Execute Batch NEFT Payout'}</span>
+                  <span>{isDispatchingNeft ? 'Sending...' : 'Send Batch NEFT Payout'}</span>
                   <span>→</span>
                 </button>
               </div>
@@ -1787,32 +1787,32 @@ export default function UnifiedAdminDashboard() {
       {/* TAB 6: TELEMETRY & SYSTEM LOGS */}
       {/* ========================================================================= */}
       {activeTab === 'telemetry' && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-extrabold text-[#1D1D1F]">
-                Pipeline Telemetry &amp; System Health
+              <h2 className="text-lg sm:text-xl font-extrabold text-[#1D1D1F]">
+                System Status &amp; Telemetry
               </h2>
               <p className="text-xs text-[#86868B] mt-0.5">
-                Real-time latency monitoring for raw ingest buckets, proxy CDNs, WhatsApp dispatch nodes, and database connections.
+                Live latency and status for storage, video streaming, WhatsApp, and database.
               </p>
             </div>
             <button
               onClick={handlePingNodes}
               disabled={isPinging}
-              className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold cursor-pointer transition-colors shadow-xs flex items-center gap-2"
+              className="px-3.5 py-1.5 rounded-lg bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold cursor-pointer transition-colors shadow-xs flex items-center gap-1.5"
             >
-              <span>{isPinging ? 'Pinging Infrastructure...' : 'Ping All Nodes Now'}</span>
+              <span>{isPinging ? 'Checking...' : 'Check All Nodes'}</span>
               <span>🔄</span>
             </button>
           </div>
 
           {/* Node Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {nodes.map((node) => (
               <div
                 key={node.name}
-                className="bg-white rounded-2xl p-5 border border-[#E5E5E7] shadow-xs flex flex-col justify-between space-y-4"
+                className="bg-white rounded-xl p-4 border border-[#E5E5E7] shadow-xs flex flex-col justify-between space-y-3"
               >
                 <div>
                   <div className="flex items-center justify-between">
@@ -1823,12 +1823,12 @@ export default function UnifiedAdminDashboard() {
                     </span>
                   </div>
                   <h3 className="text-sm font-bold text-[#1D1D1F] mt-1">{node.name}</h3>
-                  <div className="text-[11px] font-mono text-[#86868B] mt-1 truncate">{node.endpoint}</div>
-                  <p className="text-xs text-[#86868B] mt-2 leading-relaxed">{node.details}</p>
+                  <div className="text-[11px] font-mono text-[#86868B] mt-0.5 truncate">{node.endpoint}</div>
+                  <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">{node.details}</p>
                 </div>
 
-                <div className="pt-3 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
-                  <span className="text-[#86868B]">Edge Latency:</span>
+                <div className="pt-2.5 border-t border-[#F5F5F7] flex items-center justify-between text-xs">
+                  <span className="text-[#86868B]">Latency:</span>
                   <span className="font-mono font-bold text-emerald-600">{node.latencyMs} ms</span>
                 </div>
               </div>
@@ -1836,8 +1836,8 @@ export default function UnifiedAdminDashboard() {
           </div>
 
           {/* Real-time Streaming Audit Terminal */}
-          <div className="bg-[#0A0A0F] text-white rounded-3xl p-6 border border-[#262626] shadow-xl space-y-4 font-mono text-xs">
-            <div className="flex items-center justify-between border-b border-[#262626] pb-3">
+          <div className="bg-[#0A0A0F] text-white rounded-xl p-4 sm:p-5 border border-[#262626] shadow-xl space-y-3 font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-[#262626] pb-2.5">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-red-500/80"></span>
                 <span className="w-3 h-3 rounded-full bg-amber-500/80"></span>

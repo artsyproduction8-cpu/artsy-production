@@ -737,11 +737,11 @@ export default function ClientProfilePage() {
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen">
-          <div className="p-6 md:p-8 space-y-8 max-w-4xl mx-auto">
+          <div className="p-4 sm:p-5 space-y-5 max-w-4xl mx-auto">
             {/* Toast Feedback */}
             {savedFeedback && (
-              <div className="fixed top-20 right-6 z-50 p-4 rounded-2xl bg-emerald-600 text-white text-xs font-semibold shadow-2xl border border-white/20 flex items-center gap-3 animate-fade-in">
-                <span>✓ Profile, studio identity, billing, and workspace settings saved successfully.</span>
+              <div className="fixed top-20 right-6 z-50 p-3.5 rounded-xl bg-emerald-600 text-white text-xs font-semibold shadow-2xl border border-white/20 flex items-center gap-2.5 animate-fade-in">
+                <span>✓ Profile settings saved successfully.</span>
                 <button
                   type="button"
                   onClick={() => setSavedFeedback(false)}
@@ -753,13 +753,13 @@ export default function ClientProfilePage() {
             )}
 
             {/* Header Strip (without any breadcrumb sub-names) */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
+                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1D1D1F]">
                   Profile &amp; Workspace
                 </h1>
-                <p className="text-xs sm:text-sm text-[#86868B] mt-1">
-                  Manage your contact details, company name, logo, billing info, and shared storage folders.
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Manage your contact details, company name, logo, billing info, and storage folders.
                 </p>
               </div>
 
@@ -767,7 +767,7 @@ export default function ClientProfilePage() {
                 type="button"
                 onClick={handleSaveProfile}
                 disabled={saving}
-                className="self-start sm:self-auto px-5 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
+                className="self-start sm:self-auto px-4 py-2 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 {saving ? 'Saving...' : 'Save Profile'}
               </button>

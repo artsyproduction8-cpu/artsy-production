@@ -89,63 +89,63 @@ export default function AdminOrdersPage() {
   });
 
   return (
-    <div className="w-full space-y-8 font-sans">
+    <div className="w-full space-y-5 font-sans">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-8 z-50 p-4 rounded-2xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-xl border border-white/10 flex items-center gap-3 animate-fade-in">
+        <div className="fixed top-20 right-8 z-50 p-3 sm:p-4 rounded-xl bg-[#1D1D1F] text-white text-xs font-semibold shadow-xl border border-white/10 flex items-center gap-3 animate-fade-in">
           <span>{toastMessage}</span>
           <button onClick={() => setToastMessage(null)} className="text-white/60 hover:text-white ml-2">✕</button>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <Link href="/admin" className="text-xs text-[#86868B] hover:text-[#1D1D1F]">
               Dashboard
             </Link>
             <span className="text-xs text-[#86868B]">/</span>
-            <span className="text-xs font-bold text-[#1D1D1F]">Client Orders</span>
+            <span className="text-xs font-bold text-[#1D1D1F]">Orders</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
-            Studio Production Orders
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#1D1D1F] tracking-tight mt-1">
+            Orders &amp; Dispatches
           </h1>
-          <p className="text-xs text-[#86868B] mt-1">
-            Real-time orders ledger, payment confirmation gate, and client billing lifecycle.
+          <p className="text-xs text-[#86868B] mt-0.5">
+            Client bookings, payment status, and project dispatches.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={fetchOrders}
-            className="px-4 py-2 bg-white border border-[#E5E5E7] text-[#1D1D1F] text-xs font-semibold rounded-xl hover:bg-[#F5F5F7] transition-colors cursor-pointer shadow-xs"
+            className="px-3.5 py-1.5 bg-white border border-[#E5E5E7] text-[#1D1D1F] text-xs font-semibold rounded-lg hover:bg-[#F5F5F7] transition-colors cursor-pointer shadow-xs"
           >
-            ↻ Refresh Orders
+            ↻ Refresh
           </button>
           <Link
             href="/admin"
-            className="px-4 py-2 bg-[#1D1D1F] text-white text-xs font-semibold rounded-xl hover:bg-black transition-colors"
+            className="px-3.5 py-1.5 bg-[#1D1D1F] text-white text-xs font-semibold rounded-lg hover:bg-black transition-colors"
           >
-            ← Admin Console
+            ← Dashboard
           </Link>
         </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-[#E5E5E7] pb-3">
+      <div className="flex items-center gap-1.5 border-b border-[#E5E5E7] pb-2.5">
         {(['all', 'pending', 'paid', 'completed'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setFilter(tab)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer ${
+            className={`px-3 py-1 rounded-md text-xs font-semibold capitalize transition-all cursor-pointer ${
               filter === tab
                 ? 'bg-[#1D1D1F] text-white shadow-xs'
                 : 'text-[#86868B] hover:text-[#1D1D1F] hover:bg-white'
             }`}
           >
             {tab === 'pending' ? 'Pending Payment' : tab}
-            <span className="ml-1.5 opacity-60 text-[10px]">
+            <span className="ml-1 opacity-60 text-[10px]">
               ({tab === 'all'
                 ? orders.length
                 : orders.filter((o) => {
@@ -160,29 +160,29 @@ export default function AdminOrdersPage() {
       </div>
 
       {/* Orders Table */}
-      <div className="bg-white rounded-2xl border border-[#E5E5E7] overflow-hidden shadow-xs">
+      <div className="bg-white rounded-xl border border-[#E5E5E7] overflow-hidden shadow-xs">
         {loading ? (
-          <div className="p-16 text-center text-xs text-[#86868B] animate-pulse">
-            Loading client orders from Supabase PostgreSQL...
+          <div className="p-12 text-center text-xs text-[#86868B] animate-pulse">
+            Loading client orders...
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="p-16 text-center">
-            <div className="text-2xl mb-2">📋</div>
-            <h3 className="text-sm font-semibold text-[#1D1D1F]">No orders found</h3>
-            <p className="text-xs text-[#86868B] mt-1">There are no client bookings under the selected filter.</p>
+          <div className="p-12 text-center">
+            <div className="text-xl mb-1.5">📋</div>
+            <h3 className="text-xs font-semibold text-[#1D1D1F]">No orders found</h3>
+            <p className="text-[11px] text-[#86868B] mt-0.5">There are no client bookings under this filter.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#F5F5F7] text-[#86868B] font-semibold border-b border-[#E5E5E7] uppercase tracking-wider text-[10px]">
                 <tr>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Order #</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Client</th>
-                  <th className="py-3.5 px-4">Service Package</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Amount</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Date</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap text-right">Actions</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Order #</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Client</th>
+                  <th className="py-2.5 px-3">Service Package</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Amount</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Status</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Date</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E7]">
@@ -192,52 +192,52 @@ export default function AdminOrdersPage() {
 
                   return (
                     <tr key={order.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-4 px-4 font-mono font-bold text-[#1D1D1F] whitespace-nowrap">
+                      <td className="py-2.5 px-3 font-mono font-bold text-[#1D1D1F] whitespace-nowrap">
                         {order.orderNum}
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="py-2.5 px-3">
                         <div className="font-semibold text-[#1D1D1F] whitespace-nowrap">{order.client}</div>
                         {order.clientPhone && (
                           <div className="text-[10px] text-[#86868B] whitespace-nowrap">{order.clientPhone}</div>
                         )}
                       </td>
-                      <td className="py-4 px-4">
+                      <td className="py-2.5 px-3">
                         <div className="font-medium text-[#1D1D1F]">{order.title}</div>
                         <div className="text-[10px] text-[#86868B] capitalize">{order.type} • {order.cameraProfile}</div>
                       </td>
-                      <td className="py-4 px-4 font-mono font-bold text-emerald-600 whitespace-nowrap">
+                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-600 whitespace-nowrap">
                         ₹{order.amount.toLocaleString('en-IN')}
                       </td>
-                      <td className="py-4 px-4 whitespace-nowrap">
+                      <td className="py-2.5 px-3 whitespace-nowrap">
                         {isPaid ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                             PAID
                           </span>
                         ) : isPending ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
                             PENDING PAYMENT
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
                             {order.rawStatus.toUpperCase()}
                           </span>
                         )}
                       </td>
-                      <td className="py-4 px-4 text-[#86868B] text-[11px]">
+                      <td className="py-2.5 px-3 text-[#86868B] text-[11px]">
                         {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric'
                         }) : 'Recent'}
                       </td>
-                      <td className="py-4 px-4 text-right">
+                      <td className="py-2.5 px-3 text-right">
                         {isPending && (
                           <button
                             onClick={() => handleMarkAsPaid(order)}
                             disabled={updatingId === order.id}
-                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px] rounded-lg transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px] rounded-md transition-colors cursor-pointer shadow-xs disabled:opacity-50"
                           >
                             {updatingId === order.id ? 'Updating...' : 'Mark as Paid'}
                           </button>

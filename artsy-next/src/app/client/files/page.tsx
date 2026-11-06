@@ -106,39 +106,39 @@ export default function ClientFilesPage() {
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen">
-          <div className="p-4 sm:p-6 lg:p-8 space-y-6 w-full max-w-[1600px] mx-auto">
+          <div className="p-4 sm:p-5 space-y-4 w-full max-w-[1400px] mx-auto">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
+                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1D1D1F]">
                   Files &amp; Footage
                 </h1>
-                <p className="text-xs sm:text-sm text-[#86868B] mt-0.5">
-                  Direct access to your camera raw footage links, draft preview videos, and final 4K master exports.
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Direct links to your raw footage, preview drafts, and final 4K master files.
                 </p>
               </div>
               <Link
                 href="/client/review"
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-semibold text-[#1D1D1F] rounded-xl transition-colors shrink-0 shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-semibold text-[#1D1D1F] rounded-xl transition-colors shrink-0 shadow-2xs"
               >
-                <span>Interactive Review Player</span>
+                <span>Review Suite</span>
                 <span>→</span>
               </Link>
             </div>
 
             {/* Retention Warning Banner (if files expiring within 7 days) */}
             {expiringFiles.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xs">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-base shrink-0">
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 sm:p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-xs">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-sm shrink-0">
                     !
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-amber-900">
-                      Storage Notice: {expiringFiles.length} file{expiringFiles.length > 1 ? 's' : ''} will be removed within 7 days
+                    <h2 className="text-xs font-bold text-amber-900">
+                      Storage Notice: {expiringFiles.length} file{expiringFiles.length > 1 ? 's' : ''} expiring within 7 days
                     </h2>
-                    <p className="text-xs text-amber-800/80 mt-0.5 leading-relaxed">
-                      Raw video footage is stored for 15 days and final master files for 30 days after project completion. Please download any files you want to keep on your computer or drive.
+                    <p className="text-[11px] text-amber-800/80 mt-0.5 leading-relaxed">
+                      Raw footage is kept for 15 days, final files for 30 days. Please save your local copies.
                     </p>
                   </div>
                 </div>
@@ -146,27 +146,27 @@ export default function ClientFilesPage() {
                   <button
                     type="button"
                     onClick={() => setActiveFilter('expiring_soon')}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
                   >
-                    View Expiring Files
+                    View Expiring
                   </button>
                   <a
                     href={`https://wa.me/${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || '').replace(/\D/g, '')}?text=Hello%20Artsy,%20I%20would%20like%20to%20request%20extended%20storage%20for%20my%20files`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-4 py-2 bg-white border border-amber-200 hover:bg-amber-100/50 text-amber-900 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    className="px-3 py-1.5 bg-white border border-amber-200 hover:bg-amber-100/50 text-amber-900 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                   >
-                    Need More Time? Chat with Us
+                    Chat With Us
                   </a>
                 </div>
               </div>
             )}
 
             {/* Filter Tabs */}
-            <div className="flex flex-wrap items-center gap-2 border-b border-[#E5E5E7] pb-3">
+            <div className="flex flex-wrap items-center gap-1.5 border-b border-[#E5E5E7] pb-2.5">
               {(
                 [
-                  { key: 'all', label: `All Files & Links (${files.length})` },
+                  { key: 'all', label: `All Files (${files.length})` },
                   { key: 'raw_footage', label: 'Raw Footage' },
                   { key: 'delivered', label: 'Final Videos' },
                   { key: 'in_progress', label: 'Drafts' },
@@ -177,7 +177,7 @@ export default function ClientFilesPage() {
                   key={tab.key}
                   type="button"
                   onClick={() => setActiveFilter(tab.key)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     activeFilter === tab.key
                       ? 'bg-[#1D1D1F] text-white shadow-2xs'
                       : 'bg-white border border-[#E5E5E7] text-[#86868B] hover:text-[#1D1D1F] hover:bg-white'
@@ -215,13 +215,13 @@ export default function ClientFilesPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {groupedFiles.map(([projectId, { title, number, files: projectFiles }]) => (
-                  <div key={projectId} className="bg-white rounded-2xl border border-[#E5E5E7] p-5 sm:p-6 space-y-4 shadow-2xs">
+                  <div key={projectId} className="bg-white rounded-2xl border border-[#E5E5E7] p-4 sm:p-5 space-y-3 shadow-2xs">
                     {/* Project Group Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F5F5F7] gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-[#F5F5F7] gap-2">
                       <div>
-                        <h2 className="text-base font-bold text-[#1D1D1F]">{title}</h2>
+                        <h2 className="text-sm sm:text-base font-bold text-[#1D1D1F]">{title}</h2>
                         <span className="text-[11px] text-[#86868B] font-mono">
                           {number ? `Order #${number}` : `ID: ${projectId.slice(0, 8)}`} • {projectFiles.length} item{projectFiles.length > 1 ? 's' : ''} available
                         </span>
@@ -230,13 +230,13 @@ export default function ClientFilesPage() {
                         href={`/client/review?project=${encodeURIComponent(projectId)}`}
                         className="text-xs font-semibold text-[#3B82F6] hover:underline flex items-center gap-1"
                       >
-                        <span>Open Video Review Suite</span>
+                        <span>Open Review Suite</span>
                         <span>→</span>
                       </Link>
                     </div>
 
                     {/* Cards Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                       {projectFiles.map((file) => {
                         const now = Date.now();
                         const isExpiring =
@@ -258,7 +258,7 @@ export default function ClientFilesPage() {
                         return (
                           <div
                             key={file.id}
-                            className={`rounded-xl p-4 border transition-all flex flex-col justify-between ${
+                            className={`rounded-xl p-3.5 border transition-all flex flex-col justify-between ${
                               isFinal
                                 ? 'bg-blue-50/30 border-blue-200'
                                 : isRaw
@@ -268,7 +268,7 @@ export default function ClientFilesPage() {
                                 : 'bg-[#F5F5F7] border-[#E5E5E7]'
                             }`}
                           >
-                            <div className="space-y-2">
+                            <div className="space-y-1.5">
                               {/* Top Badge */}
                               <div className="flex items-center justify-between gap-2">
                                 <span
@@ -283,11 +283,11 @@ export default function ClientFilesPage() {
                                   }`}
                                 >
                                   {isFinal
-                                    ? 'Final Approved Video'
+                                    ? 'Final Video'
                                     : isRaw
                                     ? 'Raw Footage'
                                     : isDraft
-                                    ? 'Draft Preview'
+                                    ? 'Draft Cut'
                                     : file.file_type.replace('_', ' ')}
                                 </span>
                                 {isExpiring && (
@@ -302,7 +302,7 @@ export default function ClientFilesPage() {
                                 <h3 className="text-xs font-bold text-[#1D1D1F] leading-snug line-clamp-2" title={file.file_name}>
                                   {file.file_name}
                                 </h3>
-                                <div className="flex items-center gap-1.5 mt-1 text-[11px] text-[#86868B]">
+                                <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[#86868B]">
                                   <span>{file.storage_provider || 'Cloud Storage'}</span>
                                   {file.file_size_bytes > 0 && (
                                     <>
@@ -315,13 +315,13 @@ export default function ClientFilesPage() {
                             </div>
 
                             {/* Action CTA */}
-                            <div className="pt-3 mt-3 border-t border-[#E5E5E7] flex items-center justify-between gap-2">
+                            <div className="pt-2.5 mt-2.5 border-t border-[#E5E5E7] flex items-center justify-between gap-2">
                               {file.download_url ? (
                                 <a
                                   href={file.download_url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className={`w-full py-2 px-3 text-white rounded-lg text-center text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${
+                                  className={`w-full py-1.5 px-3 text-white rounded-lg text-center text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs ${
                                     isFinal
                                       ? 'bg-[#3B82F6] hover:bg-blue-600'
                                       : isRaw
@@ -331,7 +331,7 @@ export default function ClientFilesPage() {
                                 >
                                   {isFinal ? (
                                     <>
-                                      <span>Watch / Download Final Video</span>
+                                      <span>Download Final Video</span>
                                       <span>↗</span>
                                     </>
                                   ) : isRaw ? (
@@ -341,7 +341,7 @@ export default function ClientFilesPage() {
                                     </>
                                   ) : isDraft ? (
                                     <>
-                                      <span>Open Draft Video</span>
+                                      <span>Watch Draft Video</span>
                                       <span>↗</span>
                                     </>
                                   ) : (

@@ -63,13 +63,13 @@ export default function FreelancerPayoutsPage() {
         <FreelancerSidebar />
 
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
-          <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
+          <div className="p-4 sm:p-5 space-y-5 w-full max-w-[1400px] mx-auto">
             {/* Notice Alert */}
             {statementNotice && (
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs text-emerald-800 animate-in fade-in duration-200 shadow-xs">
+              <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-800 animate-in fade-in duration-200 shadow-xs">
                 <span className="font-semibold flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  Official Form 26AS TDS Certificate and payout summary dispatched to registered email.
+                  TDS Certificate and payout summary dispatched to registered email.
                 </span>
                 <button
                   type="button"
@@ -82,75 +82,72 @@ export default function FreelancerPayoutsPage() {
             )}
 
             {/* Header Block */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <div className="text-[11px] uppercase tracking-wider text-[#86868B] font-bold">
-                  CREATOR COMPENSATION
-                </div>
-                <h1 className="text-3xl font-extrabold tracking-tight text-[#1D1D1F] mt-1">
+                <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1D1D1F]">
                   Earnings &amp; Payouts
                 </h1>
-                <p className="text-xs text-[#86868B] mt-1">
-                  Track your project earnings, statutory Section 194J TDS deductions, and NEFT bank transfers.
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Track your project earnings, tax deductions, and bank payouts.
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={handleExportStatement}
-                className="self-start sm:self-auto text-xs font-semibold px-4 py-2.5 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] transition-all cursor-pointer shadow-xs flex items-center gap-2"
+                className="self-start sm:self-auto text-xs font-semibold px-3.5 py-1.5 rounded-xl bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-[#1D1D1F] transition-all cursor-pointer shadow-xs flex items-center gap-1.5"
               >
                 <span>📄</span>
-                <span>Download Statement (.pdf)</span>
+                <span>Download Statement</span>
               </button>
             </div>
 
             {/* Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-                <div className="text-xs uppercase font-bold text-[#86868B]">TOTAL PAID OUT</div>
-                <div className="text-3xl font-extrabold text-[#1D1D1F] leading-none mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="bg-white rounded-xl p-4 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+                <div className="text-[10px] uppercase font-bold text-[#86868B]">TOTAL PAID OUT</div>
+                <div className="text-2xl font-extrabold text-[#1D1D1F] leading-none mt-1.5">
                   ₹{totalPaidOut.toLocaleString('en-IN')}
                 </div>
-                <div className="text-[11px] text-[#86868B] mt-2">
+                <div className="text-[11px] text-[#86868B] mt-1.5">
                   {completedCount} {completedCount === 1 ? 'Project' : 'Projects'} Completed
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-                <div className="text-xs uppercase font-bold text-amber-600">
+              <div className="bg-white rounded-xl p-4 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+                <div className="text-[10px] uppercase font-bold text-amber-600">
                   PENDING (IN PROGRESS)
                 </div>
-                <div className="text-3xl font-extrabold text-[#1D1D1F] leading-none mt-2">
+                <div className="text-2xl font-extrabold text-[#1D1D1F] leading-none mt-1.5">
                   ₹{pendingInProgress.toLocaleString('en-IN')}
                 </div>
-                <div className="text-[11px] text-[#86868B] mt-2">
+                <div className="text-[11px] text-[#86868B] mt-1.5">
                   Released when client approves cut
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)]">
-                <div className="text-xs uppercase font-bold text-[#3B82F6]">
+              <div className="bg-white rounded-xl p-4 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+                <div className="text-[10px] uppercase font-bold text-[#3B82F6]">
                   READY FOR PAYOUT
                 </div>
-                <div className="text-3xl font-extrabold text-[#3B82F6] leading-none mt-2">
+                <div className="text-2xl font-extrabold text-[#3B82F6] leading-none mt-1.5">
                   ₹{readyForPayout.toLocaleString('en-IN')}
                 </div>
-                <div className="text-[11px] text-[#86868B] mt-2">
+                <div className="text-[11px] text-[#86868B] mt-1.5">
                   Transfers every Thursday
                 </div>
               </div>
             </div>
 
             {/* Transaction Ledger Table */}
-            <div className="bg-white rounded-2xl border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] overflow-hidden">
-              <div className="p-5 border-b border-[#E5E5E7] flex items-center justify-between">
+            <div className="bg-white rounded-2xl border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)] overflow-hidden">
+              <div className="p-4 border-b border-[#E5E5E7] flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-bold uppercase tracking-wider text-[#1D1D1F]">
-                    Project Earnings Ledger
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#1D1D1F]">
+                    Earnings Ledger
                   </h2>
                   <p className="text-[11px] text-[#86868B] mt-0.5">
-                    Gross Share (70%) • Statutory TDS (2%) • Direct Bank Transfer (NEFT)
+                    Gross Share (70%) • TDS (2%) • Bank Transfer (NEFT)
                   </p>
                 </div>
                 <span className="text-xs text-[#86868B] font-medium hidden sm:inline">
@@ -159,20 +156,20 @@ export default function FreelancerPayoutsPage() {
               </div>
 
               {loading ? (
-                <div className="p-16 text-center">
-                  <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-                  <p className="text-xs text-[#86868B]">Loading payout ledger...</p>
+                <div className="p-14 text-center">
+                  <div className="w-7 h-7 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2.5" />
+                  <p className="text-xs text-[#86868B]">Loading earnings...</p>
                 </div>
               ) : payouts.length === 0 ? (
-                <div className="p-12 text-center text-xs text-[#86868B] bg-white">
-                  <div className="text-3xl mb-2">💳</div>
-                  <div className="font-semibold text-[#1D1D1F] text-sm">No payout history yet</div>
-                  <div className="text-xs text-[#86868B] mt-1 max-w-sm mx-auto">
-                    Project earnings and NEFT bank dispatches will appear here once assigned projects are accepted and delivered.
+                <div className="p-10 text-center text-xs text-[#86868B] bg-white">
+                  <div className="text-2xl mb-1.5">💳</div>
+                  <div className="font-semibold text-[#1D1D1F] text-xs">No payout history yet</div>
+                  <div className="text-[11px] text-[#86868B] mt-1 max-w-sm mx-auto">
+                    Project earnings will appear here once assigned projects are accepted and delivered.
                   </div>
                   <Link
                     href="/freelancer"
-                    className="inline-block mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-colors"
+                    className="inline-block mt-3 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-colors"
                   >
                     View Active Workstation →
                   </Link>
@@ -181,35 +178,35 @@ export default function FreelancerPayoutsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="bg-[#F5F5F7] text-[#86868B] text-[11px] uppercase tracking-wider font-semibold border-b border-[#E5E5E7]">
-                        <th className="p-4 whitespace-nowrap">Project / Order</th>
-                        <th className="p-4 whitespace-nowrap">Date</th>
-                        <th className="p-4 whitespace-nowrap text-right">Gross (70%)</th>
-                        <th className="p-4 whitespace-nowrap text-right">TDS (2%)</th>
-                        <th className="p-4 whitespace-nowrap text-right">Net Payout</th>
-                        <th className="p-4 whitespace-nowrap text-right">Status</th>
+                      <tr className="bg-[#F5F5F7] text-[#86868B] text-[10px] uppercase tracking-wider font-semibold border-b border-[#E5E5E7]">
+                        <th className="py-2.5 px-3 whitespace-nowrap">Project / Order</th>
+                        <th className="py-2.5 px-3 whitespace-nowrap">Date</th>
+                        <th className="py-2.5 px-3 whitespace-nowrap text-right">Gross (70%)</th>
+                        <th className="py-2.5 px-3 whitespace-nowrap text-right">TDS (2%)</th>
+                        <th className="py-2.5 px-3 whitespace-nowrap text-right">Net Payout</th>
+                        <th className="py-2.5 px-3 whitespace-nowrap text-right">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#F5F5F7]">
                       {payouts.map((p) => (
                         <tr key={p.id} className="hover:bg-[#F5F5F7]/50 transition-colors">
-                          <td className="p-4">
+                          <td className="py-2.5 px-3">
                             <div className="font-bold text-[#1D1D1F]">{p.projectTitle}</div>
                             <div className="text-[10px] font-mono text-blue-600 mt-0.5">Ref: {p.orderRef}</div>
                           </td>
-                          <td className="p-4 text-[#86868B] whitespace-nowrap">{p.date}</td>
-                          <td className="p-4 text-right font-mono font-semibold text-[#1D1D1F]">
+                          <td className="py-2.5 px-3 text-[#86868B] whitespace-nowrap">{p.date}</td>
+                          <td className="py-2.5 px-3 text-right font-mono font-semibold text-[#1D1D1F]">
                             ₹{p.grossShare.toLocaleString('en-IN')}
                           </td>
-                          <td className="p-4 text-right font-mono text-amber-600">
+                          <td className="py-2.5 px-3 text-right font-mono text-amber-600">
                             -₹{p.tdsDeduction.toLocaleString('en-IN')}
                           </td>
-                          <td className="p-4 text-right font-mono font-extrabold text-emerald-700">
+                          <td className="py-2.5 px-3 text-right font-mono font-extrabold text-emerald-700">
                             ₹{p.netPayout.toLocaleString('en-IN')}
                           </td>
-                          <td className="p-4 text-right">
+                          <td className="py-2.5 px-3 text-right">
                             <span
-                              className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                                 p.status === 'paid'
                                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                   : p.status === 'ready'
@@ -229,7 +226,7 @@ export default function FreelancerPayoutsPage() {
             </div>
 
             {/* Footer Info Strip */}
-            <div className="rounded-xl bg-white p-4 border border-[#E5E5E7] flex flex-col md:flex-row items-start md:items-center justify-between gap-2 text-xs text-[#86868B]">
+            <div className="rounded-xl bg-white p-3.5 border border-[#E5E5E7] flex flex-col md:flex-row items-start md:items-center justify-between gap-2 text-xs text-[#86868B]">
               <div className="flex items-center gap-2">
                 <span className="font-bold text-[#1D1D1F]">PAYOUT POLICY:</span>
                 <span>Payments are transferred directly to your bank account via NEFT after client approval.</span>

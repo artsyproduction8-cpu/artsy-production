@@ -116,28 +116,28 @@ export default function ClientDashboardPage() {
 
         {/* Main Content Dashboard */}
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7]">
-          <div className="p-4 sm:p-6 lg:p-8 w-full max-w-[1600px] mx-auto space-y-8">
+          <div className="p-4 sm:p-5 w-full max-w-[1400px] mx-auto space-y-5">
 
           {/* Payment Success Celebratory Alert Banner */}
           {paymentSuccessNotice && (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5 flex items-center justify-between gap-4 animate-fadeIn">
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center font-black text-lg shrink-0">
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex items-center justify-between gap-4 animate-fadeIn">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center font-black text-sm shrink-0">
                   ✓
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#1D1D1F]">
-                    Payment Confirmed &amp; Project Initialized!
+                  <h3 className="text-xs font-bold text-[#1D1D1F]">
+                    Payment Confirmed &amp; Project Started!
                   </h3>
-                  <p className="text-xs text-[#86868B] mt-0.5">
-                    {paymentSuccessNotice} has been captured and bound to your account. Your footage is in the queue and your active project appears below.
+                  <p className="text-[11px] text-[#86868B] mt-0.5">
+                    {paymentSuccessNotice} has been confirmed. Your project appears below.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setPaymentSuccessNotice(null)}
-                className="text-xs text-[#86868B] hover:text-[#1D1D1F] p-1.5 cursor-pointer font-bold"
+                className="text-xs text-[#86868B] hover:text-[#1D1D1F] p-1 cursor-pointer font-bold"
                 aria-label="Dismiss"
               >
                 ✕
@@ -146,20 +146,20 @@ export default function ClientDashboardPage() {
           )}
 
           {/* Top Banner: Welcome */}
-          <div className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-1">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-0.5">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-[#1D1D1F] tracking-tight">
                 Welcome, {profile.displayName}
               </h1>
-              <p className="text-xs sm:text-sm text-[#86868B]">
-                Track your active video edits, review draft cuts, and download completed videos.
+              <p className="text-xs text-[#86868B]">
+                Manage your ongoing edits and final deliverables.
               </p>
             </div>
 
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2.5 shrink-0">
               <Link
                 href="/book"
-                className="px-5 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
               >
                 <span>+ Start New Project</span>
                 <span>→</span>
@@ -169,49 +169,49 @@ export default function ClientDashboardPage() {
 
           {/* Feedback Notices */}
           {approvedNotice && (
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between animate-fadeIn">
+            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center justify-between animate-fadeIn">
               <div className="flex items-center gap-2">
-                <span className="text-base font-bold">✓</span>
-                <span>Video approved! Your unwatermarked final 4K video is ready in Final Downloads.</span>
+                <span className="text-sm font-bold">✓</span>
+                <span>Video approved! Your clean 4K file is ready in Final Downloads.</span>
               </div>
               <span className="font-mono text-[10px] text-emerald-600 font-bold">COMPLETED</span>
             </div>
           )}
           {retakeNotice && (
-            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center justify-between animate-fadeIn">
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold flex items-center justify-between animate-fadeIn">
               <div className="flex items-center gap-2">
-                <span className="text-base font-bold">✓</span>
-                <span>Changes requested. Your editor has been notified and will deliver your revised cut within 48 hours.</span>
+                <span className="text-sm font-bold">✓</span>
+                <span>Changes requested. Your editor has been notified and will deliver within 48 hours.</span>
               </div>
               <span className="font-mono text-[10px] text-amber-600 font-bold">IN PROGRESS</span>
             </div>
           )}
 
           {/* KPI Bento Matrix */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-white rounded-2xl p-4 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
               <span className="text-[10px] uppercase font-bold text-[#86868B] block tracking-wider">
                 ACTIVE PROJECTS
               </span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] mt-1.5">
+              <div className="text-2xl font-extrabold text-[#1D1D1F] mt-1">
                 {projects.length} {projects.length === 1 ? 'Project' : 'Projects'}
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+            <div className="bg-white rounded-2xl p-4 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
               <span className="text-[10px] uppercase font-bold text-[#86868B] block tracking-wider">
-                DRAFTS TO REVIEW
+                NEEDS REVIEW
               </span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 mt-1.5">
+              <div className="text-2xl font-extrabold text-amber-600 mt-1">
                 {projects.filter((p) => p.status === 'review_ready' || p.status === 'in_review' || p.status === 'client_review').length} Pending
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+            <div className="bg-white rounded-2xl p-4 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
               <span className="text-[10px] uppercase font-bold text-[#86868B] block tracking-wider">
-                COMPLETED VIDEOS
+                COMPLETED
               </span>
-              <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 mt-1.5">
+              <div className="text-2xl font-extrabold text-emerald-600 mt-1">
                 {projects.filter((p) => p.status === 'completed' || p.status === 'approved').length} Delivered
               </div>
             </div>
@@ -220,21 +220,21 @@ export default function ClientDashboardPage() {
           {/* ================================================================ */}
           {/* MODULE 1: ACTIVE PROJECTS                                        */}
           {/* ================================================================ */}
-          <section className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-[#F5F5F7]">
+          <section className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#F5F5F7]">
               <div>
-                <h2 className="text-lg font-bold text-[#1D1D1F]">
+                <h2 className="text-base font-bold text-[#1D1D1F]">
                   Active Projects
                 </h2>
                 <p className="text-xs text-[#86868B] mt-0.5">
-                  Track ongoing edits, assigned editors, and expected delivery dates
+                  Track ongoing edits and expected delivery dates
                 </p>
               </div>
               <Link
                 href="/client/projects"
                 className="text-xs font-bold text-[#3B82F6] hover:underline"
               >
-                View All Projects ({projects.length}) →
+                View All ({projects.length}) →
               </Link>
             </div>
 
@@ -243,15 +243,15 @@ export default function ClientDashboardPage() {
                 Loading active projects...
               </div>
             ) : projects.length === 0 ? (
-              <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl">
-                <div className="text-4xl mb-3">🎬</div>
-                <h3 className="text-lg font-semibold mb-2">No active projects yet</h3>
-                <p className="text-sm text-gray-500 mb-6">
-                  Start your first video project — upload your footage and our team will get to work.
+              <div className="text-center py-14 border border-dashed border-gray-200 rounded-2xl">
+                <div className="text-3xl mb-2">🎬</div>
+                <h3 className="text-base font-semibold mb-1">No active projects</h3>
+                <p className="text-xs text-gray-500 mb-5">
+                  Upload your footage to start your first video edit.
                 </p>
                 <Link
                   href="/book"
-                  className="inline-block px-6 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-all shadow-sm"
+                  className="inline-block px-5 py-2.5 bg-blue-500 text-white rounded-xl text-xs font-semibold hover:bg-blue-600 transition-all shadow-xs"
                 >
                   Start New Project →
                 </Link>
@@ -273,7 +273,7 @@ export default function ClientDashboardPage() {
                 return (
                   <div
                     key={project.id}
-                    className="bg-[#F5F5F7] rounded-2xl p-5 sm:p-6 border border-[#E5E5E7] hover:border-[#3B82F6]/40 transition-all space-y-4"
+                    className="bg-[#F5F5F7] rounded-2xl p-4 sm:p-5 border border-[#E5E5E7] hover:border-[#3B82F6]/40 transition-all space-y-3"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="space-y-1">
@@ -290,13 +290,13 @@ export default function ClientDashboardPage() {
                             </span>
                           )}
                         </div>
-                        <h3 className="text-base font-bold text-[#1D1D1F]">
+                        <h3 className="text-sm sm:text-base font-bold text-[#1D1D1F]">
                           {displayTitle}
                         </h3>
 
                         {/* Positive 4-Stage Progress Meter */}
                         {((project as any).editingProgress) && (
-                          <div className="pt-2 space-y-1.5 max-w-md">
+                          <div className="pt-1.5 space-y-1.5 max-w-md">
                             <div className="flex items-center justify-between text-xs">
                               <span className="font-semibold text-[#1D1D1F]">
                                 Stage {(project as any).editingProgress.stage || 1} of 4: {(project as any).editingProgress.stageName || 'Ingest & Selects'}
@@ -325,7 +325,7 @@ export default function ClientDashboardPage() {
                       <div className="flex items-center gap-2 self-start sm:self-auto">
                         <Link
                           href={`/client/projects/${project.id}`}
-                          className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                          className="px-3.5 py-1.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
                         >
                           Project Details →
                         </Link>
@@ -338,14 +338,17 @@ export default function ClientDashboardPage() {
           </section>
 
           {/* ================================================================ */}
-          {/* MODULE 2: TIMESTAMPE REVIEW STATION (INTERACTIVE SPOTLIGHT)       */}
+          {/* MODULE 2: DRAFT PREVIEW (SPOTLIGHT)                              */}
           {/* ================================================================ */}
-          <section className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F5F5F7] gap-3">
+          <section className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F5F5F7] gap-3">
               <div>
-                <h2 className="text-lg font-bold text-[#1D1D1F]">
-                  Review Spotlight
+                <h2 className="text-base font-bold text-[#1D1D1F]">
+                  Draft Preview
                 </h2>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Watch the latest cut and leave notes at exact seconds
+                </p>
               </div>
 
               {projects.length > 0 && (
@@ -353,7 +356,7 @@ export default function ClientDashboardPage() {
                   href="/client/review"
                   className="text-xs font-bold text-[#3B82F6] hover:underline self-start sm:self-auto"
                 >
-                  Open Full Video Review →
+                  Open Review Suite →
                 </Link>
               )}
             </div>
@@ -486,9 +489,9 @@ export default function ClientDashboardPage() {
                   </div>
 
                   {/* Right Column: Quick Actions & Live Milestone Info */}
-                  <div className="lg:col-span-5 space-y-4">
-                    <div className="bg-[#1D1D1F] text-white rounded-2xl p-6 space-y-4 shadow-sm border border-[#262626]">
-                      <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-3">
+                  <div className="lg:col-span-5 space-y-3">
+                    <div className="bg-[#1D1D1F] text-white rounded-2xl p-4 sm:p-5 space-y-3 shadow-sm border border-[#262626]">
+                      <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2.5">
                         <div className="space-y-0.5">
                           <span className="text-[10px] font-mono text-[#3B82F6] font-bold">
                             {orderBadge}
@@ -497,7 +500,7 @@ export default function ClientDashboardPage() {
                             {displayTitle}
                           </h4>
                         </div>
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase ${
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
                           isProjectApproved
                             ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                             : embed
@@ -522,17 +525,17 @@ export default function ClientDashboardPage() {
                       </div>
 
                       {embed ? (
-                        <div className="space-y-3 pt-2">
+                        <div className="space-y-2.5 pt-1">
                           <p className="text-[11px] text-[#86868B] leading-relaxed">
                             {isProjectApproved
-                              ? 'You have approved this cut! The 4K unwatermarked master file is unlocked in Final Downloads.'
-                              : 'Watch the draft cut above. If you love it, approve the cut to unlock master files. If you need any tweaks, pause and leave timestamped notes.'}
+                              ? 'You have approved this cut. Your 4K clean master is ready in Final Downloads.'
+                              : 'Watch the draft above. Approve if ready, or pause to add notes at any second.'}
                           </p>
 
                           <div className="flex items-center gap-2 pt-1">
                             <Link
                               href={`/client/projects/${activeProject?.id}`}
-                              className="flex-1 py-2.5 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl transition-all text-center cursor-pointer inline-flex items-center justify-center gap-1"
+                              className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl transition-all text-center cursor-pointer inline-flex items-center justify-center gap-1"
                             >
                               <span>Review &amp; Notes</span>
                               <span>↗</span>
@@ -542,27 +545,27 @@ export default function ClientDashboardPage() {
                               <button
                                 type="button"
                                 onClick={() => handleApproveCut(activeProject?.id)}
-                                className="flex-1 py-2.5 px-3 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all text-center cursor-pointer shadow-sm"
+                                className="flex-1 py-2 px-3 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all text-center cursor-pointer shadow-xs"
                               >
                                 Approve Video ✓
                               </button>
                             ) : (
-                              <div className="flex-1 py-2.5 px-3 bg-emerald-600 text-white text-xs font-bold rounded-xl text-center">
+                              <div className="flex-1 py-2 px-3 bg-emerald-600 text-white text-xs font-bold rounded-xl text-center">
                                 Approved ✓
                               </div>
                             )}
                           </div>
                         </div>
                       ) : (
-                        <div className="space-y-3 pt-2">
+                        <div className="space-y-2.5 pt-1">
                           <p className="text-[11px] text-[#86868B] leading-relaxed">
-                            Your editor is actively cutting footage and matching music pacing. You will receive an instant notification on WhatsApp, Email, and here as soon as the review cut is ready.
+                            Your editor is currently cutting the footage. You will be notified on WhatsApp and email as soon as the draft is ready.
                           </p>
                           <Link
                             href={`/client/projects/${activeProject?.id}`}
-                            className="block w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl text-center transition-colors"
+                            className="block w-full py-2 px-3 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl text-center transition-colors"
                           >
-                            Open Project Review Workroom →
+                            Open Project Workroom →
                           </Link>
                         </div>
                       )}
@@ -576,14 +579,14 @@ export default function ClientDashboardPage() {
           {/* ================================================================ */}
           {/* MODULE 3: FINAL DOWNLOADS                                        */}
           {/* ================================================================ */}
-          <section className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F5F5F7] gap-3">
+          <section className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F5F5F7] gap-3">
               <div>
-                <h2 className="text-lg font-bold text-[#1D1D1F]">
+                <h2 className="text-base font-bold text-[#1D1D1F]">
                   Final Downloads
                 </h2>
                 <p className="text-xs text-[#86868B] mt-0.5">
-                  Clean 4K masters, social media cuts, and audio tracks
+                  Clean 4K masters and social media exports
                 </p>
               </div>
 
@@ -603,30 +606,30 @@ export default function ClientDashboardPage() {
               );
               if (completedProjects.length === 0) {
                 return (
-                  <div className="text-center py-12 border-2 border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-6 space-y-2">
-                    <div className="text-3xl">📦</div>
-                    <h3 className="text-sm font-bold text-[#1D1D1F]">No completed videos yet</h3>
-                    <p className="text-xs text-[#86868B] max-w-sm mx-auto">
-                      Once you approve a draft, your final clean videos and social cuts will appear here for download.
+                  <div className="text-center py-10 border border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-5 space-y-1.5">
+                    <div className="text-2xl">📦</div>
+                    <h3 className="text-xs font-bold text-[#1D1D1F]">No completed videos yet</h3>
+                    <p className="text-[11px] text-[#86868B] max-w-sm mx-auto">
+                      Once you approve a draft, your clean 4K videos will appear here ready to download.
                     </p>
                   </div>
                 );
               }
               return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {completedProjects.slice(0, 2).map((cp) => (
-                    <div key={cp.id} className="p-4 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col justify-between space-y-3">
+                    <div key={cp.id} className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col justify-between space-y-2.5">
                       <div>
                         <span className="text-[10px] font-bold uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                           ✓ Ready to Download
                         </span>
-                        <h4 className="text-sm font-bold text-[#1D1D1F] mt-2">{cp.title || 'Cinematic Film Delivery'}</h4>
+                        <h4 className="text-xs sm:text-sm font-bold text-[#1D1D1F] mt-1.5">{cp.title || 'Cinematic Film Delivery'}</h4>
                         <div className="text-[11px] text-[#86868B] mt-0.5">Order Ref: {cp.orders?.order_number || cp.project_number || `#${cp.id?.slice(0, 8)}`}</div>
                       </div>
-                      <div className="flex items-center gap-2 pt-2">
+                      <div className="flex items-center gap-2 pt-1">
                         <Link
                           href="/client/masters"
-                          className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg text-center transition-colors shadow-2xs"
+                          className="flex-1 py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg text-center transition-colors shadow-2xs"
                         >
                           Download 4K Master ↓
                         </Link>
@@ -641,14 +644,14 @@ export default function ClientDashboardPage() {
           {/* ================================================================ */}
           {/* MODULE 4: INVOICES & RECEIPTS                                    */}
           {/* ================================================================ */}
-          <section className="bg-white rounded-2xl p-6 sm:p-8 border border-[#E5E5E7]/60 shadow-[0_4px_24px_rgba(0,0,0,0.04)] space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F5F5F7] gap-3">
+          <section className="bg-white rounded-2xl p-4 sm:p-5 border border-[#E5E5E7]/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F5F5F7] gap-3">
               <div>
-                <h2 className="text-lg font-bold text-[#1D1D1F]">
+                <h2 className="text-base font-bold text-[#1D1D1F]">
                   Invoices &amp; Receipts
                 </h2>
                 <p className="text-xs text-[#86868B] mt-0.5">
-                  Official GST tax invoices and payment receipts
+                  Official GST invoices and receipts
                 </p>
               </div>
 
@@ -668,40 +671,40 @@ export default function ClientDashboardPage() {
               );
               if (paidProjects.length === 0) {
                 return (
-                  <div className="text-center py-12 border-2 border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-6 space-y-2">
-                    <div className="text-3xl">🧾</div>
-                    <h3 className="text-sm font-bold text-[#1D1D1F]">No invoices yet</h3>
-                    <p className="text-xs text-[#86868B] max-w-sm mx-auto">
-                      Official GST invoices and payment receipts will appear here automatically when you book a project.
+                  <div className="text-center py-10 border border-dashed border-[#E5E5E7] rounded-2xl bg-[#F5F5F7]/40 p-5 space-y-1.5">
+                    <div className="text-2xl">🧾</div>
+                    <h3 className="text-xs font-bold text-[#1D1D1F]">No invoices yet</h3>
+                    <p className="text-[11px] text-[#86868B] max-w-sm mx-auto">
+                      Official GST invoices appear here automatically when you place an order.
                     </p>
                   </div>
                 );
               }
               return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {paidProjects.slice(0, 2).map((pp) => {
                     const gross = Number(pp.orders?.gross_amount) || 0;
                     const paidInr = Math.round(gross / 100);
                     const invNumber = `INV-ARTSY-${(pp.orders?.order_number || pp.id)?.replace(/[^a-zA-Z0-9]/g, '').slice(-6)}`;
                     return (
-                      <div key={pp.id} className="p-4 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col justify-between space-y-3">
+                      <div key={pp.id} className="p-3.5 rounded-xl bg-[#F5F5F7] border border-[#E5E5E7] flex flex-col justify-between space-y-2.5">
                         <div className="flex items-start justify-between">
                           <div>
                             <span className="text-[10px] font-mono font-bold text-blue-600">{invNumber}</span>
-                            <h4 className="text-sm font-bold text-[#1D1D1F] mt-1">{pp.title || 'Post-Production Order'}</h4>
-                            <div className="text-[11px] text-[#86868B] mt-0.5">Total Paid: <strong className="text-[#1D1D1F]">₹{paidInr.toLocaleString('en-IN')}</strong> (Inc. 18% GST)</div>
+                            <h4 className="text-xs sm:text-sm font-bold text-[#1D1D1F] mt-1">{pp.title || 'Post-Production Order'}</h4>
+                            <div className="text-[11px] text-[#86868B] mt-0.5">Paid: <strong className="text-[#1D1D1F]">₹{paidInr.toLocaleString('en-IN')}</strong> (Inc. GST)</div>
                           </div>
                           <span className="text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">
                             ✓ Paid
                           </span>
                         </div>
-                        <div className="pt-2">
+                        <div className="pt-1">
                           <Link
                             href={`/api/invoices/${pp.orders?.id || pp.id}`}
                             target="_blank"
-                            className="inline-block py-2 px-3 bg-white hover:bg-slate-50 border border-[#E5E5E7] text-[#1D1D1F] text-xs font-bold rounded-lg transition-colors shadow-2xs"
+                            className="inline-block py-1.5 px-3 bg-white hover:bg-slate-50 border border-[#E5E5E7] text-[#1D1D1F] text-xs font-bold rounded-lg transition-colors shadow-2xs"
                           >
-                            View Tax Invoice ↗
+                            View Invoice ↗
                           </Link>
                         </div>
                       </div>

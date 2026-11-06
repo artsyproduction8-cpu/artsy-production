@@ -33,59 +33,59 @@ export default function ClientSupportPage() {
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen">
-          <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
+          <div className="p-4 sm:p-5 space-y-5 w-full max-w-[1400px] mx-auto">
             {/* Header */}
             <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
-                We&apos;re here to help
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#1D1D1F]">
+                Help &amp; Support
               </h1>
-              <p className="text-sm text-[#86868B] mt-1">
-                Need help with your project, revisions, or video downloads? Reach out to us anytime.
+              <p className="text-xs text-[#86868B] mt-0.5">
+                Have questions about your project, revisions, or video downloads? Reach out anytime.
               </p>
             </div>
 
             {/* Two Column Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
               {/* Left Column: Contact Options */}
-              <div className="lg:col-span-5 space-y-5">
+              <div className="lg:col-span-5 space-y-3.5">
                 {/* WhatsApp Support Card */}
-                <div className="bg-white border border-[#E5E5E7] rounded-2xl p-6 shadow-xs hover:border-[#3B82F6] transition-colors">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-lg">
+                <div className="bg-white border border-[#E5E5E7] rounded-2xl p-4 sm:p-5 shadow-xs hover:border-[#3B82F6] transition-colors">
+                  <div className="flex items-center gap-2.5 mb-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-sm">
                       WA
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-[#1D1D1F]">WhatsApp Live Support</h2>
+                      <h2 className="text-xs sm:text-sm font-bold text-[#1D1D1F]">WhatsApp Live Support</h2>
                     </div>
                   </div>
-                  <p className="text-xs text-[#86868B] mb-4">
-                    Chat directly with our team on WhatsApp for quick project updates, questions, or change requests.
+                  <p className="text-xs text-[#86868B] mb-3">
+                    Chat directly with our team on WhatsApp for project updates or change requests.
                   </p>
                   <a
                     href={`https://wa.me/${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || '').replace(/\D/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs"
+                    className="inline-flex items-center justify-center w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs"
                   >
                     Chat on WhatsApp {process.env.NEXT_PUBLIC_SUPPORT_PHONE ? `(${process.env.NEXT_PUBLIC_SUPPORT_PHONE})` : ''}
                   </a>
                 </div>
 
                 {/* Email Support Card */}
-                <div className="bg-white border border-[#E5E5E7] rounded-2xl p-6 shadow-xs">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-[#3B82F6] flex items-center justify-center font-bold text-lg">
+                <div className="bg-white border border-[#E5E5E7] rounded-2xl p-4 sm:p-5 shadow-xs">
+                  <div className="flex items-center gap-2.5 mb-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-[#3B82F6] flex items-center justify-center font-bold text-sm">
                       @
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-[#1D1D1F]">Email Support</h2>
+                      <h2 className="text-xs sm:text-sm font-bold text-[#1D1D1F]">Email Support</h2>
                       <span className="inline-block text-[10px] font-semibold text-[#86868B]">
                         Response within 4 business hours
                       </span>
                     </div>
                   </div>
-                  <p className="text-xs text-[#86868B] mb-3">
-                    Email us for questions about your billing, tax invoices, contracts, or custom video requests.
+                  <p className="text-xs text-[#86868B] mb-2.5">
+                    Email us for billing, tax invoices, contracts, or custom video requests.
                   </p>
                   <a
                     href="mailto:artsyproduction8@gmail.com"
@@ -96,13 +96,13 @@ export default function ClientSupportPage() {
                 </div>
 
                 {/* Grievance Card */}
-                <div className="bg-white border border-[#E5E5E7] rounded-2xl p-6 shadow-xs space-y-3">
-                  <div className="border-b border-[#F5F5F7] pb-2">
-                    <h2 className="text-xs font-bold uppercase tracking-wider text-[#86868B]">
-                      Office Address
+                <div className="bg-white border border-[#E5E5E7] rounded-2xl p-4 sm:p-5 shadow-xs space-y-2">
+                  <div className="border-b border-[#F5F5F7] pb-1.5">
+                    <h2 className="text-[11px] font-bold uppercase tracking-wider text-[#86868B]">
+                      Studio Address
                     </h2>
                   </div>
-                  <div className="text-xs space-y-1.5 text-[#1D1D1F]">
+                  <div className="text-xs space-y-1 text-[#1D1D1F]">
                     <div>
                       <span className="text-[#86868B]">Email:</span>{' '}
                       <a href="mailto:artsyproduction8@gmail.com" className="text-[#3B82F6] font-semibold hover:underline">
@@ -119,15 +119,15 @@ export default function ClientSupportPage() {
 
               {/* Right Column: FAQ Accordion */}
               <div className="lg:col-span-7">
-                <div className="bg-white border border-[#E5E5E7] rounded-2xl p-6 shadow-xs space-y-4">
-                  <div className="border-b border-[#F5F5F7] pb-3">
-                    <h2 className="text-base font-bold text-[#1D1D1F]">Frequently Asked Questions</h2>
+                <div className="bg-white border border-[#E5E5E7] rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+                  <div className="border-b border-[#F5F5F7] pb-2.5">
+                    <h2 className="text-sm sm:text-base font-bold text-[#1D1D1F]">Frequently Asked Questions</h2>
                     <p className="text-xs text-[#86868B] mt-0.5">
                       Answers to common questions about our editing process
                     </p>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {FAQ_ITEMS.map((item, index) => {
                       const isOpen = openFaq === index;
                       return (
@@ -138,7 +138,7 @@ export default function ClientSupportPage() {
                           <button
                             type="button"
                             onClick={() => toggleFaq(index)}
-                            className="w-full p-4 text-left flex items-center justify-between gap-4 bg-white hover:bg-[#F5F5F7] transition-colors cursor-pointer"
+                            className="w-full p-3.5 text-left flex items-center justify-between gap-3 bg-white hover:bg-[#F5F5F7] transition-colors cursor-pointer"
                           >
                             <span className="text-xs font-bold text-[#1D1D1F] leading-snug">{item.q}</span>
                             <span className="text-[#3B82F6] font-bold text-sm shrink-0">
@@ -146,7 +146,7 @@ export default function ClientSupportPage() {
                             </span>
                           </button>
                           {isOpen && (
-                            <div className="p-4 pt-1 bg-[#FAFAFA] border-t border-[#E5E5E7] text-xs text-[#555] leading-relaxed">
+                            <div className="p-3.5 pt-1 bg-[#FAFAFA] border-t border-[#E5E5E7] text-xs text-[#555] leading-relaxed">
                               {item.a}
                             </div>
                           )}

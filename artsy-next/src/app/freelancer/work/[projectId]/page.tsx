@@ -447,8 +447,8 @@ export default function FreelancerWorkView() {
 
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen bg-[#F5F5F7] pb-16">
           {/* Workroom Project Banner */}
-          <div className="bg-white border-b border-[#E5E5E7] px-6 py-4">
-            <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="bg-white border-b border-[#E5E5E7] px-4 py-3 sm:px-6 sm:py-3.5">
+            <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
@@ -467,37 +467,37 @@ export default function FreelancerWorkView() {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-full border border-purple-200">
-                  Revision Round {project.current_revision_round || 1} of {project.max_free_revisions || 2}
+                  Round {project.current_revision_round || 1} of {project.max_free_revisions || 2}
                 </span>
                 <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-200 uppercase">
                   {project.status?.replace('_', ' ')}
                 </span>
                 <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
-                  Creator Payout: ₹{payoutAmount.toLocaleString('en-IN')} (Net: ₹{netPayout.toLocaleString('en-IN')})
+                  Payout: ₹{payoutAmount.toLocaleString('en-IN')} (Net: ₹{netPayout.toLocaleString('en-IN')})
                 </span>
               </div>
             </div>
           </div>
 
           {/* Main Content */}
-          <div className="max-w-[1600px] mx-auto px-6 py-8">
+          <div className="max-w-[1400px] mx-auto px-4 py-5 space-y-5">
             {/* Creator Agreement Gating Warning (ONLY if genuinely unsigned) */}
             {!isAgreementSigned && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="mb-4 p-3.5 sm:p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <span className="text-amber-600 text-xl">⚠️</span>
                   <div>
                     <h3 className="text-xs font-bold text-amber-900 uppercase tracking-wider">
-                      Mandatory Legal Step: NDA &amp; Creator Agreement Unsigned
+                      NDA &amp; Creator Agreement Needed
                     </h3>
                     <p className="text-xs text-amber-700 mt-0.5">
-                      Raw footage access and deliverable payouts are gated until your NDA &amp; Creator Agreement (v1.0) is signed.
+                      Please sign the agreement to access raw footage and receive project payouts.
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowAgreementModal(true)}
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl whitespace-nowrap shadow-sm transition-all cursor-pointer"
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl whitespace-nowrap shadow-xs transition-all cursor-pointer"
                 >
                   Sign Agreement (1-Click)
                 </button>
@@ -505,17 +505,17 @@ export default function FreelancerWorkView() {
             )}
 
             {footageToast && (
-              <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-2xl flex items-center justify-between text-xs text-amber-900 font-semibold shadow-sm">
+              <div className="mb-4 p-3.5 sm:p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-center justify-between text-xs text-amber-900 font-semibold shadow-2xs">
                 <span>{footageToast}</span>
                 <button onClick={() => setFootageToast(null)} className="font-bold opacity-70 hover:opacity-100">×</button>
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
               {/* Left Column: Scope & Actions (8 cols) */}
-              <div className="lg:col-span-8 space-y-6">
+              <div className="lg:col-span-8 space-y-5">
                 {/* Project Overview Card */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm">
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs">
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <h2 className="text-base font-bold text-[#1D1D1F]">Project Brief &amp; Specifications</h2>
@@ -568,28 +568,28 @@ export default function FreelancerWorkView() {
                   )}
 
                   {/* Raw Footage Secure Link Card */}
-                  <div className="mt-6 pt-6 border-t border-[#E5E5E7] bg-[#F5F5F7]/80 p-4 rounded-xl space-y-3">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="mt-5 pt-5 border-t border-[#E5E5E7] bg-[#F5F5F7]/80 p-3.5 sm:p-4 rounded-xl space-y-2.5">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-white border border-[#E5E5E7] flex items-center justify-center text-lg shadow-sm shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E5E7] flex items-center justify-center text-base shadow-xs shrink-0">
                           📁
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className="text-xs font-bold text-[#1D1D1F]">Client Raw Footage Vault</h3>
+                            <h3 className="text-xs font-bold text-[#1D1D1F]">Raw Footage Folder</h3>
                             {rawFootageUrl ? (
                               <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                                ✓ Link Verified
+                                ✓ Ready
                               </span>
                             ) : (
                               <span className="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full">
-                                Link Pending
+                                Pending Link
                               </span>
                             )}
                           </div>
                           <p className="text-[11px] text-[#86868B] mt-0.5">
                             {rawFootageUrl
-                              ? 'Direct client folder provided during onboarding. Clicking opens the exact files.'
+                              ? 'Direct folder with client clips and assets.'
                               : 'Client has not provided a raw footage folder yet.'}
                           </p>
                         </div>
@@ -600,7 +600,7 @@ export default function FreelancerWorkView() {
                           <button
                             type="button"
                             onClick={handleCopyFootageLink}
-                            className="px-3 py-2 bg-white hover:bg-slate-50 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                            className="px-3 py-1.5 bg-white hover:bg-slate-50 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-xs whitespace-nowrap"
                           >
                             {copyFeedback ? '✓ Copied' : 'Copy Link'}
                           </button>
@@ -608,7 +608,7 @@ export default function FreelancerWorkView() {
                         <button
                           type="button"
                           onClick={handleFootageAccess}
-                          className="flex-1 sm:flex-none px-4 py-2 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                          className="flex-1 sm:flex-none px-3.5 py-1.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-semibold rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
                         >
                           Access Folder ↗
                         </button>
@@ -629,44 +629,44 @@ export default function FreelancerWorkView() {
                 </div>
 
                 {/* 4-Stage Post-Production Progress Tracker */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm space-y-5">
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs uppercase font-extrabold tracking-wider text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
-                          Milestone Tracking
+                        <span className="text-xs uppercase font-extrabold tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                          Milestones
                         </span>
-                        <h2 className="text-base font-bold text-[#1D1D1F]">Post-Production Progress</h2>
+                        <h2 className="text-sm sm:text-base font-bold text-[#1D1D1F]">Editing Progress</h2>
                       </div>
-                      <p className="text-xs text-[#86868B] mt-1">
-                        Advance the timeline stage as you edit so the Artsy Studio Lead and client see verified progress.
+                      <p className="text-xs text-[#86868B] mt-0.5">
+                        Update your progress as you work so the studio and client stay updated.
                       </p>
                     </div>
                     <div className="text-left sm:text-right shrink-0">
                       <div className="text-xs font-extrabold text-[#1D1D1F]">
-                        Stage {currentStage} of 4 • {currentStage * 25}% Complete
+                        Stage {currentStage} of 4 • {currentStage * 25}%
                       </div>
                       <div className="text-[11px] text-[#86868B]">
-                        {currentStage === 4 ? 'Ready for Master QA' : currentStage === 3 ? 'Color & Sound Conform' : currentStage === 2 ? 'Story Assembly Locked' : 'Ingest & Footage Verification'}
+                        {currentStage === 4 ? 'Ready for Master QA' : currentStage === 3 ? 'Color & Sound' : currentStage === 2 ? 'Story Assembly' : 'Ingest & Selects'}
                       </div>
                     </div>
                   </div>
 
                   {/* Visual Stepper Bar */}
                   <div className="space-y-2">
-                    <div className="w-full bg-[#F5F5F7] h-2.5 rounded-full overflow-hidden border border-[#E5E5E7]/80">
+                    <div className="w-full bg-[#F5F5F7] h-2 rounded-full overflow-hidden border border-[#E5E5E7]/80">
                       <div
                         className="h-full bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-500 transition-all duration-500 rounded-full"
                         style={{ width: `${currentStage * 25}%` }}
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
                       {[
-                        { step: 1, pct: 25, title: '01. Ingest & Selects', sub: 'Footage checked, audio synced' },
-                        { step: 2, pct: 50, title: '02. Story Assembly', sub: 'Primary cut, pacing locked' },
-                        { step: 3, pct: 75, title: '03. Audio & Color', sub: 'Music sync, Rec.709 grade' },
-                        { step: 4, pct: 100, title: '04. Final Polish', sub: 'Titles & master render ready' },
+                        { step: 1, pct: 25, title: '01. Ingest', sub: 'Footage checked & synced' },
+                        { step: 2, pct: 50, title: '02. Assembly', sub: 'Rough cut & timing' },
+                        { step: 3, pct: 75, title: '03. Audio & Color', sub: 'Music & color grading' },
+                        { step: 4, pct: 100, title: '04. Final Polish', sub: 'Ready for client review' },
                       ].map((st) => {
                         const isCurrent = currentStage === st.step;
                         const isPast = currentStage > st.step;
@@ -675,7 +675,7 @@ export default function FreelancerWorkView() {
                             key={st.step}
                             type="button"
                             onClick={() => handleUpdateStage(st.step)}
-                            className={`p-3.5 rounded-xl border text-left transition-all cursor-pointer relative ${
+                            className={`p-3 rounded-lg border text-left transition-all cursor-pointer relative ${
                               isCurrent
                                 ? 'bg-blue-50/70 border-blue-500 shadow-xs ring-1 ring-blue-500/20'
                                 : isPast
@@ -693,7 +693,7 @@ export default function FreelancerWorkView() {
                                 {isPast ? '✓' : `${st.pct}%`}
                               </span>
                             </div>
-                            <p className="text-[11px] text-[#86868B] mt-1 leading-snug">
+                            <p className="text-[11px] text-[#86868B] mt-0.5 leading-snug">
                               {st.sub}
                             </p>
                           </button>
@@ -703,65 +703,65 @@ export default function FreelancerWorkView() {
                   </div>
 
                   {/* Stage Notes & Quick Update */}
-                  <div className="pt-2 border-t border-[#F5F5F7] flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                  <div className="pt-2 border-t border-[#F5F5F7] flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
                     <div className="flex-1">
                       <input
                         type="text"
                         value={stageNotes}
                         onChange={(e) => setStageNotes(e.target.value)}
-                        placeholder="Add optional timeline note (e.g. Assembling scene 2 with music beat drop...)"
-                        className="w-full text-xs px-3.5 py-2.5 bg-[#F5F5F7] border border-[#E5E5E7] rounded-xl focus:outline-none focus:border-blue-500 transition-colors"
+                        placeholder="Add quick update note (e.g. Rough cut ready for scene 1)..."
+                        className="w-full text-xs px-3 py-2 bg-[#F5F5F7] border border-[#E5E5E7] rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
                       />
                     </div>
                     <div className="flex items-center gap-2 self-end sm:self-auto">
                       {progressSavedToast && (
                         <span className="text-xs font-bold text-emerald-600 animate-fade-in">
-                          ✓ Progress Synced
+                          ✓ Saved
                         </span>
                       )}
                       <button
                         type="button"
                         disabled={savingProgress}
                         onClick={() => handleUpdateStage(currentStage, stageNotes)}
-                        className="px-4 py-2.5 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                        className="px-3.5 py-2 bg-[#1D1D1F] hover:bg-black text-white text-xs font-bold rounded-lg transition-all shadow-xs cursor-pointer disabled:opacity-50 whitespace-nowrap"
                       >
-                        {savingProgress ? 'Saving...' : 'Save Milestone Note'}
+                        {savingProgress ? 'Saving...' : 'Save Note'}
                       </button>
                     </div>
                   </div>
                 </div>
 
                 {/* Dedicated 5th Section: Creator Roadblock & Missing Details Desk */}
-                <div className={`rounded-2xl p-6 border shadow-sm transition-all ${
+                <div className={`rounded-xl p-4 sm:p-5 border shadow-xs transition-all ${
                   activeIssue
                     ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-300/40'
                     : 'bg-white border-[#E5E5E7]'
                 }`}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
                         <span className="text-base">⚠️</span>
-                        <h2 className="text-base font-bold text-[#1D1D1F]">
-                          Need Help or Missing Details to Complete Video?
+                        <h2 className="text-sm sm:text-base font-bold text-[#1D1D1F]">
+                          Need Missing Files or Help?
                         </h2>
                       </div>
                       <p className="text-xs text-[#86868B]">
-                        Missing clips, fonts, audio references, or story clarifications? Report it directly to Artsy Studio Lead so our team can resolve it with the client.
+                        Missing clips, fonts, audio, or brief details? Report it here and the studio lead will help resolve it.
                       </p>
                     </div>
 
                     <div className="shrink-0 self-start sm:self-auto">
                       {activeIssue ? (
                         <span className="px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold rounded-full uppercase tracking-wide">
-                          Active Roadblock Logged
+                          Issue Reported
                         </span>
                       ) : (
                         <button
                           type="button"
                           onClick={() => setShowIssueForm(!showIssueForm)}
-                          className="px-3.5 py-2 bg-[#F5F5F7] hover:bg-slate-100 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-2xs whitespace-nowrap"
+                          className="px-3 py-1.5 bg-[#F5F5F7] hover:bg-slate-100 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-lg transition-all cursor-pointer shadow-2xs whitespace-nowrap"
                         >
-                          {showIssueForm ? '✕ Close Form' : '+ Raise Issue / Missing Asset'}
+                          {showIssueForm ? '✕ Close' : '+ Report Issue'}
                         </button>
                       )}
                     </div>
@@ -907,27 +907,27 @@ export default function FreelancerWorkView() {
                 </div>
 
                 {/* Deliverable Submission */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm space-y-4">
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs space-y-3.5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <h2 className="text-base font-bold text-[#1D1D1F]">Master Cut Deliverable</h2>
+                      <h2 className="text-sm sm:text-base font-bold text-[#1D1D1F]">Upload Draft or Master Cut</h2>
                       <p className="text-xs text-[#86868B] mt-0.5">
-                        Provide your export link from any platform (YouTube, Vimeo, Google Drive, Frame.io, Dropbox, or direct stream URL).
+                        Add your video link (YouTube, Vimeo, Google Drive, or cloud storage).
                       </p>
                     </div>
                     {deliverableUploaded && (
-                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                        ✓ In Client Review Pipeline
+                      <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        ✓ Live in Review
                       </span>
                     )}
                   </div>
 
                   {deliverableUploaded && !showReplaceDeliverable ? (
-                    <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-3">
+                    <div className="p-3.5 sm:p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2.5">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                         <div className="space-y-0.5 min-w-0 flex-1">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-                            Active Deliverable Link
+                            Current Video Link
                           </span>
                           <p className="font-mono text-xs text-emerald-900 truncate">
                             {deliverableUrl}
@@ -940,7 +940,7 @@ export default function FreelancerWorkView() {
                             rel="noopener noreferrer"
                             className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
                           >
-                            <span>Open Link</span>
+                            <span>Open</span>
                             <span>↗</span>
                           </a>
                           <button
@@ -948,29 +948,29 @@ export default function FreelancerWorkView() {
                             onClick={() => setShowReplaceDeliverable(true)}
                             className="px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-900 font-semibold text-xs rounded-lg border border-emerald-300 transition-colors cursor-pointer"
                           >
-                            Update Link
+                            Change Link
                           </button>
                         </div>
                       </div>
                       <p className="text-[11px] text-emerald-700 leading-relaxed">
-                        This video is live in the client portal. The client can watch, pause at any second, and leave timestamped feedback.
+                        The client can watch this video, add notes at any timecode, and approve the cut.
                       </p>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-semibold text-[#1D1D1F]">
-                          UNIVERSAL DELIVERABLE / CLOUD STORAGE URL *
+                          VIDEO PREVIEW OR EXPORT LINK *
                         </label>
                         <input
                           type="url"
                           value={deliverableUrl}
                           onChange={(e) => setDeliverableUrl(e.target.value)}
-                          placeholder="https://youtu.be/... or Google Drive / Vimeo / Loom / Dropbox link"
-                          className="bg-[#F5F5F7] px-4 py-2.5 text-xs text-[#1D1D1F] rounded-xl border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all font-mono"
+                          placeholder="https://youtu.be/... or Google Drive / Vimeo / Loom link"
+                          className="bg-[#F5F5F7] px-3.5 py-2 text-xs text-[#1D1D1F] rounded-lg border border-[#E5E5E7] outline-none focus:bg-white focus:border-[#3B82F6] transition-all font-mono"
                         />
                         <span className="text-[11px] text-[#86868B]">
-                          Supports YouTube, Vimeo, Google Drive video previews, Loom, or direct MP4/stream links.
+                          Supports YouTube, Vimeo, Google Drive, Loom, and MP4 links.
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -978,7 +978,7 @@ export default function FreelancerWorkView() {
                           <button
                             type="button"
                             onClick={() => setShowReplaceDeliverable(false)}
-                            className="px-4 py-3 bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] text-xs font-semibold rounded-xl"
+                            className="px-3.5 py-2 bg-[#F5F5F7] hover:bg-[#E5E5E7] text-[#1D1D1F] text-xs font-semibold rounded-lg"
                           >
                             Cancel
                           </button>
@@ -988,9 +988,9 @@ export default function FreelancerWorkView() {
                             await handleDeliverableSubmit();
                             setShowReplaceDeliverable(false);
                           }}
-                          className="flex-1 py-3.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                          className="flex-1 py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-lg shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                         >
-                          <span>{showReplaceDeliverable ? 'Save Updated Master Cut Link' : 'Submit Master Cut for Client Review'}</span>
+                          <span>{showReplaceDeliverable ? 'Save Updated Video Link' : 'Submit Video for Client Review'}</span>
                           <span>↗</span>
                         </button>
                       </div>
@@ -999,34 +999,34 @@ export default function FreelancerWorkView() {
                 </div>
 
                 {/* Dedicated Section: Client Review & Revision Notes Desk */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm space-y-4">
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs space-y-3.5">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h2 className="text-base font-bold text-[#1D1D1F]">Client Review &amp; Timeline Feedback</h2>
+                      <h2 className="text-sm sm:text-base font-bold text-[#1D1D1F]">Client Review Notes</h2>
                       <p className="text-xs text-[#86868B] mt-0.5">
-                        Client feedback logged at specific timecodes during draft review.
+                        Feedback left by the client at specific timecodes.
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       {isClientApproved ? (
-                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                           ✓ APPROVED BY CLIENT
                         </span>
                       ) : (
                         <>
-                          <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-                            {clientReviewNotes.length} Client {clientReviewNotes.length === 1 ? 'Note' : 'Notes'}
+                          <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+                            {clientReviewNotes.length} {clientReviewNotes.length === 1 ? 'Note' : 'Notes'}
                           </span>
                           {clientReviewNotes.filter((n) => n.isAddressed || String(n.status || '').toLowerCase().includes('addressed') || String(n.status || '').toLowerCase().includes('resolved')).length > 0 && (
-                            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300">
-                              ✓ {clientReviewNotes.filter((n) => n.isAddressed || String(n.status || '').toLowerCase().includes('addressed') || String(n.status || '').toLowerCase().includes('resolved')).length} Addressed in Cut
+                            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                              ✓ {clientReviewNotes.filter((n) => n.isAddressed || String(n.status || '').toLowerCase().includes('addressed') || String(n.status || '').toLowerCase().includes('resolved')).length} Addressed
                             </span>
                           )}
                           {clientReviewNotes.length > 0 && clientReviewNotes.some((n) => !n.isAddressed && !String(n.status || '').toLowerCase().includes('addressed') && !String(n.status || '').toLowerCase().includes('resolved')) && (
                             <button
                               type="button"
                               onClick={handleMarkAllNotesAddressed}
-                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer"
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-2xs cursor-pointer"
                             >
                               ✓ Mark All Addressed
                             </button>
@@ -1037,10 +1037,10 @@ export default function FreelancerWorkView() {
                   </div>
 
                   {isClientApproved && (
-                    <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
-                      <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
+                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1">
+                      <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs sm:text-sm">
                         <span>🎉</span>
-                        <span>Client Has Approved This Cut!</span>
+                        <span>Client Approved This Cut!</span>
                       </div>
                       <p className="text-xs text-emerald-700">
                         The client approved the final draft. Milestone payout will settle to your bank account upon final export conform.
@@ -1049,28 +1049,28 @@ export default function FreelancerWorkView() {
                   )}
 
                   {clientReviewNotes.length === 0 ? (
-                    <div className="p-6 bg-[#F5F5F7] rounded-xl text-center space-y-1 border border-[#E5E5E7]">
-                      <span className="text-lg">👀</span>
+                    <div className="p-5 bg-[#F5F5F7] rounded-xl text-center space-y-1 border border-[#E5E5E7]">
+                      <span className="text-base">👀</span>
                       <p className="text-xs font-semibold text-[#1D1D1F]">No review notes yet</p>
                       <p className="text-[11px] text-[#86868B] max-w-sm mx-auto">
-                        Once your client plays the draft cut, any timestamped notes, color adjustments, or audio changes they request will appear right here.
+                        Once the client reviews the draft, any timestamped notes will appear here.
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-2.5">
+                    <div className="space-y-2">
                       {clientReviewNotes.map((note) => {
                         const isNoteAddressed = note.isAddressed || String(note.status || '').toLowerCase().includes('addressed') || String(note.status || '').toLowerCase().includes('resolved');
                         return (
                           <div
                             key={note.id}
-                            className={`p-3.5 rounded-xl transition-all space-y-2 border ${
+                            className={`p-3 rounded-xl transition-all space-y-1.5 border ${
                               isNoteAddressed
                                 ? 'bg-emerald-50/50 border-emerald-200'
                                 : 'bg-[#F5F5F7] hover:bg-white border-[#E5E5E7]'
                             }`}
                           >
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                              <div className="flex flex-wrap items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-1.5">
                                 <span className="font-mono text-xs font-bold text-[#1D1D1F] bg-white px-2 py-0.5 rounded border border-[#E5E5E7]">
                                   ⏱ {note.timecode || '00:00:00'}
                                 </span>
@@ -1082,7 +1082,7 @@ export default function FreelancerWorkView() {
                                 </span>
                                 {isNoteAddressed ? (
                                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1">
-                                    <span>✓ Addressed in Cut</span>
+                                    <span>✓ Addressed</span>
                                   </span>
                                 ) : (
                                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
@@ -1120,17 +1120,17 @@ export default function FreelancerWorkView() {
                 </div>
 
                 {/* Activity History */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm">
-                  <h2 className="text-base font-bold text-[#1D1D1F] mb-1">Project Activity History</h2>
-                  <p className="text-xs text-[#86868B] mb-4">
-                    Timeline of file downloads, daily check-ins, and draft submissions for this project.
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs">
+                  <h2 className="text-sm sm:text-base font-bold text-[#1D1D1F] mb-0.5">Activity History</h2>
+                  <p className="text-xs text-[#86868B] mb-3">
+                    Recent timeline updates and submissions.
                   </p>
                   {activityLogs.length === 0 ? (
                     <p className="text-xs text-[#86868B] italic">No activity recorded yet.</p>
                   ) : (
                     <div className="space-y-2">
                       {activityLogs.slice(-5).reverse().map((log) => (
-                        <div key={log.id} className="p-3 bg-[#F5F5F7] rounded-xl text-xs flex justify-between items-center border border-[#E5E5E7]/70">
+                        <div key={log.id} className="p-2.5 bg-[#F5F5F7] rounded-lg text-xs flex justify-between items-center border border-[#E5E5E7]/70">
                           <div>
                             <span className="font-mono font-bold text-[#1D1D1F] uppercase">{log.eventType.replace('_', ' ')}</span>
                             <span className="text-[#86868B] ml-2">by {log.userId || 'system'}</span>
@@ -1146,37 +1146,37 @@ export default function FreelancerWorkView() {
               </div>
 
               {/* Right Column: Financial Waterfall & Compliance (4 cols) */}
-              <div className="lg:col-span-4 space-y-6">
+              <div className="lg:col-span-4 space-y-5">
                 {/* Payout & Settlement Card */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm">
-                  <h2 className="text-sm font-bold text-[#1D1D1F] uppercase tracking-wider mb-4">
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs">
+                  <h2 className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider mb-3">
                     Payout &amp; Settlement
                   </h2>
-                  <div className="space-y-3 text-xs">
+                  <div className="space-y-2.5 text-xs">
                     <div className="flex justify-between items-center">
-                      <span className="text-[#86868B]">Creator Allocation (70% Split)</span>
+                      <span className="text-[#86868B]">Gross Share (70%)</span>
                       <span className="font-bold text-[#1D1D1F]">₹{payoutAmount.toLocaleString('en-IN')}</span>
                     </div>
                     <div className="flex justify-between items-center text-amber-700">
-                      <span>Statutory TDS (2% Sec 194J)</span>
+                      <span>TDS Deducted (2%)</span>
                       <span className="font-mono font-semibold">-₹{tdsAmount.toLocaleString('en-IN')}</span>
                     </div>
-                    <div className="pt-3 border-t border-[#1D1D1F] flex justify-between items-center">
-                      <span className="font-extrabold text-[#1D1D1F]">Net NEFT Settlement</span>
-                      <span className="font-extrabold text-emerald-600 text-base">₹{netPayout.toLocaleString('en-IN')}</span>
+                    <div className="pt-2.5 border-t border-[#1D1D1F] flex justify-between items-center">
+                      <span className="font-extrabold text-[#1D1D1F]">Net Payout</span>
+                      <span className="font-extrabold text-emerald-600 text-sm sm:text-base">₹{netPayout.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
-                  <div className="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-800 leading-relaxed">
-                    Disbursed automatically to your verified bank account via NEFT upon client milestone acceptance. Form 26AS certificate issued quarterly.
+                  <div className="mt-3.5 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-[11px] text-emerald-800 leading-relaxed">
+                    Paid to your verified bank account via NEFT after client milestone approval.
                   </div>
                 </div>
 
                 {/* SLA & Timeline */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E5E5E7] shadow-sm">
-                  <h2 className="text-sm font-bold text-[#1D1D1F] uppercase tracking-wider mb-4">
+                <div className="bg-white rounded-xl p-4 sm:p-5 border border-[#E5E5E7] shadow-xs">
+                  <h2 className="text-xs font-bold text-[#1D1D1F] uppercase tracking-wider mb-3">
                     Milestone Deadlines
                   </h2>
-                  <div className="space-y-3 text-xs">
+                  <div className="space-y-2.5 text-xs">
                     <div className="flex justify-between items-center">
                       <span className="text-[#86868B]">Internal QA Delivery</span>
                       <span className="font-bold text-[#1D1D1F]">

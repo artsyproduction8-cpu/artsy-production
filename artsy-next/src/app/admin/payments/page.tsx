@@ -68,35 +68,35 @@ export default function AdminPaymentsPage() {
   };
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-5">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-[#1D1D1F]">Unified Payments Ledger</h1>
-            <span className="text-[11px] font-bold bg-[#3B82F6]/10 text-[#3B82F6] px-2.5 py-0.5 rounded-full">
-              Real-time DB
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F]">Payments &amp; Ledger</h1>
+            <span className="text-[11px] font-bold bg-[#3B82F6]/10 text-[#3B82F6] px-2 py-0.5 rounded-full">
+              Real Time
             </span>
           </div>
-          <p className="text-sm text-[#86868B] mt-1">
-            Reconciled client payments, creator payouts, and refund entries with running balance.
+          <p className="text-xs text-[#86868B] mt-0.5">
+            Client payments, creator payouts, and refund entries with running treasury balance.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <a
             href="/api/admin/payments?format=csv"
             download
-            className="px-4 py-2 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-semibold rounded-xl text-[#1D1D1F] transition-all shadow-2xs flex items-center gap-2 cursor-pointer"
+            className="px-3.5 py-1.5 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-semibold rounded-lg text-[#1D1D1F] transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
-            <svg className="w-4 h-4 text-[#86868B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5 text-[#86868B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.5L19 9.5V19a2 2 0 01-2 2z" />
             </svg>
-            Export Ledger CSV
+            Export CSV
           </a>
           <button
             onClick={fetchLedger}
-            className="p-2 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] rounded-xl text-[#86868B] transition-all cursor-pointer"
+            className="p-1.5 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] rounded-lg text-[#86868B] transition-all cursor-pointer shadow-xs"
             title="Refresh Ledger"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -107,50 +107,50 @@ export default function AdminPaymentsPage() {
       </div>
 
       {/* Running Totals Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E5E7] shadow-xs">
-          <div className="text-xs font-semibold text-[#86868B] uppercase tracking-wider">Total Money In (Clients)</div>
-          <div className="text-2xl font-bold text-emerald-600 mt-2">{formatInr(summary.totalIn || 0)}</div>
-          <div className="text-xs text-[#86868B] mt-1">Paid client orders & retains</div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="bg-white p-4 rounded-xl border border-[#E5E5E7] shadow-xs">
+          <div className="text-[10px] font-semibold text-[#86868B] uppercase tracking-wider">Total Received (Clients)</div>
+          <div className="text-xl sm:text-2xl font-bold text-emerald-600 mt-1.5">{formatInr(summary.totalIn || 0)}</div>
+          <div className="text-[11px] text-[#86868B] mt-0.5">Paid orders and retainers</div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E5E7] shadow-xs">
-          <div className="text-xs font-semibold text-[#86868B] uppercase tracking-wider">Total Money Out (Payouts & Refunds)</div>
-          <div className="text-2xl font-bold text-red-600 mt-2">{formatInr(summary.totalOut || 0)}</div>
-          <div className="text-xs text-[#86868B] mt-1">Disbursed via NEFT & refunds</div>
+        <div className="bg-white p-4 rounded-xl border border-[#E5E5E7] shadow-xs">
+          <div className="text-[10px] font-semibold text-[#86868B] uppercase tracking-wider">Total Paid Out</div>
+          <div className="text-xl sm:text-2xl font-bold text-red-600 mt-1.5">{formatInr(summary.totalOut || 0)}</div>
+          <div className="text-[11px] text-[#86868B] mt-0.5">Disbursed via NEFT and refunds</div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-[#E5E5E7] shadow-xs">
-          <div className="text-xs font-semibold text-[#86868B] uppercase tracking-wider">Current Net Treasury Balance</div>
-          <div className="text-2xl font-bold text-[#1D1D1F] mt-2">{formatInr(summary.currentBalance || 0)}</div>
-          <div className="text-xs text-[#86868B] mt-1">Net platform treasury cash flow</div>
+        <div className="bg-white p-4 rounded-xl border border-[#E5E5E7] shadow-xs">
+          <div className="text-[10px] font-semibold text-[#86868B] uppercase tracking-wider">Net Treasury Balance</div>
+          <div className="text-xl sm:text-2xl font-bold text-[#1D1D1F] mt-1.5">{formatInr(summary.currentBalance || 0)}</div>
+          <div className="text-[11px] text-[#86868B] mt-0.5">Current net platform balance</div>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-[#E5E5E7] flex flex-wrap items-center justify-between gap-4 shadow-2xs">
+      <div className="bg-white p-3 rounded-xl border border-[#E5E5E7] flex flex-wrap items-center justify-between gap-3 shadow-2xs">
         <div className="flex items-center gap-3 flex-1 min-w-[240px]">
           <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Search by party, email, reference, or method..."
+              placeholder="Search by party, email, ref, or method..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full text-xs bg-[#F5F5F7] border border-transparent rounded-xl px-3 py-2 pl-9 focus:bg-white focus:border-[#3B82F6] focus:outline-none transition-all"
+              className="w-full text-xs bg-[#F5F5F7] border border-transparent rounded-lg px-3 py-1.5 pl-8 focus:bg-white focus:border-[#3B82F6] focus:outline-none transition-all"
             />
-            <svg className="w-4 h-4 text-[#86868B] absolute left-2.5 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5 text-[#86868B] absolute left-2.5 top-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 text-xs text-[#86868B]">
             <span>Type:</span>
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="bg-[#F5F5F7] border border-[#E5E5E7] rounded-lg px-2 py-1 text-xs font-medium text-[#1D1D1F] focus:outline-none"
+              className="bg-[#F5F5F7] border border-[#E5E5E7] rounded-md px-2 py-1 text-xs font-medium text-[#1D1D1F] focus:outline-none"
             >
               <option value="all">All Flows</option>
               <option value="client_payment">Client Payment (IN)</option>
@@ -164,7 +164,7 @@ export default function AdminPaymentsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="bg-[#F5F5F7] border border-[#E5E5E7] rounded-lg px-2 py-1 text-xs font-medium text-[#1D1D1F] focus:outline-none"
+              className="bg-[#F5F5F7] border border-[#E5E5E7] rounded-md px-2 py-1 text-xs font-medium text-[#1D1D1F] focus:outline-none"
             >
               <option value="all">All Statuses</option>
               <option value="captured">Captured / Paid</option>
@@ -176,32 +176,32 @@ export default function AdminPaymentsPage() {
       </div>
 
       {/* Ledger Table */}
-      <div className="bg-white rounded-2xl border border-[#E5E5E7] overflow-hidden shadow-xs">
+      <div className="bg-white rounded-xl border border-[#E5E5E7] overflow-hidden shadow-xs">
         {loading ? (
-          <div className="p-12 text-center text-xs text-[#86868B]">Loading reconciled ledger...</div>
+          <div className="p-10 text-center text-xs text-[#86868B]">Loading ledger...</div>
         ) : filteredItems.length === 0 ? (
-          <div className="p-12 text-center text-xs text-[#86868B]">No ledger records matching filters.</div>
+          <div className="p-10 text-center text-xs text-[#86868B]">No ledger records matching filters.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold text-[11px]">
-                  <th className="py-3.5 px-4 whitespace-nowrap">Date</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Type</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Reference</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Party</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Gross</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">TDS / Fee</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Net Flow</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Running Balance</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap">Method</th>
+                <tr className="bg-[#FAFAFA] border-b border-[#E5E5E7] text-[#86868B] font-semibold text-[10px] uppercase tracking-wider">
+                  <th className="py-2.5 px-3 whitespace-nowrap">Date</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Type</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Reference</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Party</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Gross</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">TDS / Fee</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Net Flow</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Running Balance</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Status</th>
+                  <th className="py-2.5 px-3 whitespace-nowrap">Method</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E5E7]">
                 {filteredItems.map((item) => (
                   <tr key={item.id} className="hover:bg-[#F5F5F7]/50 transition-colors">
-                    <td className="py-3 px-4 text-[#86868B] whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-[#86868B] whitespace-nowrap">
                       {new Date(item.date).toLocaleDateString('en-IN', {
                         day: '2-digit',
                         month: 'short',
@@ -210,7 +210,7 @@ export default function AdminPaymentsPage() {
                         minute: '2-digit',
                       })}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       <span
                         className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                           item.type === 'client_payment'
@@ -223,31 +223,31 @@ export default function AdminPaymentsPage() {
                         {item.type.replace('_', ' ').toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-3 px-4 font-mono font-medium text-[#1D1D1F]">{item.reference}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-3 font-mono font-medium text-[#1D1D1F]">{item.reference}</td>
+                    <td className="py-2.5 px-3">
                       <div className="font-semibold text-[#1D1D1F]">{item.partyName}</div>
                       <div className="text-[10px] text-[#86868B]">{item.partyEmail}</div>
                     </td>
-                    <td className="py-3 px-4 text-[#1D1D1F] font-mono">{formatInr(item.grossAmount)}</td>
-                    <td className="py-3 px-4 text-[#86868B] font-mono">
+                    <td className="py-2.5 px-3 text-[#1D1D1F] font-mono">{formatInr(item.grossAmount)}</td>
+                    <td className="py-2.5 px-3 text-[#86868B] font-mono">
                       {item.feeOrTds > 0 ? formatInr(item.feeOrTds) : '—'}
                     </td>
                     <td
-                      className={`py-3 px-4 font-mono font-bold whitespace-nowrap ${
+                      className={`py-2.5 px-3 font-mono font-bold whitespace-nowrap ${
                         item.direction === 'IN' ? 'text-emerald-600' : 'text-red-600'
                       }`}
                     >
                       {item.direction === 'IN' ? '+' : '-'} {formatInr(item.netAmount)}
                     </td>
-                    <td className="py-3 px-4 font-mono text-[#1D1D1F] font-semibold whitespace-nowrap">
+                    <td className="py-2.5 px-3 font-mono text-[#1D1D1F] font-semibold whitespace-nowrap">
                       {formatInr(item.runningBalance)}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-3">
                       <span className="capitalize px-2 py-0.5 rounded bg-[#F5F5F7] text-[10px] font-semibold text-[#1D1D1F]">
                         {item.status}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-[#86868B] whitespace-nowrap">{item.method}</td>
+                    <td className="py-2.5 px-3 text-[#86868B] whitespace-nowrap">{item.method}</td>
                   </tr>
                 ))}
               </tbody>

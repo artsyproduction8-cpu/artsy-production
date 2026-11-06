@@ -210,26 +210,26 @@ export default function ClientProjectsPage() {
       <div className="flex w-full max-w-full overflow-x-hidden">
         <ClientSidebar />
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden lg:pl-72 pt-28 lg:pt-16 min-h-screen">
-          <div className="p-4 sm:p-6 lg:p-8 space-y-8 w-full max-w-[1600px] mx-auto">
+          <div className="p-4 sm:p-5 space-y-5 w-full max-w-[1400px] mx-auto">
             {/* User Identity Greeting */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-[#E5E5E7]">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-[#E5E5E7]">
+              <div className="flex items-center gap-3">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt={clientName || 'Client'}
-                    className="w-14 h-14 rounded-2xl object-cover border border-[#E5E5E7] shadow-xs"
+                    className="w-11 h-11 rounded-xl object-cover border border-[#E5E5E7] shadow-xs"
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-2xl bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-lg tracking-wider border border-[#E5E5E7] shadow-xs">
+                  <div className="w-11 h-11 rounded-xl bg-[#1D1D1F] text-white flex items-center justify-center font-bold text-sm tracking-wider border border-[#E5E5E7] shadow-xs">
                     {clientInitials}
                   </div>
                 )}
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1D1D1F] tracking-tight">
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-[#1D1D1F] tracking-tight">
                     My Projects
                   </h1>
-                  <p className="text-xs sm:text-sm text-[#86868B] mt-0.5">
+                  <p className="text-xs text-[#86868B]">
                     Track your ongoing video edits and review drafts
                   </p>
                 </div>
@@ -237,7 +237,7 @@ export default function ClientProjectsPage() {
 
               <Link
                 href="/book"
-                className="px-5 py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-sm text-center shrink-0"
+                className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all shadow-xs text-center shrink-0"
               >
                 + Start New Project
               </Link>
@@ -248,63 +248,63 @@ export default function ClientProjectsPage() {
                 Loading projects...
               </div>
             ) : projects.length === 0 ? (
-              <div className="text-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-white p-8">
-                <div className="text-4xl mb-3">🎬</div>
-                <h3 className="text-lg font-semibold mb-2">No active projects yet</h3>
-                <p className="text-sm text-gray-500 mb-6">
-                  Start your first video project — upload your footage and our team will get to work.
+              <div className="text-center py-14 border border-dashed border-gray-200 rounded-2xl bg-white p-6">
+                <div className="text-3xl mb-2">🎬</div>
+                <h3 className="text-base font-semibold mb-1">No active projects</h3>
+                <p className="text-xs text-gray-500 mb-5">
+                  Upload your footage to start your first video project.
                 </p>
                 <Link
                   href="/book"
-                  className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition-all shadow-sm"
+                  className="inline-block px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-semibold transition-all shadow-xs"
                 >
                   Start New Project →
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3.5">
                 {projects.map((proj) => (
                   <div
                     key={proj.id}
-                    className="bg-white rounded-2xl border border-[#E5E5E7]/70 p-6 sm:p-7 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:border-[#3B82F6]/50 transition-all group"
+                    className="bg-white rounded-2xl border border-[#E5E5E7]/70 p-4 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] hover:border-[#3B82F6]/50 transition-all group"
                   >
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                       {/* Left Meta Block */}
-                      <div className="space-y-3 flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2.5">
-                          <span className="font-mono text-[11px] font-bold text-[#3B82F6] bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-100">
+                      <div className="space-y-2 flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-[10px] font-bold text-[#3B82F6] bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
                             {proj.orderId}
                           </span>
                           <span
-                            className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${proj.statusColor}`}
+                            className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${proj.statusColor}`}
                           >
                             {proj.statusLabel}
                           </span>
-                          <span className="text-xs text-[#86868B]">
+                          <span className="text-[11px] text-[#86868B]">
                             • {proj.category}
                           </span>
                           {proj.creatorName && !proj.isCreatorDeclined && (
-                            <span className="text-[11px] font-semibold text-blue-600 bg-blue-50/80 px-2.5 py-0.5 rounded-md border border-blue-100">
+                            <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
                               🎬 Editor: {proj.creatorName}
                             </span>
                           )}
                         </div>
 
                         <div>
-                          <h2 className="text-lg font-bold text-[#1D1D1F] tracking-tight group-hover:text-[#3B82F6] transition-colors">
+                          <h2 className="text-base font-bold text-[#1D1D1F] tracking-tight group-hover:text-[#3B82F6] transition-colors">
                             {proj.title}
                           </h2>
-                          <p className="text-xs text-[#86868B] mt-1 flex flex-wrap items-center gap-3">
+                          <p className="text-xs text-[#86868B] mt-0.5 flex flex-wrap items-center gap-2.5">
                             <span>🎥 {proj.cameraAngles}</span>
                             <span>📐 {proj.aspectRatios}</span>
                           </p>
                         </div>
 
-                        {/* Positive 4-Stage Post-Production Progress Tracker (Zero negative flags) */}
-                        <div className="pt-2.5 space-y-2 max-w-xl">
+                        {/* Positive 4-Stage Post-Production Progress Tracker */}
+                        <div className="pt-1.5 space-y-1.5 max-w-xl">
                           <div className="flex flex-wrap items-center justify-between text-xs gap-2">
                             <div className="flex items-center gap-2">
-                              <span className="font-extrabold text-[#1D1D1F]">
+                              <span className="font-bold text-[#1D1D1F]">
                                 Stage {proj.editingProgress?.stage || 1} of 4: {proj.editingProgress?.stageName || 'Ingest & Selects'}
                               </span>
                               <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
@@ -346,9 +346,9 @@ export default function ClientProjectsPage() {
                       </div>
 
                       {/* Right Action Block */}
-                      <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-3 shrink-0 pt-4 lg:pt-0 border-t lg:border-t-0 border-[#F5F5F7]">
+                      <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between gap-2.5 shrink-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-[#F5F5F7]">
                         <div className="text-left lg:text-right">
-                          <div className="font-mono text-base font-extrabold text-[#1D1D1F]">
+                          <div className="font-mono text-sm font-extrabold text-[#1D1D1F]">
                             {proj.priceFormatted}
                           </div>
                           <div className="text-[11px] font-semibold text-emerald-600 mt-0.5">
@@ -359,7 +359,7 @@ export default function ClientProjectsPage() {
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                           <Link
                             href={`/client/projects/${proj.id}`}
-                            className="w-full sm:w-auto px-4 py-2 bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-semibold rounded-xl text-center transition-all shadow-xs"
+                            className="w-full sm:w-auto px-3.5 py-1.5 bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-semibold rounded-xl text-center transition-all shadow-xs"
                           >
                             Watch &amp; Review Video →
                           </Link>
@@ -378,35 +378,35 @@ export default function ClientProjectsPage() {
 
                     {/* Interactive Creator Declined & Reassignment Gate */}
                     {proj.isCreatorDeclined && (
-                      <div className="mt-5 p-4 rounded-xl bg-amber-50 border border-amber-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-amber-700 font-extrabold text-xs uppercase tracking-wide">
+                      <div className="mt-4 p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-amber-800 font-bold text-xs">
                               ⚠️ Requested Editor Unavailable
                             </span>
                           </div>
-                          <p className="text-xs text-[#1D1D1F] leading-relaxed">
-                            Your requested editor <strong className="font-semibold text-amber-900">{proj.preferredCreatorName}</strong> is fully booked for this turnaround ({proj.declineReason || 'Schedule conflict'}).
+                          <p className="text-xs text-[#1D1D1F]">
+                            <strong className="font-semibold text-amber-950">{proj.preferredCreatorName}</strong> is unavailable for these dates ({proj.declineReason || 'Schedule conflict'}).
                           </p>
                           <p className="text-[11px] text-[#6E6E73]">
-                            Your order and payment are 100% secured. Choose another verified editor from our roster or let Artsy Studio immediately assign our top senior talent.
+                            Your order is safe. Select another editor or let Artsy assign a senior specialist.
                           </p>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2 shrink-0">
                           <Link
                             href={`/creators?reselectFor=${proj.id}`}
-                            className="px-3.5 py-2 bg-white hover:bg-slate-50 border border-[#D2D2D7] text-[#1D1D1F] text-xs font-semibold rounded-xl transition-all shadow-xs"
+                            className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-[#D2D2D7] text-[#1D1D1F] text-xs font-semibold rounded-xl transition-all shadow-xs"
                           >
-                            Choose Another Editor
+                            Choose Editor
                           </Link>
                           <button
                             type="button"
                             onClick={() => handleResolveArtsy(proj.id)}
                             disabled={resolvingId === proj.id}
-                            className="px-4 py-2 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                            className="px-3.5 py-1.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50"
                           >
-                            {resolvingId === proj.id ? 'Assigning...' : 'Let Artsy Assign (Recommended)'}
+                            {resolvingId === proj.id ? 'Assigning...' : 'Let Artsy Assign'}
                           </button>
                         </div>
                       </div>

@@ -132,7 +132,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       <div className="flex pt-16 min-h-screen w-full max-w-full overflow-x-hidden">
         <AdminSidebar />
         <main className="flex-1 lg:pl-72 min-h-[calc(100vh-4rem)] w-full min-w-0 max-w-full overflow-x-hidden">
-          <div className="w-full max-w-[1680px] mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="w-full max-w-[1400px] mx-auto p-4 sm:p-5">
             {children}
           </div>
         </main>

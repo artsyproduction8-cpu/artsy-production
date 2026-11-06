@@ -674,3 +674,9 @@ flowchart TD
       - Strictly omit redundant `Landing Page Home` links from portal header menus (the top-left logo already serves this navigation).
       - Strictly omit extraneous keyboard shortcut indicators (`⌘Q`) or noisy decorative icons on `Sign Out`. Keep `Sign Out` as a clean, properly styled action.
       - Sleek, compact dropdown sizing (`w-52`) with smooth transitions.
+
+22. **Compact & Balanced Authentication Suite Standard (November 2026):**
+    - The dual-credential and OTP verification screen (`/auth/login`) enforces a sleek, compact, well-proportioned layout:
+      - Right panel card container is capped at `max-w-[360px]` to eliminate oversized, bloated text boxes.
+      - Input fields (Mobile Number with country code prefix, Email Address, and OTP) are standardized to a compact `h-9.5 sm:h-10` height (38–40px) with `rounded-lg` borders and crisp focus rings.
+      - Compact label sizing (`text-[11px] font-medium text-[#1D1D1F]`), tight form spacing (`space-y-3`), and standardized submit action button (`h-9.5 sm:h-10 rounded-lg text-xs font-semibold uppercase tracking-wider`).

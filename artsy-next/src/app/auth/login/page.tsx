@@ -721,13 +721,13 @@ function LoginFormContent() {
       </div>
 
       {/* ── RIGHT PANEL: Dual-Credential Login & Single OTP UI ── */}
-      <div className="flex-1 flex justify-center items-center px-6 py-8 sm:py-12 lg:px-10 xl:px-14 lg:w-[42%] xl:w-[40%] lg:flex-none bg-white">
-        <div className="w-full max-w-[430px] space-y-6">
+      <div className="flex-1 flex justify-center items-center px-5 py-6 sm:py-10 lg:px-8 xl:px-12 lg:w-[42%] xl:w-[40%] lg:flex-none bg-white">
+        <div className="w-full max-w-[360px] space-y-4.5">
           
-          {/* 1. ARTSY Wordmark (Dot Removed) */}
+          {/* 1. ARTSY Wordmark */}
           <div className="text-left">
-            <Link href="/" className="inline-flex items-center group mb-3">
-              <span className="text-2xl font-extrabold tracking-[-0.04em] text-[#1D1D1F]">
+            <Link href="/" className="inline-flex items-center group mb-2">
+              <span className="text-xl sm:text-2xl font-black tracking-[-0.03em] text-[#1D1D1F]">
                 ARTSY
               </span>
             </Link>
@@ -736,11 +736,11 @@ function LoginFormContent() {
             {step === 'credentials' ? (
               <>
                 {isFreelancerIntent ? (
-                  <h1 className="text-2xl sm:text-[27px] font-extrabold tracking-[-0.03em] text-[#1D1D1F] leading-tight">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-tight">
                     Apply as <span className="text-[#3B82F6]">Creator</span>
                   </h1>
                 ) : (
-                  <h1 className="text-2xl sm:text-[27px] font-extrabold tracking-[-0.03em] text-[#1D1D1F] leading-tight flex items-baseline gap-2">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-tight flex items-baseline gap-1.5">
                     <span>Access</span>
                     <span
                       className={`text-[#3B82F6] transition-opacity duration-400 ease-in-out ${
@@ -751,25 +751,25 @@ function LoginFormContent() {
                     </span>
                   </h1>
                 )}
-                <p className="text-xs sm:text-[13px] text-[#86868B] mt-1.5 leading-relaxed">
+                <p className="text-xs text-[#86868B] mt-1 leading-normal">
                   {isFreelancerIntent
-                    ? 'Enter both your mobile number and email. A single OTP will be dispatched to both.'
-                    : 'Enter both your mobile number and email to receive a single verification code.'}
+                    ? 'Enter your mobile number and email. A single OTP will be sent to both.'
+                    : 'Enter your mobile number and email to receive a single verification code.'}
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-2xl sm:text-[27px] font-extrabold tracking-[-0.03em] text-[#1D1D1F] leading-tight">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-tight">
                   Verify <span className="text-[#3B82F6]">Passcode</span>
                 </h1>
-                <p className="text-xs sm:text-[13px] text-[#86868B] mt-1.5 leading-relaxed">
+                <p className="text-xs text-[#86868B] mt-1 leading-normal">
                   Enter the 6-digit code sent to both your phone and email.
                 </p>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="text-[11px] font-mono font-semibold bg-[#F5F5F7] text-[#1D1D1F] px-2.5 py-1 rounded-lg border border-[#E5E5E7]">
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  <span className="text-[10px] font-mono font-medium bg-[#F5F5F7] text-[#1D1D1F] px-2 py-0.5 rounded-md border border-[#E5E5E7]">
                     📱 +91 {phoneInput}
                   </span>
-                  <span className="text-[11px] font-semibold bg-[#F5F5F7] text-[#1D1D1F] px-2.5 py-1 rounded-lg border border-[#E5E5E7] truncate max-w-[200px]">
+                  <span className="text-[10px] font-medium bg-[#F5F5F7] text-[#1D1D1F] px-2 py-0.5 rounded-md border border-[#E5E5E7] truncate max-w-[180px]">
                     ✉️ {emailInput}
                   </span>
                 </div>
@@ -779,24 +779,24 @@ function LoginFormContent() {
 
           {/* Inline Error Message */}
           {error && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium leading-relaxed animate-in fade-in duration-200">
+            <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-xs font-medium leading-relaxed animate-in fade-in duration-200">
               {error}
             </div>
           )}
 
           {/* STEP 1: DUAL INPUT CREDENTIALS FORM */}
           {step === 'credentials' ? (
-            <form onSubmit={handleSendOtp} className="space-y-4">
+            <form onSubmit={handleSendOtp} className="space-y-3">
               
               {/* Mobile Number Input */}
               <div>
-                <label htmlFor="login-phone-input" className="block text-xs font-semibold text-[#1D1D1F] mb-1.5">
+                <label htmlFor="login-phone-input" className="block text-[11px] font-medium text-[#1D1D1F] mb-1">
                   Mobile Number <span className="text-red-500">*</span>
                 </label>
-                <div className="relative flex h-11 w-full items-stretch rounded-xl border border-[#E5E5E7] bg-white transition-colors focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10">
-                  <div className="flex h-full items-center gap-1.5 rounded-l-xl border-r border-[#E5E5E7] px-3 text-xs font-semibold text-[#1D1D1F] bg-[#F5F5F7] select-none">
-                    <span>🇮🇳</span>
-                    <span>+91</span>
+                <div className="relative flex h-9.5 sm:h-10 w-full items-stretch rounded-lg border border-[#E5E5E7] bg-white transition-all focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10">
+                  <div className="flex h-full items-center gap-1 rounded-l-lg border-r border-[#E5E5E7] px-2.5 text-xs font-medium text-[#1D1D1F] bg-[#F8F8FA] select-none shrink-0">
+                    <span className="text-xs">🇮🇳</span>
+                    <span className="font-mono text-xs">+91</span>
                   </div>
                   <input
                     ref={phoneInputRef}
@@ -811,17 +811,17 @@ function LoginFormContent() {
                       if (error) setError(null);
                     }}
                     placeholder="98765 43210"
-                    className="h-full w-full rounded-r-xl bg-transparent px-3 text-xs sm:text-sm font-semibold text-[#1D1D1F] placeholder:text-[#86868B] focus:outline-none"
+                    className="h-full w-full rounded-r-lg bg-transparent px-2.5 text-xs sm:text-[13px] font-medium text-[#1D1D1F] placeholder:text-[#86868B]/60 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Email Address Input */}
               <div>
-                <label htmlFor="login-email-input" className="block text-xs font-semibold text-[#1D1D1F] mb-1.5">
+                <label htmlFor="login-email-input" className="block text-[11px] font-medium text-[#1D1D1F] mb-1">
                   Email Address <span className="text-red-500">*</span>
                 </label>
-                <div className="relative flex h-11 w-full items-stretch rounded-xl border border-[#E5E5E7] bg-white transition-colors focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10">
+                <div className="relative flex h-9.5 sm:h-10 w-full items-stretch rounded-lg border border-[#E5E5E7] bg-white transition-all focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10">
                   <input
                     ref={emailInputRef}
                     id="login-email-input"
@@ -832,13 +832,13 @@ function LoginFormContent() {
                       if (error) setError(null);
                     }}
                     placeholder="client@studio.com or creator@gmail.com"
-                    className="h-full w-full rounded-xl bg-transparent px-3 text-xs sm:text-sm font-semibold text-[#1D1D1F] placeholder:text-[#86868B] focus:outline-none"
+                    className="h-full w-full rounded-lg bg-transparent px-3 text-xs sm:text-[13px] font-medium text-[#1D1D1F] placeholder:text-[#86868B]/60 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Terms Checkbox */}
-              <label className="flex items-start gap-2.5 text-xs text-[#86868B] leading-snug cursor-pointer select-none pt-1">
+              <label className="flex items-start gap-2 text-[11px] text-[#86868B] leading-snug cursor-pointer select-none pt-0.5">
                 <input
                   id="terms-checkbox"
                   type="checkbox"
@@ -847,12 +847,12 @@ function LoginFormContent() {
                     setTermsAccepted(e.target.checked);
                     if (error) setError(null);
                   }}
-                  className="mt-0.5 h-4 w-4 accent-[#3B82F6] rounded border-[#E5E5E7] cursor-pointer"
+                  className="mt-0.5 h-3.5 w-3.5 accent-[#3B82F6] rounded border-[#E5E5E7] cursor-pointer"
                 />
                 <span>
                   I agree to Artsy&apos;s{' '}
                   <Link href="/terms" className="font-semibold text-[#1D1D1F] hover:text-[#3B82F6] underline">
-                    Terms of Service
+                    Terms
                   </Link>{' '}
                   and{' '}
                   <Link href="/privacy" className="font-semibold text-[#1D1D1F] hover:text-[#3B82F6] underline">
@@ -865,15 +865,15 @@ function LoginFormContent() {
               <button
                 type="submit"
                 disabled={isLoading || isFormIncomplete}
-                className="w-full h-11 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] active:scale-[0.98] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-9.5 sm:h-10 rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] active:scale-[0.99] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                  <div className="flex items-center gap-1.5">
+                    <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    <span>Sending OTP...</span>
+                    <span>Sending Code...</span>
                   </div>
                 ) : (
                   <span>CONTINUE WITH OTP →</span>
@@ -882,14 +882,12 @@ function LoginFormContent() {
             </form>
           ) : (
             /* STEP 2: SINGLE UNIFIED OTP VERIFICATION FORM */
-            <form onSubmit={handleVerifyOtp} className="space-y-4 animate-in fade-in duration-200">
+            <form onSubmit={handleVerifyOtp} className="space-y-3 animate-in fade-in duration-200">
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="login-otp-input" className="block text-xs font-semibold text-[#1D1D1F]">
-                    Single Verification Code <span className="text-red-500">*</span>
-                  </label>
-                </div>
-                <div className="relative flex h-12 w-full items-stretch rounded-xl border border-[#E5E5E7] bg-white transition-colors focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10">
+                <label htmlFor="login-otp-input" className="block text-[11px] font-medium text-[#1D1D1F] mb-1">
+                  Verification Code <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex h-9.5 sm:h-10 w-full items-stretch rounded-lg border border-[#E5E5E7] bg-white transition-all focus-within:border-[#3B82F6] focus-within:ring-2 focus-within:ring-[#3B82F6]/10">
                   <input
                     ref={otpInputRef}
                     id="login-otp-input"
@@ -902,14 +900,14 @@ function LoginFormContent() {
                       setOtpInput(e.target.value.replace(/\D/g, ''));
                       if (error) setError(null);
                     }}
-                    placeholder="Enter 6-digit OTP"
-                    className="h-full w-full rounded-xl bg-transparent px-4 text-center font-mono text-lg font-extrabold tracking-[0.3em] text-[#1D1D1F] placeholder:tracking-normal placeholder:font-sans placeholder:text-xs placeholder:text-[#86868B] focus:outline-none"
+                    placeholder="••••••"
+                    className="h-full w-full rounded-lg bg-transparent px-3 text-center font-mono text-base font-bold tracking-[0.25em] text-[#1D1D1F] placeholder:font-sans placeholder:tracking-normal placeholder:text-xs placeholder:text-[#86868B]/60 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Timer & Resend */}
-              <div className="flex items-center justify-between text-xs text-[#86868B] pt-1">
+              <div className="flex items-center justify-between text-[11px] text-[#86868B] pt-0.5">
                 <button
                   type="button"
                   onClick={() => {
@@ -938,11 +936,11 @@ function LoginFormContent() {
               <button
                 type="submit"
                 disabled={isLoading || otpInput.trim().length < 4}
-                className="w-full h-11 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] active:scale-[0.98] text-white text-xs font-bold uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full h-9.5 sm:h-10 rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] active:scale-[0.99] text-white text-xs font-semibold uppercase tracking-wider transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                  <div className="flex items-center gap-1.5">
+                    <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
@@ -958,7 +956,7 @@ function LoginFormContent() {
           )}
 
           {/* Divider Line */}
-          <div className="w-full border-t border-[#E5E5E7] my-4" />
+          <div className="w-full border-t border-[#E5E5E7] my-3" />
 
           {/* Mode Switcher */}
           <div className="text-center text-xs">

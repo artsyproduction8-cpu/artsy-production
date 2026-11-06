@@ -665,3 +665,12 @@ flowchart TD
       - **Table & Grid Density:** Table cell padding is compact (`py-2.5 px-3`) with horizontal scrolling (`overflow-x-auto`), eliminating bloated multi-inch table rows.
       - **Simple, Concise English Copy:** UI labels, cards, alerts, and instructions use clear, conversational, minimum-word-count English (e.g. "Needs Review", "Completed", "Active Projects", "Paid", "Upload Draft or Master Cut"). All robotic, academic, or bureaucratic phrasing is eliminated.
       - **Design Fidelity & Styling Preservation:** Strictly maintain all visual brand identities, color palettes, button styling, borders (`border-[#E5E5E7]`), and shadow levels (`shadow-xs`). Visual design, contrast, and component hierarchy remain identical.
+
+21. **Clean & Minimal Header User Menus (November 2026):**
+    - The profile dropdown menus in `ClientHeader.tsx`, `FreelancerHeader.tsx`, `AdminHeader.tsx`, and `Navbar.tsx` strictly adhere to a clean, minimal, uncluttered standard:
+      - Display the user's name prominently (`font-semibold text-white truncate`).
+      - Strictly omit noisy metadata taglines (`Client • user@email.com`, `Creator • user@email.com`, `Admin • user@email.com`).
+      - Strictly omit redundant section headers and badges (`CLIENT PAGES Portal`, `CREATOR PAGES Studio`, `ADMIN PAGES Control`).
+      - Strictly omit redundant `Landing Page Home` links from portal header menus (the top-left logo already serves this navigation).
+      - Strictly omit extraneous keyboard shortcut indicators (`⌘Q`) or noisy decorative icons on `Sign Out`. Keep `Sign Out` as a clean, properly styled action.
+      - Sleek, compact dropdown sizing (`w-52`) with smooth transitions.

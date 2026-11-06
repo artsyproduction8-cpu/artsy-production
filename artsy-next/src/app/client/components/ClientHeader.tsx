@@ -149,21 +149,14 @@ export default function ClientHeader() {
 
             {/* Compact Client Pages Dropdown Menu */}
             {isMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 sm:w-60 bg-[#18181B] border border-white/15 rounded-xl p-2 shadow-2xl z-50 text-white animate-in fade-in slide-in-from-top-2 duration-150">
-                {/* User Profile Info Header */}
-                <div className="px-3 py-2 border-b border-white/10 mb-1.5">
-                  <div className="text-xs font-bold text-white truncate">{clientName}</div>
-                  <div className="text-[10px] text-white/60 font-mono mt-0.5 truncate">Client • {user?.email}</div>
-                </div>
-
-                {/* Client Pages Header */}
-                <div className="px-2.5 py-1 flex items-center justify-between">
-                  <span className="text-[9px] font-bold font-mono text-white/50 uppercase tracking-wider">Client Pages</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Portal</span>
+              <div className="absolute right-0 top-full mt-2 w-52 bg-[#18181B] border border-white/15 rounded-xl p-1.5 shadow-2xl z-50 text-white animate-in fade-in slide-in-from-top-2 duration-150">
+                {/* User Profile Info */}
+                <div className="px-2.5 py-1.5 border-b border-white/10 mb-1">
+                  <div className="text-xs font-semibold text-white truncate">{clientName}</div>
                 </div>
 
                 {/* Client Pages Links */}
-                <div className="space-y-0.5 mt-0.5 max-h-60 overflow-y-auto">
+                <div className="space-y-0.5 max-h-64 overflow-y-auto">
                   {CLIENT_PAGES.map((item) => (
                     <Link
                       key={item.href}
@@ -176,43 +169,30 @@ export default function ClientHeader() {
                   ))}
                 </div>
 
-                <div className="border-t border-white/10 my-1.5"></div>
-
-                <Link
-                  href="/"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                >
-                  <span>Landing Page Home</span>
-                  <span className="font-mono text-[9px] text-white/40">/</span>
-                </Link>
-
                 {(user?.role === 'admin' || user?.role === 'super_admin') && (
                   <>
-                    <div className="border-t border-white/10 my-1.5"></div>
-                    <div className="px-2.5 py-1 text-[9px] font-bold font-mono text-white/50 uppercase tracking-wider">
+                    <div className="border-t border-white/10 my-1"></div>
+                    <div className="px-2.5 py-1 text-[9px] font-semibold text-white/50 uppercase tracking-wider">
                       Staff Switcher
                     </div>
                     <Link
                       href="/freelancer"
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                      className="flex items-center px-2.5 py-1.5 rounded-lg text-xs text-emerald-400 hover:bg-emerald-500/10 transition-colors"
                     >
                       <span>Creator Studio</span>
-                      <span className="text-[10px]">🎨</span>
                     </Link>
                     <Link
                       href="/admin"
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                      className="flex items-center px-2.5 py-1.5 rounded-lg text-xs text-indigo-400 hover:bg-indigo-500/10 transition-colors"
                     >
                       <span>Admin Operations</span>
-                      <span className="text-[10px]">⚙️</span>
                     </Link>
                   </>
                 )}
 
-                <div className="border-t border-white/10 my-1.5"></div>
+                <div className="border-t border-white/10 my-1"></div>
 
                 {/* Sign Out */}
                 <button
@@ -221,10 +201,9 @@ export default function ClientHeader() {
                     setIsMenuOpen(false);
                     logout();
                   }}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors flex items-center justify-between cursor-pointer"
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors cursor-pointer"
                 >
-                  <span>Sign Out</span>
-                  <span className="text-[10px] font-mono">⌘Q</span>
+                  Sign Out
                 </button>
               </div>
             )}

@@ -504,35 +504,16 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
                 </span>
               </button>
 
-              {/* User Menu Dropdown: Compact Client Pages Menu on Top Right User Logo */}
+              {/* User Menu Dropdown: Compact Pages Menu on Top Right User Logo */}
               {isUserMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 sm:w-60 bg-[#18181B] border border-white/15 rounded-xl p-2 shadow-2xl z-50 text-white animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 top-full mt-2 w-52 bg-[#18181B] border border-white/15 rounded-xl p-1.5 shadow-2xl z-50 text-white animate-in fade-in slide-in-from-top-2 duration-150">
                   {/* User Profile Info Header */}
-                  <div className="px-3 py-2 border-b border-white/10 mb-1.5">
-                    <div className="text-xs font-bold text-white truncate">{user?.full_name}</div>
-                    <div className="text-[10px] text-white/60 font-mono mt-0.5 truncate">{roleLabel} • {user?.email}</div>
-                  </div>
-
-                  {/* Role-Specific Portal Pages Header */}
-                  <div className="px-2.5 py-1 flex items-center justify-between">
-                    <span className="text-[9px] font-bold font-mono text-white/50 uppercase tracking-wider">
-                      {role === 'admin' || role === 'super_admin' ? 'Admin Control' : role === 'freelancer' ? 'Creator Studio' : 'Client Portal'}
-                    </span>
-                    <span
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
-                        role === 'admin' || role === 'super_admin'
-                          ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30'
-                          : role === 'freelancer'
-                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                          : 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-                      }`}
-                    >
-                      {role === 'admin' || role === 'super_admin' ? 'Admin' : role === 'freelancer' ? 'Creator' : 'Client'}
-                    </span>
+                  <div className="px-2.5 py-1.5 border-b border-white/10 mb-1">
+                    <div className="text-xs font-semibold text-white truncate">{user?.full_name}</div>
                   </div>
 
                   {/* Role-Specific Pages Links */}
-                  <div className="space-y-0.5 mt-0.5 max-h-60 overflow-y-auto">
+                  <div className="space-y-0.5 max-h-64 overflow-y-auto">
                     {(role === 'admin' || role === 'super_admin'
                       ? ADMIN_PAGES
                       : role === 'freelancer'
@@ -553,7 +534,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
                   {/* Start New Project Link */}
                   {role === 'client' && (
                     <>
-                      <div className="border-t border-white/10 my-1.5"></div>
+                      <div className="border-t border-white/10 my-1"></div>
                       <Link
                         href="/book"
                         onClick={() => setIsUserMenuOpen(false)}
@@ -565,7 +546,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
                     </>
                   )}
 
-                  <div className="border-t border-white/10 my-1.5"></div>
+                  <div className="border-t border-white/10 my-1"></div>
 
                   {/* Sign Out */}
                   <button
@@ -574,10 +555,9 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
                       setIsUserMenuOpen(false);
                       logout();
                     }}
-                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors flex items-center justify-between cursor-pointer"
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors cursor-pointer"
                   >
-                    <span>Sign Out</span>
-                    <span className="text-[10px] font-mono">⌘Q</span>
+                    Sign Out
                   </button>
                 </div>
               )}

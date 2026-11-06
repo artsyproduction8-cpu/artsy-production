@@ -680,3 +680,8 @@ flowchart TD
       - Right panel card container is capped at `max-w-[360px]` to eliminate oversized, bloated text boxes.
       - Input fields (Mobile Number with country code prefix, Email Address, and OTP) are standardized to a compact `h-9.5 sm:h-10` height (38–40px) with `rounded-lg` borders and crisp focus rings.
       - Compact label sizing (`text-[11px] font-medium text-[#1D1D1F]`), tight form spacing (`space-y-3`), and standardized submit action button (`h-9.5 sm:h-10 rounded-lg text-xs font-semibold uppercase tracking-wider`).
+
+23. **Unified Auto-Recognition Authentication Invariant (November 2026):**
+    - The authentication system (`/api/auth/otp` and `/auth/login`) dynamically recognizes existing user credentials without forcing registered users to manually choose a role or click "Apply as Creator".
+    - When an existing creator submits their registered mobile and email on the standard login screen, the system automatically resolves their `freelancer` database role, verifies the single OTP, and routes them directly to their Creator Workstation (`/freelancer` for approved creators, `/freelancer/pending-approval` for pending creators).
+    - Existing users are never blocked with cross-role errors when logging in with their registered credentials from the standard login portal.

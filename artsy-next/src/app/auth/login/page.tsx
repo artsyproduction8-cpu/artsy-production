@@ -584,16 +584,15 @@ function LoginFormContent() {
           }
         } catch {}
 
-        // Strict state machine order for freelancers:
-        // 1. If not onboarded or onboarding_status is null -> Route to redirect parameter (/freelancer/onboarding)
-        if (!isOnboarded || uStatus === null || uStatus === undefined) {
-          router.push(redirectTarget || '/freelancer/onboarding');
+        // Strict state machine order for creators:
+        if (uStatus === 'approved') {
+          router.push('/freelancer');
         } else if (uStatus === 'pending' || uStatus === 'pending_review') {
           router.push('/freelancer/pending-approval');
-        } else if (uStatus === 'approved') {
-          router.push('/freelancer');
         } else if (uStatus === 'rejected') {
           router.push('/freelancer/rejected');
+        } else if (!isOnboarded || uStatus === null || uStatus === undefined) {
+          router.push(redirectTarget || '/freelancer/onboarding');
         } else {
           router.push(redirectTarget || '/freelancer/onboarding');
         }

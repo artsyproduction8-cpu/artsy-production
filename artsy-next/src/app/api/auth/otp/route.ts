@@ -273,24 +273,22 @@ export async function POST(request: NextRequest) {
         sessionRole === 'freelancer' ||
         sessionRole === 'creator' ||
         memSession?.role === 'freelancer' ||
-        memSession?.role === 'creator';
+        memSession?.role === 'creator' ||
+        existingUser?.role === 'freelancer';
 
       if (existingUser) {
         resolvedUser = existingUser;
         if (isSuperAdminIdentifier) {
           resolvedUser.role = 'super_admin';
-        } else if (existingUser.role === 'client' && isFreelancerRequest) {
-          // Strict Role Firewall: Block Client from verifying as a Freelancer
+        } else if (existingUser.role === 'client' && isFreelancerRoleOrIntent) {
+          // Block Client from attempting to verify as a Freelancer with same credentials
           return NextResponse.json(
             { error: 'This account is registered as a Client account. A creator account requires distinct creator credentials. Cross-role login is blocked.' },
             { status: 403 }
           );
-        } else if (existingUser.role === 'freelancer' && !isFreelancerRequest && !isSuperAdminIdentifier) {
-          // Strict Role Firewall: Block Freelancer from verifying as a Client
-          return NextResponse.json(
-            { error: 'This account is registered as a Creator account. Cross-role login as a Client is blocked. Please sign in to the Creator Workstation.' },
-            { status: 403 }
-          );
+        } else if (existingUser.role === 'freelancer') {
+          // Auto-recognize existing Creator: seamlessly verify as freelancer
+          resolvedUser.role = 'freelancer';
         }
         if (isSupabaseConfigured && dbClient) {
           try {
@@ -472,7 +470,9 @@ export async function POST(request: NextRequest) {
         phone: resolvedUser.phone || formattedPhone || (cleanPhone ? `+91${cleanPhone}` : ''),
         email: resolvedUser.email || cleanEmail || '',
         full_name: resolvedUser.full_name ?? null,
-        onboarded: finalRole === 'freelancer' ? Boolean(resolvedUser.onboarded && onboarding_status !== null) : Boolean(resolvedUser.onboarded),
+        onboarded: finalRole === 'freelancer'
+          ? Boolean((resolvedUser.onboarded || onboarding_status === 'approved' || onboarding_status === 'pending_review') && onboarding_status !== null)
+          : Boolean(resolvedUser.onboarded),
         status: 'active',
         token_version: Number(resolvedUser.token_version && Number(resolvedUser.token_version) >= 2 ? resolvedUser.token_version : 2),
       };
@@ -833,7 +833,7 @@ export async function POST(request: NextRequest) {
             );
           }
 
-          // Strict Role Isolation Firewall: Prevent Cross-Role Authentication Collisions
+          // Credential & Role Recognition: Prevent Cross-Role Conflicts while auto-recognizing existing creators
           const matchedUser = userByPhone || userByEmail;
           const isSuperAdminIdentifier = Boolean(
             isSuperAdminAccount({ phone: cleanPhone, email: cleanEmail }) ||
@@ -841,18 +841,14 @@ export async function POST(request: NextRequest) {
           );
 
           if (!isSuperAdminIdentifier && matchedUser) {
+            // Block existing Client from duplicate signup as a Freelancer with identical client credentials
             if (matchedUser.role === 'client' && isFreelancerRoleOrIntent) {
               return NextResponse.json(
                 { error: 'This phone number and email are registered as a Client account. A creator account requires distinct creator credentials. Please sign in as a Client, or use separate credentials for creator onboarding.' },
                 { status: 403 }
               );
             }
-            if (matchedUser.role === 'freelancer' && !isFreelancerRoleOrIntent) {
-              return NextResponse.json(
-                { error: 'This phone number and email are registered as a Creator account. Please sign in to the Creator Workstation, or use separate credentials for your client account.' },
-                { status: 403 }
-              );
-            }
+            // Auto-recognize existing Creator: seamlessly recognize them as a Creator without forcing "Apply as Creator"
           }
         } else {
           isNewUser = true;
@@ -877,6 +873,22 @@ export async function POST(request: NextRequest) {
     const expiresAtMs = Date.now() + 5 * 60 * 1000;
     const expiresAtIso = new Date(expiresAtMs).toISOString();
 
+    // Determine effective role: for existing accounts, always recognize their registered database role
+    let matchedUser: any = null;
+    if (isSupabaseConfigured && dbClient) {
+      try {
+        if (cleanPhone || cleanEmail) {
+          const { data: u } = await dbClient
+            .from('users')
+            .select('id, role')
+            .or(`phone.eq.+91${cleanPhone},phone.eq.91${cleanPhone},phone.eq.${cleanPhone},email.eq.${cleanEmail}`)
+            .maybeSingle();
+          matchedUser = u;
+        }
+      } catch {}
+    }
+    const effectiveRole = (matchedUser?.role) || role || 'client';
+
     // Save in memory for instant verification and attempt tracking
     const sessionObj: LocalOtpSession = {
       identifier,
@@ -886,7 +898,7 @@ export async function POST(request: NextRequest) {
       expiresAt: expiresAtMs,
       attempts: 0,
       verified: false,
-      role: role || 'client',
+      role: effectiveRole,
       isNewUser,
     };
     memoryOtpSessions.set(identifier, sessionObj);
@@ -915,7 +927,7 @@ export async function POST(request: NextRequest) {
               expires_at: expiresAtIso,
               verified: false,
               ip_address: ip,
-              role: role || 'client',
+              role: effectiveRole,
               created_at: new Date().toISOString(),
             },
           ]);

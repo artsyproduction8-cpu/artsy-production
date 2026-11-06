@@ -72,7 +72,7 @@ function formatCategoryLabel(tag?: string): string {
     case 'AUDIO': return 'Audio';
     case 'PACING': return 'Pacing';
     case 'TITLES': return 'Titles';
-    case 'FOOTAGE': return 'Cut / B-Roll';
+    case 'FOOTAGE': return 'Cut & B-Roll';
     case 'VFX': return 'VFX';
     case 'FRAMING': return 'Framing';
     case 'GENERAL': return 'General';
@@ -83,21 +83,21 @@ function formatCategoryLabel(tag?: string): string {
 function getCategoryPlaceholder(category: string): string {
   switch (category) {
     case 'COLOR':
-      return 'e.g., Skin tones look too warm here, please cool them down and lift shadows...';
+      return 'e.g., Skin tones look too warm, please adjust...';
     case 'AUDIO':
-      return 'e.g., Lower the background music volume during dialogue, sound effects too loud...';
+      return 'e.g., Lower background music during speech...';
     case 'PACING':
-      return 'e.g., Cut this shot 1 second earlier, hold on the reaction shot longer...';
+      return 'e.g., Trim this cut 1 second earlier...';
     case 'TITLES':
-      return 'e.g., Fix spelling typo in speaker name, make subtitle font slightly larger...';
+      return 'e.g., Fix spelling in title text...';
     case 'FOOTAGE':
-      return 'e.g., Swap this b-roll clip with the drone landscape shot from raw footage...';
+      return 'e.g., Swap with another take or angle...';
     case 'VFX':
-      return 'e.g., Add a subtle zoom-in here, make transition into next scene smoother...';
+      return 'e.g., Add a smooth zoom-in here...';
     case 'FRAMING':
-      return 'e.g., Reframe shot to center the subject, stabilize handheld camera shake...';
+      return 'e.g., Reframe shot to center the subject...';
     default:
-      return 'e.g., Add your creative notes for this specific timestamp...';
+      return 'Write your feedback for this moment...';
   }
 }
 
@@ -724,7 +724,7 @@ export default function ClientReviewPage() {
           };
         });
         setNoteText('');
-        showToast(`✓ Note saved at ${finalTimecode}! Your editor can see this timestamped note.`);
+        showToast(`✓ Note saved at ${finalTimecode}`);
       } else {
         alert(data.error || 'Failed to save note');
       }
@@ -738,7 +738,7 @@ export default function ClientReviewPage() {
   // Handle Approving the Video Cut (I Like It!)
   const handleApproveCut = async () => {
     if (!project) return;
-    if (!confirm('Are you happy with this video cut?\n\nApproving confirms your satisfaction, unlocks your final unwatermarked master file for download, and notifies your editor.')) {
+    if (!confirm('Are you happy with this video?\n\nApproving unlocks your final unwatermarked files for download and lets your editor know.')) {
       return;
     }
 
@@ -753,7 +753,7 @@ export default function ClientReviewPage() {
       if (res.ok && data.success) {
         setIsApproved(true);
         setProject((prev) => prev ? { ...prev, isApproved: true, status: 'approved' } : prev);
-        showToast('🎉 Video Cut Approved! Your final master is ready for download.');
+        showToast('✓ Video Approved! Your final files are ready.');
       } else {
         alert(data.error || 'Failed to approve video cut');
       }
@@ -769,7 +769,7 @@ export default function ClientReviewPage() {
     if (!project) return;
 
     if (currentRound < includedRounds) {
-      if (!confirm(`Submit these revision notes to your editor for Round ${currentRound + 1} of ${includedRounds}?\n\nYour editor will implement all timestamped feedback notes and deliver an updated cut.`)) {
+      if (!confirm(`Send revision notes for Round ${currentRound + 1} of ${includedRounds}?\n\nYour editor will update the video with your notes.`)) {
         return;
       }
       try {
@@ -783,7 +783,7 @@ export default function ClientReviewPage() {
           const nextR = data.currentRound || currentRound + 1;
           setCurrentRound(nextR);
           setProject((prev) => prev ? { ...prev, currentRound: nextR, status: 'client_revision_requested' } : prev);
-          showToast(`✓ Revision Round ${nextR} requested! Your editor has been alerted.`);
+          showToast(`✓ Round ${nextR} requested! Your editor has been notified.`);
         } else {
           alert(data.error || 'Failed to request revision');
         }
@@ -834,7 +834,7 @@ export default function ClientReviewPage() {
           setIncludedRounds(nextIncluded);
           setProject((prev) => prev ? { ...prev, includedRounds: nextIncluded } : prev);
           setShowChangeOrderModal(false);
-          showToast(`✓ Revision Round ${currentRound} unlocked! Comment section enabled.`);
+          showToast(`✓ Round ${currentRound} unlocked! You can now leave notes.`);
         } else {
           alert(verifyData.error || 'Verification failed');
         }
@@ -874,7 +874,7 @@ export default function ClientReviewPage() {
               setIncludedRounds(nextIncluded);
               setProject((prev) => prev ? { ...prev, includedRounds: nextIncluded } : prev);
               setShowChangeOrderModal(false);
-              showToast(`✓ Revision Round ${currentRound} unlocked! Comment section enabled.`);
+              showToast(`✓ Round ${currentRound} unlocked! You can now leave notes.`);
             } else {
               alert(verifyData.error || 'Payment verification failed');
             }
@@ -953,7 +953,7 @@ export default function ClientReviewPage() {
                 <div className="text-4xl mb-3">🎬</div>
                 <h3 className="text-lg font-semibold text-[#1D1D1F]">No video drafts to review yet</h3>
                 <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-                  When your video editor uploads a master cut for your order, it will appear here so you can watch, review, and leave exact timestamped feedback.
+                  When your editor uploads a cut, it will appear here so you can review and leave timestamped notes.
                 </p>
                 <Link
                   href="/book"
@@ -993,25 +993,25 @@ export default function ClientReviewPage() {
                     {/* Quick Metrics */}
                     <div className="flex items-stretch gap-3 self-start xl:self-auto">
                       <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] min-w-[130px]">
-                        <div className="text-[10px] uppercase font-bold text-[#86868B]">Turnaround SLA</div>
+                        <div className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">Delivery Time</div>
                         <div className="text-base font-extrabold text-[#1D1D1F] mt-1">{project.turnaround}</div>
                         <div className="text-[10px] text-[#86868B] mt-0.5">
                           {project.extendedDeliveryDays && project.extendedDeliveryDays > 0
-                            ? `+${project.extendedDeliveryDays}d added for extra rounds`
-                            : 'For revision updates'}
+                            ? `+${project.extendedDeliveryDays}d for extra rounds`
+                            : 'Estimated delivery'}
                         </div>
                       </div>
                       <div className="bg-[#F5F5F7] p-4 rounded-xl border border-[#E5E5E7] min-w-[130px]">
-                        <div className="text-[10px] uppercase font-bold text-[#86868B]">Revisions</div>
+                        <div className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">Revisions</div>
                         <div className={`text-base font-extrabold mt-1 ${isRevisionLocked ? 'text-amber-600' : 'text-[#3B82F6]'}`}>
                           Round {currentRound} of {includedRounds}
                         </div>
                         <div className="text-[10px] text-[#86868B] mt-0.5">
                           {isRevisionLocked
-                            ? `Extra pass required (+₹${(extraRevisionFeePaise / 100).toLocaleString('en-IN')})`
+                            ? `Extra round (+₹${(extraRevisionFeePaise / 100).toLocaleString('en-IN')})`
                             : currentRound < includedRounds
-                            ? 'Free revision included'
-                            : 'Final included round'}
+                            ? 'Included with project'
+                            : 'Last included round'}
                         </div>
                       </div>
                     </div>
@@ -1021,7 +1021,7 @@ export default function ClientReviewPage() {
                   <div className="mt-6 pt-6 border-t border-[#F5F5F7] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div className="p-3.5 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex items-center justify-between">
                       <div>
-                        <div className="text-[10px] uppercase font-bold text-[#86868B]">1. Footage Upload</div>
+                        <div className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">1. Footage</div>
                         <div className="text-xs font-semibold text-[#1D1D1F]">Received ✓</div>
                       </div>
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -1029,9 +1029,9 @@ export default function ClientReviewPage() {
 
                     <div className="p-3.5 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] flex items-center justify-between">
                       <div>
-                        <div className="text-[10px] uppercase font-bold text-[#86868B]">2. Video Editing</div>
+                        <div className="text-[10px] uppercase font-bold text-[#86868B] tracking-wider">2. Editing</div>
                         <div className="text-xs font-semibold text-[#1D1D1F]">
-                          {videoEmbed ? 'Draft Ready ✓' : 'In Assembly'}
+                          {videoEmbed ? 'Draft Ready ✓' : 'In Progress'}
                         </div>
                       </div>
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
@@ -1041,11 +1041,11 @@ export default function ClientReviewPage() {
                       videoEmbed && !isApproved ? 'bg-[#3B82F6]/10 border-[#3B82F6]/30' : 'bg-[#F5F5F7] border-[#E5E5E7]'
                     }`}>
                       <div>
-                        <div className={`text-[10px] uppercase font-bold ${videoEmbed && !isApproved ? 'text-[#3B82F6]' : 'text-[#86868B]'}`}>
-                          3. Client Review
+                        <div className={`text-[10px] uppercase font-bold tracking-wider ${videoEmbed && !isApproved ? 'text-[#3B82F6]' : 'text-[#86868B]'}`}>
+                          3. Review
                         </div>
                         <div className="text-xs font-bold text-[#1D1D1F]">
-                          {isApproved ? 'Approved ✓' : videoEmbed ? 'Reviewing Draft' : 'Awaiting Cut'}
+                          {isApproved ? 'Approved ✓' : videoEmbed ? 'In Review' : 'Awaiting Draft'}
                         </div>
                       </div>
                       <span className={`w-2 h-2 rounded-full ${isApproved ? 'bg-emerald-500' : videoEmbed ? 'bg-[#3B82F6] animate-ping' : 'bg-gray-400'}`}></span>
@@ -1055,8 +1055,8 @@ export default function ClientReviewPage() {
                       isApproved ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-[#F5F5F7] border-[#E5E5E7] text-[#86868B]'
                     }`}>
                       <div>
-                        <div className="text-[10px] uppercase font-bold">4. Final 4K Download</div>
-                        <div className="text-xs font-semibold">{isApproved ? 'Unlocked ✓' : 'Locks after approval'}</div>
+                        <div className="text-[10px] uppercase font-bold tracking-wider">4. Final Master</div>
+                        <div className="text-xs font-semibold">{isApproved ? 'Unlocked ✓' : 'Unlocks on approval 🔒'}</div>
                       </div>
                       <span>{isApproved ? '✓' : '🔒'}</span>
                     </div>
@@ -1129,12 +1129,12 @@ export default function ClientReviewPage() {
                         <span className="text-base">🎬</span>
                         <h3 className="text-sm font-extrabold text-[#1D1D1F]">
                           {isApproved
-                            ? 'Video Cut Approved & Ready!'
+                            ? 'Video Cut Approved'
                             : isRevisionRequested
-                            ? `Round ${currentRound - 1} Notes Submitted — Editor is Cutting v${currentRound}.0`
+                            ? `Round ${currentRound - 1} Notes Sent — Editor Cutting v${currentRound}.0`
                             : isRevisionLocked
-                            ? 'All 2 Included Rounds Completed'
-                            : `Round ${currentRound} of ${includedRounds} Active: Master Cut Submitted by Editor`}
+                            ? 'All Included Rounds Completed'
+                            : `Draft v${currentRound}.0 Ready for Review`}
                         </h3>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
                           isApproved
@@ -1148,26 +1148,26 @@ export default function ClientReviewPage() {
                           {isApproved
                             ? 'APPROVED'
                             : isRevisionRequested
-                            ? `EDITOR CUTTING v${currentRound}.0`
+                            ? 'IN REVISION'
                             : isRevisionLocked
-                            ? 'ALL ROUNDS ENDED'
-                            : `ROUND ${currentRound} ACTIVE`}
+                            ? 'LOCKED'
+                            : `ROUND ${currentRound}`}
                         </span>
                       </div>
                       <p className="text-xs text-[#86868B]">
                         {isApproved
-                          ? 'You have approved this cut! You can download your final unwatermarked master below.'
+                          ? 'Your video is approved! You can download your final unwatermarked files below.'
                           : isRevisionRequested
-                          ? `Your editor has received your Round ${currentRound - 1} revision notes and is cutting updated version v${currentRound}.0. You will be notified the instant it is ready.`
+                          ? `Your editor is working on version v${currentRound}.0 with your notes. You will be notified when it is ready.`
                           : isRevisionLocked
-                          ? `You have completed all ${includedRounds} included review rounds. You can approve this cut or unlock Round ${currentRound} with a 50% extra revision pass.`
-                          : `Watch the video preview below. If you love it, click "Approve Video Cut". If you want changes, pause at any second, log your notes, and click "Send Round ${currentRound} Notes to Editor".`}
+                          ? `You have used your ${includedRounds} included review rounds. You can approve this cut or unlock an extra round.`
+                          : 'Watch your video below. Approve if you love it, or leave notes on the timeline to request changes.'}
                       </p>
                       {!isApproved && addressedNotesCount > 0 && (
                         <div className="pt-1 flex items-center gap-1.5">
                           <span className="text-[11px] font-bold text-emerald-800 bg-white/90 border border-emerald-300 px-2.5 py-0.5 rounded-md shadow-2xs inline-flex items-center gap-1">
                             <span className="text-emerald-600 font-extrabold">✓</span>
-                            <span>{addressedNotesCount} review {addressedNotesCount === 1 ? 'change' : 'changes'} addressed in this cut</span>
+                            <span>{addressedNotesCount} {addressedNotesCount === 1 ? 'change' : 'changes'} addressed in this cut</span>
                           </span>
                         </div>
                       )}
@@ -1181,7 +1181,7 @@ export default function ClientReviewPage() {
                           rel="noopener noreferrer"
                           className="px-3.5 py-2.5 bg-white hover:bg-slate-50 text-[#1D1D1F] border border-[#E5E5E7] text-xs font-semibold rounded-xl transition-all inline-flex items-center gap-1.5 shadow-2xs"
                         >
-                          <span>Open Source Link</span>
+                          <span>Open Link</span>
                           <span>↗</span>
                         </a>
                       )}
@@ -1201,19 +1201,19 @@ export default function ClientReviewPage() {
                             disabled={isApproving}
                             className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer disabled:opacity-50"
                           >
-                            <span>{isApproving ? 'Approving...' : '✓ I Like It! Approve Video Cut'}</span>
+                            <span>{isApproving ? 'Approving...' : '✓ Approve Video'}</span>
                           </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
                           <div className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs">
-                            <span>✓ Video Cut Approved</span>
+                            <span>✓ Video Approved</span>
                           </div>
                           <Link
                             href="/client/masters"
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-xs"
                           >
-                            <span>Download 4K Master Assets →</span>
+                            <span>Download Final Files →</span>
                           </Link>
                         </div>
                       )}
@@ -1231,11 +1231,11 @@ export default function ClientReviewPage() {
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${videoEmbed ? 'bg-emerald-500' : 'bg-amber-400'}`}></span>
                           <span className="text-xs font-bold text-[#1D1D1F]">
-                            {videoEmbed ? 'Interactive Video Preview Player' : 'Video In Production'}
+                            {videoEmbed ? 'Video Preview' : 'In Production'}
                           </span>
                           {videoEmbed && (
                             <span className="text-[10px] uppercase font-bold text-[#86868B] bg-[#F5F5F7] px-2 py-0.5 rounded">
-                              {videoEmbed.type === 'gdrive' ? (useDriveIframeFallback ? 'Drive Embed' : 'GDrive (Synced)') : videoEmbed.type}
+                              {videoEmbed.type === 'gdrive' ? (useDriveIframeFallback ? 'Drive Embed' : 'HD Preview') : videoEmbed.type}
                             </span>
                           )}
                           {videoEmbed?.type === 'gdrive' && (
@@ -1243,16 +1243,14 @@ export default function ClientReviewPage() {
                               type="button"
                               onClick={() => setUseDriveIframeFallback((prev) => !prev)}
                               className="text-[10px] font-semibold text-[#3B82F6] hover:underline cursor-pointer ml-1"
-                              title="Toggle between synchronized player and Google Drive viewer"
+                              title="Toggle viewer"
                             >
-                              {useDriveIframeFallback ? 'Switch to Synced Player 🎬' : 'Switch to Drive Embed ↗'}
+                              {useDriveIframeFallback ? 'Switch to Synced Player 🎬' : 'Drive View ↗'}
                             </button>
                           )}
                         </div>
                         <span className="text-xs text-[#86868B]">
-                          {videoEmbed?.type === 'direct' || (videoEmbed?.type === 'gdrive' && !useDriveIframeFallback)
-                            ? 'Space to play/pause • Click anywhere on timeline'
-                            : 'Click to play/pause'}
+                          Press Space to play/pause
                         </span>
                       </div>
 
@@ -1351,9 +1349,9 @@ export default function ClientReviewPage() {
                               📁
                             </div>
                             <div className="space-y-1 max-w-md">
-                              <h3 className="text-base font-bold">Cloud Deliverable Linked</h3>
+                              <h3 className="text-base font-bold">Cloud Deliverable</h3>
                               <p className="text-xs text-white/70 leading-relaxed">
-                                Your editor has shared a cloud storage master folder for this cut. Click below to view the files in full resolution, then return here to leave exact timestamped notes.
+                                Your editor shared a cloud storage folder for this cut. Open it to view full resolution files, then leave notes below.
                               </p>
                             </div>
                             <a
@@ -1362,7 +1360,7 @@ export default function ClientReviewPage() {
                               rel="noopener noreferrer"
                               className="px-6 py-3 bg-[#3B82F6] hover:bg-[#2563EB] text-white font-bold text-xs rounded-xl shadow-lg transition-transform hover:scale-105 inline-flex items-center gap-2 cursor-pointer"
                             >
-                              <span>Open Cloud Deliverable</span>
+                              <span>Open Folder</span>
                               <span>↗</span>
                             </a>
                           </div>
@@ -1375,13 +1373,13 @@ export default function ClientReviewPage() {
                               ✂️
                             </div>
                             <div className="space-y-1 max-w-md">
-                              <h3 className="text-base font-bold">Post-Production In Progress</h3>
+                              <h3 className="text-base font-bold">Video In Production</h3>
                               <p className="text-xs text-white/70 leading-relaxed">
-                                Your editor <strong className="text-white">{project.creatorName ? formatPublicCreatorName(project.creatorName) : 'Senior Lead Editor'}</strong> is actively assembling and color grading your timeline. As soon as the first cut is submitted, it will play directly here for your review.
+                                Your editor <strong className="text-white">{project.creatorName ? formatPublicCreatorName(project.creatorName) : 'Senior Lead Editor'}</strong> is editing your video. When the draft cut is uploaded, it will play here for your review.
                               </p>
                             </div>
                             <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-800">
-                              Estimated Turnaround: {project.turnaround}
+                              Estimated Delivery: {project.turnaround}
                             </span>
                           </div>
                         )}
@@ -1506,12 +1504,12 @@ export default function ClientReviewPage() {
                                   } else if (videoRef.current) {
                                     updateCurrentTime(Math.floor(videoRef.current.currentTime));
                                   }
-                                  showToast(`Captured timecode: ${currentTimecode}`);
+                                  showToast(`Captured time: ${currentTimecode}`);
                                   noteTextareaRef.current?.focus();
                                 }}
                                 className="px-2.5 py-1 bg-white border border-[#E5E5E7] hover:bg-[#F5F5F7] text-xs font-medium text-[#1D1D1F] rounded-md cursor-pointer transition-colors"
                               >
-                                Tag at {currentTimecode}
+                                Tag Time
                               </button>
                             </div>
                           </div>
@@ -1519,10 +1517,10 @@ export default function ClientReviewPage() {
                       ) : (
                         <div className="mt-5 p-4 bg-[#F5F5F7] rounded-xl border border-dashed border-[#E5E5E7] text-center space-y-1">
                           <div className="text-xs font-bold text-[#1D1D1F]">
-                            Interactive Timeline Scrubbing &amp; Frame Tagging
+                            Interactive Timeline &amp; Notes
                           </div>
                           <p className="text-[11px] text-[#86868B]">
-                            This playback bar and frame note tagger will unlock immediately once your editor posts your draft cut.
+                            This playback bar and note tagger will unlock as soon as your draft cut is ready.
                           </p>
                         </div>
                       )}
@@ -1532,10 +1530,10 @@ export default function ClientReviewPage() {
                     <div className="mt-5 pt-3 border-t border-[#F5F5F7] flex flex-wrap items-center justify-between gap-2 text-xs text-[#86868B]">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-[#1D1D1F]">Tip:</span>
-                        <span>Pause the video at any time, select a category, and type your feedback note.</span>
+                        <span>Pause anytime to leave a note at that exact second.</span>
                       </div>
                       <div className="font-mono text-[11px] text-[#86868B]">
-                        {project.reviewNotes.length} Notes Logged
+                        {project.reviewNotes.length} {project.reviewNotes.length === 1 ? 'Note' : 'Notes'}
                       </div>
                     </div>
                   </div>
@@ -1548,8 +1546,8 @@ export default function ClientReviewPage() {
                           <h2 className="text-base font-bold text-[#1D1D1F]">Notes &amp; Feedback</h2>
                           <p className="text-[11px] text-[#86868B]">
                             {addressedNotesCount > 0
-                              ? `${addressedNotesCount} of ${project.reviewNotes.length} notes addressed in new cut`
-                              : 'Specific notes for your editor'}
+                              ? `${addressedNotesCount} of ${project.reviewNotes.length} notes addressed in this cut`
+                              : 'Notes for your editor'}
                           </p>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -1566,7 +1564,7 @@ export default function ClientReviewPage() {
                       <div className="mt-4 space-y-3 overflow-y-auto max-h-[380px] pr-1">
                         {project.reviewNotes.length === 0 ? (
                           <div className="text-center py-8 text-xs text-[#86868B] bg-[#F5F5F7] rounded-xl border border-dashed border-[#E5E5E7] p-4">
-                            No notes added yet. Pause the video at any time to leave a timestamped note for your editor.
+                            No notes yet. Pause the video anytime to leave a timestamped note.
                           </div>
                         ) : (
                           project.reviewNotes.map((rev) => {
@@ -1612,7 +1610,7 @@ export default function ClientReviewPage() {
                                       <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                       </svg>
-                                      <span>✓ Addressed in New Cut</span>
+                                      <span>✓ Done in this cut</span>
                                     </span>
                                   ) : (
                                     <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
@@ -1626,7 +1624,7 @@ export default function ClientReviewPage() {
                                       onClick={() => handleSeek(rev.timecodeSeconds || 0)}
                                       className="text-[11px] font-bold text-[#3B82F6] hover:underline cursor-pointer"
                                     >
-                                      Jump to this time →
+                                      Jump to time →
                                     </button>
                                   )}
                                 </div>
@@ -1646,23 +1644,23 @@ export default function ClientReviewPage() {
                               🔒
                             </span>
                             <span className="text-xs font-bold text-white tracking-wide">
-                              Comment Section Disabled
+                              Revisions Locked
                             </span>
                           </div>
                           <span className="text-[10px] font-mono font-bold text-amber-400 bg-amber-950/80 border border-amber-800/80 px-2 py-0.5 rounded-full">
-                            Round {currentRound} Locked
+                            Round {currentRound}
                           </span>
                         </div>
 
                         <p className="text-[11px] text-white/75 leading-relaxed">
-                          Your <strong>{includedRounds} included revision rounds</strong> have been completed. To write timestamped review notes and request changes for Round {currentRound}, unlock this pass below.
+                          Your <strong>{includedRounds} included revision rounds</strong> are complete. To leave notes and request changes for Round {currentRound}, unlock this round below.
                         </p>
 
                         {/* Fee breakdown box */}
                         <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between">
                           <div>
-                            <div className="text-[10px] uppercase font-bold text-white/50">Extra Pass Fee (50%)</div>
-                            <div className="text-xs text-white/80 mt-0.5">50% of ₹{(totalAmountPaidPaise / 100).toLocaleString('en-IN')} total paid</div>
+                            <div className="text-[10px] uppercase font-bold text-white/50">Extra Round Fee (50%)</div>
+                            <div className="text-xs text-white/80 mt-0.5">50% of ₹{(totalAmountPaidPaise / 100).toLocaleString('en-IN')} order total</div>
                           </div>
                           <div className="text-right">
                             <div className="text-base font-extrabold text-amber-400 font-mono">
@@ -1680,8 +1678,8 @@ export default function ClientReviewPage() {
                         >
                           <span>
                             {isUnlockingRound
-                              ? 'Connecting to Gateway...'
-                              : `Unlock Round ${currentRound} (+₹${(extraRevisionFeePaise / 100).toLocaleString('en-IN')}) via Razorpay →`}
+                              ? 'Connecting...'
+                              : `Unlock Round ${currentRound} (+₹${(extraRevisionFeePaise / 100).toLocaleString('en-IN')}) →`}
                           </span>
                         </button>
                       </div>
@@ -1691,7 +1689,7 @@ export default function ClientReviewPage() {
                         className="bg-[#F5F5F7] rounded-xl p-4 border border-[#E5E5E7] space-y-3"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-[#1D1D1F]">Add Note at This Moment</span>
+                          <span className="text-xs font-semibold text-[#1D1D1F]">Add a Note</span>
                           <span className="text-xs font-mono text-[#86868B]">
                             {currentTimecode}
                           </span>
@@ -1709,14 +1707,14 @@ export default function ClientReviewPage() {
                               onChange={(e) => setActiveCategory(e.target.value)}
                               className="w-full bg-white border border-[#E5E5E7] text-[#1D1D1F] rounded-lg pl-3 pr-8 py-2 text-xs font-semibold focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] outline-none cursor-pointer appearance-none transition-colors shadow-2xs"
                             >
-                              <option value="COLOR">🎨 Color &amp; Grading (Exposure, tones, contrast)</option>
-                              <option value="AUDIO">🔊 Audio &amp; Music (Volume, dialogue, SFX, sync)</option>
-                              <option value="PACING">⏱ Pacing &amp; Timing (Cut speed, rhythm, timing)</option>
-                              <option value="TITLES">✏️ Titles &amp; Subtitles (Typo, font, lower thirds)</option>
-                              <option value="FOOTAGE">✂️ Cut &amp; B-Roll (Alternate takes, swap shot, trim)</option>
-                              <option value="VFX">✨ VFX &amp; Transitions (Zooms, motion, effects)</option>
-                              <option value="FRAMING">💡 Lighting &amp; Framing (Crop, stabilization, reframe)</option>
-                              <option value="GENERAL">💬 General Feedback (Storyline, direction, note)</option>
+                              <option value="COLOR">🎨 Color &amp; Grading</option>
+                              <option value="AUDIO">🔊 Audio &amp; Music</option>
+                              <option value="PACING">⏱ Pacing &amp; Timing</option>
+                              <option value="TITLES">✏️ Titles &amp; Text</option>
+                              <option value="FOOTAGE">✂️ Cut &amp; B-Roll</option>
+                              <option value="VFX">✨ Effects &amp; VFX</option>
+                              <option value="FRAMING">💡 Framing &amp; Lighting</option>
+                              <option value="GENERAL">💬 General Note</option>
                             </select>
                             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-[#86868B]">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1742,7 +1740,7 @@ export default function ClientReviewPage() {
                             disabled={isSubmittingNote}
                             className="w-full py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-sm"
                           >
-                            {isSubmittingNote ? 'Saving Note...' : `Save Note at ${currentTimecode}`}
+                            {isSubmittingNote ? 'Saving...' : `Save Note at ${currentTimecode}`}
                           </button>
                         </div>
                       </form>
@@ -1755,15 +1753,15 @@ export default function ClientReviewPage() {
                   <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-[#F5F5F7] gap-3">
                     <div>
                       <h3 className="text-lg font-bold text-[#1D1D1F]">
-                        Project Deliverables &amp; Files
+                        Project Files &amp; Deliverables
                       </h3>
                       <p className="text-xs text-[#86868B] mt-0.5">
-                        Download draft preview files or view linked project assets.
+                        Download draft files or view project assets.
                       </p>
                     </div>
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
                       <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                      Cloud Storage Active
+                      Storage Active
                     </span>
                   </div>
 
@@ -1774,7 +1772,7 @@ export default function ClientReviewPage() {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[10px] font-bold px-2 py-0.5 bg-[#3B82F6]/10 text-[#3B82F6] rounded-md">
-                            MASTER DELIVERABLE
+                            MASTER CUT
                           </span>
                           <span className="text-[11px] text-[#86868B] font-mono">
                             {isApproved ? 'FINAL 4K' : 'DRAFT'}
@@ -1785,8 +1783,8 @@ export default function ClientReviewPage() {
                         </h4>
                         <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
                           {project.deliverableUrl
-                            ? 'High-resolution cut uploaded by editor for client review.'
-                            : 'Editor is preparing the master export cut.'}
+                            ? 'High-resolution cut uploaded for your review.'
+                            : 'Your editor is preparing this video cut.'}
                         </p>
                       </div>
                       <div className="mt-4 pt-3 border-t border-[#E5E5E7] flex items-center justify-between">
@@ -1800,7 +1798,7 @@ export default function ClientReviewPage() {
                             rel="noopener noreferrer"
                             className="text-xs font-bold text-[#3B82F6] hover:underline cursor-pointer"
                           >
-                            Open Link ↗
+                            Open Video ↗
                           </a>
                         ) : (
                           <span className="text-xs text-[#86868B]">In progress</span>
@@ -1815,13 +1813,13 @@ export default function ClientReviewPage() {
                           <span className="text-[10px] font-bold px-2 py-0.5 bg-[#1D1D1F] text-white rounded-md">
                             RAW FOOTAGE
                           </span>
-                          <span className="text-[11px] text-[#86868B] font-mono">SECURE VAULT</span>
+                          <span className="text-[11px] text-[#86868B] font-mono">VAULT</span>
                         </div>
                         <h4 className="text-sm font-bold text-[#1D1D1F] leading-snug">
-                          Camera Raw Vault
+                          Raw Camera Files
                         </h4>
                         <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                          Original camera files provided during order booking.
+                          Original footage uploaded during project booking.
                         </p>
                       </div>
                       <div className="mt-4 pt-3 border-t border-[#E5E5E7] flex items-center justify-between">
@@ -1851,15 +1849,15 @@ export default function ClientReviewPage() {
                           <span className="text-[11px] text-[#86868B] font-mono">SYNCED</span>
                         </div>
                         <h4 className="text-sm font-bold text-[#1D1D1F] leading-snug">
-                          Music &amp; Sound Mix
+                          Music &amp; Audio Mix
                         </h4>
                         <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                          Dialogue leveling, background music balance, and SFX conform.
+                          Clean dialogue, background music, and sound design.
                         </p>
                       </div>
                       <div className="mt-4 pt-3 border-t border-[#E5E5E7] flex items-center justify-between">
                         <span className="text-xs font-semibold text-emerald-600">Active</span>
-                        <span className="text-xs text-[#86868B]">In Timeline</span>
+                        <span className="text-xs text-[#86868B]">Conformed</span>
                       </div>
                     </div>
 
@@ -1868,15 +1866,15 @@ export default function ClientReviewPage() {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-[10px] font-bold px-2 py-0.5 bg-purple-50 text-purple-700 rounded-md border border-purple-200">
-                            COLOR LOOK
+                            COLOR
                           </span>
                           <span className="text-[11px] text-[#86868B] font-mono">REC.709</span>
                         </div>
                         <h4 className="text-sm font-bold text-[#1D1D1F] leading-snug">
-                          Cinematic Color Grade
+                          Color Grade
                         </h4>
                         <p className="text-xs text-[#86868B] mt-1.5 leading-relaxed">
-                          Camera color science, skin tone conform, and stylized finish.
+                          Natural skin tones and cinematic finish.
                         </p>
                       </div>
                       <div className="mt-4 pt-3 border-t border-[#E5E5E7] flex items-center justify-between">
@@ -1891,16 +1889,16 @@ export default function ClientReviewPage() {
                     <div className="space-y-1.5 text-left">
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-bold text-[#3B82F6] uppercase tracking-wider">
-                          APPROVAL &amp; FINAL DELIVERY
+                          FINAL APPROVAL
                         </span>
                       </div>
                       <h3 className="text-xl font-bold text-white tracking-tight">
-                        {isApproved ? 'Video Approved! Ready for Final Use' : 'Ready to approve this video?'}
+                        {isApproved ? 'Video Approved' : 'Ready to approve this video?'}
                       </h3>
                       <p className="text-xs text-[#86868B] max-w-2xl leading-relaxed">
                         {isApproved
-                          ? 'This cut has been confirmed. Your editor and studio team have received milestone sign-off.'
-                          : 'Approving this video confirms your satisfaction. If you need any tweaks or edits first, use the timeline notes form above, then click "Request Changes" to alert your editor.'}
+                          ? 'This cut is approved. You can download your final unwatermarked files anytime.'
+                          : 'Approving confirms this cut as final. If you want any changes first, add your notes on the timeline above and request changes.'}
                       </p>
                     </div>
 
@@ -1929,7 +1927,7 @@ export default function ClientReviewPage() {
                             disabled={isApproving}
                             className="text-xs font-semibold px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
                           >
-                            <span>{isApproving ? 'Approving...' : '✓ I Like It! Approve Video Cut'}</span>
+                            <span>{isApproving ? 'Approving...' : '✓ Approve Video'}</span>
                           </button>
                         </>
                       ) : (
@@ -1940,7 +1938,7 @@ export default function ClientReviewPage() {
                             rel="noopener noreferrer"
                             className="text-xs font-bold px-6 py-3 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
                           >
-                            <span>Open Final Master Link</span>
+                            <span>Open Final Files</span>
                             <span>↗</span>
                           </a>
                         )
@@ -2015,7 +2013,7 @@ export default function ClientReviewPage() {
           <div className="bg-white max-w-md w-full rounded-2xl border border-[#E5E5E7] shadow-2xl p-6 sm:p-8 flex flex-col gap-4">
             <div className="flex items-center justify-between border-b border-[#F5F5F7] pb-3">
               <h3 className="text-lg font-extrabold text-[#1D1D1F]">
-                Unlock Extra Revision Pass
+                Unlock Extra Revision
               </h3>
               <span className="text-xs font-mono font-bold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
                 Round {currentRound}
@@ -2023,28 +2021,28 @@ export default function ClientReviewPage() {
             </div>
 
             <p className="text-xs text-[#86868B] leading-relaxed">
-              Your {includedRounds} free included revision rounds have been completed. You can unlock an additional creative revision round with your editor for 50% of your project order total.
+              Your {includedRounds} included revision rounds are complete. You can unlock another revision round for 50% of your order total.
             </p>
 
             <div className="p-4 bg-[#F5F5F7] rounded-xl border border-[#E5E5E7] space-y-2">
               <div className="flex justify-between text-xs font-semibold text-[#1D1D1F]">
-                <span>Service Total Paid:</span>
+                <span>Order Total:</span>
                 <span className="font-mono">₹{(totalAmountPaidPaise / 100).toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between text-xs font-semibold text-[#1D1D1F]">
-                <span>Extra Pass:</span>
-                <span>Revision Round {currentRound}</span>
+                <span>Revision Round:</span>
+                <span>Round {currentRound}</span>
               </div>
               <div className="flex justify-between text-xs font-semibold text-[#1D1D1F]">
-                <span>Delivery Extension:</span>
-                <span className="text-emerald-700 font-bold">+2 Days SLA Extension</span>
+                <span>Extra Time:</span>
+                <span className="text-emerald-700 font-bold">+2 Days</span>
               </div>
               <div className="flex justify-between text-xs font-semibold text-[#1D1D1F]">
-                <span>Turnaround Time:</span>
-                <span>Within 48 Hours (+2 Working Days)</span>
+                <span>Delivery:</span>
+                <span>Within 48 Hours</span>
               </div>
               <div className="flex justify-between text-sm font-extrabold text-[#1D1D1F] pt-2 border-t border-[#E5E5E7]">
-                <span>Amount (50%):</span>
+                <span>Price (50%):</span>
                 <span className="font-mono text-[#3B82F6]">
                   ₹{(extraRevisionFeePaise / 100).toLocaleString('en-IN')}
                 </span>

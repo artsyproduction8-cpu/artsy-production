@@ -39,13 +39,19 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch portfolio' }, { status: 500 });
     }
 
-    const BLOCKED_YOUTUBE_IDS = ['dQw4w9WgXcQ', 'test087694'];
-    const cleanSamples = (samples || []).filter(
-      (s: any) =>
-        s.youtube_id &&
-        !BLOCKED_YOUTUBE_IDS.includes(s.youtube_id) &&
-        (s.approval_status === undefined || s.approval_status === 'approved')
-    );
+    const BLOCKED_PATTERNS = ['dQw4w9WgXcQ', 'test087694', 'youtube.com', 'test.com', 'pub-test.r2.dev'];
+    const seenUrls = new Set<string>();
+    const cleanSamples: any[] = [];
+
+    for (const s of samples || []) {
+      if (!s.video_url) continue;
+      if (BLOCKED_PATTERNS.some((p) => s.video_url.includes(p) || (s.youtube_id || '').includes(p))) continue;
+      if (s.approval_status !== undefined && s.approval_status !== 'approved') continue;
+      if (seenUrls.has(s.video_url)) continue;
+
+      seenUrls.add(s.video_url);
+      cleanSamples.push(s);
+    }
 
     return NextResponse.json(
       { success: true, samples: cleanSamples },

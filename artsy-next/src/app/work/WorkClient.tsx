@@ -81,7 +81,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
     ? videos
     : videos.filter((item) => {
         const cat = (item.category || '').toLowerCase();
-        if (filter === 'wedding') return cat.includes('wedding');
+        if (filter === 'wedding') return cat.includes('wedding') || cat.includes('pre-wedding') || cat.includes('teaser') || cat.includes('reel');
         if (filter === 'brand') return cat.includes('brand') || cat.includes('commercial') || cat.includes('social');
         if (filter === 'product') return cat.includes('product') || cat.includes('commercial');
         if (filter === 'corporate') return cat.includes('corporate') || cat.includes('documentary');
@@ -160,7 +160,17 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                             tabIndex={-1}
                           />
                         </div>
-                      ) : (
+                      ) : video.video_url?.endsWith('.mp4') || video.video_url?.includes('.r2.dev') || video.video_url?.includes('.mp4') ? (
+                        <video
+                          src={video.video_url}
+                          muted
+                          loop
+                          autoPlay
+                          playsInline
+                          preload="metadata"
+                          className="w-full h-full object-cover pointer-events-none"
+                        />
+                      ) : thumbUrl ? (
                         <Image
                           src={thumbUrl}
                           alt={video.title}
@@ -169,6 +179,11 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                           unoptimized
                           className="w-full h-full object-cover"
                         />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0A0A0A] text-white/70">
+                          <span className="text-3xl mb-1">🎬</span>
+                          <span className="text-[10px] font-mono tracking-widest uppercase text-white/50">{video.category || 'Cinema'}</span>
+                        </div>
                       )}
 
                       {/* Transparent click shield overlay so mouse never touches YouTube player */}
@@ -265,13 +280,21 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
               </button>
             </div>
 
-            {/* Video Player (16:9 Aspect Ratio with YouTube Iframe API for 1080p/4K highres quality) */}
+            {/* Video Player (16:9 Aspect Ratio with YouTube Iframe API or Native MP4 Player) */}
             <div className="relative aspect-video w-full bg-black overflow-hidden">
               {selectedYtId ? (
                 <YouTubePlayerModal
                   videoId={selectedYtId}
                   title={selectedVideo.title}
                   zoomScale="w-[150%] h-[150%]"
+                />
+              ) : selectedVideo.video_url ? (
+                <video
+                  src={selectedVideo.video_url}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-contain"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-white text-xs">

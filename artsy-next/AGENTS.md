@@ -685,3 +685,10 @@ flowchart TD
     - The authentication system (`/api/auth/otp` and `/auth/login`) dynamically recognizes existing user credentials without forcing registered users to manually choose a role or click "Apply as Creator".
     - When an existing creator submits their registered mobile and email on the standard login screen, the system automatically resolves their `freelancer` database role, verifies the single OTP, and routes them directly to their Creator Workstation (`/freelancer` for approved creators, `/freelancer/pending-approval` for pending creators).
     - Existing users are never blocked with cross-role errors when logging in with their registered credentials from the standard login portal.
+
+24. **Automated Cloudflare R2 Portfolio Ingestion & Playback Standard (November 2026):**
+    - **Cloudflare R2 Synchronizer:** The studio portfolio archive synchronizes directly from the Cloudflare R2 bucket (`artsy-portfolio-videos`) via S3 client credentials (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ENDPOINT`).
+    - **Folder & Category Taxonomy:** Subfolder prefixes automatically map to official Artsy post-production categories: `Pre wedding/` → `"Pre-Wedding"`, `Reel/` → `"Reels"`, `Teaser/` → `"Wedding Teaser"`, `Wedding/` → `"Wedding Cinema"`.
+    - **Title & Metadata Normalization:** Video filenames are cleaned of noise (e.g. `Low Res`, `(2)`, underscores) into polished, title-cased editorial titles with auto-generated 2-sentence SEO descriptions.
+    - **Native MP4 & Responsive Streaming:** `/work` (`WorkClient.tsx`) and `/api/portfolio` natively support MP4 video streams from Cloudflare R2 (`pub-*.r2.dev`) with video preview loop in card thumbnails and native video playback in the interactive modal lightbox, decoupled from external YouTube dependencies.
+    - **Migration 019 Server-Auth RLS Standard:** `public.portfolio_samples` enforces server authorization via `is_server_authorized() OR is_admin()` for mutations, preventing permission denied errors during automated catalog updates.

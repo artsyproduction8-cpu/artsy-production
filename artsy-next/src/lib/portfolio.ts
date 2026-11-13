@@ -103,46 +103,30 @@ export async function getEnrichedPortfolioVideos(): Promise<PortfolioVideo[]> {
       return [];
     }
 
-    const BLOCKED_YOUTUBE_IDS = ['dQw4w9WgXcQ', 'test087694'];
     const seenUrls = new Set<string>();
     const cleanSamples: any[] = [];
 
     for (const s of samples) {
-      if (s.youtube_id && BLOCKED_YOUTUBE_IDS.includes(s.youtube_id)) continue;
+      // 1. Strictly exclude legacy mock YouTube videos and test fixtures
+      if (s.youtube_id || s.video_url?.includes('youtube.com') || s.video_url?.includes('youtu.be')) continue;
+      if (s.video_url?.includes('test.com') || s.video_url?.includes('pub-test.r2.dev')) continue;
       if (s.approval_status && s.approval_status !== 'approved') continue;
       if (!s.video_url) continue;
-      // Filter test fixtures and legacy mock URLs
-      if (s.video_url.includes('test.com') || s.video_url.includes('pub-test.r2.dev')) continue;
-      if (seenUrls.has(s.video_url)) continue;
 
-      seenUrls.add(s.video_url);
-      cleanSamples.push(s);
+      // 2. Normalize key for robust deduplication across runs
+      const key = extractR2Key(s.video_url);
+      if (!key) continue;
+      if (seenUrls.has(key)) continue;
+
+      seenUrls.add(key);
+      cleanSamples.push({ ...s, r2_key: key });
     }
 
     const s3 = getR2S3Client();
 
     const enriched: PortfolioVideo[] = await Promise.all(
       cleanSamples.map(async (sample) => {
-        const isR2 =
-          sample.video_url?.includes('.r2.dev') ||
-          sample.video_url?.includes('r2.cloudflarestorage.com') ||
-          (!sample.youtube_id && sample.video_url?.includes('.mp4'));
-
-        if (!isR2) {
-          return {
-            id: sample.id,
-            title: sample.title,
-            description: sample.description || null,
-            category: sample.category || 'Wedding Cinema',
-            video_url: sample.video_url,
-            thumbnail_url: sample.thumbnail_url || (sample.youtube_id ? `https://img.youtube.com/vi/${sample.youtube_id}/hqdefault.jpg` : ''),
-            youtube_id: sample.youtube_id || '',
-            display_order: sample.display_order ?? 0,
-            created_at: sample.created_at,
-          };
-        }
-
-        const key = extractR2Key(sample.video_url);
+        const key = sample.r2_key;
         let signedUrl = `/api/portfolio/stream?key=${encodeURIComponent(key || '')}`;
 
         if (s3 && key) {
@@ -158,17 +142,32 @@ export async function getEnrichedPortfolioVideos(): Promise<PortfolioVideo[]> {
           }
         }
 
+        // Clean and polish titles
+        let cleanTitle = sample.title || 'Cinematic Film';
+        cleanTitle = cleanTitle
+          .replace(/\bLow Res\b/gi, '')
+          .replace(/\bLow\b/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        // Normalize category
+        let cleanCat = sample.category || 'Wedding Cinema';
+        if (cleanCat.toLowerCase().includes('reel')) cleanCat = 'Reels';
+        else if (cleanCat.toLowerCase().includes('pre-wedding') || cleanCat.toLowerCase().includes('pre wedding')) cleanCat = 'Pre-Wedding';
+        else if (cleanCat.toLowerCase().includes('teaser') || cleanCat.toLowerCase().includes('trailer')) cleanCat = 'Wedding Teaser';
+        else cleanCat = 'Wedding Cinema';
+
         return {
           id: sample.id,
-          title: sample.title,
-          description: sample.description || null,
-          category: sample.category || 'Wedding Cinema',
+          title: cleanTitle,
+          description: sample.description || `Experience the cinematic mastery of ${cleanTitle} crafted by Artsy Production with deterministic color grading and acoustic precision.`,
+          category: cleanCat,
           video_url: signedUrl,
           thumbnail_url: sample.thumbnail_url || '',
-          youtube_id: sample.youtube_id || '',
+          youtube_id: '',
           display_order: sample.display_order ?? 0,
           created_at: sample.created_at,
-          r2_key: key || undefined,
+          r2_key: key,
         };
       })
     );

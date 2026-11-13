@@ -2,12 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import dynamic from 'next/dynamic';
-import { extractYouTubeId } from '@/lib/youtube';
-const YouTubePlayerModal = dynamic(() => import('@/components/YouTubePlayerModal'), {
-  ssr: false,
-});
 
 export interface PortfolioVideo {
   id: string;
@@ -19,31 +13,100 @@ export interface PortfolioVideo {
   youtube_id: string;
   display_order?: number;
   created_at?: string;
+  r2_key?: string;
 }
 
 interface WorkClientProps {
   initialVideos?: PortfolioVideo[];
 }
 
-type CategoryFilter = 'all' | 'wedding' | 'brand' | 'product' | 'corporate' | 'music';
+type CategoryFilter = 'all' | 'wedding' | 'pre-wedding' | 'teaser' | 'reels';
 
-function VideoCardPreview({ src, title }: { src: string; title: string }) {
+/**
+ * High-performance, viewport-aware video preview card.
+ * Uses IntersectionObserver so ONLY visible cards decode video, preventing GPU and network choking.
+ * Automatically skips 2-second black title slates (starts at 1.8s) for instant cinematic impact.
+ */
+function VideoCardPreview({
+  src,
+  title,
+  category,
+}: {
+  src: string;
+  title: string;
+  category: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isInView, setIsInView] = useState(false);
   const [hasError, setHasError] = useState(false);
 
+  // 1. Viewport-Aware Observer: Only decode & stream when scrolled into view
   useEffect(() => {
-    const el = videoRef.current;
+    const el = containerRef.current;
     if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        setIsInView(entry.isIntersecting);
+      },
+      {
+        threshold: 0.15,
+        rootMargin: '100px 0px',
+      }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // 2. Play when in view, pause when scrolled away (saves GPU decoder instances)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isInView && !hasError) {
+      video.muted = true;
+      video.defaultMuted = true;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch(() => {});
+      }
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  }, [isInView, src, hasError]);
+
+  // 3. Skip black title slates on metadata load (starts at 1.8s)
+  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const el = e.currentTarget;
     el.muted = true;
     el.defaultMuted = true;
-    const playPromise = el.play();
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => setIsPlaying(true))
-        .catch(() => {});
+    if (el.duration > 3 && el.currentTime < 1.0) {
+      try {
+        el.currentTime = 1.8;
+      } catch {}
     }
-  }, [src]);
+    if (isInView) {
+      el.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  };
+
+  // 4. On loop, restart at 1.8s instead of the 0s black editor slate
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    const el = e.currentTarget;
+    if (el.duration && el.currentTime >= el.duration - 0.4) {
+      try {
+        el.currentTime = 1.8;
+        el.play().catch(() => {});
+      } catch {}
+    }
+  };
 
   if (hasError) {
     return (
@@ -54,33 +117,115 @@ function VideoCardPreview({ src, title }: { src: string; title: string }) {
     );
   }
 
+  const isReel = category.toLowerCase().includes('reel');
+
   return (
-    <div className="relative w-full h-full bg-[#111113] overflow-hidden">
+    <div ref={containerRef} className="relative w-full h-full bg-[#0A0A0A] overflow-hidden">
+      {/* Studio Master Resolution Badge */}
+      <div className="absolute top-3 right-3 z-10 pointer-events-none flex items-center gap-1.5">
+        <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-white/95 font-mono text-[9px] font-bold tracking-wider uppercase border border-white/10 shadow-xs">
+          {isReel ? '9:16 REEL' : '4K UHD'}
+        </span>
+      </div>
+
+      {/* Subtle loader shimmer before first frame paints */}
       {!isPlaying && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0A0A0A]">
-          <div className="w-5 h-5 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#18181B] to-[#0A0A0A] text-white/40">
+          <div className="w-5 h-5 border-2 border-white/20 border-t-[#3B82F6] rounded-full animate-spin mb-2" />
+          <span className="text-[9px] font-mono tracking-widest uppercase text-white/40">Loading 4K Cut</span>
         </div>
       )}
+
       <video
         ref={videoRef}
         src={src}
         muted
-        autoPlay
         loop
         playsInline
         preload="metadata"
-        className={`w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${
+        className={`w-full h-full object-cover pointer-events-none transition-opacity duration-500 ${
           isPlaying ? 'opacity-100' : 'opacity-0'
         }`}
+        onLoadedMetadata={handleLoadedMetadata}
+        onTimeUpdate={handleTimeUpdate}
         onPlaying={() => setIsPlaying(true)}
         onError={() => setHasError(true)}
         onCanPlay={(e) => {
           e.currentTarget.muted = true;
-          const p = e.currentTarget.play();
-          if (p !== undefined) {
-            p.then(() => setIsPlaying(true)).catch(() => {});
+          if (isInView) {
+            e.currentTarget.play().then(() => setIsPlaying(true)).catch(() => {});
           }
         }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Premium Modal Video Player.
+ * Automatically skips initial slate, initiates playback, handles browser audio autoplay
+ * policy with a smooth unmute trigger, and displays authentic 4K master credentials.
+ */
+function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+
+    if (el.currentTime < 1.0) {
+      try {
+        el.currentTime = 1.5;
+      } catch {}
+    }
+
+    const p = el.play();
+    if (p !== undefined) {
+      p.catch(() => {
+        // Fallback to muted autoplay if unmuted autoplay is blocked by browser policy
+        el.muted = true;
+        setIsAudioMuted(true);
+        el.play().catch(() => {});
+      });
+    }
+  }, [video.video_url]);
+
+  const toggleUnmute = () => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = false;
+    setIsAudioMuted(false);
+  };
+
+  return (
+    <div className="relative aspect-video w-full bg-black overflow-hidden flex items-center justify-center">
+      {/* Audio Unmute Banner */}
+      {isAudioMuted && (
+        <button
+          type="button"
+          onClick={toggleUnmute}
+          className="absolute top-4 left-4 z-20 px-3.5 py-1.5 rounded-full bg-black/85 hover:bg-black backdrop-blur-md text-white text-xs font-semibold flex items-center gap-2 border border-white/20 transition-all cursor-pointer shadow-lg hover:scale-105"
+        >
+          <span>🔇 Audio Muted by Browser</span>
+          <span className="text-[#3B82F6] font-bold underline">Tap to Unmute 🔊</span>
+        </button>
+      )}
+
+      {/* Quality Badge */}
+      <div className="absolute top-4 right-4 z-20 pointer-events-none">
+        <span className="px-3 py-1 rounded-lg bg-black/80 backdrop-blur-md text-[#3B82F6] font-mono text-xs font-bold tracking-wider uppercase border border-[#3B82F6]/30 shadow-lg">
+          4K ULTRA HD • DIRECT EDGE STREAM
+        </span>
+      </div>
+
+      <video
+        ref={videoRef}
+        src={video.video_url}
+        controls
+        playsInline
+        preload="auto"
+        className="w-full h-full object-contain"
       />
     </div>
   );
@@ -135,22 +280,44 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
     };
   }, [selectedVideo]);
 
-  // Filter logic
-  const filteredVideos = filter === 'all'
-    ? videos
-    : videos.filter((item) => {
-        const cat = (item.category || '').toLowerCase();
-        if (filter === 'wedding') return cat.includes('wedding') || cat.includes('pre-wedding') || cat.includes('teaser') || cat.includes('reel');
-        if (filter === 'brand') return cat.includes('brand') || cat.includes('commercial') || cat.includes('social');
-        if (filter === 'product') return cat.includes('product') || cat.includes('commercial');
-        if (filter === 'corporate') return cat.includes('corporate') || cat.includes('documentary');
-        if (filter === 'music') return cat.includes('music') || cat.includes('event');
-        return cat.includes(filter);
-      });
+  // Clean, deterministic filter logic matching the 4 studio categories
+  const filteredVideos =
+    filter === 'all'
+      ? videos
+      : videos.filter((item) => {
+          const cat = (item.category || '').toLowerCase();
+          if (filter === 'wedding') {
+            return cat.includes('wedding') && !cat.includes('pre-wedding') && !cat.includes('teaser');
+          }
+          if (filter === 'pre-wedding') {
+            return cat.includes('pre-wedding') || cat.includes('pre wedding');
+          }
+          if (filter === 'teaser') {
+            return cat.includes('teaser') || cat.includes('trailer');
+          }
+          if (filter === 'reels') {
+            return cat.includes('reel');
+          }
+          return cat.includes(filter);
+        });
 
-  const selectedYtId = selectedVideo
-    ? selectedVideo.youtube_id || extractYouTubeId(selectedVideo.video_url)
-    : null;
+  // Calculate counts for category pills
+  const counts = {
+    all: videos.length,
+    wedding: videos.filter((v) => {
+      const c = (v.category || '').toLowerCase();
+      return c.includes('wedding') && !c.includes('pre-wedding') && !c.includes('teaser');
+    }).length,
+    'pre-wedding': videos.filter((v) => {
+      const c = (v.category || '').toLowerCase();
+      return c.includes('pre-wedding') || c.includes('pre wedding');
+    }).length,
+    teaser: videos.filter((v) => {
+      const c = (v.category || '').toLowerCase();
+      return c.includes('teaser') || c.includes('trailer');
+    }).length,
+    reels: videos.filter((v) => (v.category || '').toLowerCase().includes('reel')).length,
+  };
 
   return (
     <>
@@ -165,27 +332,33 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
           </p>
         </div>
 
-        {/* Interactive Filter Pills */}
-        <div className="mt-8 flex flex-wrap items-center gap-2 pt-6 border-t border-[#F5F5F7]">
+        {/* Interactive Filter Pills with Live Counts */}
+        <div className="mt-8 flex flex-wrap items-center gap-2.5 pt-6 border-t border-[#F5F5F7]">
           {[
-            { id: 'all', label: 'All Portfolio' },
-            { id: 'wedding', label: 'Wedding Cinema' },
-            { id: 'brand', label: 'Brand & Commercial' },
-            { id: 'product', label: 'Product & Showcase' },
-            { id: 'corporate', label: 'Corporate & Keynotes' },
-            { id: 'music', label: 'Music & Events' },
+            { id: 'all', label: 'All Portfolio', count: counts.all },
+            { id: 'wedding', label: 'Wedding Cinema', count: counts.wedding },
+            { id: 'pre-wedding', label: 'Pre-Wedding Films', count: counts['pre-wedding'] },
+            { id: 'teaser', label: 'Teasers & Trailers', count: counts.teaser },
+            { id: 'reels', label: 'Cinematic Reels', count: counts.reels },
           ].map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setFilter(tab.id as CategoryFilter)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
                 filter === tab.id
-                  ? 'bg-[#1D1D1F] text-white shadow-sm'
+                  ? 'bg-[#1D1D1F] text-white shadow-xs'
                   : 'bg-[#F5F5F7] text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#E5E5E7]'
               }`}
             >
-              {tab.label}
+              <span>{tab.label}</span>
+              <span
+                className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                  filter === tab.id ? 'bg-white/20 text-white' : 'bg-black/5 text-[#86868B]'
+                }`}
+              >
+                {tab.count}
+              </span>
             </button>
           ))}
         </div>
@@ -195,100 +368,71 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
       <section className="w-full max-w-[1200px] mx-auto px-6 sm:px-8">
         {filteredVideos.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredVideos.map((video) => {
-              const ytid = video.youtube_id || extractYouTubeId(video.video_url) || '';
-              const thumbUrl = video.thumbnail_url || (ytid ? `https://img.youtube.com/vi/${ytid}/hqdefault.jpg` : '');
-              const isDirectVideo = Boolean(
-                video.video_url && (
-                  video.video_url.includes('.mp4') ||
-                  video.video_url.includes('r2.cloudflarestorage.com') ||
-                  video.video_url.includes('/api/portfolio/stream') ||
-                  video.video_url.includes('pub-') ||
-                  !ytid
-                )
-              );
+            {filteredVideos.map((video) => (
+              <div
+                key={video.id}
+                onClick={() => setSelectedVideo(video)}
+                className="group bg-white rounded-3xl border border-[#E5E5E7] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)] hover:border-[#3B82F6]/50 transition-all duration-300 flex flex-col justify-between cursor-pointer"
+              >
+                {/* 16:9 Aspect Video Preview Container */}
+                <div>
+                  <div className="relative aspect-video w-full bg-[#0A0A0A] overflow-hidden">
+                    <VideoCardPreview
+                      src={video.video_url}
+                      title={video.title}
+                      category={video.category}
+                    />
 
-              return (
-                <div
-                  key={video.id}
-                  onClick={() => setSelectedVideo(video)}
-                  className="group bg-white rounded-3xl border border-[#E5E5E7] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)] hover:border-[#3B82F6]/50 transition-all duration-300 flex flex-col justify-between cursor-pointer"
-                >
-                  {/* Movie Poster Thumbnail Container (16:9 aspect-video with object-cover) */}
-                  <div>
-                    <div className="relative aspect-video w-full bg-[#0A0A0A] overflow-hidden">
-                      {ytid ? (
-                        <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
-                          <iframe
-                            src={`https://www.youtube-nocookie.com/embed/${ytid}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${ytid}&playsinline=1&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&vq=highres&hd=1`}
-                            title={video.title}
-                            className="absolute w-[150%] h-[150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-0 pointer-events-none"
-                            loading="lazy"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            tabIndex={-1}
-                          />
-                        </div>
-                      ) : isDirectVideo ? (
-                        <VideoCardPreview src={video.video_url} title={video.title} />
-                      ) : thumbUrl ? (
-                        <Image
-                          src={thumbUrl}
-                          alt={video.title}
-                          width={640}
-                          height={360}
-                          unoptimized
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0A0A0A] text-white/70">
-                          <span className="text-3xl mb-1">🎬</span>
-                          <span className="text-[10px] font-mono tracking-widest uppercase text-white/50">{video.category || 'Cinema'}</span>
-                        </div>
-                      )}
+                    {/* Click Shield to trigger modal */}
+                    <div
+                      className="absolute inset-0 z-10 cursor-pointer"
+                      onClick={() => setSelectedVideo(video)}
+                    />
 
-                      {/* Transparent click shield overlay so mouse never touches YouTube player */}
-                      <div
-                        className="absolute inset-0 z-10 cursor-pointer"
-                        onClick={() => setSelectedVideo(video)}
-                      />
-
-                      {/* Subtle dark tint overlay */}
-                      <div className="absolute inset-0 bg-black/10 pointer-events-none" />
-                    </div>
-
-                    {/* Card Content */}
-                    <div className="p-6 space-y-2.5">
-                      <h3 className="text-base sm:text-lg font-bold text-[#1D1D1F] leading-snug group-hover:text-[#3B82F6] transition-colors line-clamp-2">
-                        {video.title}
-                      </h3>
-
-                      {/* Description rendered in muted text color under title; hidden gracefully if absent */}
-                      {video.description && (
-                        <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">
-                          {video.description}
-                        </p>
-                      )}
-                    </div>
+                    {/* Subtle dark tint */}
+                    <div className="absolute inset-0 bg-black/5 pointer-events-none group-hover:bg-transparent transition-colors" />
                   </div>
 
-                  {/* Card Actions */}
-                  <div className="p-6 pt-0 border-t border-[#F5F5F7] mt-3 flex items-center justify-between">
-                    <span className="text-xs font-bold text-[#3B82F6] group-hover:underline flex items-center gap-1.5">
-                      <span>Watch Film</span>
-                      <span className="text-sm">▶</span>
-                    </span>
+                  {/* Card Content */}
+                  <div className="p-6 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#3B82F6]">
+                        {video.category}
+                      </span>
+                      <span className="text-[10px] font-mono text-[#86868B] uppercase">
+                        Master Cut
+                      </span>
+                    </div>
 
-                    <Link
-                      href={`/book?category=${encodeURIComponent((video.category || '').toLowerCase().includes('wedding') ? 'wedding' : 'brand')}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs"
-                    >
-                      Order Cut →
-                    </Link>
+                    <h3 className="text-base sm:text-lg font-bold text-[#1D1D1F] leading-snug group-hover:text-[#3B82F6] transition-colors line-clamp-2">
+                      {video.title}
+                    </h3>
+
+                    {video.description && (
+                      <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">
+                        {video.description}
+                      </p>
+                    )}
                   </div>
                 </div>
-              );
-            })}
+
+                {/* Card Actions */}
+                <div className="p-6 pt-0 border-t border-[#F5F5F7] mt-3 flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#3B82F6] group-hover:underline flex items-center gap-1.5">
+                    <span>Play Master</span>
+                    <span className="text-sm">▶</span>
+                  </span>
+
+                  <Link
+                    href={`/book?category=${encodeURIComponent((video.category || '').toLowerCase().includes('wedding') ? 'wedding' : 'brand')}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs"
+                  >
+                    Order Cut →
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           /* Clean empty state when no videos match */
@@ -327,9 +471,14 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
           >
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between text-white">
-              <h2 className="text-base sm:text-lg font-bold text-white truncate max-w-[85%]">
-                {selectedVideo.title}
-              </h2>
+              <div className="flex items-center gap-3 truncate max-w-[85%]">
+                <span className="px-2 py-0.5 rounded-md bg-[#3B82F6]/20 text-[#3B82F6] font-mono text-[10px] font-bold uppercase tracking-wider border border-[#3B82F6]/30">
+                  {selectedVideo.category}
+                </span>
+                <h2 className="text-base sm:text-lg font-bold text-white truncate">
+                  {selectedVideo.title}
+                </h2>
+              </div>
               <button
                 type="button"
                 onClick={() => setSelectedVideo(null)}
@@ -340,33 +489,16 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
               </button>
             </div>
 
-            {/* Video Player (16:9 Aspect Ratio with YouTube Iframe API or Native MP4 Player) */}
-            <div className="relative aspect-video w-full bg-black overflow-hidden">
-              {selectedYtId ? (
-                <YouTubePlayerModal
-                  videoId={selectedYtId}
-                  title={selectedVideo.title}
-                  zoomScale="w-[150%] h-[150%]"
-                />
-              ) : selectedVideo.video_url ? (
-                <video
-                  src={selectedVideo.video_url}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-white text-xs">
-                  Video preview unavailable
-                </div>
-              )}
-            </div>
+            {/* Video Player (High-Definition Native Player) */}
+            <ModalVideoPlayer video={selectedVideo} />
 
             {/* Modal Footer */}
             <div className="p-4 sm:p-6 bg-[#18181B] border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-1 text-xs max-w-xl">
-                <div className="text-white font-semibold">Cinematic Post-Production Master</div>
+                <div className="text-white font-semibold flex items-center gap-2">
+                  <span>Cinematic Post-Production Master</span>
+                  <span className="text-[#3B82F6] font-mono text-[10px]">• 4K UHD</span>
+                </div>
                 {selectedVideo.description && (
                   <p className="text-gray-400 line-clamp-2 leading-relaxed">
                     {selectedVideo.description}
@@ -381,7 +513,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                     rel="noopener noreferrer"
                     className="px-4 py-2.5 rounded-xl border border-white/20 hover:border-white text-white text-xs font-semibold uppercase tracking-wider transition-colors"
                   >
-                    YouTube ↗
+                    Direct 4K Stream ↗
                   </a>
                 )}
                 <Link

@@ -42,7 +42,7 @@ function VideoCardPreview({
   const [isInView, setIsInView] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  // 1. Viewport-Aware Observer: Only decode & stream when scrolled into view
+  // 1. Viewport-Aware Observer: Only mount src and decode when in or near viewport
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -53,8 +53,8 @@ function VideoCardPreview({
         setIsInView(entry.isIntersecting);
       },
       {
-        threshold: 0.1,
-        rootMargin: '250px 0px', // Pre-buffer 250px ahead of scroll
+        threshold: 0.05,
+        rootMargin: '150px 0px',
       }
     );
 
@@ -65,22 +65,20 @@ function VideoCardPreview({
   // 2. Play when in view, pause when scrolled far away
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !isInView) return;
 
     video.muted = true;
     video.defaultMuted = true;
 
-    if (isInView && !hasError) {
+    if (!hasError) {
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise
           .then(() => setIsPlaying(true))
           .catch(() => {});
       }
-    } else if (!isInView && isPlaying) {
-      video.pause();
     }
-  }, [isInView, src, hasError]);
+  }, [isInView, hasError]);
 
   if (hasError) {
     return (
@@ -110,26 +108,28 @@ function VideoCardPreview({
         </div>
       )}
 
-      <video
-        ref={videoRef}
-        src={src}
-        muted
-        autoPlay
-        loop
-        playsInline
-        preload="metadata"
-        className={`w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${
-          isPlaying ? 'opacity-100' : 'opacity-0'
-        }`}
-        onLoadedData={() => setIsPlaying(true)}
-        onPlaying={() => setIsPlaying(true)}
-        onError={() => setHasError(true)}
-        onCanPlay={(e) => {
-          e.currentTarget.muted = true;
-          e.currentTarget.defaultMuted = true;
-          e.currentTarget.play().then(() => setIsPlaying(true)).catch(() => {});
-        }}
-      />
+      {isInView ? (
+        <video
+          ref={videoRef}
+          src={src}
+          muted
+          autoPlay
+          loop
+          playsInline
+          preload="metadata"
+          className={`w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${
+            isPlaying ? 'opacity-100' : 'opacity-0'
+          }`}
+          onLoadedData={() => setIsPlaying(true)}
+          onPlaying={() => setIsPlaying(true)}
+          onError={() => setHasError(true)}
+          onCanPlay={(e) => {
+            e.currentTarget.muted = true;
+            e.currentTarget.defaultMuted = true;
+            e.currentTarget.play().then(() => setIsPlaying(true)).catch(() => {});
+          }}
+        />
+      ) : null}
     </div>
   );
 }

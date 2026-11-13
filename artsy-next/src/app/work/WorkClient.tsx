@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -26,6 +26,65 @@ interface WorkClientProps {
 }
 
 type CategoryFilter = 'all' | 'wedding' | 'brand' | 'product' | 'corporate' | 'music';
+
+function VideoCardPreview({ src, title }: { src: string; title: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = true;
+    el.defaultMuted = true;
+    const playPromise = el.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => setIsPlaying(true))
+        .catch(() => {});
+    }
+  }, [src]);
+
+  if (hasError) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0A0A0A] text-white/70">
+        <span className="text-3xl mb-1">🎬</span>
+        <span className="text-[10px] font-mono tracking-widest uppercase text-white/50">{title}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-full bg-[#111113] overflow-hidden">
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0A0A0A]">
+          <div className="w-5 h-5 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+        </div>
+      )}
+      <video
+        ref={videoRef}
+        src={src}
+        muted
+        autoPlay
+        loop
+        playsInline
+        preload="metadata"
+        className={`w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${
+          isPlaying ? 'opacity-100' : 'opacity-0'
+        }`}
+        onPlaying={() => setIsPlaying(true)}
+        onError={() => setHasError(true)}
+        onCanPlay={(e) => {
+          e.currentTarget.muted = true;
+          const p = e.currentTarget.play();
+          if (p !== undefined) {
+            p.then(() => setIsPlaying(true)).catch(() => {});
+          }
+        }}
+      />
+    </div>
+  );
+}
 
 export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
   const [videos, setVideos] = useState<PortfolioVideo[]>(initialVideos);
@@ -139,6 +198,15 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
             {filteredVideos.map((video) => {
               const ytid = video.youtube_id || extractYouTubeId(video.video_url) || '';
               const thumbUrl = video.thumbnail_url || (ytid ? `https://img.youtube.com/vi/${ytid}/hqdefault.jpg` : '');
+              const isDirectVideo = Boolean(
+                video.video_url && (
+                  video.video_url.includes('.mp4') ||
+                  video.video_url.includes('r2.cloudflarestorage.com') ||
+                  video.video_url.includes('/api/portfolio/stream') ||
+                  video.video_url.includes('pub-') ||
+                  !ytid
+                )
+              );
 
               return (
                 <div
@@ -160,16 +228,8 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                             tabIndex={-1}
                           />
                         </div>
-                      ) : video.video_url?.endsWith('.mp4') || video.video_url?.includes('.r2.dev') || video.video_url?.includes('.mp4') ? (
-                        <video
-                          src={video.video_url}
-                          muted
-                          loop
-                          autoPlay
-                          playsInline
-                          preload="metadata"
-                          className="w-full h-full object-cover pointer-events-none"
-                        />
+                      ) : isDirectVideo ? (
+                        <VideoCardPreview src={video.video_url} title={video.title} />
                       ) : thumbUrl ? (
                         <Image
                           src={thumbUrl}

@@ -24,8 +24,9 @@ type CategoryFilter = 'all' | 'wedding' | 'pre-wedding' | 'teaser' | 'reels';
 
 /**
  * High-performance, viewport-aware video preview card.
- * Uses IntersectionObserver so ONLY visible cards decode video, preventing GPU and network choking.
- * Automatically seeks past intro title slates directly to high-energy cinematic highlights.
+ * - Uses HTML5 Media Fragments (#t=5.5) so the browser natively buffers and displays the highlight frame without black intro slates.
+ * - Native declarative autoplay (autoPlay, muted, playsInline, loop) with defaultMuted={true} for 100% universal browser compliance.
+ * - Once in view, the video element remains mounted and cached, never thrashing or restarting on scroll.
  */
 function VideoCardPreview({
   src,
@@ -38,20 +39,16 @@ function VideoCardPreview({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hasSeekedRef = useRef(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isInView, setIsInView] = useState(false);
+  const [hasEnteredView, setHasEnteredView] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   const isReel = category.toLowerCase().includes('reel');
   const isTeaser = category.toLowerCase().includes('teaser') || category.toLowerCase().includes('trailer');
-  // Highlight start time:
-  // - Reels start at 0.3s
-  // - Teasers start at 1.5s
-  // - Wedding and Pre-wedding films skip the 4.5s black editor credit slate and start at 5.5s
   const previewStartTime = isReel ? 0.3 : isTeaser ? 1.5 : 5.5;
 
-  // 1. Viewport-Aware Observer: Only mount src and decode when in or near viewport
+  // Append native media fragment so browser decodes from highlight
+  const mediaSrc = src ? `${src}#t=${previewStartTime}` : '';
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -59,44 +56,29 @@ function VideoCardPreview({
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        setIsInView(entry.isIntersecting);
+        const isVisible = entry.isIntersecting;
+        const video = videoRef.current;
+
+        if (isVisible) {
+          setHasEnteredView(true);
+          if (video && video.paused) {
+            video.play().catch(() => {});
+          }
+        } else {
+          if (video && !video.paused) {
+            video.pause();
+          }
+        }
       },
       {
         threshold: 0.05,
-        rootMargin: '200px 0px',
+        rootMargin: '350px 0px',
       }
     );
 
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-
-  // 2. Play when in view, seek past intro slate once on initial load
-  const handleSeekAndPlay = (video: HTMLVideoElement) => {
-    try {
-      video.muted = true;
-      video.defaultMuted = true;
-      if (!hasSeekedRef.current && video.currentTime < previewStartTime) {
-        hasSeekedRef.current = true;
-        video.currentTime = previewStartTime;
-      }
-      const p = video.play();
-      if (p !== undefined) {
-        p.then(() => setIsPlaying(true)).catch(() => {});
-      }
-    } catch {}
-  };
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !isInView) return;
-
-    if (!hasError) {
-      if (video.readyState >= 1) {
-        handleSeekAndPlay(video);
-      }
-    }
-  }, [isInView, hasError, previewStartTime]);
 
   if (hasError) {
     return (
@@ -116,33 +98,19 @@ function VideoCardPreview({
         </span>
       </div>
 
-      {/* Subtle loader shimmer before first frame paints */}
-      {!isPlaying && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-[#18181B] to-[#0A0A0A] text-white/40">
-          <div className="w-5 h-5 border-2 border-white/20 border-t-[#3B82F6] rounded-full animate-spin mb-2" />
-          <span className="text-[9px] font-mono tracking-widest uppercase text-white/40">Loading 4K Cut</span>
-        </div>
-      )}
-
-      {isInView ? (
+      {hasEnteredView ? (
         <video
           ref={videoRef}
-          src={src}
-          muted
+          src={mediaSrc}
           autoPlay
+          muted
           loop
           playsInline
-          preload="auto"
-          className={`w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${
-            isPlaying ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoadedMetadata={(e) => handleSeekAndPlay(e.currentTarget)}
-          onCanPlay={(e) => handleSeekAndPlay(e.currentTarget)}
-          onPlaying={() => setIsPlaying(true)}
+          preload="metadata"
+          className="w-full h-full object-cover pointer-events-none"
           onError={() => setHasError(true)}
           onTimeUpdate={(e) => {
             const vid = e.currentTarget;
-            // Prevent looping back into the intro title slate
             if (vid.duration && vid.currentTime >= vid.duration - 0.5) {
               vid.currentTime = previewStartTime;
               vid.play().catch(() => {});
@@ -156,102 +124,18 @@ function VideoCardPreview({
 
 /**
  * Premium Modal Video Player.
- * Automatically skips initial slate, initiates playback, handles browser audio autoplay
- * policy with a smooth unmute trigger, and displays authentic 4K master credentials.
+ * Native HTML5 high-definition video player with full playback controls.
  */
 function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hasSeekedRef = useRef(false);
-  const [isAudioMuted, setIsAudioMuted] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(true);
-
   const isReel = (video.category || '').toLowerCase().includes('reel');
   const isTeaser = (video.category || '').toLowerCase().includes('teaser') || (video.category || '').toLowerCase().includes('trailer');
   const highlightStart = isReel ? 0.3 : isTeaser ? 1.5 : 5.0;
 
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-
-    const handleInitialPlay = () => {
-      if (!hasSeekedRef.current && el.currentTime < highlightStart) {
-        hasSeekedRef.current = true;
-        try {
-          el.currentTime = highlightStart;
-        } catch {}
-      }
-
-      // Try playing with sound first (since user clicked the card)
-      el.muted = false;
-      const p = el.play();
-      if (p !== undefined) {
-        p.then(() => {
-          setIsPlaying(true);
-          setIsAudioMuted(false);
-          setIsBuffering(false);
-        }).catch(() => {
-          // If browser policy blocks sound without direct media engagement, fall back to muted autoplay
-          el.muted = true;
-          setIsAudioMuted(true);
-          el.play().then(() => {
-            setIsPlaying(true);
-            setIsBuffering(false);
-          }).catch(() => {
-            setIsBuffering(false);
-          });
-        });
-      }
-    };
-
-    if (el.readyState >= 1) {
-      handleInitialPlay();
-    } else {
-      el.onloadedmetadata = handleInitialPlay;
-    }
-  }, [video.video_url, highlightStart]);
-
-  const togglePlay = () => {
-    const el = videoRef.current;
-    if (!el) return;
-    if (el.paused) {
-      el.play().then(() => setIsPlaying(true)).catch(() => {});
-    } else {
-      el.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const unmuteAndPlay = () => {
-    const el = videoRef.current;
-    if (!el) return;
-    el.muted = false;
-    setIsAudioMuted(false);
-    if (el.paused) {
-      el.play().then(() => setIsPlaying(true)).catch(() => {});
-    }
-  };
+  const modalSrc = video.video_url ? `${video.video_url}#t=${highlightStart}` : '';
 
   return (
-    <div
-      className="relative aspect-video w-full bg-black overflow-hidden flex items-center justify-center cursor-pointer group"
-      onClick={togglePlay}
-    >
-      {/* Audio Unmute Banner */}
-      {isAudioMuted && (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            unmuteAndPlay();
-          }}
-          className="absolute top-4 left-4 z-20 px-3.5 py-1.5 rounded-full bg-black/85 hover:bg-black backdrop-blur-md text-white text-xs font-semibold flex items-center gap-2 border border-white/20 transition-all cursor-pointer shadow-lg hover:scale-105"
-        >
-          <span>🔇 Audio Muted by Browser</span>
-          <span className="text-[#3B82F6] font-bold underline">Tap to Unmute 🔊</span>
-        </button>
-      )}
-
+    <div className="relative aspect-video w-full bg-black overflow-hidden flex items-center justify-center">
       {/* Quality Badge */}
       <div className="absolute top-4 right-4 z-20 pointer-events-none">
         <span className="px-3 py-1 rounded-lg bg-black/80 backdrop-blur-md text-[#3B82F6] font-mono text-xs font-bold tracking-wider uppercase border border-[#3B82F6]/30 shadow-lg">
@@ -259,38 +143,14 @@ function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
         </span>
       </div>
 
-      {/* Big Center Play / Pause Indicator */}
-      {(!isPlaying || isBuffering) && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none bg-black/30 backdrop-blur-xs">
-          {isBuffering ? (
-            <div className="flex flex-col items-center gap-2">
-              <div className="w-12 h-12 border-3 border-white/20 border-t-[#3B82F6] rounded-full animate-spin" />
-              <span className="text-white text-xs font-mono tracking-wider uppercase">Buffering 4K Master...</span>
-            </div>
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white text-2xl shadow-2xl pl-1">
-              ▶
-            </div>
-          )}
-        </div>
-      )}
-
       <video
         ref={videoRef}
-        src={video.video_url}
+        src={modalSrc}
         controls
+        autoPlay
         playsInline
         preload="auto"
         className="w-full h-full object-contain"
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-        onWaiting={() => setIsBuffering(true)}
-        onPlaying={() => {
-          setIsPlaying(true);
-          setIsBuffering(false);
-        }}
-        onCanPlay={() => setIsBuffering(false)}
-        onClick={(e) => e.stopPropagation()}
       />
     </div>
   );
@@ -310,8 +170,9 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
     }
   }
 
-  // Re-fetch on mount so client always reflects live database portfolio
+  // Only fetch on mount if initialVideos is empty
   useEffect(() => {
+    if (initialVideos.length > 0) return;
     async function fetchFreshVideos() {
       try {
         const res = await fetch('/api/portfolio');
@@ -324,7 +185,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
       }
     }
     fetchFreshVideos();
-  }, []);
+  }, [initialVideos.length]);
 
   // Lock body scroll and support Escape key when lightbox is open
   useEffect(() => {

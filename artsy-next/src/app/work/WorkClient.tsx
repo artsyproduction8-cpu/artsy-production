@@ -53,8 +53,8 @@ function VideoCardPreview({
         setIsInView(entry.isIntersecting);
       },
       {
-        threshold: 0.15,
-        rootMargin: '100px 0px',
+        threshold: 0.1,
+        rootMargin: '250px 0px', // Pre-buffer 250px ahead of scroll
       }
     );
 
@@ -62,51 +62,25 @@ function VideoCardPreview({
     return () => observer.disconnect();
   }, []);
 
-  // 2. Play when in view, pause when scrolled away (saves GPU decoder instances)
+  // 2. Play when in view, pause when scrolled far away
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    video.muted = true;
+    video.defaultMuted = true;
+
     if (isInView && !hasError) {
-      video.muted = true;
-      video.defaultMuted = true;
       const playPromise = video.play();
       if (playPromise !== undefined) {
         playPromise
           .then(() => setIsPlaying(true))
           .catch(() => {});
       }
-    } else {
+    } else if (!isInView && isPlaying) {
       video.pause();
-      setIsPlaying(false);
     }
   }, [isInView, src, hasError]);
-
-  // 3. Skip black title slates on metadata load (starts at 1.8s)
-  const handleLoadedMetadata = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    const el = e.currentTarget;
-    el.muted = true;
-    el.defaultMuted = true;
-    if (el.duration > 3 && el.currentTime < 1.0) {
-      try {
-        el.currentTime = 1.8;
-      } catch {}
-    }
-    if (isInView) {
-      el.play().then(() => setIsPlaying(true)).catch(() => {});
-    }
-  };
-
-  // 4. On loop, restart at 1.8s instead of the 0s black editor slate
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    const el = e.currentTarget;
-    if (el.duration && el.currentTime >= el.duration - 0.4) {
-      try {
-        el.currentTime = 1.8;
-        el.play().catch(() => {});
-      } catch {}
-    }
-  };
 
   if (hasError) {
     return (
@@ -140,21 +114,20 @@ function VideoCardPreview({
         ref={videoRef}
         src={src}
         muted
+        autoPlay
         loop
         playsInline
         preload="metadata"
-        className={`w-full h-full object-cover pointer-events-none transition-opacity duration-500 ${
+        className={`w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${
           isPlaying ? 'opacity-100' : 'opacity-0'
         }`}
-        onLoadedMetadata={handleLoadedMetadata}
-        onTimeUpdate={handleTimeUpdate}
+        onLoadedData={() => setIsPlaying(true)}
         onPlaying={() => setIsPlaying(true)}
         onError={() => setHasError(true)}
         onCanPlay={(e) => {
           e.currentTarget.muted = true;
-          if (isInView) {
-            e.currentTarget.play().then(() => setIsPlaying(true)).catch(() => {});
-          }
+          e.currentTarget.defaultMuted = true;
+          e.currentTarget.play().then(() => setIsPlaying(true)).catch(() => {});
         }}
       />
     </div>

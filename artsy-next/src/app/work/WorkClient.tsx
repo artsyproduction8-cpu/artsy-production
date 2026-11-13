@@ -38,6 +38,7 @@ function VideoCardPreview({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hasSeekedRef = useRef(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -70,12 +71,13 @@ function VideoCardPreview({
     return () => observer.disconnect();
   }, []);
 
-  // 2. Play when in view, seek past intro slate immediately on loadedmetadata
+  // 2. Play when in view, seek past intro slate once on initial load
   const handleSeekAndPlay = (video: HTMLVideoElement) => {
     try {
       video.muted = true;
       video.defaultMuted = true;
-      if (video.currentTime < previewStartTime) {
+      if (!hasSeekedRef.current && video.currentTime < previewStartTime) {
+        hasSeekedRef.current = true;
         video.currentTime = previewStartTime;
       }
       const p = video.play();
@@ -159,6 +161,7 @@ function VideoCardPreview({
  */
 function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hasSeekedRef = useRef(false);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(true);
@@ -172,7 +175,8 @@ function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
     if (!el) return;
 
     const handleInitialPlay = () => {
-      if (el.currentTime < highlightStart) {
+      if (!hasSeekedRef.current && el.currentTime < highlightStart) {
+        hasSeekedRef.current = true;
         try {
           el.currentTime = highlightStart;
         } catch {}

@@ -383,6 +383,24 @@ To ensure clients never struggle to find project assets or raw footage links, th
    - **Cryptographic Mobile Token Signatures:** Email invoice links embed a tamper-proof HMAC-SHA256 access token (`?token=...`) validated in constant time by `verifyInvoiceAccessToken(orderId, token)`. This allows mobile users tapping "View & Download GST Invoice PDF" from their email to immediately inspect and download their official statutory invoice without being blocked by 401 Unauthorized or cookie session drops.
 
 
+
+### 3.10 Studio Portfolio Video Streaming & Direct Edge Highlight Invariants (/work)
+To deliver a broadcast-quality visual experience across desktop and mobile, `/work` implements an edge-optimized streaming architecture:
+1. **Content-Security-Policy & R2 Edge Integration:** `next.config.ts` Content-Security-Policy explicitly permits `https://*.r2.cloudflarestorage.com https://*.r2.dev` across `media-src`, `connect-src`, and `img-src`, allowing unthrottled streaming directly from Cloudflare R2 buckets.
+2. **Viewport-Aware Virtualized Mounting & Loop Guard:**
+   - Video preview cards use `IntersectionObserver` (`rootMargin: '200px 0px'`). Only cards currently in or near the viewport attach `src` and decode video, preventing browser connection pool exhaustion (Chrome 6-socket limit) and GPU decoder starvation.
+   - Employs a one-time `hasSeekedRef` guard to prevent repeated seek interruptions and endless buffering loops upon `onCanPlay`.
+3. **Automated Highlight Seek Invariant (Zero Black Title Slates):**
+   - Editor master cuts typically contain a 4.5s black title slate at the start (`CLIENT PRE-WEDDING FILM / STORIES BY...`).
+   - Preview cards automatically determine `previewStartTime` based on category: `0.3s` for 9:16 Reels, `1.5s` for Teasers, and `5.5s` for Wedding Cinema and Pre-Wedding films.
+   - On `onLoadedMetadata`, the player instantly seeks past the title slate to `previewStartTime` so the very first frame paints full-color cinematic action (couples, drone sweeps, golden-hour emotions).
+   - On `onTimeUpdate`, when the video reaches the end, it smoothly loops back to `previewStartTime` rather than `0.0s`, guaranteeing visitors **never** see a black title slate.
+4. **Modal Lightbox Autoplay & Sound Management:**
+   - Clicking any card opens the modal player and immediately starts streaming at `highlightStart`.
+   - Attempts unmuted audio playback using the user click gesture context. If browser Autoplay Policy requires muted autoplay, it smoothly continues muted and surfaces a prominent `"🔇 Audio Muted by Browser • Tap to Unmute 🔊"` banner.
+   - Includes a central buffering spinner (`isBuffering`) during 4K streaming to ensure immediate visual feedback.
+5. **Curated Database Ordering:** Database table `portfolio_samples` maintains exactly 29 unique, high-definition studio master cuts ordered with grand celebrity and luxury wedding cuts at the top (positions 1–8), followed by pre-wedding films, teasers, and vertical reels.
+
 ---
 
 ## 4. DYNAMIC PRICING ENGINE & FINANCIAL WATERFALL

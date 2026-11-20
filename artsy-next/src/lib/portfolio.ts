@@ -8,6 +8,7 @@ export interface PortfolioVideo {
   description: string | null;
   category: string;
   video_url: string;
+  preview_url?: string;
   thumbnail_url: string;
   youtube_id: string;
   display_order: number;
@@ -128,6 +129,8 @@ export async function getEnrichedPortfolioVideos(): Promise<PortfolioVideo[]> {
       cleanSamples.map(async (sample) => {
         const key = sample.r2_key;
         let signedUrl = `/api/portfolio/stream?key=${encodeURIComponent(key || '')}`;
+        let signedPreviewUrl: string | undefined = undefined;
+        let signedThumbUrl = sample.thumbnail_url || '';
 
         if (s3 && key) {
           try {
@@ -137,6 +140,25 @@ export async function getEnrichedPortfolioVideos(): Promise<PortfolioVideo[]> {
             });
             // 7-day presigned URL for direct, unthrottled streaming from Cloudflare Edge
             signedUrl = await getSignedUrl(s3, cmd, { expiresIn: 60 * 60 * 24 * 7 });
+
+            // Generate signed URLs for lightweight preview and sharp poster
+            const safeKey = key
+              .replace(/[^\w\d\-_./]/g, '_')
+              .replace(/\.mp4$/i, '');
+            const previewR2Key = `previews/${safeKey}_preview.mp4`;
+            const thumbR2Key = `thumbnails/${safeKey}_thumb.jpg`;
+
+            const previewCmd = new GetObjectCommand({
+              Bucket: 'artsy-portfolio-videos',
+              Key: previewR2Key,
+            });
+            signedPreviewUrl = await getSignedUrl(s3, previewCmd, { expiresIn: 60 * 60 * 24 * 7 });
+
+            const thumbCmd = new GetObjectCommand({
+              Bucket: 'artsy-portfolio-videos',
+              Key: thumbR2Key,
+            });
+            signedThumbUrl = await getSignedUrl(s3, thumbCmd, { expiresIn: 60 * 60 * 24 * 7 });
           } catch (signErr) {
             console.warn('[Portfolio URL Sign Warning]', signErr);
           }
@@ -163,7 +185,8 @@ export async function getEnrichedPortfolioVideos(): Promise<PortfolioVideo[]> {
           description: sample.description || `Experience the cinematic mastery of ${cleanTitle} crafted by Artsy Production with deterministic color grading and acoustic precision.`,
           category: cleanCat,
           video_url: signedUrl,
-          thumbnail_url: sample.thumbnail_url || '',
+          preview_url: signedPreviewUrl || signedUrl,
+          thumbnail_url: signedThumbUrl || sample.thumbnail_url || '',
           youtube_id: '',
           display_order: sample.display_order ?? 0,
           created_at: sample.created_at,

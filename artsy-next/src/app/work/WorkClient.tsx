@@ -9,6 +9,7 @@ export interface PortfolioVideo {
   description: string | null;
   category: string;
   video_url: string;
+  preview_url?: string;
   thumbnail_url: string;
   youtube_id: string;
   display_order?: number;
@@ -32,11 +33,15 @@ type CategoryFilter = 'all' | 'wedding' | 'pre-wedding' | 'teaser' | 'reels';
  */
 function VideoCardPreview({
   src,
+  previewSrc,
+  poster,
   title,
   category,
   priority = false,
 }: {
   src: string;
+  previewSrc?: string;
+  poster?: string;
   title: string;
   category: string;
   priority?: boolean;
@@ -47,14 +52,16 @@ function VideoCardPreview({
   const [hasEnteredView, setHasEnteredView] = useState(priority);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [activeSrc, setActiveSrc] = useState(previewSrc || src);
+  const isPreview = activeSrc === previewSrc && Boolean(previewSrc);
   const hasSeekedInitialRef = useRef(false);
 
   const isReel = category.toLowerCase().includes('reel');
   const isTeaser = category.toLowerCase().includes('teaser') || category.toLowerCase().includes('trailer');
   const isPreWedding = category.toLowerCase().includes('pre-wedding') || category.toLowerCase().includes('pre wedding');
   
-  // Highlight preview starting timestamp: skips black intro slates seamlessly
-  const previewStartTime = isReel ? 0.1 : isTeaser ? 1.5 : isPreWedding ? 4.5 : 5.0;
+  // Highlight preview starting timestamp: only needed if playing the master cut directly
+  const previewStartTime = isPreview ? 0 : (isReel ? 0.1 : isTeaser ? 1.5 : isPreWedding ? 4.5 : 5.0);
 
   // Viewport observation: activates playback when in view, pauses when out of view to save bandwidth
   useEffect(() => {
@@ -94,7 +101,7 @@ function VideoCardPreview({
 
   // Programmatic play trigger whenever card is in view
   useEffect(() => {
-    if (!isInView || !src) return;
+    if (!isInView || !activeSrc) return;
     const video = videoRef.current;
     if (video) {
       video.muted = true;
@@ -104,13 +111,13 @@ function VideoCardPreview({
         playPromise.catch(() => {});
       }
     }
-  }, [src, isInView]);
+  }, [activeSrc, isInView]);
 
-  // Seamless continuous replay function
+  // Seamless continuous replay function: restarts smoothly and immediately
   const handleReplay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.duration && video.duration > previewStartTime) {
+    if (!isPreview && video.duration && video.duration > previewStartTime) {
       video.currentTime = previewStartTime;
     } else {
       video.currentTime = 0;
@@ -118,7 +125,7 @@ function VideoCardPreview({
     video.muted = true;
     const p = video.play();
     if (p !== undefined) p.catch(() => {});
-  }, [previewStartTime]);
+  }, [isPreview, previewStartTime]);
 
   if (hasError) {
     return (
@@ -158,7 +165,8 @@ function VideoCardPreview({
               el.defaultMuted = true;
             }
           }}
-          src={src}
+          src={activeSrc}
+          poster={poster || undefined}
           autoPlay
           muted
           loop
@@ -167,12 +175,18 @@ function VideoCardPreview({
           className={`w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
-          onError={() => setHasError(true)}
+          onError={() => {
+            if (activeSrc !== src) {
+              setActiveSrc(src);
+            } else {
+              setHasError(true);
+            }
+          }}
           onLoadedMetadata={(e) => {
             const vid = e.currentTarget;
             vid.muted = true;
             vid.defaultMuted = true;
-            if (!hasSeekedInitialRef.current && previewStartTime > 0 && vid.duration > previewStartTime) {
+            if (!isPreview && !hasSeekedInitialRef.current && previewStartTime > 0 && vid.duration > previewStartTime) {
               hasSeekedInitialRef.current = true;
               vid.currentTime = previewStartTime;
             }
@@ -200,8 +214,7 @@ function VideoCardPreview({
           onEnded={handleReplay}
           onSeeked={(e) => {
             const vid = e.currentTarget;
-            // Native loop fallback: if browser natively looped to 0.0, advance to highlight
-            if (vid.currentTime < previewStartTime - 0.5 && vid.duration > previewStartTime) {
+            if (!isPreview && vid.currentTime < previewStartTime - 0.5 && vid.duration > previewStartTime) {
               vid.currentTime = previewStartTime;
               if (isInView) {
                 vid.play().catch(() => {});
@@ -210,9 +223,9 @@ function VideoCardPreview({
           }}
           onTimeUpdate={(e) => {
             const vid = e.currentTarget;
-            if (vid.duration && vid.duration > previewStartTime) {
-              // Seamless continuous loop: restart 0.4s before end
-              if (vid.currentTime >= vid.duration - 0.4) {
+            if (vid.duration && vid.duration > 1.0) {
+              // Seamless continuous loop: restart 0.25s before end
+              if (vid.currentTime >= vid.duration - 0.25) {
                 handleReplay();
               }
             }
@@ -466,6 +479,8 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                     <VideoCardPreview
                       key={video.id}
                       src={video.video_url}
+                      previewSrc={video.preview_url}
+                      poster={video.thumbnail_url}
                       title={video.title}
                       category={video.category}
                       priority={idx < 3}

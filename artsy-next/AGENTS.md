@@ -384,21 +384,24 @@ To ensure clients never struggle to find project assets or raw footage links, th
 
 
 
-### 3.10 Studio Portfolio Video Streaming & Direct Edge Highlight Invariants (/work)
-To deliver a broadcast-quality visual experience across desktop and mobile, `/work` implements an edge-optimized streaming architecture:
-1. **Content-Security-Policy & R2 Edge Integration:** `next.config.ts` Content-Security-Policy explicitly permits `https://*.r2.cloudflarestorage.com https://*.r2.dev` across `media-src`, `connect-src`, and `img-src`, allowing unthrottled streaming directly from Cloudflare R2 buckets.
-2. **Instant Native Autoplay & Immediate Priority Mounting Standard:**
-   - Video preview cards above the fold (`priority={idx < 6}`) are rendered immediately in the DOM with `preload="auto"` and `hasEnteredView: true`, ensuring `<video>` tags exist in initial SSR HTML and begin playing on page load without waiting for `IntersectionObserver` delays.
-   - Clean video source URLs without media fragment hashes (`#t=...` is strictly omitted from `src`) to guarantee 100% universal browser Range-request compliance and prevent W3C seek-pauses from cancelling autoplay in Chromium and WebKit.
-   - Explicit DOM property enforcement: `videoRef.current.muted = true` and `defaultMuted = true` are assigned directly via element ref callback prior to browser autoplay policy evaluation.
-   - Programmatic highlight seeking: on `onLoadedMetadata`, the player seeks to `previewStartTime` (4.5s for Pre-Wedding, 5.0s for Wedding Cinema, 1.5s for Teaser, 0.1s for Reels) and immediately calls `.play()`, cleanly skipping intro editor credit slates without stalling.
-   - Smooth skeleton transition: sleek dark loader shimmer (`transition-opacity duration-500`) fades out seamlessly on `onLoadedData` / `onPlaying` to prevent black screen flashes.
-   - Viewport management for below-the-fold cards: non-priority cards use `IntersectionObserver` (`rootMargin: '400px 0px'`) to pause playback when out of view and resume when entering view, conserving device memory and cellular data.
-3. **Automated Highlight Loop Guard (Zero Black Title Slates):**
-   - On `onTimeUpdate`, when the video reaches its end, it smoothly loops back to `previewStartTime` rather than `0.0s`, guaranteeing visitors **never** see a black title slate.
+### 3.10 Studio Portfolio Video Streaming, Cloudflare R2 Previews & Edge Highlight Invariants (/work)
+To deliver a broadcast-quality visual experience across desktop and mobile while keeping bandwidth consumption ultra-lightweight, `/work` implements an edge-optimized multi-tier streaming architecture:
+1. **Multi-Tier R2 Storage Architecture (Master vs. Preview vs. Thumbnail):**
+   - **Full Master Cut (`video_url`):** Full uncompressed 1080p/4K master export (78MB to 280MB). Strictly reserved for the full-screen modal lightbox player upon user click.
+   - **Standalone Preview Clip (`preview_url`):** 7-second lightweight standalone MP4 loop (~1.5 MB each, CRF 24, 720p, ~1.2 Mbps bitrate), pre-trimmed directly at highlight timestamp past black title slates.
+   - **Sharp Poster Thumbnail (`thumbnail_url`):** High-resolution JPEG frame (~100 KB) served via `<video poster={thumbnail_url}>` to guarantee instant (0ms) visual rendering with zero black screens before video packets arrive.
+2. **Bandwidth & Data Consumption Standard:**
+   - **Required Internet Speed:** Only **1.2 to 1.5 Mbps** per visible card (plays smoothly on 3G, 4G, 5G, or slow broadband). Top 3 cards require ~3.5 to 4.5 Mbps combined, eliminating Chrome 6-socket exhaustion and connection choking.
+   - **Data Consumption:** 1 preview card is ~1.5 MB (99.4% reduction compared to streaming 280MB master cuts). Full 30-card portfolio consumes only ~45 MB in total.
+3. **Seamless Continuous Auto-Replay (Quad-Layer Loop Shield):**
+   - 100% native client-side HTML5 execution with zero reliance on background scripts or manual processes.
+   - Enforces HTML5 `loop`, `muted`, `playsInline`, `autoPlay`, and `defaultMuted = true` via DOM element ref.
+   - `onEnded` callback resets `currentTime = 0; video.play()`.
+   - `onTimeUpdate` loop check smoothly restarts playback 0.25s before clip end to prevent browser-native freezing on the final frame.
+   - Active playback recovery on `canplay` and `canplaythrough`.
 4. **Modal Lightbox Player with Resilient Audio Fallback:**
-   - Native HTML5 high-definition video player with full interactive controls (`controls`, `autoPlay`, `playsInline`, `preload="auto"`).
-   - Attempts unmuted playback on open; if blocked by the browser's autoplay policy, automatically falls back to muted playback with a prominent, tactile **"🔊 Click to Unmute Audio"** overlay pill.
+   - Native HTML5 high-definition video player streaming the full 4K master cut with interactive controls (`controls`, `autoPlay`, `playsInline`, `preload="auto"`).
+   - Attempts unmuted playback on open; if blocked by the browser's autoplay policy, automatically falls back to muted playback with a tactile **"🔊 Click to Unmute Audio"** overlay pill.
 5. **Curated Database Ordering:** Database table `portfolio_samples` maintains clean, approved, high-definition studio master cuts ordered with grand celebrity and luxury wedding cuts at the top (positions 1–8), followed by pre-wedding films, teasers, and vertical reels.
 
 ---

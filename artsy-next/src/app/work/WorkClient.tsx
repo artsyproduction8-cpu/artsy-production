@@ -23,32 +23,39 @@ interface WorkClientProps {
 type CategoryFilter = 'all' | 'wedding' | 'pre-wedding' | 'teaser' | 'reels';
 
 /**
- * High-performance, viewport-aware video preview card.
- * - Uses HTML5 Media Fragments (#t=5.5) so the browser natively buffers and displays the highlight frame without black intro slates.
- * - Native declarative autoplay (autoPlay, muted, playsInline, loop) with defaultMuted={true} for 100% universal browser compliance.
- * - Once in view, the video element remains mounted and cached, never thrashing or restarting on scroll.
+ * Bulletproof, high-performance HTML5 video preview card.
+ * - Renders <video> immediately for priority cards (above-the-fold) so playback starts on page load without delay.
+ * - Direct clean video src (no media fragment hash) ensuring 100% universal browser Range-request and autoplay compliance.
+ * - Explicit DOM property enforcement (muted = true, defaultMuted = true) before browser policy evaluation.
+ * - Programmatic seek to highlight time on loadedmetadata without stopping or freezing.
+ * - Smooth skeleton fade-in to prevent black screen flashes while initial keyframes decode.
  */
 function VideoCardPreview({
   src,
   title,
   category,
+  priority = false,
 }: {
   src: string;
   title: string;
   category: string;
+  priority?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [hasEnteredView, setHasEnteredView] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [hasEnteredView, setHasEnteredView] = useState(priority);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const hasSeekedRef = useRef(false);
 
   const isReel = category.toLowerCase().includes('reel');
   const isTeaser = category.toLowerCase().includes('teaser') || category.toLowerCase().includes('trailer');
-  const previewStartTime = isReel ? 0.3 : isTeaser ? 1.5 : 5.5;
+  const isPreWedding = category.toLowerCase().includes('pre-wedding') || category.toLowerCase().includes('pre wedding');
+  
+  // Highlight preview starting timestamp: skips black intro slates seamlessly
+  const previewStartTime = isReel ? 0.1 : isTeaser ? 1.5 : isPreWedding ? 4.5 : 5.0;
 
-  // Append native media fragment so browser decodes from highlight
-  const mediaSrc = src ? `${src}#t=${previewStartTime}` : '';
-
+  // Viewport observation for below-the-fold cards to conserve bandwidth
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -62,6 +69,7 @@ function VideoCardPreview({
         if (isVisible) {
           setHasEnteredView(true);
           if (video && video.paused) {
+            video.muted = true;
             video.play().catch(() => {});
           }
         } else {
@@ -72,7 +80,7 @@ function VideoCardPreview({
       },
       {
         threshold: 0.05,
-        rootMargin: '350px 0px',
+        rootMargin: '400px 0px',
       }
     );
 
@@ -80,11 +88,27 @@ function VideoCardPreview({
     return () => observer.disconnect();
   }, []);
 
+  // Programmatic play trigger on mount or src change
+  useEffect(() => {
+    if (!hasEnteredView || !src) return;
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.defaultMuted = true;
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {});
+      }
+    }
+  }, [src, hasEnteredView]);
+
   if (hasError) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0A0A0A] text-white/70">
         <span className="text-3xl mb-1">🎬</span>
-        <span className="text-[10px] font-mono tracking-widest uppercase text-white/50">{title}</span>
+        <span className="text-[10px] font-mono tracking-widest uppercase text-white/50 px-4 text-center truncate w-full">
+          {title}
+        </span>
       </div>
     );
   }
@@ -98,17 +122,51 @@ function VideoCardPreview({
         </span>
       </div>
 
+      {/* Smooth Loading Shimmer (fades out as video begins playing) */}
+      <div
+        className={`absolute inset-0 bg-[#0A0A0A] flex items-center justify-center transition-opacity duration-500 pointer-events-none z-5 ${
+          isLoaded ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#3B82F6] animate-spin" />
+      </div>
+
       {hasEnteredView ? (
         <video
-          ref={videoRef}
-          src={mediaSrc}
+          ref={(el) => {
+            videoRef.current = el;
+            if (el) {
+              el.muted = true;
+              el.defaultMuted = true;
+            }
+          }}
+          src={src}
           autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
-          className="w-full h-full object-cover pointer-events-none"
+          preload={priority ? 'auto' : 'metadata'}
+          className={`w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${
+            isLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
           onError={() => setHasError(true)}
+          onLoadedMetadata={(e) => {
+            const vid = e.currentTarget;
+            vid.muted = true;
+            vid.defaultMuted = true;
+            if (!hasSeekedRef.current && previewStartTime > 0 && vid.duration > previewStartTime) {
+              hasSeekedRef.current = true;
+              vid.currentTime = previewStartTime;
+            }
+            vid.play().catch(() => {});
+          }}
+          onLoadedData={(e) => {
+            const vid = e.currentTarget;
+            vid.muted = true;
+            vid.play().catch(() => {});
+            setIsLoaded(true);
+          }}
+          onPlaying={() => setIsLoaded(true)}
           onTimeUpdate={(e) => {
             const vid = e.currentTarget;
             if (vid.duration && vid.currentTime >= vid.duration - 0.5) {
@@ -124,18 +182,47 @@ function VideoCardPreview({
 
 /**
  * Premium Modal Video Player.
- * Native HTML5 high-definition video player with full playback controls.
+ * Native HTML5 high-definition video player with full playback controls and resilient unmuting.
  */
 function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isMutedByPolicy, setIsMutedByPolicy] = useState(false);
+
   const isReel = (video.category || '').toLowerCase().includes('reel');
   const isTeaser = (video.category || '').toLowerCase().includes('teaser') || (video.category || '').toLowerCase().includes('trailer');
-  const highlightStart = isReel ? 0.3 : isTeaser ? 1.5 : 5.0;
+  const isPreWedding = (video.category || '').toLowerCase().includes('pre-wedding') || (video.category || '').toLowerCase().includes('pre wedding');
+  const highlightStart = isReel ? 0.1 : isTeaser ? 1.5 : isPreWedding ? 4.5 : 4.0;
 
-  const modalSrc = video.video_url ? `${video.video_url}#t=${highlightStart}` : '';
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    // First attempt unmuted playback
+    vid.muted = false;
+    const playPromise = vid.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Fall back to muted playback if browser policy requires it
+        vid.muted = true;
+        setIsMuted(true);
+        setIsMutedByPolicy(true);
+        vid.play().catch(() => {});
+      });
+    }
+  }, [video.video_url]);
+
+  const toggleSound = () => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    const newMuted = !vid.muted;
+    vid.muted = newMuted;
+    setIsMuted(newMuted);
+    setIsMutedByPolicy(false);
+  };
 
   return (
-    <div className="relative aspect-video w-full bg-black overflow-hidden flex items-center justify-center">
+    <div className="relative aspect-video w-full bg-black overflow-hidden flex items-center justify-center group">
       {/* Quality Badge */}
       <div className="absolute top-4 right-4 z-20 pointer-events-none">
         <span className="px-3 py-1 rounded-lg bg-black/80 backdrop-blur-md text-[#3B82F6] font-mono text-xs font-bold tracking-wider uppercase border border-[#3B82F6]/30 shadow-lg">
@@ -143,14 +230,35 @@ function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
         </span>
       </div>
 
+      {/* Unmute Prompt if muted by browser policy */}
+      {isMutedByPolicy && (
+        <button
+          type="button"
+          onClick={toggleSound}
+          className="absolute bottom-16 left-6 z-20 px-4 py-2.5 rounded-xl bg-black/80 hover:bg-[#3B82F6] text-white text-xs font-bold tracking-wide uppercase backdrop-blur-md border border-white/20 transition-all flex items-center gap-2 shadow-xl cursor-pointer"
+        >
+          <span>🔊</span>
+          <span>Click to Unmute Audio</span>
+        </button>
+      )}
+
       <video
-        ref={videoRef}
-        src={modalSrc}
+        ref={(el) => {
+          videoRef.current = el;
+        }}
+        src={video.video_url}
         controls
         autoPlay
         playsInline
         preload="auto"
         className="w-full h-full object-contain"
+        onLoadedMetadata={(e) => {
+          const vid = e.currentTarget;
+          if (highlightStart > 0 && vid.currentTime < highlightStart && vid.duration > highlightStart) {
+            vid.currentTime = highlightStart;
+          }
+          vid.play().catch(() => {});
+        }}
       />
     </div>
   );
@@ -294,7 +402,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
       <section className="w-full max-w-[1200px] mx-auto px-6 sm:px-8">
         {filteredVideos.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredVideos.map((video) => (
+            {filteredVideos.map((video, idx) => (
               <div
                 key={video.id}
                 onClick={() => setSelectedVideo(video)}
@@ -304,9 +412,11 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                 <div>
                   <div className="relative aspect-video w-full bg-[#0A0A0A] overflow-hidden">
                     <VideoCardPreview
+                      key={video.id}
                       src={video.video_url}
                       title={video.title}
                       category={video.category}
+                      priority={idx < 6}
                     />
 
                     {/* Click Shield to trigger modal */}
@@ -415,7 +525,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
               </button>
             </div>
 
-            {/* Video Player (High-Definition Native Player) */}
+            {/* Video Player (High-Definition Native Player with unmuting) */}
             <ModalVideoPlayer video={selectedVideo} />
 
             {/* Modal Footer */}

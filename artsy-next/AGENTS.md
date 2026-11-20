@@ -387,17 +387,19 @@ To ensure clients never struggle to find project assets or raw footage links, th
 ### 3.10 Studio Portfolio Video Streaming & Direct Edge Highlight Invariants (/work)
 To deliver a broadcast-quality visual experience across desktop and mobile, `/work` implements an edge-optimized streaming architecture:
 1. **Content-Security-Policy & R2 Edge Integration:** `next.config.ts` Content-Security-Policy explicitly permits `https://*.r2.cloudflarestorage.com https://*.r2.dev` across `media-src`, `connect-src`, and `img-src`, allowing unthrottled streaming directly from Cloudflare R2 buckets.
-2. **Native Declarative Autoplay & Persistent Mounting Standard:**
-   - Video preview cards use native HTML5 declarative autoplay attributes (`autoPlay`, `muted`, `playsInline`, `loop`, `preload="metadata"`) with `defaultMuted={true}` for universal, 100% compliant browser playback across iOS Safari, Android Chrome, and desktop.
-   - Preview cards use native W3C Media Fragments in the URL (`#t=5.5` for Wedding Cinema & Pre-Wedding, `#t=1.5` for Teasers, `#t=0.3` for Reels). The browser's native media engine directly fetches the highlight byte range and paints the highlight frame instantly without requiring JavaScript seek triggers or timers.
-   - Employs a persistent mounting pattern: once a card enters the viewport (`IntersectionObserver` with `rootMargin: '350px 0px'`), it remains mounted in the DOM. When scrolled out of view, the video simply pauses; when scrolled back into view, it resumes playing in 0ms without re-downloading or re-buffering.
-   - Eliminates redundant client-side refetches on mount when `initialVideos` is already rendered by Next.js SSR, preventing layout thrashing and stream resets.
+2. **Instant Native Autoplay & Immediate Priority Mounting Standard:**
+   - Video preview cards above the fold (`priority={idx < 6}`) are rendered immediately in the DOM with `preload="auto"` and `hasEnteredView: true`, ensuring `<video>` tags exist in initial SSR HTML and begin playing on page load without waiting for `IntersectionObserver` delays.
+   - Clean video source URLs without media fragment hashes (`#t=...` is strictly omitted from `src`) to guarantee 100% universal browser Range-request compliance and prevent W3C seek-pauses from cancelling autoplay in Chromium and WebKit.
+   - Explicit DOM property enforcement: `videoRef.current.muted = true` and `defaultMuted = true` are assigned directly via element ref callback prior to browser autoplay policy evaluation.
+   - Programmatic highlight seeking: on `onLoadedMetadata`, the player seeks to `previewStartTime` (4.5s for Pre-Wedding, 5.0s for Wedding Cinema, 1.5s for Teaser, 0.1s for Reels) and immediately calls `.play()`, cleanly skipping intro editor credit slates without stalling.
+   - Smooth skeleton transition: sleek dark loader shimmer (`transition-opacity duration-500`) fades out seamlessly on `onLoadedData` / `onPlaying` to prevent black screen flashes.
+   - Viewport management for below-the-fold cards: non-priority cards use `IntersectionObserver` (`rootMargin: '400px 0px'`) to pause playback when out of view and resume when entering view, conserving device memory and cellular data.
 3. **Automated Highlight Loop Guard (Zero Black Title Slates):**
    - On `onTimeUpdate`, when the video reaches its end, it smoothly loops back to `previewStartTime` rather than `0.0s`, guaranteeing visitors **never** see a black title slate.
-4. **Modal Lightbox Player:**
+4. **Modal Lightbox Player with Resilient Audio Fallback:**
    - Native HTML5 high-definition video player with full interactive controls (`controls`, `autoPlay`, `playsInline`, `preload="auto"`).
-   - Starts directly at `#t=${highlightStart}` with audio active.
-5. **Curated Database Ordering:** Database table `portfolio_samples` maintains exactly 29 unique, high-definition studio master cuts ordered with grand celebrity and luxury wedding cuts at the top (positions 1–8), followed by pre-wedding films, teasers, and vertical reels.
+   - Attempts unmuted playback on open; if blocked by the browser's autoplay policy, automatically falls back to muted playback with a prominent, tactile **"🔊 Click to Unmute Audio"** overlay pill.
+5. **Curated Database Ordering:** Database table `portfolio_samples` maintains clean, approved, high-definition studio master cuts ordered with grand celebrity and luxury wedding cuts at the top (positions 1–8), followed by pre-wedding films, teasers, and vertical reels.
 
 ---
 

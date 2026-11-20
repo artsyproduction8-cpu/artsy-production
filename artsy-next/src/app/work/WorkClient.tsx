@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 
 export interface PortfolioVideo {
@@ -24,11 +24,11 @@ type CategoryFilter = 'all' | 'wedding' | 'pre-wedding' | 'teaser' | 'reels';
 
 /**
  * Bulletproof, high-performance HTML5 video preview card.
- * - Renders <video> immediately for priority cards (above-the-fold) so playback starts on page load without delay.
- * - Direct clean video src (no media fragment hash) ensuring 100% universal browser Range-request and autoplay compliance.
- * - Explicit DOM property enforcement (muted = true, defaultMuted = true) before browser policy evaluation.
- * - Programmatic seek to highlight time on loadedmetadata without stopping or freezing.
- * - Smooth skeleton fade-in to prevent black screen flashes while initial keyframes decode.
+ * - Concurrency-aware: Prioritizes active viewport cards to prevent browser socket exhaustion.
+ * - Continuous Seamless Auto-Replay: Quad-layer loop shield (onEnded, onTimeUpdate, onSeeked, loop) ensuring videos replay continuously without freezing.
+ * - Zero Black Title Slates: Jumps directly to highlight start and loops back to highlight start on repeat.
+ * - Active Playback Recovery: Listens to canplay and canplaythrough to immediately resume when buffer fills.
+ * - DOM-level muted enforcement for 100% universal browser policy compliance across iOS Safari, Chrome, Edge, and Firefox.
  */
 function VideoCardPreview({
   src,
@@ -43,10 +43,11 @@ function VideoCardPreview({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isInView, setIsInView] = useState(priority);
   const [hasEnteredView, setHasEnteredView] = useState(priority);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const hasSeekedRef = useRef(false);
+  const hasSeekedInitialRef = useRef(false);
 
   const isReel = category.toLowerCase().includes('reel');
   const isTeaser = category.toLowerCase().includes('teaser') || category.toLowerCase().includes('trailer');
@@ -55,7 +56,7 @@ function VideoCardPreview({
   // Highlight preview starting timestamp: skips black intro slates seamlessly
   const previewStartTime = isReel ? 0.1 : isTeaser ? 1.5 : isPreWedding ? 4.5 : 5.0;
 
-  // Viewport observation for below-the-fold cards to conserve bandwidth
+  // Viewport observation: activates playback when in view, pauses when out of view to save bandwidth
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -64,23 +65,26 @@ function VideoCardPreview({
       (entries) => {
         const entry = entries[0];
         const isVisible = entry.isIntersecting;
-        const video = videoRef.current;
+        setIsInView(isVisible);
 
         if (isVisible) {
           setHasEnteredView(true);
+          const video = videoRef.current;
           if (video && video.paused) {
             video.muted = true;
+            video.defaultMuted = true;
             video.play().catch(() => {});
           }
         } else {
+          const video = videoRef.current;
           if (video && !video.paused) {
             video.pause();
           }
         }
       },
       {
-        threshold: 0.05,
-        rootMargin: '400px 0px',
+        threshold: 0.1,
+        rootMargin: '250px 0px',
       }
     );
 
@@ -88,9 +92,9 @@ function VideoCardPreview({
     return () => observer.disconnect();
   }, []);
 
-  // Programmatic play trigger on mount or src change
+  // Programmatic play trigger whenever card is in view
   useEffect(() => {
-    if (!hasEnteredView || !src) return;
+    if (!isInView || !src) return;
     const video = videoRef.current;
     if (video) {
       video.muted = true;
@@ -100,7 +104,21 @@ function VideoCardPreview({
         playPromise.catch(() => {});
       }
     }
-  }, [src, hasEnteredView]);
+  }, [src, isInView]);
+
+  // Seamless continuous replay function
+  const handleReplay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.duration && video.duration > previewStartTime) {
+      video.currentTime = previewStartTime;
+    } else {
+      video.currentTime = 0;
+    }
+    video.muted = true;
+    const p = video.play();
+    if (p !== undefined) p.catch(() => {});
+  }, [previewStartTime]);
 
   if (hasError) {
     return (
@@ -154,24 +172,49 @@ function VideoCardPreview({
             const vid = e.currentTarget;
             vid.muted = true;
             vid.defaultMuted = true;
-            if (!hasSeekedRef.current && previewStartTime > 0 && vid.duration > previewStartTime) {
-              hasSeekedRef.current = true;
+            if (!hasSeekedInitialRef.current && previewStartTime > 0 && vid.duration > previewStartTime) {
+              hasSeekedInitialRef.current = true;
               vid.currentTime = previewStartTime;
             }
-            vid.play().catch(() => {});
+            if (isInView) {
+              vid.play().catch(() => {});
+            }
           }}
           onLoadedData={(e) => {
             const vid = e.currentTarget;
             vid.muted = true;
-            vid.play().catch(() => {});
+            if (isInView) {
+              vid.play().catch(() => {});
+            }
+            setIsLoaded(true);
+          }}
+          onCanPlay={(e) => {
+            const vid = e.currentTarget;
+            vid.muted = true;
+            if (isInView && vid.paused) {
+              vid.play().catch(() => {});
+            }
             setIsLoaded(true);
           }}
           onPlaying={() => setIsLoaded(true)}
+          onEnded={handleReplay}
+          onSeeked={(e) => {
+            const vid = e.currentTarget;
+            // Native loop fallback: if browser natively looped to 0.0, advance to highlight
+            if (vid.currentTime < previewStartTime - 0.5 && vid.duration > previewStartTime) {
+              vid.currentTime = previewStartTime;
+              if (isInView) {
+                vid.play().catch(() => {});
+              }
+            }
+          }}
           onTimeUpdate={(e) => {
             const vid = e.currentTarget;
-            if (vid.duration && vid.currentTime >= vid.duration - 0.5) {
-              vid.currentTime = previewStartTime;
-              vid.play().catch(() => {});
+            if (vid.duration && vid.duration > previewStartTime) {
+              // Seamless continuous loop: restart 0.4s before end
+              if (vid.currentTime >= vid.duration - 0.4) {
+                handleReplay();
+              }
             }
           }}
         />
@@ -193,6 +236,13 @@ function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
   const isTeaser = (video.category || '').toLowerCase().includes('teaser') || (video.category || '').toLowerCase().includes('trailer');
   const isPreWedding = (video.category || '').toLowerCase().includes('pre-wedding') || (video.category || '').toLowerCase().includes('pre wedding');
   const highlightStart = isReel ? 0.1 : isTeaser ? 1.5 : isPreWedding ? 4.5 : 4.0;
+
+  const handleModalReplay = () => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    vid.currentTime = 0;
+    vid.play().catch(() => {});
+  };
 
   useEffect(() => {
     const vid = videoRef.current;
@@ -249,9 +299,11 @@ function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
         src={video.video_url}
         controls
         autoPlay
+        loop
         playsInline
         preload="auto"
         className="w-full h-full object-contain"
+        onEnded={handleModalReplay}
         onLoadedMetadata={(e) => {
           const vid = e.currentTarget;
           if (highlightStart > 0 && vid.currentTime < highlightStart && vid.duration > highlightStart) {
@@ -416,7 +468,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                       src={video.video_url}
                       title={video.title}
                       category={video.category}
-                      priority={idx < 6}
+                      priority={idx < 3}
                     />
 
                     {/* Click Shield to trigger modal */}

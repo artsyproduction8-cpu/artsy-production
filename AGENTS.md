@@ -402,7 +402,12 @@ To deliver a broadcast-quality visual experience across desktop and mobile while
 4. **Modal Lightbox Player with Resilient Audio Fallback:**
    - Native HTML5 high-definition video player streaming the full 4K master cut with interactive controls (`controls`, `autoPlay`, `playsInline`, `preload="auto"`).
    - Attempts unmuted playback on open; if blocked by the browser's autoplay policy, automatically falls back to muted playback with a tactile **"🔊 Click to Unmute Audio"** overlay pill.
-5. **Curated Database Ordering:** Database table `portfolio_samples` maintains clean, approved, high-definition studio master cuts ordered with grand celebrity and luxury wedding cuts at the top (positions 1–8), followed by pre-wedding films, teasers, and vertical reels.
+5. **Canonical 27-Film Deduplication Standard & Migration 020:** The portfolio maintains an authoritative, audited registry of exactly 27 unique films across 4 categories:
+   - **Wedding Cinema (6 films):** Order 1–6 (Chandni & Harihar, Akash & Mayuri, Juhi & Swapnil, Rujuta & Abhyuday, Rajat & Nimisha, Hufriya & Danesh).
+   - **Pre-Wedding Films (4 films):** Order 7–10 (Anoop & Ansa, Akshay, Matan & Lihi, Robin).
+   - **Teasers & Trailers (7 films):** Order 11–17 (Akshay & Jagruti, Jai & Aishwarya, Khushboo & Tejas, Matan & Lihi, Mayuri & Swapnil, Sanket & Rutuja, Shree & Shivani).
+   - **Cinematic Reels (10 vertical reels):** Order 18–27 (Anoop & Ansa, Akash, Akshay & Gauri, Anroop & Jeemol, George & Sumi, Kuhu Haldi, Monish & Jisha, Sanket & Rutuja Sangeet, Shweta Bridal Solo, Sumit & Sonal).
+   - **Deduplication Invariant:** All duplicate files in R2 (such as redundant root teasers and multi-folder duplicates) were permanently removed. `src/lib/portfolio.ts` strictly maps to the canonical 27 films, eliminating duplicate renders regardless of database state. Migration 020 (`020_purge_duplicates_and_set_canonical_27_portfolio.sql`) provides the authoritative SQL to purge legacy duplicate rows and seed the exact 27 canonical rows with integer `display_order` 1..27.
 
 ---
 

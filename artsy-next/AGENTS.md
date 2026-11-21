@@ -311,6 +311,21 @@ To ensure clients can inspect draft master cuts and leave frame-accurate creativ
    - **Full Timeline Interactivity:** Enables native `onTimeUpdate`, `onLoadedMetadata`, Spacebar play/pause, precision seeking (`-5s`, `-1s`, `+1s`, `+5s`), scrubber progress bar fill, speed scaling (`1x`, `1.25x`, `1.5x`), and instant note tagging at the exact paused frame.
    - **Seamless Dual-Mode Fallback:** If the direct stream cannot be fetched (e.g. corporate SSO or restricted permissions), the player automatically falls back to the Google Drive preview iframe (`setUseDriveIframeFallback(true)`), with an active interval timer ensuring the timeline counter continues advancing during playback. A clean header toggle allows clients to switch between "Synced Player 🎬" and "Drive Embed ↗" at any time.
 
+### 3.6 Studio Video Modal Player Standard (Landing Coverflow & Production Standards & Delivery)
+To ensure prospective clients experience the true broadcast craftsmanship of Artsy films without compression degradation or abrupt rotation, the landing page features the dedicated **Studio Video Modal Player** (`StudioVideoModal.tsx`):
+1. **Interactive Pause & Continuous Watch on Hover / Hold:**
+   - In the 3D Coverflow (`CoverflowReels.tsx`), moving the mouse or holding a card sets `isHoveredRef.current = true` and freezes the 3-second auto-rotation interval immediately.
+   - The video on the active card continues playing uninterrupted from its current timestamp all the way through to the end.
+2. **Master Video Modal Player Trigger:**
+   - **Coverflow Interaction:** Clicking flanking/background cards smoothly rotates that card to the center. Clicking the active center card opens the `StudioVideoModal` player.
+   - **Production Standards & Delivery (`ProductionArchive.tsx`):** Clicking any video preview card or the "Watch Master ▶" button immediately launches `StudioVideoModal`.
+   - **Timestamp Continuity Handoff:** The exact current playback timestamp (`videoElement.currentTime`) is captured and passed as `startTime` to `StudioVideoModal`, allowing the master stream to resume seamlessly from the exact frame the user was watching.
+3. **Adaptive Luxury Player Experience:**
+   - **Dynamic Aspect Ratio Detection:** Automatically configures player frame to 16:9 for widescreen cinematic films and 9:16 for vertical reels, eliminating black letterbox pillars.
+   - **Full Master Stream Quality:** Streams original uncompressed Cloudflare R2 master films (`masterUrl`) rendered in Rec.709 color profiles with vibrant saturation (no grey haze or dull wash).
+   - **Audio Autoplay & 1-Click Unmute:** Initiated by direct user click gesture to satisfy browser autoplay policies; provides an elegant glass "🔊 Click to Unmute Audio" button fallback if browser requires muted initial state.
+   - **Glassmorphic Studio UI:** Features high-end dark glassmorphism (`backdrop-blur-md bg-black/90`), category badge, film title, keyboard `Escape` handler, `✕` close trigger, native HTML5 timeline controls, and an "Order Edit →" direct booking CTA linking to `/book?category=...`.
+
 ### 3.7 Client Revision Rounds (2 Included Rounds Standard & 50% Extra Revision Sizing)
 1. **Included Rounds Standard (Migration 018):**
    - Every creative service booking strictly includes **2 Revision Rounds** (`max_free_revisions = 2`).

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import StudioVideoModal, { ModalVideoItem } from './StudioVideoModal';
 
 interface ReelCard {
   title: string;
@@ -8,6 +9,7 @@ interface ReelCard {
   aspect: '16/9' | '9/16';
   image: string;
   videoUrl: string;
+  masterUrl: string;
 }
 
 const getStreamUrl = (key: string) => `/api/portfolio/stream?key=${encodeURIComponent(key)}`;
@@ -20,6 +22,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
+    masterUrl: getStreamUrl('Wedding/Chandni  Harihar’s Reception Film — Shreyas Iyer Steals the Dance Floor.mp4'),
   },
   // 2. Cinematic Reel (9:16)
   {
@@ -28,6 +31,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/ANOOP___ANSA_REEL_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
+    masterUrl: getStreamUrl('Reel/ANOOP & ANSA REEL low.mp4'),
   },
   // 3. Wedding Cinema (16:9)
   {
@@ -36,6 +40,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
+    masterUrl: getStreamUrl('Wedding/Akash  Mayuri Wedding Film — Cinematic Highlights  Mumbai Wedding Videographer.mp4'),
   },
   // 4. Cinematic Reel (9:16)
   {
@@ -44,6 +49,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Akash_Reel_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Akash_Reel_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Reel/Akash Reel Low.mp4'),
   },
   // 5. Pre-Wedding Film (16:9)
   {
@@ -52,6 +58,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
+    masterUrl: getStreamUrl('Pre wedding/ANOOP & ANSA pre wedding Low Res.mp4'),
   },
   // 6. Cinematic Reel (9:16)
   {
@@ -60,6 +67,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Akshay___Gauri_Reel__2__Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Akshay___Gauri_Reel__2__Low_preview.mp4'),
+    masterUrl: getStreamUrl('Reel/Akshay & Gauri Reel (2) Low.mp4'),
   },
   // 7. Wedding Cinema (16:9)
   {
@@ -68,6 +76,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
+    masterUrl: getStreamUrl('Wedding/Juhi  Swapnils Grand North Indian Wedding Film — Cinematic Highlights.mp4'),
   },
   // 8. Cinematic Reel (9:16)
   {
@@ -76,6 +85,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Anroop___Jeemol_Reel_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Anroop___Jeemol_Reel_low_preview.mp4'),
+    masterUrl: getStreamUrl('Reel/Anroop & Jeemol Reel low.mp4'),
   },
   // 9. Pre-Wedding Film (16:9)
   {
@@ -84,6 +94,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Pre_wedding/Akshay_Pre_wedding_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Pre_wedding/Akshay_Pre_wedding_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Pre wedding/Akshay Pre wedding Low.mp4'),
   },
   // 10. Cinematic Reel (9:16)
   {
@@ -92,6 +103,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/George___Sumi_Reel_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/George___Sumi_Reel_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Reel/George & Sumi Reel Low.mp4'),
   },
   // 11. Wedding Cinema (16:9)
   {
@@ -100,6 +112,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_preview.mp4'),
+    masterUrl: getStreamUrl('Wedding/Rujuta  Abhyudays North Indian Wedding Film — Joy, Dance  Romance.mp4'),
   },
   // 12. Cinematic Reel (9:16)
   {
@@ -108,6 +121,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
+    masterUrl: getStreamUrl('Reel/Kuhu Haldi Reel low.mp4'),
   },
   // 13. Pre-Wedding Film (16:9)
   {
@@ -116,6 +130,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Pre_wedding/Matan___Lihi_cine_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Pre_wedding/Matan___Lihi_cine_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Pre wedding/Matan & Lihi cine Low.mp4'),
   },
   // 14. Cinematic Reel (9:16)
   {
@@ -124,6 +139,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Monish___Jisha_Reel__Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Monish___Jisha_Reel__Low_preview.mp4'),
+    masterUrl: getStreamUrl('Reel/Monish & Jisha Reel  Low.mp4'),
   },
   // 15. Wedding Cinema (16:9)
   {
@@ -132,6 +148,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
+    masterUrl: getStreamUrl('Wedding/Rajat  Nimishas South Indian Wedding Film — Cinematic Highlights.mp4'),
   },
   // 16. Cinematic Reel (9:16)
   {
@@ -140,6 +157,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
+    masterUrl: getStreamUrl('Reel/Sanket & Rutuja - Sangeet Reel Low .mp4'),
   },
   // 17. Pre-Wedding Film (16:9)
   {
@@ -148,6 +166,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Pre_wedding/Robin_Pre_wedding_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Pre_wedding/Robin_Pre_wedding_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Pre wedding/Robin Pre wedding Low.mp4'),
   },
   // 18. Cinematic Reel (9:16)
   {
@@ -156,6 +175,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Reel/Shweta Reel Low.mp4'),
   },
   // 19. Wedding Cinema (16:9)
   {
@@ -164,6 +184,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_preview.mp4'),
+    masterUrl: getStreamUrl('Wedding/Hufriya  Danesh Reception Film — 16 Years of Love Finally Sealed.mp4'),
   },
   // 20. Cinematic Reel (9:16)
   {
@@ -172,6 +193,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Sumit___Sonal_Reel__Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Sumit___Sonal_Reel__Low_preview.mp4'),
+    masterUrl: getStreamUrl('Reel/Sumit & Sonal Reel  Low.mp4'),
   },
   // 21. Teasers & Trailers (16:9)
   {
@@ -180,6 +202,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Teaser/Akshay & Jagruti  Wedding Teaser Low.mp4'),
   },
   // 22. Teasers & Trailers (16:9)
   {
@@ -188,6 +211,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
+    masterUrl: getStreamUrl('Teaser/Jai & Aishwarya (Teaser) Low.mp4'),
   },
   // 23. Teasers & Trailers (16:9)
   {
@@ -196,6 +220,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Teaser/Khushboo___Tejas_Teaser_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Khushboo___Tejas_Teaser_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Teaser/Khushboo & Tejas Teaser Low.mp4'),
   },
   // 24. Teasers & Trailers (16:9)
   {
@@ -204,6 +229,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Teaser/Matan___Lihi_Trailer_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Matan___Lihi_Trailer_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Teaser/Matan & Lihi Trailer Low.mp4'),
   },
   // 25. Teasers & Trailers (16:9)
   {
@@ -212,6 +238,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Teaser/Mayuri___Swapni_Teaser_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Mayuri___Swapni_Teaser_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Teaser/Mayuri & Swapni Teaser Low.mp4'),
   },
   // 26. Teasers & Trailers (16:9)
   {
@@ -220,6 +247,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Teaser/Sanket___Rutuja__Teaser_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Sanket___Rutuja__Teaser_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Teaser/Sanket & Rutuja  Teaser Low.mp4'),
   },
   // 27. Teasers & Trailers (16:9)
   {
@@ -228,6 +256,7 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Teaser/Shree___Shivani_Teaser_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Shree___Shivani_Teaser_Low_preview.mp4'),
+    masterUrl: getStreamUrl('Teaser/Shree & Shivani Teaser Low.mp4'),
   },
 ];
 
@@ -291,6 +320,8 @@ export default function CoverflowReels() {
   const [currentIndex, setCurrentIndex] = useState(2);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeModalVideo, setActiveModalVideo] = useState<ModalVideoItem | null>(null);
+  const [modalStartTime, setModalStartTime] = useState(0);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const isPointerDownRef = useRef(false);
@@ -505,6 +536,19 @@ export default function CoverflowReels() {
                   }
                   if (currentIndex !== idx) {
                     setCurrentIndex(idx);
+                  } else {
+                    // Center active card clicked: Open in Studio Master Video Player!
+                    const cardEl = e.currentTarget;
+                    const vid = cardEl.querySelector('video');
+                    const curTime = vid?.currentTime || 0;
+                    setModalStartTime(curTime);
+                    setActiveModalVideo({
+                      title: item.title,
+                      category: item.category,
+                      videoUrl: item.masterUrl || item.videoUrl,
+                      poster: item.image,
+                      aspect: item.aspect,
+                    });
                   }
                 }}
                 style={{
@@ -550,12 +594,31 @@ export default function CoverflowReels() {
                       priority={isCenter}
                     />
                   )}
+
+                  {/* Play Indicator on Active Center Card */}
+                  {isCenter && (
+                    <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                      <div className="w-13 h-13 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white text-lg shadow-xl transition-transform duration-300 group-hover:scale-110">
+                        ▶
+                      </div>
+                      <span className="mt-2 px-3 py-1 rounded-md bg-black/70 backdrop-blur-md text-white text-[10px] font-semibold uppercase tracking-wider">
+                        Play Full Master
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Studio Master Video Modal */}
+      <StudioVideoModal
+        video={activeModalVideo}
+        onClose={() => setActiveModalVideo(null)}
+        startTime={modalStartTime}
+      />
     </section>
   );
 }

@@ -109,12 +109,12 @@ async function processFilm(film, index) {
   const tempVideo = path.join(tempDir, `cut_${index}.mp4`);
   const tempThumb = path.join(tempDir, `thumb_${index}.jpg`);
 
-  const scale = film.vertical ? 'scale=360:640' : 'scale=640:360';
+  const scale = film.vertical ? 'scale=720:1280' : 'scale=1280:720';
 
-  // 2. Cut 7 seconds of peak action directly from master using Range requests
+  // 2. Cut 7 seconds of peak action directly from master in pristine 720p HD with faststart
   execSync(
     `ffmpeg -y -ss ${film.start} -i "${signedUrl}" -t 7.0 -vf "${scale}" ` +
-    `-c:v libx264 -crf 27 -preset veryfast -b:v 350k -maxrate 500k -bufsize 800k ` +
+    `-c:v libx264 -crf 21 -preset fast -b:v 1800k -maxrate 2800k -bufsize 3600k ` +
     `-an -movflags +faststart "${tempVideo}"`,
     { stdio: 'pipe' }
   );

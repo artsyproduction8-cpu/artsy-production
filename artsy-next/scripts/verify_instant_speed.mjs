@@ -19,7 +19,7 @@ async function main() {
   await page1.setViewport({ width: 1440, height: 900 });
 
   const startLogin = Date.now();
-  await page1.goto('https://artsyproduction.com/auth/login', { waitUntil: 'domcontentloaded' });
+  await page1.goto('https://artsyproduction.com/auth/login', { waitUntil: 'networkidle2' });
   console.log(`Login DOM loaded in ${Date.now() - startLogin}ms`);
 
   // Wait 1.5 seconds to let first video frames stream
@@ -33,7 +33,7 @@ async function main() {
   await page2.setViewport({ width: 1440, height: 900 });
 
   const startHome = Date.now();
-  await page2.goto('https://artsyproduction.com', { waitUntil: 'domcontentloaded' });
+  await page2.goto('https://artsyproduction.com', { waitUntil: 'networkidle2' });
   console.log(`Home DOM loaded in ${Date.now() - startHome}ms`);
 
   // Scroll to Coverflow section

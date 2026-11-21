@@ -235,8 +235,8 @@ function LoopingHighlightVideo({
   const initMidpoint = (video: HTMLVideoElement) => {
     if (hasSeekedRef.current) return;
     const dur = video.duration;
-    if (dur && Number.isFinite(dur) && dur > 4) {
-      const mid = Math.max(3.5, Math.floor(dur * 0.45));
+    if (dur && Number.isFinite(dur) && dur > 3) {
+      const mid = Math.max(2.5, Math.floor(dur * 0.45));
       startMidRef.current = mid;
       try {
         video.currentTime = mid;
@@ -250,7 +250,7 @@ function LoopingHighlightVideo({
     const video = videoRef.current;
     if (!video || !hasSeekedRef.current) return;
     const maxPlayTime = startMidRef.current + 12;
-    if (video.currentTime >= maxPlayTime || (video.duration && video.currentTime >= video.duration - 0.5)) {
+    if (video.currentTime >= maxPlayTime || (video.duration && video.currentTime >= video.duration - 0.4)) {
       video.currentTime = startMidRef.current;
       video.play().catch(() => {});
     }
@@ -276,6 +276,7 @@ function LoopingHighlightVideo({
       onLoadedMetadata={(e) => initMidpoint(e.currentTarget)}
       onLoadedData={(e) => initMidpoint(e.currentTarget)}
       onCanPlay={(e) => initMidpoint(e.currentTarget)}
+      onPlaying={() => setIsReady(true)}
       onTimeUpdate={handleTimeUpdate}
       onEnded={handleEnded}
       className={`absolute inset-0 object-cover w-full h-full pointer-events-none group-hover:scale-105 transition-all duration-700 ease-out ${
@@ -289,6 +290,33 @@ export default function CoverflowReels() {
   const [currentIndex, setCurrentIndex] = useState(2);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Single edge pre-fetch of direct signed Cloudflare R2 URLs
+  const [directUrlMap, setDirectUrlMap] = useState<Record<string, { image: string; videoUrl: string }>>({});
+
+  useEffect(() => {
+    let isCancelled = false;
+    fetch('/api/portfolio')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isCancelled && data.samples && Array.isArray(data.samples)) {
+          const map: Record<string, { image: string; videoUrl: string }> = {};
+          for (const s of data.samples) {
+            if (s.title && (s.thumbnail_url || s.preview_url)) {
+              map[s.title] = {
+                image: s.thumbnail_url || '',
+                videoUrl: s.preview_url || '',
+              };
+            }
+          }
+          setDirectUrlMap(map);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const isPointerDownRef = useRef(false);
@@ -481,52 +509,56 @@ export default function CoverflowReels() {
               ? 'w-[320px] sm:w-[460px] md:w-[500px] aspect-video'
               : 'w-[200px] sm:w-[250px] md:w-[270px] aspect-[9/16]';
 
-            return (
-              <div
-                key={`mix-${idx}`}
-                onClick={(e) => {
-                  if (hasDraggedRef.current) {
-                    e.preventDefault();
-                    return;
-                  }
-                  if (currentIndex !== idx) {
-                    setCurrentIndex(idx);
-                  }
-                }}
-                style={{
-                  transform,
-                  zIndex,
-                  opacity,
-                  pointerEvents,
-                }}
-                className={`coverflow-card ${widthClass} rounded-2xl sm:rounded-3xl overflow-hidden bg-[#0A0A0A] cursor-pointer group transition-[border,box-shadow] duration-300 ${
-                  isDragging ? 'is-dragging' : ''
-                } ${
-                  isCenter
-                    ? 'border border-white/25 shadow-[0_24px_60px_rgba(0,0,0,0.25)] ring-1 ring-black/5'
-                    : 'border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.08)]'
-                }`}
-              >
-                <div className="relative w-full h-full bg-black">
-                  {/* Base Layer: Instant Sharp Rec.709 Poster frame (guarantees ZERO black frames) */}
-                  <img
-                    src={item.image}
-                    alt=""
-                    className="absolute inset-0 object-cover w-full h-full pointer-events-none"
-                    loading={absDiff < 2.5 ? 'eager' : 'lazy'}
-                  />
+                const cardImage = directUrlMap[item.title]?.image || item.image;
+                const cardVideo = directUrlMap[item.title]?.videoUrl || item.videoUrl;
 
-                  {/* Active Video Stream: Only mounted for centered active card and immediate neighbor to save bandwidth & decoders */}
-                  {absDiff < 1.2 && (
-                    <LoopingHighlightVideo
-                      src={item.videoUrl}
-                      poster={item.image}
-                      priority={isCenter}
-                    />
-                  )}
-                </div>
-              </div>
-            );
+                return (
+                  <div
+                    key={`mix-${idx}`}
+                    onClick={(e) => {
+                      if (hasDraggedRef.current) {
+                        e.preventDefault();
+                        return;
+                      }
+                      if (currentIndex !== idx) {
+                        setCurrentIndex(idx);
+                      }
+                    }}
+                    style={{
+                      transform,
+                      zIndex,
+                      opacity,
+                      pointerEvents,
+                    }}
+                    className={`coverflow-card ${widthClass} rounded-2xl sm:rounded-3xl overflow-hidden bg-[#18181B] cursor-pointer group transition-[border,box-shadow] duration-300 ${
+                      isDragging ? 'is-dragging' : ''
+                    } ${
+                      isCenter
+                        ? 'border border-white/25 shadow-[0_24px_60px_rgba(0,0,0,0.25)] ring-1 ring-black/5'
+                        : 'border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.08)]'
+                    }`}
+                  >
+                    <div className="relative w-full h-full bg-[#18181B]">
+                      {/* Base Layer: Instant Sharp Rec.709 Poster frame (guarantees ZERO black frames) */}
+                      <img
+                        src={cardImage}
+                        alt=""
+                        className="absolute inset-0 object-cover w-full h-full pointer-events-none select-none transition-opacity duration-300"
+                        loading="eager"
+                        decoding="async"
+                      />
+
+                      {/* Active Video Stream: Only mounted for centered active card and immediate neighbor to save bandwidth & decoders */}
+                      {absDiff < 1.2 && (
+                        <LoopingHighlightVideo
+                          src={cardVideo}
+                          poster={cardImage}
+                          priority={isCenter}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
           })}
         </div>
       </div>

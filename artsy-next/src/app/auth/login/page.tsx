@@ -279,8 +279,8 @@ function LoopingHighlightVideo({
   const initMidpoint = (video: HTMLVideoElement) => {
     if (hasSeekedRef.current) return;
     const dur = video.duration;
-    if (dur && Number.isFinite(dur) && dur > 4) {
-      const mid = Math.max(3.5, Math.floor(dur * 0.45));
+    if (dur && Number.isFinite(dur) && dur > 3) {
+      const mid = Math.max(2.5, Math.floor(dur * 0.45));
       startMidRef.current = mid;
       try {
         video.currentTime = mid;
@@ -295,7 +295,7 @@ function LoopingHighlightVideo({
     if (!video || !hasSeekedRef.current) return;
     // Loop for 12 seconds from the middle start point
     const maxPlayTime = startMidRef.current + 12;
-    if (video.currentTime >= maxPlayTime || (video.duration && video.currentTime >= video.duration - 0.5)) {
+    if (video.currentTime >= maxPlayTime || (video.duration && video.currentTime >= video.duration - 0.4)) {
       video.currentTime = startMidRef.current;
       video.play().catch(() => {});
     }
@@ -317,25 +317,35 @@ function LoopingHighlightVideo({
       muted
       loop
       playsInline
-      preload="auto"
+      preload="metadata"
       onLoadedMetadata={(e) => initMidpoint(e.currentTarget)}
-      onLoadedData={(e) => initMidpoint(e.currentTarget)}
       onCanPlay={(e) => initMidpoint(e.currentTarget)}
       onPlaying={() => setIsReady(true)}
       onTimeUpdate={handleTimeUpdate}
       onEnded={handleEnded}
-      className={`absolute inset-0 object-cover w-full h-full pointer-events-none transition-opacity duration-300 ${
+      className={`absolute inset-0 object-cover w-full h-full pointer-events-none transition-opacity duration-500 ease-out ${
         isReady ? 'opacity-100' : 'opacity-0'
       }`}
     />
   );
 }
 
-function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
+function PortfolioMarqueeCard({
+  item,
+  directVideoUrl,
+  directImageUrl,
+}: {
+  item: PortfolioWorkCard;
+  directVideoUrl?: string;
+  directImageUrl?: string;
+}) {
   const isVertical = item.aspect === '9/16';
   const heightClass = isVertical
     ? 'h-[200px] sm:h-[230px] lg:h-[260px] xl:h-[285px]'
     : 'h-[125px] sm:h-[145px] lg:h-[160px] xl:h-[175px]';
+
+  const imageSrc = directImageUrl || item.image;
+  const videoSrc = directVideoUrl || item.videoUrl;
 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -363,21 +373,22 @@ function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
   return (
     <div
       ref={cardRef}
-      className={`w-full ${heightClass} mb-2.5 sm:mb-3.5 xl:mb-4 relative rounded-2xl overflow-hidden border border-white/10 bg-[#0A0A0A] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none transition-all duration-300`}
+      className={`w-full ${heightClass} mb-2.5 sm:mb-3.5 xl:mb-4 relative rounded-2xl overflow-hidden border border-white/10 bg-[#18181B] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none transition-all duration-300`}
     >
-      {/* 1. Underlying Sharp Poster Frame (Guarantees ZERO black screens or empty voids) */}
+      {/* 1. Underlying Sharp Poster Frame (Eager load with immediate display, ZERO black boxes) */}
       <img
-        src={item.image}
+        src={imageSrc}
         alt=""
-        className="absolute inset-0 object-cover w-full h-full pointer-events-none"
-        loading="lazy"
+        className="absolute inset-0 object-cover w-full h-full pointer-events-none select-none transition-opacity duration-300"
+        loading="eager"
+        decoding="async"
       />
 
       {/* 2. Live Video Highlight: Mounts & plays ONLY when card is in viewport */}
-      {item.videoUrl && isVisible && (
+      {videoSrc && isVisible && (
         <LoopingHighlightVideo
-          src={item.videoUrl}
-          poster={item.image}
+          src={videoSrc}
+          poster={imageSrc}
         />
       )}
     </div>
@@ -434,6 +445,33 @@ function LoginFormContent() {
 
   // Freelancer Intent
   const [isFreelancerIntent, setIsFreelancerIntent] = useState(false);
+
+  // Single edge pre-fetch of direct signed Cloudflare R2 URLs to eliminate 307 redirects & browser socket stalls
+  const [directUrlMap, setDirectUrlMap] = useState<Record<string, { image: string; videoUrl: string }>>({});
+
+  useEffect(() => {
+    let isCancelled = false;
+    fetch('/api/portfolio')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isCancelled && data.samples && Array.isArray(data.samples)) {
+          const map: Record<string, { image: string; videoUrl: string }> = {};
+          for (const s of data.samples) {
+            if (s.title && (s.thumbnail_url || s.preview_url)) {
+              map[s.title] = {
+                image: s.thumbnail_url || '',
+                videoUrl: s.preview_url || '',
+              };
+            }
+          }
+          setDirectUrlMap(map);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -811,10 +849,20 @@ function LoginFormContent() {
             <div className="overflow-hidden h-full">
               <div className="animate-marquee-up-fast flex flex-col will-change-transform marquee-pause-hover">
                 {COLUMN_1_WORK.map((item, idx) => (
-                  <PortfolioMarqueeCard key={`c1-a-${item.id}-${idx}`} item={item} />
+                  <PortfolioMarqueeCard
+                    key={`c1-a-${item.id}-${idx}`}
+                    item={item}
+                    directImageUrl={directUrlMap[item.title]?.image}
+                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                  />
                 ))}
                 {COLUMN_1_WORK.map((item, idx) => (
-                  <PortfolioMarqueeCard key={`c1-b-${item.id}-${idx}`} item={item} />
+                  <PortfolioMarqueeCard
+                    key={`c1-b-${item.id}-${idx}`}
+                    item={item}
+                    directImageUrl={directUrlMap[item.title]?.image}
+                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                  />
                 ))}
               </div>
             </div>
@@ -823,10 +871,20 @@ function LoginFormContent() {
             <div className="overflow-hidden h-full">
               <div className="animate-marquee-down-fast flex flex-col will-change-transform marquee-pause-hover">
                 {COLUMN_2_WORK.map((item, idx) => (
-                  <PortfolioMarqueeCard key={`c2-a-${item.id}-${idx}`} item={item} />
+                  <PortfolioMarqueeCard
+                    key={`c2-a-${item.id}-${idx}`}
+                    item={item}
+                    directImageUrl={directUrlMap[item.title]?.image}
+                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                  />
                 ))}
                 {COLUMN_2_WORK.map((item, idx) => (
-                  <PortfolioMarqueeCard key={`c2-b-${item.id}-${idx}`} item={item} />
+                  <PortfolioMarqueeCard
+                    key={`c2-b-${item.id}-${idx}`}
+                    item={item}
+                    directImageUrl={directUrlMap[item.title]?.image}
+                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                  />
                 ))}
               </div>
             </div>
@@ -835,10 +893,20 @@ function LoginFormContent() {
             <div className="overflow-hidden h-full">
               <div className="animate-marquee-up-slow flex flex-col will-change-transform marquee-pause-hover">
                 {COLUMN_3_WORK.map((item, idx) => (
-                  <PortfolioMarqueeCard key={`c3-a-${item.id}-${idx}`} item={item} />
+                  <PortfolioMarqueeCard
+                    key={`c3-a-${item.id}-${idx}`}
+                    item={item}
+                    directImageUrl={directUrlMap[item.title]?.image}
+                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                  />
                 ))}
                 {COLUMN_3_WORK.map((item, idx) => (
-                  <PortfolioMarqueeCard key={`c3-b-${item.id}-${idx}`} item={item} />
+                  <PortfolioMarqueeCard
+                    key={`c3-b-${item.id}-${idx}`}
+                    item={item}
+                    directImageUrl={directUrlMap[item.title]?.image}
+                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                  />
                 ))}
               </div>
             </div>

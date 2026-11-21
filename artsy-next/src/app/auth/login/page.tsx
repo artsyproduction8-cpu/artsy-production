@@ -258,55 +258,29 @@ const COLUMN_3_WORK: PortfolioWorkCard[] = [
 
 /**
  * Looping Video Highlight Player:
- * - Automatically seeks to the high-energy middle segment on load (skipping black frames & intro logos).
- * - Plays the high-energy middle segment for 10-15 seconds.
- * - Loops back to the midpoint seamlessly for continuous dynamic playback.
+ * - Instant frame-0 playback on mount (video is faststart pre-cut at action frame, requiring ZERO seek latency).
+ * - Plays continuously and loops cleanly via native HTML5 loop.
  * - 100% full color vibrancy with ZERO grey wraps, dimming filters, or dark overlays.
- * - Fades in cleanly once video frames arrive so there is never an unbuffered flash.
+ * - Smooth fade-in on frame decode for zero flash over matching poster frame.
  */
 function LoopingHighlightVideo({
   src,
   poster,
+  priority = false,
 }: {
   src: string;
   poster?: string;
+  priority?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const startMidRef = useRef<number>(0);
-  const hasSeekedRef = useRef<boolean>(false);
-  const [isReady, setIsReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  const initMidpoint = (video: HTMLVideoElement) => {
-    if (hasSeekedRef.current) return;
-    const dur = video.duration;
-    if (dur && Number.isFinite(dur) && dur > 3) {
-      const mid = Math.max(2.5, Math.floor(dur * 0.45));
-      startMidRef.current = mid;
-      try {
-        video.currentTime = mid;
-        hasSeekedRef.current = true;
-      } catch {}
-      video.play().then(() => setIsReady(true)).catch(() => {});
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    const video = videoRef.current;
-    if (!video || !hasSeekedRef.current) return;
-    // Loop for 12 seconds from the middle start point
-    const maxPlayTime = startMidRef.current + 12;
-    if (video.currentTime >= maxPlayTime || (video.duration && video.currentTime >= video.duration - 0.4)) {
-      video.currentTime = startMidRef.current;
-      video.play().catch(() => {});
-    }
-  };
-
-  const handleEnded = () => {
+  useEffect(() => {
+    setIsPlaying(false);
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = startMidRef.current;
     video.play().catch(() => {});
-  };
+  }, [src]);
 
   return (
     <video
@@ -317,14 +291,11 @@ function LoopingHighlightVideo({
       muted
       loop
       playsInline
-      preload="metadata"
-      onLoadedMetadata={(e) => initMidpoint(e.currentTarget)}
-      onCanPlay={(e) => initMidpoint(e.currentTarget)}
-      onPlaying={() => setIsReady(true)}
-      onTimeUpdate={handleTimeUpdate}
-      onEnded={handleEnded}
-      className={`absolute inset-0 object-cover w-full h-full pointer-events-none transition-opacity duration-500 ease-out ${
-        isReady ? 'opacity-100' : 'opacity-0'
+      preload={priority ? 'auto' : 'metadata'}
+      onPlaying={() => setIsPlaying(true)}
+      onError={() => setIsPlaying(false)}
+      className={`absolute inset-0 object-cover w-full h-full pointer-events-none transition-opacity duration-300 ease-out ${
+        isPlaying ? 'opacity-100' : 'opacity-0'
       }`}
     />
   );
@@ -332,63 +303,37 @@ function LoopingHighlightVideo({
 
 function PortfolioMarqueeCard({
   item,
-  directVideoUrl,
-  directImageUrl,
+  hasVideo = false,
+  priority = false,
 }: {
   item: PortfolioWorkCard;
-  directVideoUrl?: string;
-  directImageUrl?: string;
+  hasVideo?: boolean;
+  priority?: boolean;
 }) {
   const isVertical = item.aspect === '9/16';
   const heightClass = isVertical
     ? 'h-[200px] sm:h-[230px] lg:h-[260px] xl:h-[285px]'
     : 'h-[125px] sm:h-[145px] lg:h-[160px] xl:h-[175px]';
 
-  const imageSrc = directImageUrl || item.image;
-  const videoSrc = directVideoUrl || item.videoUrl;
-
-  const cardRef = useRef<HTMLDivElement | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-
-    // Viewport-aware lazy stream activation: only mounts <video> when card is in or near viewport
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-      },
-      {
-        root: null,
-        rootMargin: '120px 0px 120px 0px', // preload 120px ahead of scroll
-        threshold: 0.05,
-      }
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <div
-      ref={cardRef}
       className={`w-full ${heightClass} mb-2.5 sm:mb-3.5 xl:mb-4 relative rounded-2xl overflow-hidden border border-white/10 bg-[#18181B] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none transition-all duration-300`}
     >
-      {/* 1. Underlying Sharp Poster Frame (Eager load with immediate display, ZERO black boxes) */}
+      {/* 1. Underlying Sharp Rec.709 Frame: Always visible, guarantees ZERO black boxes */}
       <img
-        src={imageSrc}
+        src={item.image}
         alt=""
-        className="absolute inset-0 object-cover w-full h-full pointer-events-none select-none transition-opacity duration-300"
+        className="absolute inset-0 object-cover w-full h-full pointer-events-none select-none"
         loading="eager"
         decoding="async"
       />
 
-      {/* 2. Live Video Highlight: Mounts & plays ONLY when card is in viewport */}
-      {videoSrc && isVisible && (
+      {/* 2. Live Video Highlight: Controlled active decoder budget (<= 9 videos total on page) */}
+      {hasVideo && item.videoUrl && (
         <LoopingHighlightVideo
-          src={videoSrc}
-          poster={imageSrc}
+          src={item.videoUrl}
+          poster={item.image}
+          priority={priority}
         />
       )}
     </div>
@@ -445,33 +390,6 @@ function LoginFormContent() {
 
   // Freelancer Intent
   const [isFreelancerIntent, setIsFreelancerIntent] = useState(false);
-
-  // Single edge pre-fetch of direct signed Cloudflare R2 URLs to eliminate 307 redirects & browser socket stalls
-  const [directUrlMap, setDirectUrlMap] = useState<Record<string, { image: string; videoUrl: string }>>({});
-
-  useEffect(() => {
-    let isCancelled = false;
-    fetch('/api/portfolio')
-      .then((res) => res.json())
-      .then((data) => {
-        if (!isCancelled && data.samples && Array.isArray(data.samples)) {
-          const map: Record<string, { image: string; videoUrl: string }> = {};
-          for (const s of data.samples) {
-            if (s.title && (s.thumbnail_url || s.preview_url)) {
-              map[s.title] = {
-                image: s.thumbnail_url || '',
-                videoUrl: s.preview_url || '',
-              };
-            }
-          }
-          setDirectUrlMap(map);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
 
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -852,16 +770,16 @@ function LoginFormContent() {
                   <PortfolioMarqueeCard
                     key={`c1-a-${item.id}-${idx}`}
                     item={item}
-                    directImageUrl={directUrlMap[item.title]?.image}
-                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                    hasVideo={idx < 3}
+                    priority={idx < 3}
                   />
                 ))}
                 {COLUMN_1_WORK.map((item, idx) => (
                   <PortfolioMarqueeCard
                     key={`c1-b-${item.id}-${idx}`}
                     item={item}
-                    directImageUrl={directUrlMap[item.title]?.image}
-                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                    hasVideo={false}
+                    priority={false}
                   />
                 ))}
               </div>
@@ -874,16 +792,16 @@ function LoginFormContent() {
                   <PortfolioMarqueeCard
                     key={`c2-a-${item.id}-${idx}`}
                     item={item}
-                    directImageUrl={directUrlMap[item.title]?.image}
-                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                    hasVideo={idx < 3}
+                    priority={idx < 3}
                   />
                 ))}
                 {COLUMN_2_WORK.map((item, idx) => (
                   <PortfolioMarqueeCard
                     key={`c2-b-${item.id}-${idx}`}
                     item={item}
-                    directImageUrl={directUrlMap[item.title]?.image}
-                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                    hasVideo={false}
+                    priority={false}
                   />
                 ))}
               </div>
@@ -896,16 +814,16 @@ function LoginFormContent() {
                   <PortfolioMarqueeCard
                     key={`c3-a-${item.id}-${idx}`}
                     item={item}
-                    directImageUrl={directUrlMap[item.title]?.image}
-                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                    hasVideo={idx < 3}
+                    priority={idx < 3}
                   />
                 ))}
                 {COLUMN_3_WORK.map((item, idx) => (
                   <PortfolioMarqueeCard
                     key={`c3-b-${item.id}-${idx}`}
                     item={item}
-                    directImageUrl={directUrlMap[item.title]?.image}
-                    directVideoUrl={directUrlMap[item.title]?.videoUrl}
+                    hasVideo={false}
+                    priority={false}
                   />
                 ))}
               </div>

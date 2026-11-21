@@ -228,40 +228,14 @@ function LoopingHighlightVideo({
   priority?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const startMidRef = useRef<number>(0);
-  const hasSeekedRef = useRef<boolean>(false);
   const [isReady, setIsReady] = useState(false);
 
-  const initMidpoint = (video: HTMLVideoElement) => {
-    if (hasSeekedRef.current) return;
-    const dur = video.duration;
-    if (dur && Number.isFinite(dur) && dur > 3) {
-      const mid = Math.max(2.5, Math.floor(dur * 0.45));
-      startMidRef.current = mid;
-      try {
-        video.currentTime = mid;
-        hasSeekedRef.current = true;
-      } catch {}
-      video.play().then(() => setIsReady(true)).catch(() => {});
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    const video = videoRef.current;
-    if (!video || !hasSeekedRef.current) return;
-    const maxPlayTime = startMidRef.current + 12;
-    if (video.currentTime >= maxPlayTime || (video.duration && video.currentTime >= video.duration - 0.4)) {
-      video.currentTime = startMidRef.current;
-      video.play().catch(() => {});
-    }
-  };
-
-  const handleEnded = () => {
+  useEffect(() => {
+    setIsReady(false);
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = startMidRef.current;
     video.play().catch(() => {});
-  };
+  }, [src]);
 
   return (
     <video
@@ -273,13 +247,9 @@ function LoopingHighlightVideo({
       loop
       playsInline
       preload={priority ? 'auto' : 'metadata'}
-      onLoadedMetadata={(e) => initMidpoint(e.currentTarget)}
-      onLoadedData={(e) => initMidpoint(e.currentTarget)}
-      onCanPlay={(e) => initMidpoint(e.currentTarget)}
       onPlaying={() => setIsReady(true)}
-      onTimeUpdate={handleTimeUpdate}
-      onEnded={handleEnded}
-      className={`absolute inset-0 object-cover w-full h-full pointer-events-none group-hover:scale-105 transition-all duration-700 ease-out ${
+      onError={() => setIsReady(false)}
+      className={`absolute inset-0 object-cover w-full h-full pointer-events-none group-hover:scale-105 transition-all duration-500 ease-out ${
         isReady ? 'opacity-100' : 'opacity-0'
       }`}
     />
@@ -290,33 +260,6 @@ export default function CoverflowReels() {
   const [currentIndex, setCurrentIndex] = useState(2);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-
-  // Single edge pre-fetch of direct signed Cloudflare R2 URLs
-  const [directUrlMap, setDirectUrlMap] = useState<Record<string, { image: string; videoUrl: string }>>({});
-
-  useEffect(() => {
-    let isCancelled = false;
-    fetch('/api/portfolio')
-      .then((res) => res.json())
-      .then((data) => {
-        if (!isCancelled && data.samples && Array.isArray(data.samples)) {
-          const map: Record<string, { image: string; videoUrl: string }> = {};
-          for (const s of data.samples) {
-            if (s.title && (s.thumbnail_url || s.preview_url)) {
-              map[s.title] = {
-                image: s.thumbnail_url || '',
-                videoUrl: s.preview_url || '',
-              };
-            }
-          }
-          setDirectUrlMap(map);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const isPointerDownRef = useRef(false);
@@ -509,8 +452,8 @@ export default function CoverflowReels() {
               ? 'w-[320px] sm:w-[460px] md:w-[500px] aspect-video'
               : 'w-[200px] sm:w-[250px] md:w-[270px] aspect-[9/16]';
 
-                const cardImage = directUrlMap[item.title]?.image || item.image;
-                const cardVideo = directUrlMap[item.title]?.videoUrl || item.videoUrl;
+                const cardImage = item.image;
+                const cardVideo = item.videoUrl;
 
                 return (
                   <div

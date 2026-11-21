@@ -13,61 +13,201 @@ interface ReelCard {
 const getStreamUrl = (key: string) => `/api/portfolio/stream?key=${encodeURIComponent(key)}`;
 
 const FEATURED_MIX: ReelCard[] = [
+  // ── SUB-CATEGORY 1: Wedding Cinema (6 Films, 16:9) ──
   {
-    title: 'Chandni & Harihar — Grand Reception',
+    title: 'Chandni & Harihar — Grand Reception Film',
     category: 'Wedding Cinema',
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
   },
   {
-    title: 'Anoop & Ansa — Viral Wedding Reel',
-    category: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/ANOOP___ANSA_REEL_low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
-  },
-  {
-    title: 'Juhi & Swapnil — Grand North Indian',
-    category: 'Wedding Cinema',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
-  },
-  {
-    title: 'Kuhu — Haldi Celebration Reel',
-    category: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
-  },
-  {
-    title: 'Rajat & Nimisha — South Indian Wedding',
-    category: 'Wedding Cinema',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
-  },
-  {
-    title: 'Shweta — Bridal Solo Reel',
-    category: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
-  },
-  {
-    title: 'Akash & Mayuri — Mumbai Wedding Film',
+    title: 'Akash & Mayuri — Mumbai Wedding Highlights',
     category: 'Wedding Cinema',
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
   },
   {
+    title: 'Juhi & Swapnil — Grand North Indian Wedding',
+    category: 'Wedding Cinema',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
+  },
+  {
+    title: 'Rujuta & Abhyuday — Joy, Dance & Romance',
+    category: 'Wedding Cinema',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_preview.mp4'),
+  },
+  {
+    title: 'Rajat & Nimisha — South Indian Wedding Highlights',
+    category: 'Wedding Cinema',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
+  },
+  {
+    title: 'Hufriya & Danesh — 16 Years of Love Reception',
+    category: 'Wedding Cinema',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_preview.mp4'),
+  },
+
+  // ── SUB-CATEGORY 2: Pre-Wedding Films (4 Films, 16:9) ──
+  {
+    title: 'Anoop & Ansa — Cinematic Pre-Wedding Film',
+    category: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
+  },
+  {
+    title: 'Akshay & Partner — Romantic Pre-Wedding Journey',
+    category: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/Akshay_Pre_wedding_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Akshay_Pre_wedding_Low_preview.mp4'),
+  },
+  {
+    title: 'Matan & Lihi — Destination Pre-Wedding Story',
+    category: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/Matan___Lihi_cine_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Matan___Lihi_cine_Low_preview.mp4'),
+  },
+  {
+    title: 'Robin & Partner — Timeless Pre-Wedding Film',
+    category: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/Robin_Pre_wedding_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Robin_Pre_wedding_Low_preview.mp4'),
+  },
+
+  // ── SUB-CATEGORY 3: Teasers & Trailers (7 Films, 16:9) ──
+  {
+    title: 'Akshay & Jagruti — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
+  },
+  {
+    title: 'Jai & Aishwarya — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
+  },
+  {
+    title: 'Khushboo & Tejas — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Khushboo___Tejas_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Khushboo___Tejas_Teaser_Low_preview.mp4'),
+  },
+  {
+    title: 'Matan & Lihi — Cinematic Trailer',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Matan___Lihi_Trailer_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Matan___Lihi_Trailer_Low_preview.mp4'),
+  },
+  {
+    title: 'Mayuri & Swapnil — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Mayuri___Swapni_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Mayuri___Swapni_Teaser_Low_preview.mp4'),
+  },
+  {
+    title: 'Sanket & Rutuja — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Sanket___Rutuja__Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Sanket___Rutuja__Teaser_Low_preview.mp4'),
+  },
+  {
+    title: 'Shree & Shivani — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Shree___Shivani_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Shree___Shivani_Teaser_Low_preview.mp4'),
+  },
+
+  // ── SUB-CATEGORY 4: Cinematic Reels (10 Vertical Reels, 9:16) ──
+  {
+    title: 'Anoop & Ansa — Viral Wedding Reel',
+    category: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/ANOOP___ANSA_REEL_low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
+  },
+  {
+    title: 'Akash — Groom Entry & Celebration Reel',
+    category: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Akash_Reel_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Akash_Reel_Low_preview.mp4'),
+  },
+  {
+    title: 'Akshay & Gauri — Romantic Wedding Reel',
+    category: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Akshay___Gauri_Reel__2__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Akshay___Gauri_Reel__2__Low_preview.mp4'),
+  },
+  {
+    title: 'Anroop & Jeemol — Wedding Highlights Reel',
+    category: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Anroop___Jeemol_Reel_low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Anroop___Jeemol_Reel_low_preview.mp4'),
+  },
+  {
+    title: 'George & Sumi — Church Wedding Reel',
+    category: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/George___Sumi_Reel_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/George___Sumi_Reel_Low_preview.mp4'),
+  },
+  {
+    title: 'Kuhu — Haldi Celebration Reel',
+    category: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
+  },
+  {
+    title: 'Monish & Jisha — Cinematic Couple Reel',
+    category: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Monish___Jisha_Reel__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Monish___Jisha_Reel__Low_preview.mp4'),
+  },
+  {
     title: 'Sanket & Rutuja — Sangeet Night Reel',
-    category: 'Cinematic Reel',
+    category: 'Cinematic Reels',
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
+  },
+  {
+    title: 'Shweta — Bridal Solo Highlights Reel',
+    category: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
+  },
+  {
+    title: 'Sumit & Sonal — Wedding Celebration Reel',
+    category: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Sumit___Sonal_Reel__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Sumit___Sonal_Reel__Low_preview.mp4'),
   },
 ];
 
@@ -76,6 +216,7 @@ const FEATURED_MIX: ReelCard[] = [
  * - Seeks to the vibrant middle segment (skipping any black screens or static titles).
  * - Plays for 12 seconds of peak cinematic action, then loops continuously.
  * - 100% full color vibrancy with ZERO grey wraps, dimming filters, or dark overlays.
+ * - Fades in smoothly once loaded so there is never a black flash.
  */
 function LoopingHighlightVideo({
   src,
@@ -89,6 +230,7 @@ function LoopingHighlightVideo({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const startMidRef = useRef<number>(0);
   const hasSeekedRef = useRef<boolean>(false);
+  const [isReady, setIsReady] = useState(false);
 
   const initMidpoint = (video: HTMLVideoElement) => {
     if (hasSeekedRef.current) return;
@@ -100,7 +242,7 @@ function LoopingHighlightVideo({
         video.currentTime = mid;
         hasSeekedRef.current = true;
       } catch {}
-      video.play().catch(() => {});
+      video.play().then(() => setIsReady(true)).catch(() => {});
     }
   };
 
@@ -136,7 +278,9 @@ function LoopingHighlightVideo({
       onCanPlay={(e) => initMidpoint(e.currentTarget)}
       onTimeUpdate={handleTimeUpdate}
       onEnded={handleEnded}
-      className="object-cover w-full h-full pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out opacity-100"
+      className={`absolute inset-0 object-cover w-full h-full pointer-events-none group-hover:scale-105 transition-all duration-700 ease-out ${
+        isReady ? 'opacity-100' : 'opacity-0'
+      }`}
     />
   );
 }
@@ -364,12 +508,22 @@ export default function CoverflowReels() {
                 }`}
               >
                 <div className="relative w-full h-full bg-black">
-                  {/* Crystal-Clear Live Looping Video Clip - Pure Color, NO Grey Overlays */}
-                  <LoopingHighlightVideo
-                    src={item.videoUrl}
-                    poster={item.image}
-                    priority={absDiff < 1.5}
+                  {/* Base Layer: Instant Sharp Rec.709 Poster frame (guarantees ZERO black frames) */}
+                  <img
+                    src={item.image}
+                    alt=""
+                    className="absolute inset-0 object-cover w-full h-full pointer-events-none"
+                    loading={absDiff < 2.5 ? 'eager' : 'lazy'}
                   />
+
+                  {/* Active Video Stream: Only mounted for centered active card and immediate neighbor to save bandwidth & decoders */}
+                  {absDiff < 1.2 && (
+                    <LoopingHighlightVideo
+                      src={item.videoUrl}
+                      poster={item.image}
+                      priority={isCenter}
+                    />
+                  )}
                 </div>
               </div>
             );

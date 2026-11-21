@@ -27,156 +27,232 @@ const ROTATING_TAGLINES = [
   'Active Project',
 ];
 
-const ROW_1_WORK: PortfolioWorkCard[] = [
+// ── 27 Authoritative Canonical Portfolio Films Organized Sub-Category Wise ──
+const COLUMN_1_WORK: PortfolioWorkCard[] = [
+  // ── Sub-Category: Wedding Cinema & Viral Reels ──
   {
-    id: 'w1',
-    title: 'Chandni & Harihar — Grand Reception',
+    id: 'c1-1',
+    title: 'Chandni & Harihar — Grand Reception Film',
     genre: 'Wedding Cinema',
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
   },
   {
-    id: 'w2',
+    id: 'c1-2',
     title: 'Anoop & Ansa — Viral Wedding Reel',
-    genre: 'Cinematic Reel',
+    genre: 'Cinematic Reels',
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/ANOOP___ANSA_REEL_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
   },
   {
-    id: 'w3',
-    title: 'Akash & Mayuri — Mumbai Wedding Film',
+    id: 'c1-3',
+    title: 'Akash & Mayuri — Mumbai Wedding Highlights',
     genre: 'Wedding Cinema',
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
   },
   {
-    id: 'w4',
-    title: 'Sanket & Rutuja — Sangeet Night Reel',
-    genre: 'Cinematic Reel',
+    id: 'c1-4',
+    title: 'Akash — Groom Entry & Celebration Reel',
+    genre: 'Cinematic Reels',
     aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
+    image: getStreamUrl('thumbnails/Reel_/Akash_Reel_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Akash_Reel_Low_preview.mp4'),
   },
   {
-    id: 'w5',
-    title: 'Juhi & Swapnil — Grand North Indian',
+    id: 'c1-5',
+    title: 'Anoop & Ansa — Cinematic Pre-Wedding Film',
+    genre: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
+  },
+  {
+    id: 'c1-6',
+    title: 'Akshay & Gauri — Romantic Wedding Reel',
+    genre: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Akshay___Gauri_Reel__2__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Akshay___Gauri_Reel__2__Low_preview.mp4'),
+  },
+  {
+    id: 'c1-7',
+    title: 'Akshay & Partner — Romantic Pre-Wedding Journey',
+    genre: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/Akshay_Pre_wedding_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Akshay_Pre_wedding_Low_preview.mp4'),
+  },
+  {
+    id: 'c1-8',
+    title: 'Akshay & Jagruti — Wedding Teaser',
+    genre: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
+  },
+  {
+    id: 'c1-9',
+    title: 'Anroop & Jeemol — Wedding Highlights Reel',
+    genre: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Anroop___Jeemol_Reel_low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Anroop___Jeemol_Reel_low_preview.mp4'),
+  },
+];
+
+const COLUMN_2_WORK: PortfolioWorkCard[] = [
+  // ── Sub-Category: Grand Weddings, Teasers & Haldi Reels ──
+  {
+    id: 'c2-1',
+    title: 'Juhi & Swapnil — Grand North Indian Wedding',
     genre: 'Wedding Cinema',
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
   },
   {
-    id: 'w6',
-    title: 'Akshay & Jagruti — Wedding Teaser',
-    genre: 'Teaser',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
-  },
-];
-
-const ROW_2_WORK: PortfolioWorkCard[] = [
-  {
-    id: 'w7',
-    title: 'Kuhu — Haldi Celebration Reel',
-    genre: 'Cinematic Reel',
+    id: 'c2-2',
+    title: 'George & Sumi — Church Wedding Reel',
+    genre: 'Cinematic Reels',
     aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
+    image: getStreamUrl('thumbnails/Reel_/George___Sumi_Reel_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/George___Sumi_Reel_Low_preview.mp4'),
   },
   {
-    id: 'w8',
-    title: 'Anoop & Ansa — Pre-Wedding Film',
-    genre: 'Pre-Wedding',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
-  },
-  {
-    id: 'w9',
-    title: 'Shweta — Bridal Solo Reel',
-    genre: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
-  },
-  {
-    id: 'w10',
-    title: 'Jai & Aishwarya — Wedding Teaser',
-    genre: 'Teaser',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
-  },
-  {
-    id: 'w11',
-    title: 'Monish & Jisha — Couple Reel',
-    genre: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Monish___Jisha_Reel__Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Monish___Jisha_Reel__Low_preview.mp4'),
-  },
-  {
-    id: 'w12',
-    title: 'Rujuta & Abhyuday — Joy & Romance',
+    id: 'c2-3',
+    title: 'Rujuta & Abhyuday — Joy, Dance & Romance',
     genre: 'Wedding Cinema',
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_preview.mp4'),
   },
+  {
+    id: 'c2-4',
+    title: 'Kuhu — Haldi Celebration Reel',
+    genre: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
+  },
+  {
+    id: 'c2-5',
+    title: 'Matan & Lihi — Destination Pre-Wedding Story',
+    genre: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/Matan___Lihi_cine_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Matan___Lihi_cine_Low_preview.mp4'),
+  },
+  {
+    id: 'c2-6',
+    title: 'Monish & Jisha — Cinematic Couple Reel',
+    genre: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Monish___Jisha_Reel__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Monish___Jisha_Reel__Low_preview.mp4'),
+  },
+  {
+    id: 'c2-7',
+    title: 'Jai & Aishwarya — Wedding Teaser',
+    genre: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
+  },
+  {
+    id: 'c2-8',
+    title: 'Khushboo & Tejas — Wedding Teaser',
+    genre: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Khushboo___Tejas_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Khushboo___Tejas_Teaser_Low_preview.mp4'),
+  },
+  {
+    id: 'c2-9',
+    title: 'Sanket & Rutuja — Sangeet Night Reel',
+    genre: 'Cinematic Reels',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
+  },
 ];
 
-const ROW_3_WORK: PortfolioWorkCard[] = [
+const COLUMN_3_WORK: PortfolioWorkCard[] = [
+  // ── Sub-Category: South Indian & Reception Cinema, Sangeet & Solo Reels, Master Trailers ──
   {
-    id: 'w13',
-    title: 'Rajat & Nimisha — South Indian Wedding',
+    id: 'c3-1',
+    title: 'Rajat & Nimisha — South Indian Wedding Highlights',
     genre: 'Wedding Cinema',
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
   },
   {
-    id: 'w14',
-    title: 'Matan & Lihi — Golden Hour Reel',
-    genre: 'Cinematic Reel',
+    id: 'c3-2',
+    title: 'Shweta — Bridal Solo Highlights Reel',
+    genre: 'Cinematic Reels',
     aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Matan___Lihi_Reel_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Matan___Lihi_Reel_Low_preview.mp4'),
+    image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
   },
   {
-    id: 'w15',
-    title: 'Matan & Lihi — Pre-Wedding Story',
-    genre: 'Pre-Wedding',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Pre_wedding/Matan___Lihi_cine_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Pre_wedding/Matan___Lihi_cine_Low_preview.mp4'),
-  },
-  {
-    id: 'w16',
-    title: 'Matan & Lihi — Cinematic Trailer',
-    genre: 'Teaser',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Matan___Lihi_Trailer_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Matan___Lihi_Trailer_Low_preview.mp4'),
-  },
-  {
-    id: 'w17',
-    title: 'Hufriya & Danesh — 16 Years of Love',
+    id: 'c3-3',
+    title: 'Hufriya & Danesh — 16 Years of Love Reception',
     genre: 'Wedding Cinema',
     aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_preview.mp4'),
   },
   {
-    id: 'w18',
-    title: 'Shweta — Bridal Solo Reel',
-    genre: 'Cinematic Reel',
+    id: 'c3-4',
+    title: 'Sumit & Sonal — Wedding Celebration Reel',
+    genre: 'Cinematic Reels',
     aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
+    image: getStreamUrl('thumbnails/Reel_/Sumit___Sonal_Reel__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Sumit___Sonal_Reel__Low_preview.mp4'),
+  },
+  {
+    id: 'c3-5',
+    title: 'Robin & Partner — Timeless Pre-Wedding Film',
+    genre: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/Robin_Pre_wedding_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Robin_Pre_wedding_Low_preview.mp4'),
+  },
+  {
+    id: 'c3-6',
+    title: 'Matan & Lihi — Cinematic Trailer',
+    genre: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Matan___Lihi_Trailer_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Matan___Lihi_Trailer_Low_preview.mp4'),
+  },
+  {
+    id: 'c3-7',
+    title: 'Mayuri & Swapnil — Wedding Teaser',
+    genre: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Mayuri___Swapni_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Mayuri___Swapni_Teaser_Low_preview.mp4'),
+  },
+  {
+    id: 'c3-8',
+    title: 'Sanket & Rutuja — Wedding Teaser',
+    genre: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Sanket___Rutuja__Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Sanket___Rutuja__Teaser_Low_preview.mp4'),
+  },
+  {
+    id: 'c3-9',
+    title: 'Shree & Shivani — Wedding Teaser',
+    genre: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Shree___Shivani_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Shree___Shivani_Teaser_Low_preview.mp4'),
   },
 ];
 
@@ -186,6 +262,7 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
  * - Plays the high-energy middle segment for 10-15 seconds.
  * - Loops back to the midpoint seamlessly for continuous dynamic playback.
  * - 100% full color vibrancy with ZERO grey wraps, dimming filters, or dark overlays.
+ * - Fades in cleanly once video frames arrive so there is never an unbuffered flash.
  */
 function LoopingHighlightVideo({
   src,
@@ -197,6 +274,7 @@ function LoopingHighlightVideo({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const startMidRef = useRef<number>(0);
   const hasSeekedRef = useRef<boolean>(false);
+  const [isReady, setIsReady] = useState(false);
 
   const initMidpoint = (video: HTMLVideoElement) => {
     if (hasSeekedRef.current) return;
@@ -208,7 +286,7 @@ function LoopingHighlightVideo({
         video.currentTime = mid;
         hasSeekedRef.current = true;
       } catch {}
-      video.play().catch(() => {});
+      video.play().then(() => setIsReady(true)).catch(() => {});
     }
   };
 
@@ -239,13 +317,16 @@ function LoopingHighlightVideo({
       muted
       loop
       playsInline
-      preload="metadata"
+      preload="auto"
       onLoadedMetadata={(e) => initMidpoint(e.currentTarget)}
       onLoadedData={(e) => initMidpoint(e.currentTarget)}
       onCanPlay={(e) => initMidpoint(e.currentTarget)}
+      onPlaying={() => setIsReady(true)}
       onTimeUpdate={handleTimeUpdate}
       onEnded={handleEnded}
-      className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-100 pointer-events-none"
+      className={`absolute inset-0 object-cover w-full h-full pointer-events-none transition-opacity duration-300 ${
+        isReady ? 'opacity-100' : 'opacity-0'
+      }`}
     />
   );
 }
@@ -256,21 +337,47 @@ function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
     ? 'h-[200px] sm:h-[230px] lg:h-[260px] xl:h-[285px]'
     : 'h-[125px] sm:h-[145px] lg:h-[160px] xl:h-[175px]';
 
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    // Viewport-aware lazy stream activation: only mounts <video> when card is in or near viewport
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      {
+        root: null,
+        rootMargin: '120px 0px 120px 0px', // preload 120px ahead of scroll
+        threshold: 0.05,
+      }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className={`w-full ${heightClass} relative rounded-2xl overflow-hidden border border-white/10 bg-[#0A0A0A] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none transition-all duration-300`}>
-      {/* Background Live Video / Poster - Pure color, ZERO grey wrap, ZERO titles */}
-      {item.videoUrl ? (
+    <div
+      ref={cardRef}
+      className={`w-full ${heightClass} mb-2.5 sm:mb-3.5 xl:mb-4 relative rounded-2xl overflow-hidden border border-white/10 bg-[#0A0A0A] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none transition-all duration-300`}
+    >
+      {/* 1. Underlying Sharp Poster Frame (Guarantees ZERO black screens or empty voids) */}
+      <img
+        src={item.image}
+        alt=""
+        className="absolute inset-0 object-cover w-full h-full pointer-events-none"
+        loading="lazy"
+      />
+
+      {/* 2. Live Video Highlight: Mounts & plays ONLY when card is in viewport */}
+      {item.videoUrl && isVisible && (
         <LoopingHighlightVideo
           src={item.videoUrl}
           poster={item.image}
-        />
-      ) : (
-        <Image
-          src={item.image}
-          alt={item.title}
-          fill
-          sizes="(max-width: 640px) 130px, (max-width: 1024px) 180px, 240px"
-          className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-100"
         />
       )}
     </div>
@@ -701,28 +808,37 @@ function LoginFormContent() {
           <div className="w-full h-full grid grid-cols-3 gap-2.5 sm:gap-3.5 xl:gap-4 p-2.5 sm:p-4 select-none overflow-hidden">
 
             {/* COLUMN 1: Scrolling Upward */}
-            <div className="overflow-hidden h-full flex flex-col justify-center">
-              <div className="animate-marquee-up-fast flex flex-col gap-2.5 sm:gap-3.5 xl:gap-4 marquee-pause-hover">
-                {ROW_1_WORK.concat(ROW_1_WORK).map((item, idx) => (
-                  <PortfolioMarqueeCard key={`c1-${item.id}-${idx}`} item={item} />
+            <div className="overflow-hidden h-full">
+              <div className="animate-marquee-up-fast flex flex-col will-change-transform marquee-pause-hover">
+                {COLUMN_1_WORK.map((item, idx) => (
+                  <PortfolioMarqueeCard key={`c1-a-${item.id}-${idx}`} item={item} />
+                ))}
+                {COLUMN_1_WORK.map((item, idx) => (
+                  <PortfolioMarqueeCard key={`c1-b-${item.id}-${idx}`} item={item} />
                 ))}
               </div>
             </div>
 
             {/* COLUMN 2: Scrolling Downward */}
-            <div className="overflow-hidden h-full flex flex-col justify-center">
-              <div className="animate-marquee-down-fast flex flex-col gap-2.5 sm:gap-3.5 xl:gap-4 marquee-pause-hover">
-                {ROW_2_WORK.concat(ROW_2_WORK).map((item, idx) => (
-                  <PortfolioMarqueeCard key={`c2-${item.id}-${idx}`} item={item} />
+            <div className="overflow-hidden h-full">
+              <div className="animate-marquee-down-fast flex flex-col will-change-transform marquee-pause-hover">
+                {COLUMN_2_WORK.map((item, idx) => (
+                  <PortfolioMarqueeCard key={`c2-a-${item.id}-${idx}`} item={item} />
+                ))}
+                {COLUMN_2_WORK.map((item, idx) => (
+                  <PortfolioMarqueeCard key={`c2-b-${item.id}-${idx}`} item={item} />
                 ))}
               </div>
             </div>
 
             {/* COLUMN 3: Scrolling Upward */}
-            <div className="overflow-hidden h-full flex flex-col justify-center">
-              <div className="animate-marquee-up-slow flex flex-col gap-2.5 sm:gap-3.5 xl:gap-4 marquee-pause-hover">
-                {ROW_3_WORK.concat(ROW_3_WORK).map((item, idx) => (
-                  <PortfolioMarqueeCard key={`c3-${item.id}-${idx}`} item={item} />
+            <div className="overflow-hidden h-full">
+              <div className="animate-marquee-up-slow flex flex-col will-change-transform marquee-pause-hover">
+                {COLUMN_3_WORK.map((item, idx) => (
+                  <PortfolioMarqueeCard key={`c3-a-${item.id}-${idx}`} item={item} />
+                ))}
+                {COLUMN_3_WORK.map((item, idx) => (
+                  <PortfolioMarqueeCard key={`c3-b-${item.id}-${idx}`} item={item} />
                 ))}
               </div>
             </div>

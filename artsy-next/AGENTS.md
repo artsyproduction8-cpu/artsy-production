@@ -416,9 +416,20 @@ To deliver a broadcast-quality visual experience across desktop and mobile while
    - **Widescreen Films (16:9):** Modal container smoothly expands to `max-w-4xl lg:max-w-5xl` with `aspect-video`.
    - **Mixed Format Marquee & Coverflow (`login/page.tsx` & `CoverflowReels.tsx`):** Both the 3-column login marquee and homepage Coverflow showcase present a dynamic alternating mix of 16:9 widescreen films (`h-[125px..175px]` / `w-[320px..500px] aspect-video`) and 9:16 vertical reels (`h-[200px..285px]` / `w-[200px..270px] aspect-[9/16]`) with zero letterbox distortion or ugly bars.
 2. **Clean, Minimalist Studio Aesthetic (Pure Video Cinema & Clutter Purge):**
-   - **Login Page (`/auth/login`):** All floating badges, category tags (`Selected Studio Work`, `WEDDING CINEMA`, `CINEMATIC REEL`, `PRE-WEDDING`, `TEASER`, etc.), couple names, and text titles are completely purged. Cards present 100% pure moving video rectangles. The right-panel headline maintains smooth auto-rotation (`Access Production Command` -> `Cinematic Suite` -> `Frame Review` -> `Studio Dashboard` -> `Active Project`).
-   - **Coverflow Showcase (`CoverflowReels.tsx`):** The top tab switcher pill bar (`[ Featured Mix ] [ Master Films (16:9) ] [ Vertical Reels (9:16) ]`) and the bottom `[ VIEW FULL PORTFOLIO → ]` button are completely removed. Cards display pure video with zero titles, couple names, or category tags. The carousel is locked to `FEATURED_MIX` and auto-rotates continuously every 4.2 seconds.
-   - **Grey Wrap & Overlay Elimination (100% Color Vibrancy):** Removed all dark gradient overlays (`bg-gradient-to-t from-black/85 via-black/20 to-transparent`), artificial brightness dimming (`brightness(0.78)`), and reduced opacities (`opacity-85`/`opacity-90`). All video elements render at `opacity-100` with natural, vivid Rec.709 color.
+   - **Login Page (`/auth/login`):** All floating badges, category tags (`Selected Studio Work`, `WEDDING CINEMA`, etc.), couple names, and text titles are completely purged. Cards present 100% pure moving video rectangles. The right-panel headline maintains smooth auto-rotation (`Access Production Command` -> `Cinematic Suite` -> `Frame Review` -> `Studio Dashboard` -> `Active Project`).
+   - **All 27 Canonical Films Distributed Sub-Category Wise Across 3 Columns:**
+     - Column 1 (9 films): Wedding Cinema (16:9) & Pre-Wedding Cinema.
+     - Column 2 (9 films): Grand Weddings, Teasers & Trailers (16:9).
+     - Column 3 (9 films): Destination Pre-Wedding & Vertical Cinematic Reels (9:16).
+     - **Unbroken Seamless Infinite Waterfall:** Each column features two identical sets of 9 cards with uniform bottom margins (`mb-2.5 sm:mb-3.5 xl:mb-4`), eliminating gap calculation mismatches and ensuring continuous, unbroken infinite scrolling with zero seam jumps, voids, or broken lines.
+     - **Viewport-Aware Stream Activation & Decoder Protection:** Employs `IntersectionObserver` to mount `<video>` strictly when a card is in or near the visible filmstrip viewport (~9 active streams total across all 3 columns instead of 54). Cards feature an underlying sharp JPEG poster base layer with smooth fade-in upon playback (`onPlaying`), guaranteeing zero black frames or decoder lockups even on low-speed internet.
+   - **Coverflow Showcase (`CoverflowReels.tsx`):** The top tab switcher pill bar and bottom button are completely removed. Cards display pure video with zero titles, couple names, or category tags. Contains **ALL 27 CANONICAL FILMS** sequenced in sub-category order:
+     1. Wedding Cinema (Films 1–6, 16:9)
+     2. Pre-Wedding Films (Films 7–10, 16:9)
+     3. Teasers & Trailers (Films 11–17, 16:9)
+     4. Cinematic Reels (Films 18–27, 9:16 vertical)
+     - **One-by-One Focus Streaming:** Auto-rotates continuously through all 27 films. Only the centered active card (and immediate neighbor, `absDiff < 1.2`) mounts and streams the video highlight; background cards render instant Rec.709 JPEG poster frames. Slashes bandwidth requirement to **1.2 Mbps**, eliminating buffering and frame drops on slow broadband or mobile data.
+   - **Grey Wrap & Overlay Elimination (100% Color Vibrancy):** Removed all dark gradient overlays (`bg-gradient-to-t from-black/85 via-black/20 to-transparent`), artificial brightness dimming (`brightness(0.78)`), and reduced opacities. All video elements render at `opacity-100` with natural, vivid Rec.709 color.
    - **Production Archive (`ProductionArchive.tsx`):** Section renamed to "Production Standards & Delivery" with client-facing studio metrics.
    - **Portfolio (`/work`):** Action buttons refined to `Order Edit →`.
 3. **Midpoint Video Highlight Looping (10-15s Action Window):**

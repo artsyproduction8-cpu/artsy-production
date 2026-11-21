@@ -410,19 +410,23 @@ To deliver a broadcast-quality visual experience across desktop and mobile while
    - **Deduplication Invariant:** All duplicate files in R2 (such as redundant root teasers and multi-folder duplicates) were permanently removed. `src/lib/portfolio.ts` strictly maps to the canonical 27 films, eliminating duplicate renders regardless of database state. Migration 020 (`020_purge_duplicates_and_set_canonical_27_portfolio.sql`) provides the authoritative SQL to purge legacy duplicate rows and seed the exact 27 canonical rows with integer `display_order` 1..27.
 
 ### 3.11 Dynamic Aspect-Ratio Player, Harmonized Coverflow & Luxury Studio Standards (/work, Landing & Login)
-1. **Adaptive Aspect-Ratio Player & Coverflow Harmonization:**
+1. **Adaptive Aspect-Ratio Player & Mixed Showcase Layout:**
    - Detects video dimensions automatically via `video.onLoadedMetadata` (`videoHeight > videoWidth`) and category heuristics (`isReel`).
    - **Vertical Reels (9:16):** Modal container dynamically narrows to `max-w-md sm:max-w-sm` and player container snaps to `aspect-[9/16] max-h-[78vh] mx-auto`. Completely eliminates black pillarbox bars on left and right, delivering a native smartphone reel experience.
    - **Widescreen Films (16:9):** Modal container smoothly expands to `max-w-4xl lg:max-w-5xl` with `aspect-video`.
-   - **Coverflow Showcase Harmonization (`CoverflowReels.tsx`):** 16:9 widescreen films and 9:16 vertical reels are decoupled into dedicated aspect-harmonized tabs (`[ 🎬 Master Films (16:9) ]` vs `[ 📱 Vertical Reels (9:16) ]`), eliminating height clashing, letterbox gaps, and harsh blue focus rings in the 3D stage. Active center cards utilize luxury ambient drop shadows and subtle glass borders.
-2. **Clean, Minimalist Studio Aesthetic (Purging Buzzwords & Technical Jargon):**
-   - **Login Page (`/auth/login`):** Filmstrip cards are pure moving cinema. All technical badges (`9:16 VERTICAL`, `FEATURE CUT`, `04:30`, `Kinetic Pacing`, `Rec.709 Color Science`, `Stage Audio Master`, etc.) are purged. Top pill replaced with quiet `• Selected Studio Work`. Header replaced rotating taglines with luxury typography: `Sign in to Artsy` / `Apply as Creator`.
-   - **Production Archive (`ProductionArchive.tsx`):** Section renamed to "Production Standards & Delivery". Replaced internal labels with client-facing studio metrics (`Color Grading: Studio Rec.709 Master`, `Turnaround: 5 Working Days`, `Deliverables: 4K Master + Social Cut`).
-   - **Portfolio (`/work`):** Action buttons refined to `Order Edit →`. Typography kept compact and titles unclipped.
-3. **Edge Streaming & Backend Link Elimination:**
+   - **Mixed Format Marquee & Coverflow (`login/page.tsx` & `CoverflowReels.tsx`):** Both the 3-column login marquee and homepage Coverflow showcase present a dynamic alternating mix of 16:9 widescreen films (`h-[125px..175px]` / `w-[320px..500px] aspect-video`) and 9:16 vertical reels (`h-[200px..285px]` / `w-[200px..270px] aspect-[9/16]`) with zero letterbox distortion or ugly bars.
+2. **Clean, Minimalist Studio Aesthetic (Complete Tag Purge & Auto-Rotating Headings):**
+   - **Login Page (`/auth/login`):** All floating badges and category tags (`Selected Studio Work`, `WEDDING CINEMA`, `CINEMATIC REEL`, `PRE-WEDDING`, `TEASER`, etc.) are completely purged. Cards present pure moving video with subtle titles. The right-panel headline maintains smooth auto-rotation (`Access Production Command` -> `Cinematic Suite` -> `Frame Review` -> `Studio Dashboard` -> `Active Project`).
+   - **Coverflow Showcase (`CoverflowReels.tsx`):** All category tags are completely removed. Cards showcase pure video with subtle titles drop-shadowed against an ambient dark vignette.
+   - **Production Archive (`ProductionArchive.tsx`):** Section renamed to "Production Standards & Delivery" with client-facing studio metrics.
+   - **Portfolio (`/work`):** Action buttons refined to `Order Edit →`.
+3. **Midpoint Video Highlight Looping (10-15s Action Window):**
+   - Video previews in both the login filmstrip and Coverflow showcase automatically seek to the middle of the video (`video.currentTime = Math.floor(dur / 2) - 3`) upon loading metadata.
+   - Videos play the peak 10-15 seconds of cinematic action and seamlessly loop back to the midpoint on `timeupdate`, completely eliminating black opening frames, static title screens, and studio logos.
+4. **Edge Streaming & Backend Link Elimination:**
    - The "Direct 4K Stream ↗" button and raw storage links have been completely removed.
    - All video and image streaming across marketing components, login marquee, and portfolio utilizes `/api/portfolio/stream?key=...` which generates 7-day presigned S3 URLs on the server, ensuring zero 401 Unauthorized errors and full HTTP 206 range-seeking support.
-4. **Real Canonical Video Previews on Landing & Login:**
+5. **Real Canonical Video Previews on Landing & Login:**
    - Replaced all mock/demo images and titles in `CoverflowReels.tsx`, `ProductionArchive.tsx`, and `auth/login/page.tsx` with authentic canonical films from Cloudflare R2 (`previews/` and `thumbnails/`).
 
 ---

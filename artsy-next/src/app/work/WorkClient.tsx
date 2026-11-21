@@ -26,10 +26,8 @@ type CategoryFilter = 'all' | 'wedding' | 'pre-wedding' | 'teaser' | 'reels';
 /**
  * Bulletproof, high-performance HTML5 video preview card.
  * - Concurrency-aware: Prioritizes active viewport cards to prevent browser socket exhaustion.
- * - Continuous Seamless Auto-Replay: Quad-layer loop shield (onEnded, onTimeUpdate, onSeeked, loop) ensuring videos replay continuously without freezing.
- * - Zero Black Title Slates: Jumps directly to highlight start and loops back to highlight start on repeat.
- * - Active Playback Recovery: Listens to canplay and canplaythrough to immediately resume when buffer fills.
- * - DOM-level muted enforcement for 100% universal browser policy compliance across iOS Safari, Chrome, Edge, and Firefox.
+ * - Continuous Seamless Auto-Replay: Quad-layer loop shield (onEnded, onTimeUpdate, onSeeked, loop).
+ * - Compact & Quiet: Pure video focus with zero unnecessary tags or overlays.
  */
 function VideoCardPreview({
   src,
@@ -60,10 +58,9 @@ function VideoCardPreview({
   const isTeaser = category.toLowerCase().includes('teaser') || category.toLowerCase().includes('trailer');
   const isPreWedding = category.toLowerCase().includes('pre-wedding') || category.toLowerCase().includes('pre wedding');
   
-  // Highlight preview starting timestamp: only needed if playing the master cut directly
   const previewStartTime = isPreview ? 0 : (isReel ? 0.1 : isTeaser ? 1.5 : isPreWedding ? 4.5 : 5.0);
 
-  // Viewport observation: activates playback when in view, pauses when out of view to save bandwidth
+  // Viewport observation: activates playback when in view, pauses when out of view
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -113,7 +110,7 @@ function VideoCardPreview({
     }
   }, [activeSrc, isInView]);
 
-  // Seamless continuous replay function: restarts smoothly and immediately
+  // Seamless continuous replay function
   const handleReplay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -129,9 +126,9 @@ function VideoCardPreview({
 
   if (hasError) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#1C1C1E] to-[#0A0A0A] text-white/70">
-        <span className="text-3xl mb-1">🎬</span>
-        <span className="text-[10px] font-mono tracking-widest uppercase text-white/50 px-4 text-center truncate w-full">
+      <div className="w-full h-full flex flex-col items-center justify-center bg-[#141416] text-white/60">
+        <span className="text-2xl mb-1">🎬</span>
+        <span className="text-[10px] font-mono tracking-widest uppercase text-white/40 px-3 text-center truncate w-full">
           {title}
         </span>
       </div>
@@ -140,20 +137,13 @@ function VideoCardPreview({
 
   return (
     <div ref={containerRef} className="relative w-full h-full bg-[#0A0A0A] overflow-hidden">
-      {/* Studio Master Resolution Badge */}
-      <div className="absolute top-3 right-3 z-10 pointer-events-none flex items-center gap-1.5">
-        <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-white/95 font-mono text-[9px] font-bold tracking-wider uppercase border border-white/10 shadow-xs">
-          {isReel ? '9:16 REEL' : '4K UHD'}
-        </span>
-      </div>
-
-      {/* Smooth Loading Shimmer (fades out as video begins playing) */}
+      {/* Smooth Loading Shimmer */}
       <div
         className={`absolute inset-0 bg-[#0A0A0A] flex items-center justify-center transition-opacity duration-500 pointer-events-none z-5 ${
           isLoaded ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-[#3B82F6] animate-spin" />
+        <div className="w-5 h-5 rounded-full border-2 border-white/10 border-t-[#3B82F6] animate-spin" />
       </div>
 
       {hasEnteredView ? (
@@ -224,7 +214,6 @@ function VideoCardPreview({
           onTimeUpdate={(e) => {
             const vid = e.currentTarget;
             if (vid.duration && vid.duration > 1.0) {
-              // Seamless continuous loop: restart 0.25s before end
               if (vid.currentTime >= vid.duration - 0.25) {
                 handleReplay();
               }
@@ -237,10 +226,20 @@ function VideoCardPreview({
 }
 
 /**
- * Premium Modal Video Player.
- * Native HTML5 high-definition video player with full playback controls and resilient unmuting.
+ * Adaptive Aspect-Ratio Video Player.
+ * - Detects 9:16 vertical reels vs 16:9 widescreen films automatically.
+ * - Fits reels snugly in portrait mode without blank space on left/right.
+ * - Clean, distraction-free player with zero backend links or overlays.
  */
-function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
+function ModalVideoPlayer({
+  video,
+  isVertical,
+  onDetectAspect,
+}: {
+  video: PortfolioVideo;
+  isVertical: boolean;
+  onDetectAspect?: (vertical: boolean) => void;
+}) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isMutedByPolicy, setIsMutedByPolicy] = useState(false);
@@ -285,23 +284,20 @@ function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
   };
 
   return (
-    <div className="relative aspect-video w-full bg-black overflow-hidden flex items-center justify-center group">
-      {/* Quality Badge */}
-      <div className="absolute top-4 right-4 z-20 pointer-events-none">
-        <span className="px-3 py-1 rounded-lg bg-black/80 backdrop-blur-md text-[#3B82F6] font-mono text-xs font-bold tracking-wider uppercase border border-[#3B82F6]/30 shadow-lg">
-          4K ULTRA HD • DIRECT EDGE STREAM
-        </span>
-      </div>
-
+    <div
+      className={`relative w-full bg-black overflow-hidden flex items-center justify-center group ${
+        isVertical ? 'aspect-[9/16] max-h-[78vh] mx-auto' : 'aspect-video'
+      }`}
+    >
       {/* Unmute Prompt if muted by browser policy */}
       {isMutedByPolicy && (
         <button
           type="button"
           onClick={toggleSound}
-          className="absolute bottom-16 left-6 z-20 px-4 py-2.5 rounded-xl bg-black/80 hover:bg-[#3B82F6] text-white text-xs font-bold tracking-wide uppercase backdrop-blur-md border border-white/20 transition-all flex items-center gap-2 shadow-xl cursor-pointer"
+          className="absolute bottom-6 left-6 z-20 px-3.5 py-2 rounded-xl bg-black/80 hover:bg-[#3B82F6] text-white text-xs font-semibold backdrop-blur-md border border-white/20 transition-all flex items-center gap-2 shadow-xl cursor-pointer"
         >
           <span>🔊</span>
-          <span>Click to Unmute Audio</span>
+          <span>Click to Unmute</span>
         </button>
       )}
 
@@ -319,6 +315,9 @@ function ModalVideoPlayer({ video }: { video: PortfolioVideo }) {
         onEnded={handleModalReplay}
         onLoadedMetadata={(e) => {
           const vid = e.currentTarget;
+          if (vid.videoHeight > vid.videoWidth && onDetectAspect) {
+            onDetectAspect(true);
+          }
           if (highlightStart > 0 && vid.currentTime < highlightStart && vid.duration > highlightStart) {
             vid.currentTime = highlightStart;
           }
@@ -334,8 +333,9 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
   const [prevInitial, setPrevInitial] = useState<PortfolioVideo[]>(initialVideos);
   const [filter, setFilter] = useState<CategoryFilter>('all');
   const [selectedVideo, setSelectedVideo] = useState<PortfolioVideo | null>(null);
+  const [isModalVertical, setIsModalVertical] = useState(false);
 
-  // Sync state if initialVideos changes (React-recommended pattern during render)
+  // Sync state if initialVideos changes
   if (initialVideos !== prevInitial) {
     setPrevInitial(initialVideos);
     if (initialVideos.length > 0) {
@@ -369,6 +369,8 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
     };
 
     if (selectedVideo) {
+      const isReel = (selectedVideo.category || '').toLowerCase().includes('reel');
+      setIsModalVertical(isReel);
       window.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
     }
@@ -379,7 +381,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
     };
   }, [selectedVideo]);
 
-  // Clean, deterministic filter logic matching the 4 studio categories
+  // Clean filter logic matching the 4 studio categories
   const filteredVideos =
     filter === 'all'
       ? videos
@@ -420,31 +422,31 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
 
   return (
     <>
-      {/* Header Hero */}
-      <section className="w-full max-w-[1200px] mx-auto px-6 sm:px-8 mb-12">
-        <div className="max-w-3xl space-y-4">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#1D1D1F] uppercase">
-            CINEMATIC ARCHIVE
+      {/* Header Hero - Clean & Simple */}
+      <section className="w-full max-w-[1200px] mx-auto px-6 sm:px-8 mb-8">
+        <div className="max-w-2xl space-y-2">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#1D1D1F] uppercase">
+            PORTFOLIO
           </h1>
-          <p className="text-base sm:text-lg text-[#86868B] leading-relaxed">
-            Explore Artsy Production&apos;s official portfolio across luxury wedding films, pre-wedding cinema, and high-velocity commercial cuts. Every film is crafted with emotive storytelling, deterministic color grading, and acoustic precision.
+          <p className="text-sm sm:text-base text-[#86868B] leading-relaxed">
+            Explore our video edits across wedding cinema, pre-wedding films, teasers, and vertical reels.
           </p>
         </div>
 
-        {/* Interactive Filter Pills with Live Counts */}
-        <div className="mt-8 flex flex-wrap items-center gap-2.5 pt-6 border-t border-[#F5F5F7]">
+        {/* Clean Filter Pills */}
+        <div className="mt-6 flex flex-wrap items-center gap-2 pt-4 border-t border-[#F5F5F7]">
           {[
-            { id: 'all', label: 'All Portfolio', count: counts.all },
+            { id: 'all', label: 'All', count: counts.all },
             { id: 'wedding', label: 'Wedding Cinema', count: counts.wedding },
-            { id: 'pre-wedding', label: 'Pre-Wedding Films', count: counts['pre-wedding'] },
+            { id: 'pre-wedding', label: 'Pre-Wedding', count: counts['pre-wedding'] },
             { id: 'teaser', label: 'Teasers & Trailers', count: counts.teaser },
-            { id: 'reels', label: 'Cinematic Reels', count: counts.reels },
+            { id: 'reels', label: 'Reels', count: counts.reels },
           ].map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setFilter(tab.id as CategoryFilter)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold tracking-wide transition-all cursor-pointer flex items-center gap-1.5 ${
                 filter === tab.id
                   ? 'bg-[#1D1D1F] text-white shadow-xs'
                   : 'bg-[#F5F5F7] text-[#86868B] hover:text-[#1D1D1F] hover:bg-[#E5E5E7]'
@@ -463,17 +465,17 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
         </div>
       </section>
 
-      {/* Portfolio Showcase Grid */}
+      {/* Portfolio Showcase Grid - Compact Cards with Big Video Area */}
       <section className="w-full max-w-[1200px] mx-auto px-6 sm:px-8">
         {filteredVideos.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
             {filteredVideos.map((video, idx) => (
               <div
                 key={video.id}
                 onClick={() => setSelectedVideo(video)}
-                className="group bg-white rounded-3xl border border-[#E5E5E7] overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.12)] hover:border-[#3B82F6]/50 transition-all duration-300 flex flex-col justify-between cursor-pointer"
+                className="group bg-white rounded-2xl border border-[#E5E5E7] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] hover:border-[#3B82F6]/40 transition-all duration-300 flex flex-col justify-between cursor-pointer"
               >
-                {/* 16:9 Aspect Video Preview Container */}
+                {/* Video Area (Dominant & Prominent) */}
                 <div>
                   <div className="relative aspect-video w-full bg-[#0A0A0A] overflow-hidden">
                     <VideoCardPreview
@@ -491,141 +493,111 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                       className="absolute inset-0 z-10 cursor-pointer"
                       onClick={() => setSelectedVideo(video)}
                     />
-
-                    {/* Subtle dark tint */}
-                    <div className="absolute inset-0 bg-black/5 pointer-events-none group-hover:bg-transparent transition-colors" />
                   </div>
 
-                  {/* Card Content */}
-                  <div className="p-6 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#3B82F6]">
-                        {video.category}
-                      </span>
-                      <span className="text-[10px] font-mono text-[#86868B] uppercase">
-                        Master Cut
-                      </span>
-                    </div>
+                  {/* Compact Info Area */}
+                  <div className="p-3.5 sm:p-4 pb-2 space-y-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[#3B82F6] block">
+                      {video.category}
+                    </span>
 
-                    <h3 className="text-base sm:text-lg font-bold text-[#1D1D1F] leading-snug group-hover:text-[#3B82F6] transition-colors line-clamp-2">
+                    <h3 className="text-sm sm:text-base font-bold text-[#1D1D1F] leading-snug group-hover:text-[#3B82F6] transition-colors truncate">
                       {video.title}
                     </h3>
 
                     {video.description && (
-                      <p className="text-sm text-gray-400 leading-relaxed line-clamp-3">
+                      <p className="text-xs text-[#86868B] leading-relaxed line-clamp-1">
                         {video.description}
                       </p>
                     )}
                   </div>
                 </div>
 
-                {/* Card Actions */}
-                <div className="p-6 pt-0 border-t border-[#F5F5F7] mt-3 flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#3B82F6] group-hover:underline flex items-center gap-1.5">
-                    <span>Play Master</span>
-                    <span className="text-sm">▶</span>
+                {/* Compact Card Action Bar */}
+                <div className="p-3.5 sm:p-4 pt-2.5 border-t border-[#F5F5F7] mt-1 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#3B82F6] group-hover:underline flex items-center gap-1">
+                    <span>Watch</span>
+                    <span className="text-[9px]">▶</span>
                   </span>
 
                   <Link
                     href={`/book?category=${encodeURIComponent((video.category || '').toLowerCase().includes('wedding') ? 'wedding' : 'brand')}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="px-4 py-2 rounded-xl bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-xs"
+                    className="px-3 py-1.5 rounded-lg bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-[11px] font-semibold uppercase tracking-wider transition-colors shadow-xs"
                   >
-                    Order Cut →
+                    Book Cut →
                   </Link>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          /* Clean empty state when no videos match */
-          <div className="p-16 text-center bg-white rounded-3xl border border-[#E5E5E7] shadow-xs">
-            <div className="w-16 h-16 rounded-2xl bg-[#F5F5F7] text-[#86868B] flex items-center justify-center mx-auto mb-4 text-2xl">
+          /* Empty state */
+          <div className="p-16 text-center bg-white rounded-2xl border border-[#E5E5E7]">
+            <div className="w-12 h-12 rounded-xl bg-[#F5F5F7] text-[#86868B] flex items-center justify-center mx-auto mb-3 text-xl">
               🎬
             </div>
-            <h3 className="text-lg font-bold text-[#1D1D1F]">Portfolio Coming Soon</h3>
-            <p className="text-sm text-[#86868B] mt-1.5 max-w-md mx-auto">
-              Official company portfolio reels are currently being curated. Please check back shortly or order a custom edit cut directly.
+            <h3 className="text-base font-bold text-[#1D1D1F]">Portfolio Coming Soon</h3>
+            <p className="text-xs text-[#86868B] mt-1 max-w-sm mx-auto">
+              Our official company reels are being updated. Check back shortly or book a custom cut directly.
             </p>
-            <div className="mt-6 flex items-center justify-center gap-3">
-              <Link
-                href="/book"
-                className="px-5 py-2.5 rounded-xl bg-[#1D1D1F] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#3B82F6] transition-colors"
-              >
-                Book a Project →
-              </Link>
-            </div>
           </div>
         )}
       </section>
 
-      {/* Video Lightbox Modal */}
+      {/* Video Lightbox Modal with Dynamic Aspect Ratio */}
       {selectedVideo && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 md:p-8 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
           onClick={() => setSelectedVideo(null)}
           role="dialog"
           aria-modal="true"
           aria-label={selectedVideo.title}
         >
           <div
-            className="relative w-full max-w-5xl bg-[#141414] border border-[#262626] rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+            className={`relative w-full ${
+              isModalVertical ? 'max-w-md sm:max-w-sm' : 'max-w-4xl lg:max-w-5xl'
+            } bg-[#141414] border border-[#262626] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col transition-all duration-300`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between text-white">
-              <div className="flex items-center gap-3 truncate max-w-[85%]">
-                <span className="px-2 py-0.5 rounded-md bg-[#3B82F6]/20 text-[#3B82F6] font-mono text-[10px] font-bold uppercase tracking-wider border border-[#3B82F6]/30">
+            <div className="p-3.5 sm:p-4 border-b border-white/10 flex items-center justify-between text-white">
+              <div className="flex items-center gap-2 truncate max-w-[85%]">
+                <span className="px-2 py-0.5 rounded bg-[#3B82F6]/20 text-[#3B82F6] font-mono text-[9px] font-bold uppercase tracking-wider">
                   {selectedVideo.category}
                 </span>
-                <h2 className="text-base sm:text-lg font-bold text-white truncate">
+                <h2 className="text-sm sm:text-base font-bold text-white truncate">
                   {selectedVideo.title}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedVideo(null)}
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer text-xl font-bold ml-4 shrink-0"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer text-base font-bold ml-2 shrink-0"
                 aria-label="Close modal"
               >
                 ✕
               </button>
             </div>
 
-            {/* Video Player (High-Definition Native Player with unmuting) */}
-            <ModalVideoPlayer video={selectedVideo} />
+            {/* Video Player (Adaptive: 9:16 for Reels, 16:9 for Widescreen) */}
+            <ModalVideoPlayer
+              video={selectedVideo}
+              isVertical={isModalVertical}
+              onDetectAspect={(vert) => setIsModalVertical(vert)}
+            />
 
-            {/* Modal Footer */}
-            <div className="p-4 sm:p-6 bg-[#18181B] border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1 text-xs max-w-xl">
-                <div className="text-white font-semibold flex items-center gap-2">
-                  <span>Cinematic Post-Production Master</span>
-                  <span className="text-[#3B82F6] font-mono text-[10px]">• 4K UHD</span>
-                </div>
-                {selectedVideo.description && (
-                  <p className="text-gray-400 line-clamp-2 leading-relaxed">
-                    {selectedVideo.description}
-                  </p>
-                )}
+            {/* Clean Modal Footer (No Backend Links or Clutter) */}
+            <div className="p-3.5 sm:p-4 bg-[#18181B] border-t border-white/10 flex items-center justify-between gap-3">
+              <div className="text-xs text-white/90 truncate max-w-[65%]">
+                <span className="font-semibold">{selectedVideo.title}</span>
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                {selectedVideo.video_url && (
-                  <a
-                    href={selectedVideo.video_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2.5 rounded-xl border border-white/20 hover:border-white text-white text-xs font-semibold uppercase tracking-wider transition-colors"
-                  >
-                    Direct 4K Stream ↗
-                  </a>
-                )}
-                <Link
-                  href={`/book?category=${encodeURIComponent((selectedVideo.category || '').toLowerCase().includes('wedding') ? 'wedding' : 'brand')}`}
-                  className="px-5 py-2.5 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
-                >
-                  Book This Cut →
-                </Link>
-              </div>
+              <Link
+                href={`/book?category=${encodeURIComponent((selectedVideo.category || '').toLowerCase().includes('wedding') ? 'wedding' : 'brand')}`}
+                className="px-4 py-2 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm shrink-0"
+              >
+                Book This Cut →
+              </Link>
             </div>
           </div>
         </div>

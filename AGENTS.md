@@ -409,6 +409,21 @@ To deliver a broadcast-quality visual experience across desktop and mobile while
    - **Cinematic Reels (10 vertical reels):** Order 18–27 (Anoop & Ansa, Akash, Akshay & Gauri, Anroop & Jeemol, George & Sumi, Kuhu Haldi, Monish & Jisha, Sanket & Rutuja Sangeet, Shweta Bridal Solo, Sumit & Sonal).
    - **Deduplication Invariant:** All duplicate files in R2 (such as redundant root teasers and multi-folder duplicates) were permanently removed. `src/lib/portfolio.ts` strictly maps to the canonical 27 films, eliminating duplicate renders regardless of database state. Migration 020 (`020_purge_duplicates_and_set_canonical_27_portfolio.sql`) provides the authoritative SQL to purge legacy duplicate rows and seed the exact 27 canonical rows with integer `display_order` 1..27.
 
+### 3.11 Dynamic Aspect-Ratio Player & Minimalist Portfolio System (/work, Landing & Login)
+1. **Adaptive Aspect-Ratio Video Player System:**
+   - Detects video dimensions automatically via `video.onLoadedMetadata` (`videoHeight > videoWidth`) and category heuristics (`isReel`).
+   - **Vertical Reels (9:16):** Modal container dynamically narrows to `max-w-md sm:max-w-sm` and player container snaps to `aspect-[9/16] max-h-[78vh] mx-auto`. Completely eliminates black pillarbox bars on left and right, delivering a native smartphone reel experience.
+   - **Widescreen Films (16:9):** Modal container smoothly expands to `max-w-4xl lg:max-w-5xl` with `aspect-video`.
+2. **Clean, Minimalist Portfolio UI (Buzzword Removal & Compact Cards):**
+   - All technical jargon (`9:16 reel`, `4k master`, `master cuts`, `4K UHD`, `4K ULTRA HD • DIRECT EDGE STREAM`, `Cinematic Post-Production Master`) is completely purged.
+   - Action button simplified from `Play Master ▶` to `Watch ▶`.
+   - Cards are compact (`p-3.5 sm:p-4`) with smaller typography, single-line truncated titles, and 1-line clamped descriptions so the visual focus remains 90%+ on the high-definition moving video preview.
+3. **Edge Streaming & Backend Link Elimination:**
+   - The "Direct 4K Stream ↗" button and raw storage links have been completely removed.
+   - All video and image streaming across marketing components, login marquee, and portfolio utilizes `/api/portfolio/stream?key=...` which generates 7-day presigned S3 URLs on the server, ensuring zero 401 Unauthorized errors and full HTTP 206 range-seeking support.
+4. **Real Canonical Video Previews on Landing & Login:**
+   - Replaced all mock/demo images and titles in `CoverflowReels.tsx`, `ProductionArchive.tsx`, and `auth/login/page.tsx` with authentic canonical films from Cloudflare R2 (`previews/` and `thumbnails/`).
+
 ---
 
 ## 4. DYNAMIC PRICING ENGINE & FINANCIAL WATERFALL

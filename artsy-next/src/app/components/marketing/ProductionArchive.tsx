@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 
 interface ArchiveMeta {
@@ -13,41 +12,47 @@ interface ArchiveItem {
   title: string;
   description: string;
   image: string;
+  videoUrl: string;
   meta: ArchiveMeta[];
 }
+
+const getStreamUrl = (key: string) => `/api/portfolio/stream?key=${encodeURIComponent(key)}`;
 
 const ARCHIVE_ITEMS: ArchiveItem[] = [
   {
     category: 'Wedding Cinema',
-    title: 'The Rajasthan Palace Celebration',
+    title: 'Chandni & Harihar — Grand Reception Film',
     description:
-      'Multi-day footage ingest across four camera packages. Precision audio synchronization on non-timecode ambient recordings, finished with custom Rec.709 film emulations to accentuate architectural golden hours.',
-    image: '/images/reels/wedding-palace.jpg',
+      'A lavish Bollywood-grade wedding reception celebration featuring dynamic choreography and Shreyas Iyer on the dance floor, color graded to perfection with pristine acoustic pacing.',
+    image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
     meta: [
       { label: 'Assigned Lead', value: 'Senior Fellow Colorist' },
-      { label: 'Delivery Window', value: '06 Calendar Days' },
+      { label: 'Delivery Window', value: '05 Working Days' },
     ],
   },
   {
-    category: 'Commercial Campaign',
-    title: 'Nomad Labs Vertical Editorial',
+    category: 'Wedding Cinema',
+    title: 'Akash & Mayuri — Mumbai Wedding Highlights',
     description:
-      'High-velocity editorial constructed from 100fps runway captures. Bespoke rhythmic sound foley synced directly with textile cuts and speed ramps to elevate retention past 42% on paid channels.',
-    image: '/images/reels/neon-fashion.jpg',
+      'An emotional, grand Mumbai wedding film capturing traditional rituals, intimate candid exchanges, and breathtaking golden-hour cinematography mastered in Rec.709 color science.',
+    image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
     meta: [
-      { label: 'Lead Specialist', value: 'Kinetic Motion Lead' },
-      { label: 'Deliverables', value: '6x Hook Variants' },
+      { label: 'Lead Specialist', value: 'Cinematic Narrative Lead' },
+      { label: 'Deliverables', value: 'Full Highlight + Teaser' },
     ],
   },
   {
-    category: 'Automotive Showcase',
-    title: 'Solaris Electric Motor Launch',
+    category: 'Pre-Wedding Films',
+    title: 'Anoop & Ansa — Cinematic Pre-Wedding Film',
     description:
-      'Multi-layer CG asset integration, subtle technical typography overlays, and visceral synthesized electric powertrain sound design engineered for worldwide commercial broadcast.',
-    image: '/images/reels/automotive-supercar.jpg',
+      'An evocative romance set against scenic mountain vistas and serene lakeside shores, edited with poetic cadence, seamless speed ramps, and warm filmic contrast.',
+    image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
     meta: [
-      { label: 'Master Suite', value: 'VFX & Master Suite' },
-      { label: 'Master Format', value: '3840 × 2160 UHD' },
+      { label: 'Master Suite', value: 'DaVinci Resolve Studio' },
+      { label: 'Timeline SLA', value: '48h Priority Delivery' },
     ],
   },
 ];
@@ -55,54 +60,55 @@ const ARCHIVE_ITEMS: ArchiveItem[] = [
 export default function ProductionArchive() {
   return (
     <section
-      className="w-full py-24 sm:py-32 bg-[#F5F5F7]"
+      className="w-full py-20 sm:py-28 bg-[#F5F5F7]"
       id="verified-production-archive"
     >
       <div className="max-w-[1200px] mx-auto px-6 sm:px-8">
-        
         {/* Section Header */}
-        <div className="mb-14">
+        <div className="mb-12">
           <div className="max-w-2xl">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#1D1D1F]">
               Verified production archive
             </h2>
-            <p className="mt-4 text-base sm:text-lg text-[#86868B] font-normal leading-relaxed">
-              Every deliverable is logged with complete render metadata, color specifications, and verified delivery timelines.
+            <p className="mt-3 text-base text-[#86868B] font-normal leading-relaxed">
+              Real client deliverables logged with verified color specifications, audio sync, and strict studio turnaround.
             </p>
           </div>
         </div>
 
-        {/* 3 Borderless White Cards with Soft Diffuse Shadow */}
+        {/* 3 Borderless White Cards with Live Video Panes */}
         <div className="flex flex-col gap-8">
           {ARCHIVE_ITEMS.map((item, idx) => (
             <div
               key={idx}
               className="bg-white rounded-2xl overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.04)] grid grid-cols-1 lg:grid-cols-12 transition-all duration-300 hover:shadow-[0_8px_32px_rgba(0,0,0,0.07)]"
             >
-              {/* Media Pane */}
-              <div className="lg:col-span-6 relative h-64 sm:h-80 lg:h-auto overflow-hidden bg-[#1D1D1F]">
+              {/* Media Video Pane */}
+              <div className="lg:col-span-6 relative h-64 sm:h-80 lg:h-auto overflow-hidden bg-black">
                 <div className="relative w-full h-full min-h-[260px]">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    loading="eager"
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-cover transition-transform duration-700 hover:scale-105"
+                  <video
+                    src={item.videoUrl}
+                    poster={item.image}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    className="object-cover w-full h-full transition-transform duration-700 hover:scale-105"
                   />
                 </div>
               </div>
 
               {/* Editorial Data Pane */}
-              <div className="lg:col-span-6 p-8 sm:p-10 flex flex-col justify-between gap-6">
+              <div className="lg:col-span-6 p-7 sm:p-9 flex flex-col justify-between gap-5">
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-semibold text-[#3B82F6]">
                       {item.category}
                     </span>
                   </div>
 
-                  <h3 className="text-2xl font-bold tracking-tight text-[#1D1D1F] leading-snug">
+                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-snug">
                     <Link
                       href="/work"
                       className="hover:text-[#3B82F6] transition-colors focus:underline focus:outline-none"
@@ -111,7 +117,7 @@ export default function ProductionArchive() {
                     </Link>
                   </h3>
 
-                  <p className="mt-4 text-sm leading-relaxed text-[#86868B] font-normal">
+                  <p className="mt-3 text-sm leading-relaxed text-[#86868B] font-normal">
                     {item.description}
                   </p>
 
@@ -121,19 +127,19 @@ export default function ProductionArchive() {
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3B82F6] hover:text-[#2563EB] group transition-colors"
                       aria-label={`View production breakdown for ${item.title}`}
                     >
-                      <span>View Production Breakdown</span>
+                      <span>View in Portfolio</span>
                       <span className="group-hover:translate-x-1 transition-transform">→</span>
                     </Link>
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-[#F5F5F7] grid grid-cols-2 gap-4">
+                <div className="pt-5 border-t border-[#F5F5F7] grid grid-cols-2 gap-4">
                   {item.meta.map((m, mIdx) => (
                     <div key={mIdx}>
                       <span className="text-[#86868B] block text-xs font-normal">
                         {m.label}
                       </span>
-                      <span className="text-[#1D1D1F] font-semibold mt-1 block text-sm">
+                      <span className="text-[#1D1D1F] font-semibold mt-0.5 block text-sm">
                         {m.value}
                       </span>
                     </div>
@@ -143,7 +149,6 @@ export default function ProductionArchive() {
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );

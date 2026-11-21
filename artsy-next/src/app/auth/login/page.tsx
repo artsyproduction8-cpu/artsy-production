@@ -16,194 +16,215 @@ interface PortfolioWorkCard {
   format: string;
   duration: string;
   image: string;
+  videoUrl?: string;
 }
+
+const getStreamUrl = (key: string) => `/api/portfolio/stream?key=${encodeURIComponent(key)}`;
 
 const ROW_1_WORK: PortfolioWorkCard[] = [
   {
     id: 'w1',
-    title: 'Royal Udaipur Palace Film',
+    title: 'Chandni & Harihar — Grand Reception',
     genre: 'Wedding Cinema',
-    badge: '4K MASTER',
+    badge: 'FEATURE CUT',
     badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    format: 'Rec.709 Film LUT',
+    format: 'Rec.709 Color Science',
     duration: '04:30',
-    image: '/images/reels/wedding-palace.jpg',
+    image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
   },
   {
     id: 'w2',
-    title: 'Verve FW26 Streetwear Editorial',
-    genre: 'Brand & DTC',
-    badge: 'COMMERCIAL',
+    title: 'Anoop & Ansa — Viral Wedding Reel',
+    genre: 'Cinematic Reel',
+    badge: '9:16 VERTICAL',
     badgeColor: 'bg-[#3B82F6]/20 text-[#60A5FA] border-[#3B82F6]/30',
-    format: 'Kinetic Cuts',
-    duration: '01:20',
-    image: '/images/portfolio-brand-1.jpg',
+    format: 'Kinetic Pacing',
+    duration: '00:30',
+    image: getStreamUrl('thumbnails/Reel_/ANOOP___ANSA_REEL_low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
   },
   {
     id: 'w3',
-    title: 'Apex Automotive Supercar Campaign',
-    genre: 'Commercial',
-    badge: '8K RAW',
+    title: 'Akash & Mayuri — Mumbai Wedding Film',
+    genre: 'Wedding Cinema',
+    badge: 'HIGHLIGHTS',
     badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    format: 'Color Science',
-    duration: '02:15',
-    image: '/images/reels/automotive-supercar.jpg',
+    format: 'Multi-Cam Sync',
+    duration: '03:45',
+    image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
   },
   {
     id: 'w4',
-    title: 'Lake Pichola Sunset Vows',
-    genre: 'Luxury Wedding',
-    badge: 'MULTI-CAM',
+    title: 'Akshay & Jagruti — Wedding Teaser',
+    genre: 'Teaser',
+    badge: 'FAST CUT',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    format: 'Waveform Sync',
-    duration: '03:45',
-    image: '/images/portfolio-wedding-2.jpg',
+    format: 'Beat-Matched Cut',
+    duration: '01:00',
+    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
   },
   {
     id: 'w5',
-    title: 'Haute Horlogerie Macro Commercial',
-    genre: 'Product Studio',
-    badge: 'MACRO 4K',
-    badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    format: 'Foley Sound',
-    duration: '00:45',
-    image: '/images/portfolio-product-1.jpg',
+    title: 'Juhi & Swapnil — Grand North Indian',
+    genre: 'Wedding Cinema',
+    badge: 'ROYAL CINEMA',
+    badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+    format: 'Baraat Master',
+    duration: '05:15',
+    image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
   },
   {
     id: 'w6',
-    title: 'Solaris Electronic Music Festival',
-    genre: 'Live Event',
-    badge: 'AUDIO STEMS',
-    badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-    format: '4K Multi-Perspective',
-    duration: '01:30',
-    image: '/images/reels/dj-festival.jpg',
+    title: 'Sanket & Rutuja — Sangeet Night Reel',
+    genre: 'Cinematic Reel',
+    badge: '9:16 VERTICAL',
+    badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    format: 'Stage Audio Master',
+    duration: '00:35',
+    image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
   },
 ];
 
 const ROW_2_WORK: PortfolioWorkCard[] = [
   {
     id: 'w7',
-    title: 'Neon Fashion Tokyo Lookbook',
-    genre: 'Fashion Editorial',
-    badge: '9:16 REEL',
+    title: 'Anoop & Ansa — Pre-Wedding Film',
+    genre: 'Pre-Wedding',
+    badge: 'ROMANCE',
     badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
-    format: 'Beat-Synced',
-    duration: '00:55',
-    image: '/images/reels/neon-fashion.jpg',
+    format: 'Scenic Drone Grade',
+    duration: '04:10',
+    image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
   },
   {
     id: 'w8',
-    title: 'Global Leadership Keynote Sizzle',
-    genre: 'Corporate Summit',
-    badge: 'EXECUTIVE',
+    title: 'Jai & Aishwarya — Wedding Teaser',
+    genre: 'Teaser',
+    badge: 'CINEMATIC',
     badgeColor: 'bg-[#3B82F6]/20 text-[#60A5FA] border-[#3B82F6]/30',
-    format: 'Dialogue Cleaned',
-    duration: '02:40',
-    image: '/images/portfolio-corporate-1.jpg',
+    format: 'Orchestral Score',
+    duration: '01:15',
+    image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
   },
   {
     id: 'w9',
-    title: 'The Heritage Palace Wedding Suite',
+    title: 'Rujuta & Abhyuday — Joy & Romance',
     genre: 'Wedding Cinema',
-    badge: 'TRINITY BUNDLE',
+    badge: 'FULL STORY',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    format: 'Full Story Cut',
-    duration: '08:15',
-    image: '/images/portfolio-wedding-1.jpg',
+    format: 'Warm Tone Curve',
+    duration: '03:50',
+    image: getStreamUrl('thumbnails/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_preview.mp4'),
   },
   {
     id: 'w10',
-    title: 'Lumina Diamond Fine Jewelry',
-    genre: 'Luxury Brand',
-    badge: 'DTC HOOKS',
-    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    format: 'Variant Cuts',
-    duration: '00:40',
-    image: '/images/reels/luxury-product.jpg',
+    title: 'Kuhu — Haldi Celebration Reel',
+    genre: 'Cinematic Reel',
+    badge: '9:16 VERTICAL',
+    badgeColor: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+    format: 'High-Frame-Rate',
+    duration: '00:25',
+    image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
   },
   {
     id: 'w11',
-    title: 'Aura Activewear High-Velocity Ad',
-    genre: 'Brand Commercial',
-    badge: 'CONVERSION AD',
-    badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    format: 'Motion Design',
-    duration: '01:10',
-    image: '/images/portfolio-brand-2.jpg',
+    title: 'Akshay & Partner — Pre-Wedding',
+    genre: 'Pre-Wedding',
+    badge: 'NARRATIVE',
+    badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    format: 'Landscape Pacing',
+    duration: '03:15',
+    image: getStreamUrl('thumbnails/Pre_wedding/Akshay_Pre_wedding_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Akshay_Pre_wedding_Low_preview.mp4'),
   },
   {
     id: 'w12',
-    title: 'Live Arena Stadium Concert Film',
-    genre: 'Concert Cinema',
-    badge: 'SURROUND 5.1',
-    badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-    format: 'Pro Audio Master',
-    duration: '03:20',
-    image: '/images/reels/concert-rock.jpg',
+    title: 'Khushboo & Tejas — Wedding Teaser',
+    genre: 'Teaser',
+    badge: 'TEASER',
+    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    format: 'Dialogue Snippets',
+    duration: '01:05',
+    image: getStreamUrl('thumbnails/Teaser/Khushboo___Tejas_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Khushboo___Tejas_Teaser_Low_preview.mp4'),
   },
 ];
 
 const ROW_3_WORK: PortfolioWorkCard[] = [
   {
     id: 'w13',
-    title: 'Creator Studio Aesthetic Reel',
-    genre: 'UGC & Social',
-    badge: 'VERTICAL 9:16',
+    title: 'Rajat & Nimisha — South Indian Wedding',
+    genre: 'Wedding Cinema',
+    badge: 'TEMPLE RITUALS',
     badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    format: 'Kinetic SFX',
-    duration: '00:60',
-    image: '/images/reels/creator-studio.jpg',
+    format: 'Silk Color Science',
+    duration: '04:20',
+    image: getStreamUrl('thumbnails/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
   },
   {
     id: 'w14',
-    title: 'Taj Exotica Seaside Nuptials',
-    genre: 'Wedding Cinema',
-    badge: '4K CINEMA',
+    title: 'Monish & Jisha — Couple Reel',
+    genre: 'Cinematic Reel',
+    badge: '9:16 VERTICAL',
     badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    format: 'Rec.709 Tone Curve',
-    duration: '04:10',
-    image: '/images/portfolio-wedding-2.jpg',
+    format: 'Moody Film Shadows',
+    duration: '00:30',
+    image: getStreamUrl('thumbnails/Reel_/Monish___Jisha_Reel__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Monish___Jisha_Reel__Low_preview.mp4'),
   },
   {
     id: 'w15',
-    title: 'NextGen Cloud Summit Keynote',
-    genre: 'Corporate Event',
-    badge: 'BROADCAST',
+    title: 'Matan & Lihi — Pre-Wedding Story',
+    genre: 'Pre-Wedding',
+    badge: 'DESTINATION',
     badgeColor: 'bg-[#3B82F6]/20 text-[#60A5FA] border-[#3B82F6]/30',
-    format: 'Deck Conformed',
-    duration: '03:10',
-    image: '/images/portfolio-corporate-1.jpg',
+    format: 'Coastal Warmth',
+    duration: '03:30',
+    image: getStreamUrl('thumbnails/Pre_wedding/Matan___Lihi_cine_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Matan___Lihi_cine_Low_preview.mp4'),
   },
   {
     id: 'w16',
-    title: 'GT Hypercar Track Day Showcase',
-    genre: 'Commercial',
-    badge: 'COLOR PASS',
+    title: 'Matan & Lihi — Cinematic Trailer',
+    genre: 'Teaser',
+    badge: 'THEATRICAL',
     badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    format: 'Speed Ramps',
-    duration: '02:00',
-    image: '/images/reels/automotive-supercar.jpg',
+    format: 'Surround Sound',
+    duration: '01:20',
+    image: getStreamUrl('thumbnails/Teaser/Matan___Lihi_Trailer_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Matan___Lihi_Trailer_Low_preview.mp4'),
   },
   {
     id: 'w17',
-    title: 'Ceramic Chronograph Product Film',
-    genre: 'Product Video',
-    badge: 'MACRO FOLEY',
+    title: 'Hufriya & Danesh — 16 Years of Love',
+    genre: 'Wedding Cinema',
+    badge: 'RECEPTION',
     badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    format: 'Clean Lighting',
-    duration: '00:50',
-    image: '/images/portfolio-product-1.jpg',
+    format: 'Black-Tie Master',
+    duration: '04:45',
+    image: getStreamUrl('thumbnails/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_preview.mp4'),
   },
   {
     id: 'w18',
-    title: 'Indie Rock Arena Sound Check',
-    genre: 'Music & Stage',
-    badge: 'STAGE PROXIES',
+    title: 'Shweta — Bridal Solo Reel',
+    genre: 'Cinematic Reel',
+    badge: '9:16 VERTICAL',
     badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-    format: 'Audio Mastered',
-    duration: '02:50',
-    image: '/images/reels/concert-rock.jpg',
+    format: 'Portrait Grade',
+    duration: '00:25',
+    image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
   },
 ];
 
@@ -219,20 +240,33 @@ const ROTATING_TAGLINES = [
 function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
   return (
     <div className="w-full h-[145px] sm:h-[165px] lg:h-[180px] xl:h-[200px] relative rounded-2xl overflow-hidden border border-white/10 bg-[#141416] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none">
-      {/* Background Image */}
-      <Image
-        src={item.image}
-        alt={item.title}
-        fill
-        sizes="(max-width: 640px) 130px, (max-width: 1024px) 180px, 240px"
-        className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-85 group-hover/card:opacity-100"
-      />
+      {/* Background Live Video / Poster */}
+      {item.videoUrl ? (
+        <video
+          src={item.videoUrl}
+          poster={item.image}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="none"
+          className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-80 group-hover/card:opacity-100 pointer-events-none"
+        />
+      ) : (
+        <Image
+          src={item.image}
+          alt={item.title}
+          fill
+          sizes="(max-width: 640px) 130px, (max-width: 1024px) 180px, 240px"
+          className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-85 group-hover/card:opacity-100"
+        />
+      )}
 
       {/* Cinematic Gradient Vignette */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20 pointer-events-none" />
 
       {/* Top Badges */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 z-10">
+      <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 z-10 pointer-events-none">
         <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-black/65 backdrop-blur-md text-white/90 border border-white/10 flex items-center gap-1 truncate max-w-[58%]">
           <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] shrink-0" />
           <span className="truncate">{item.genre}</span>
@@ -243,7 +277,7 @@ function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
       </div>
 
       {/* Bottom Information */}
-      <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
+      <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 pointer-events-none">
         <h4 className="text-[11px] sm:text-xs font-bold text-white tracking-tight leading-snug truncate drop-shadow-md">
           {item.title}
         </h4>

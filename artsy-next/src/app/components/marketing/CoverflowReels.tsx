@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 
 interface ReelCard {
@@ -9,50 +8,60 @@ interface ReelCard {
   category: string;
   aspect: '16/9' | '9/16';
   image: string;
+  videoUrl: string;
 }
+
+const getStreamUrl = (key: string) => `/api/portfolio/stream?key=${encodeURIComponent(key)}`;
 
 const REELS: ReelCard[] = [
   {
-    title: 'Wedding Highlight Cinema',
-    category: 'Wedding // 4K Master',
+    title: 'Chandni & Harihar — Reception Film',
+    category: 'Wedding Cinema',
     aspect: '16/9',
-    image: '/images/reels/wedding-palace.jpg',
+    image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
   },
   {
-    title: 'Neon Fashion Editorial',
-    category: 'Commercial // 9:16 Reel',
+    title: 'Anoop & Ansa — Viral Wedding Reel',
+    category: 'Cinematic Reel',
     aspect: '9/16',
-    image: '/images/reels/neon-fashion.jpg',
+    image: getStreamUrl('thumbnails/Reel_/ANOOP___ANSA_REEL_low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
   },
   {
-    title: 'Automotive Cinema',
-    category: 'Commercial // Automotive',
+    title: 'Akash & Mayuri — Mumbai Highlights',
+    category: 'Wedding Cinema',
     aspect: '16/9',
-    image: '/images/reels/automotive-supercar.jpg',
+    image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
   },
   {
-    title: 'Luxury Commercial Showcase',
-    category: 'Product // Macro Studio',
-    aspect: '16/9',
-    image: '/images/reels/luxury-product.jpg',
-  },
-  {
-    title: 'Music Festival Reel',
-    category: 'Event // 9:16 Festival',
+    title: 'Sanket & Rutuja — Sangeet Night',
+    category: 'Cinematic Reel',
     aspect: '9/16',
-    image: '/images/reels/dj-festival.jpg',
+    image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
   },
   {
-    title: 'Concert Stage Film',
-    category: 'Music // Concert 4K',
+    title: 'Juhi & Swapnil — Grand North Indian',
+    category: 'Wedding Cinema',
     aspect: '16/9',
-    image: '/images/reels/concert-rock.jpg',
+    image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
   },
   {
-    title: 'Creator Aesthetic Video',
-    category: 'UGC // Creator Studio',
+    title: 'Kuhu — Haldi Celebration',
+    category: 'Cinematic Reel',
     aspect: '9/16',
-    image: '/images/reels/creator-studio.jpg',
+    image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
+  },
+  {
+    title: 'Akshay & Jagruti — Wedding Teaser',
+    category: 'Teaser',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
   },
 ];
 
@@ -69,7 +78,7 @@ export default function CoverflowReels() {
   const isHoveredRef = useRef(false);
 
   const total = REELS.length;
-  const AUTOPLAY_INTERVAL = 4000;
+  const AUTOPLAY_INTERVAL = 4500;
   const DRAG_SENSITIVITY = 260;
   const SWIPE_THRESHOLD = 40;
 
@@ -155,16 +164,15 @@ export default function CoverflowReels() {
     }, 50);
   };
 
-
   return (
     <section
-      className="w-full py-24 sm:py-32 bg-white overflow-hidden relative"
+      className="w-full py-20 sm:py-28 bg-white overflow-hidden relative"
       id="featured-reels"
     >
       {/* Section Header */}
-      <div className="max-w-[1200px] mx-auto px-6 sm:px-8 mb-12">
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-[-0.03em] text-[#1D1D1F]">
-          Featured reels &amp; master cuts
+      <div className="max-w-[1200px] mx-auto px-6 sm:px-8 mb-10">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#1D1D1F]">
+          Featured films &amp; reels
         </h2>
       </div>
 
@@ -179,8 +187,7 @@ export default function CoverflowReels() {
           handlePointerEnd();
         }}
         onMouseDown={(e) => {
-          if ((e.target as HTMLElement).closest('button'))
-            return;
+          if ((e.target as HTMLElement).closest('button')) return;
           handlePointerStart(e.clientX);
         }}
         onMouseMove={(e) => handlePointerMove(e.clientX)}
@@ -192,7 +199,7 @@ export default function CoverflowReels() {
         className="relative w-full max-w-[1200px] mx-auto px-4 sm:px-8 py-4 select-none cursor-grab active:cursor-grabbing touch-pan-y"
       >
         {/* 3D Stage Viewport */}
-        <div className="coverflow-stage relative w-full h-[480px] sm:h-[530px] flex items-center justify-center overflow-hidden pointer-events-none">
+        <div className="coverflow-stage relative w-full h-[460px] sm:h-[520px] flex items-center justify-center overflow-hidden pointer-events-none">
           {REELS.map((reel, idx) => {
             let diff = idx - currentIndex;
             if (diff > total / 2) diff -= total;
@@ -222,7 +229,7 @@ export default function CoverflowReels() {
               pointerEvents = 'auto';
               isCenter = true;
             } else if (absDiff <= 1.8) {
-              // Flanking visible cards with reduced overlap & gentle perspective
+              // Flanking visible cards
               const sign = effectiveDiff > 0 ? 1 : -1;
               const normDist = absDiff;
               const translateX = sign * (250 + (normDist - 1) * 180);
@@ -238,7 +245,7 @@ export default function CoverflowReels() {
               filter = `brightness(${brightnessVal})`;
               pointerEvents = 'auto';
             } else {
-              // Culled distant cards to prevent visual clutter
+              // Culled distant cards
               transform = `translate(-50%, -50%) translate3d(0, 0, -280px) scale(0.55)`;
               zIndex = 0;
               opacity = 0;
@@ -247,8 +254,8 @@ export default function CoverflowReels() {
 
             const is169 = reel.aspect === '16/9';
             const widthClass = is169
-              ? 'w-[380px] sm:w-[520px] aspect-[16/9]'
-              : 'w-[240px] sm:w-[290px] aspect-[9/16]';
+              ? 'w-[360px] sm:w-[500px] aspect-[16/9]'
+              : 'w-[230px] sm:w-[280px] aspect-[9/16]';
 
             return (
               <div
@@ -269,32 +276,36 @@ export default function CoverflowReels() {
                   filter,
                   pointerEvents,
                 }}
-                className={`coverflow-card ${widthClass} rounded-2xl overflow-hidden bg-[#1D1D1F] cursor-pointer group ${
+                className={`coverflow-card ${widthClass} rounded-2xl overflow-hidden bg-[#0A0A0A] cursor-pointer group ${
                   isDragging ? 'is-dragging' : ''
                 } ${
                   isCenter
-                    ? 'ring-2 ring-[#3B82F6] ring-offset-4 ring-offset-white shadow-[0_8px_32px_rgba(0,0,0,0.08)]'
-                    : 'shadow-[0_4px_24px_rgba(0,0,0,0.04)]'
+                    ? 'ring-2 ring-[#3B82F6] ring-offset-4 ring-offset-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+                    : 'shadow-[0_4px_24px_rgba(0,0,0,0.06)]'
                 }`}
               >
-                <div className="relative w-full h-full">
-                  <Image
-                    src={reel.image}
-                    alt={reel.title}
-                    fill
-                    sizes="(max-width: 768px) 380px, 520px"
-                    className="object-cover pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out"
-                    priority={idx === 3}
+                <div className="relative w-full h-full bg-black">
+                  {/* Live Looping Video Clip */}
+                  <video
+                    src={reel.videoUrl}
+                    poster={reel.image}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload={absDiff < 1.5 ? 'auto' : 'none'}
+                    className="object-cover w-full h-full pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
-                  {/* Subtle clean gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
-                  
+
+                  {/* Clean gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
                   {/* Card bottom info */}
-                  <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
-                    <span className="text-xs font-semibold tracking-wide bg-white/15 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
+                  <div className="absolute bottom-3.5 left-3.5 right-3.5 flex items-center justify-between text-white pointer-events-none">
+                    <span className="text-[11px] font-semibold tracking-wide bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/10 text-white/90">
                       {reel.category}
                     </span>
-                    <span className="text-xs font-medium text-white/90">
+                    <span className="text-xs font-bold text-white truncate max-w-[55%] drop-shadow-sm">
                       {reel.title}
                     </span>
                   </div>
@@ -304,13 +315,13 @@ export default function CoverflowReels() {
           })}
         </div>
 
-        {/* View All Work Prominent Secondary CTA */}
-        <div className="mt-6 text-center">
+        {/* View All Work Action */}
+        <div className="mt-8 text-center">
           <Link
             href="/work"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-sm font-bold uppercase tracking-wider text-[#1D1D1F] transition-all shadow-xs group"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-xs font-bold uppercase tracking-wider text-[#1D1D1F] transition-all shadow-xs group"
           >
-            <span>View All Showreel Cuts &amp; Technical Formats</span>
+            <span>View Full Portfolio</span>
             <span className="text-[#3B82F6] group-hover:translate-x-1 transition-transform">→</span>
           </Link>
         </div>

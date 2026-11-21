@@ -258,7 +258,7 @@ const COLUMN_3_WORK: PortfolioWorkCard[] = [
 
 /**
  * Looping Video Highlight Player:
- * - Instant frame-0 playback on mount (video is faststart pre-cut at action frame, requiring ZERO seek latency).
+ * - Instant playback on mount with zero seek latency.
  * - Plays continuously and loops cleanly via native HTML5 loop.
  * - 100% full color vibrancy with ZERO grey wraps, dimming filters, or dark overlays.
  * - Smooth fade-in on frame decode for zero flash over matching poster frame.
@@ -279,7 +279,12 @@ function LoopingHighlightVideo({
     setIsPlaying(false);
     const video = videoRef.current;
     if (!video) return;
-    video.play().catch(() => {});
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => setIsPlaying(true))
+        .catch(() => {});
+    }
   }, [src]);
 
   return (
@@ -291,19 +296,25 @@ function LoopingHighlightVideo({
       muted
       loop
       playsInline
-      preload={priority ? 'auto' : 'metadata'}
+      preload="auto"
+      onCanPlay={() => setIsPlaying(true)}
       onPlaying={() => setIsPlaying(true)}
       onError={() => setIsPlaying(false)}
-      className={`absolute inset-0 object-cover w-full h-full pointer-events-none transition-opacity duration-300 ease-out ${
+      className={`absolute inset-0 object-cover w-full h-full pointer-events-none rounded-2xl transition-opacity duration-300 ease-out ${
         isPlaying ? 'opacity-100' : 'opacity-0'
       }`}
+      style={{
+        borderRadius: 'inherit',
+        WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+        maskImage: 'radial-gradient(white, black)',
+      }}
     />
   );
 }
 
 function PortfolioMarqueeCard({
   item,
-  hasVideo = false,
+  hasVideo = true,
   priority = false,
 }: {
   item: PortfolioWorkCard;
@@ -318,17 +329,23 @@ function PortfolioMarqueeCard({
   return (
     <div
       className={`w-full ${heightClass} mb-2.5 sm:mb-3.5 xl:mb-4 relative rounded-2xl overflow-hidden border border-white/10 bg-[#18181B] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none transition-all duration-300`}
+      style={{
+        borderRadius: '1rem',
+        WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+        maskImage: 'radial-gradient(white, black)',
+      }}
     >
       {/* 1. Underlying Sharp Rec.709 Frame: Always visible, guarantees ZERO black boxes */}
       <img
         src={item.image}
         alt=""
-        className="absolute inset-0 object-cover w-full h-full pointer-events-none select-none"
+        className="absolute inset-0 object-cover w-full h-full pointer-events-none select-none rounded-2xl"
+        style={{ borderRadius: 'inherit' }}
         loading="eager"
         decoding="async"
       />
 
-      {/* 2. Live Video Highlight: Controlled active decoder budget (<= 9 videos total on page) */}
+      {/* 2. Live Video Highlight: Continuous vibrant playback across all marquee cards */}
       {hasVideo && item.videoUrl && (
         <LoopingHighlightVideo
           src={item.videoUrl}
@@ -770,7 +787,7 @@ function LoginFormContent() {
                   <PortfolioMarqueeCard
                     key={`c1-a-${item.id}-${idx}`}
                     item={item}
-                    hasVideo={idx < 3}
+                    hasVideo={true}
                     priority={idx < 3}
                   />
                 ))}
@@ -778,7 +795,7 @@ function LoginFormContent() {
                   <PortfolioMarqueeCard
                     key={`c1-b-${item.id}-${idx}`}
                     item={item}
-                    hasVideo={false}
+                    hasVideo={true}
                     priority={false}
                   />
                 ))}
@@ -792,7 +809,7 @@ function LoginFormContent() {
                   <PortfolioMarqueeCard
                     key={`c2-a-${item.id}-${idx}`}
                     item={item}
-                    hasVideo={idx < 3}
+                    hasVideo={true}
                     priority={idx < 3}
                   />
                 ))}
@@ -800,7 +817,7 @@ function LoginFormContent() {
                   <PortfolioMarqueeCard
                     key={`c2-b-${item.id}-${idx}`}
                     item={item}
-                    hasVideo={false}
+                    hasVideo={true}
                     priority={false}
                   />
                 ))}
@@ -814,7 +831,7 @@ function LoginFormContent() {
                   <PortfolioMarqueeCard
                     key={`c3-a-${item.id}-${idx}`}
                     item={item}
-                    hasVideo={idx < 3}
+                    hasVideo={true}
                     priority={idx < 3}
                   />
                 ))}
@@ -822,7 +839,7 @@ function LoginFormContent() {
                   <PortfolioMarqueeCard
                     key={`c3-b-${item.id}-${idx}`}
                     item={item}
-                    hasVideo={false}
+                    hasVideo={true}
                     priority={false}
                   />
                 ))}

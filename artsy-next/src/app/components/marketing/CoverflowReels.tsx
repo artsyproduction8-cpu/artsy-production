@@ -13,7 +13,7 @@ interface ReelCard {
 const getStreamUrl = (key: string) => `/api/portfolio/stream?key=${encodeURIComponent(key)}`;
 
 const FEATURED_MIX: ReelCard[] = [
-  // ── SUB-CATEGORY 1: Wedding Cinema (6 Films, 16:9) ──
+  // 1. Wedding Cinema (16:9)
   {
     title: 'Chandni & Harihar — Grand Reception Film',
     category: 'Wedding Cinema',
@@ -21,124 +21,7 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
   },
-  {
-    title: 'Akash & Mayuri — Mumbai Wedding Highlights',
-    category: 'Wedding Cinema',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
-  },
-  {
-    title: 'Juhi & Swapnil — Grand North Indian Wedding',
-    category: 'Wedding Cinema',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
-  },
-  {
-    title: 'Rujuta & Abhyuday — Joy, Dance & Romance',
-    category: 'Wedding Cinema',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_preview.mp4'),
-  },
-  {
-    title: 'Rajat & Nimisha — South Indian Wedding Highlights',
-    category: 'Wedding Cinema',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
-  },
-  {
-    title: 'Hufriya & Danesh — 16 Years of Love Reception',
-    category: 'Wedding Cinema',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_preview.mp4'),
-  },
-
-  // ── SUB-CATEGORY 2: Pre-Wedding Films (4 Films, 16:9) ──
-  {
-    title: 'Anoop & Ansa — Cinematic Pre-Wedding Film',
-    category: 'Pre-Wedding Films',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
-  },
-  {
-    title: 'Akshay & Partner — Romantic Pre-Wedding Journey',
-    category: 'Pre-Wedding Films',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Pre_wedding/Akshay_Pre_wedding_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Pre_wedding/Akshay_Pre_wedding_Low_preview.mp4'),
-  },
-  {
-    title: 'Matan & Lihi — Destination Pre-Wedding Story',
-    category: 'Pre-Wedding Films',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Pre_wedding/Matan___Lihi_cine_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Pre_wedding/Matan___Lihi_cine_Low_preview.mp4'),
-  },
-  {
-    title: 'Robin & Partner — Timeless Pre-Wedding Film',
-    category: 'Pre-Wedding Films',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Pre_wedding/Robin_Pre_wedding_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Pre_wedding/Robin_Pre_wedding_Low_preview.mp4'),
-  },
-
-  // ── SUB-CATEGORY 3: Teasers & Trailers (7 Films, 16:9) ──
-  {
-    title: 'Akshay & Jagruti — Wedding Teaser',
-    category: 'Teasers & Trailers',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
-  },
-  {
-    title: 'Jai & Aishwarya — Wedding Teaser',
-    category: 'Teasers & Trailers',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
-  },
-  {
-    title: 'Khushboo & Tejas — Wedding Teaser',
-    category: 'Teasers & Trailers',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Khushboo___Tejas_Teaser_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Khushboo___Tejas_Teaser_Low_preview.mp4'),
-  },
-  {
-    title: 'Matan & Lihi — Cinematic Trailer',
-    category: 'Teasers & Trailers',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Matan___Lihi_Trailer_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Matan___Lihi_Trailer_Low_preview.mp4'),
-  },
-  {
-    title: 'Mayuri & Swapnil — Wedding Teaser',
-    category: 'Teasers & Trailers',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Mayuri___Swapni_Teaser_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Mayuri___Swapni_Teaser_Low_preview.mp4'),
-  },
-  {
-    title: 'Sanket & Rutuja — Wedding Teaser',
-    category: 'Teasers & Trailers',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Sanket___Rutuja__Teaser_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Sanket___Rutuja__Teaser_Low_preview.mp4'),
-  },
-  {
-    title: 'Shree & Shivani — Wedding Teaser',
-    category: 'Teasers & Trailers',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Shree___Shivani_Teaser_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Shree___Shivani_Teaser_Low_preview.mp4'),
-  },
-
-  // ── SUB-CATEGORY 4: Cinematic Reels (10 Vertical Reels, 9:16) ──
+  // 2. Cinematic Reel (9:16)
   {
     title: 'Anoop & Ansa — Viral Wedding Reel',
     category: 'Cinematic Reels',
@@ -146,6 +29,15 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Reel_/ANOOP___ANSA_REEL_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
   },
+  // 3. Wedding Cinema (16:9)
+  {
+    title: 'Akash & Mayuri — Mumbai Wedding Highlights',
+    category: 'Wedding Cinema',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
+  },
+  // 4. Cinematic Reel (9:16)
   {
     title: 'Akash — Groom Entry & Celebration Reel',
     category: 'Cinematic Reels',
@@ -153,6 +45,15 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Reel_/Akash_Reel_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Akash_Reel_Low_preview.mp4'),
   },
+  // 5. Pre-Wedding Film (16:9)
+  {
+    title: 'Anoop & Ansa — Cinematic Pre-Wedding Film',
+    category: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
+  },
+  // 6. Cinematic Reel (9:16)
   {
     title: 'Akshay & Gauri — Romantic Wedding Reel',
     category: 'Cinematic Reels',
@@ -160,6 +61,15 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Reel_/Akshay___Gauri_Reel__2__Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Akshay___Gauri_Reel__2__Low_preview.mp4'),
   },
+  // 7. Wedding Cinema (16:9)
+  {
+    title: 'Juhi & Swapnil — Grand North Indian Wedding',
+    category: 'Wedding Cinema',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
+  },
+  // 8. Cinematic Reel (9:16)
   {
     title: 'Anroop & Jeemol — Wedding Highlights Reel',
     category: 'Cinematic Reels',
@@ -167,6 +77,15 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Reel_/Anroop___Jeemol_Reel_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Anroop___Jeemol_Reel_low_preview.mp4'),
   },
+  // 9. Pre-Wedding Film (16:9)
+  {
+    title: 'Akshay & Partner — Romantic Pre-Wedding Journey',
+    category: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/Akshay_Pre_wedding_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Akshay_Pre_wedding_Low_preview.mp4'),
+  },
+  // 10. Cinematic Reel (9:16)
   {
     title: 'George & Sumi — Church Wedding Reel',
     category: 'Cinematic Reels',
@@ -174,6 +93,15 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Reel_/George___Sumi_Reel_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/George___Sumi_Reel_Low_preview.mp4'),
   },
+  // 11. Wedding Cinema (16:9)
+  {
+    title: 'Rujuta & Abhyuday — Joy, Dance & Romance',
+    category: 'Wedding Cinema',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_preview.mp4'),
+  },
+  // 12. Cinematic Reel (9:16)
   {
     title: 'Kuhu — Haldi Celebration Reel',
     category: 'Cinematic Reels',
@@ -181,6 +109,15 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
   },
+  // 13. Pre-Wedding Film (16:9)
+  {
+    title: 'Matan & Lihi — Destination Pre-Wedding Story',
+    category: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/Matan___Lihi_cine_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Matan___Lihi_cine_Low_preview.mp4'),
+  },
+  // 14. Cinematic Reel (9:16)
   {
     title: 'Monish & Jisha — Cinematic Couple Reel',
     category: 'Cinematic Reels',
@@ -188,6 +125,15 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Reel_/Monish___Jisha_Reel__Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Monish___Jisha_Reel__Low_preview.mp4'),
   },
+  // 15. Wedding Cinema (16:9)
+  {
+    title: 'Rajat & Nimisha — South Indian Wedding Highlights',
+    category: 'Wedding Cinema',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
+  },
+  // 16. Cinematic Reel (9:16)
   {
     title: 'Sanket & Rutuja — Sangeet Night Reel',
     category: 'Cinematic Reels',
@@ -195,6 +141,15 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
   },
+  // 17. Pre-Wedding Film (16:9)
+  {
+    title: 'Robin & Partner — Timeless Pre-Wedding Film',
+    category: 'Pre-Wedding Films',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/Robin_Pre_wedding_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/Robin_Pre_wedding_Low_preview.mp4'),
+  },
+  // 18. Cinematic Reel (9:16)
   {
     title: 'Shweta — Bridal Solo Highlights Reel',
     category: 'Cinematic Reels',
@@ -202,6 +157,15 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
   },
+  // 19. Wedding Cinema (16:9)
+  {
+    title: 'Hufriya & Danesh — 16 Years of Love Reception',
+    category: 'Wedding Cinema',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_preview.mp4'),
+  },
+  // 20. Cinematic Reel (9:16)
   {
     title: 'Sumit & Sonal — Wedding Celebration Reel',
     category: 'Cinematic Reels',
@@ -209,14 +173,70 @@ const FEATURED_MIX: ReelCard[] = [
     image: getStreamUrl('thumbnails/Reel_/Sumit___Sonal_Reel__Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Sumit___Sonal_Reel__Low_preview.mp4'),
   },
+  // 21. Teasers & Trailers (16:9)
+  {
+    title: 'Akshay & Jagruti — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
+  },
+  // 22. Teasers & Trailers (16:9)
+  {
+    title: 'Jai & Aishwarya — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
+  },
+  // 23. Teasers & Trailers (16:9)
+  {
+    title: 'Khushboo & Tejas — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Khushboo___Tejas_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Khushboo___Tejas_Teaser_Low_preview.mp4'),
+  },
+  // 24. Teasers & Trailers (16:9)
+  {
+    title: 'Matan & Lihi — Cinematic Trailer',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Matan___Lihi_Trailer_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Matan___Lihi_Trailer_Low_preview.mp4'),
+  },
+  // 25. Teasers & Trailers (16:9)
+  {
+    title: 'Mayuri & Swapnil — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Mayuri___Swapni_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Mayuri___Swapni_Teaser_Low_preview.mp4'),
+  },
+  // 26. Teasers & Trailers (16:9)
+  {
+    title: 'Sanket & Rutuja — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Sanket___Rutuja__Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Sanket___Rutuja__Teaser_Low_preview.mp4'),
+  },
+  // 27. Teasers & Trailers (16:9)
+  {
+    title: 'Shree & Shivani — Wedding Teaser',
+    category: 'Teasers & Trailers',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Shree___Shivani_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Shree___Shivani_Teaser_Low_preview.mp4'),
+  },
 ];
 
 /**
  * Crystal-Clear Looping Video Player:
- * - Seeks to the vibrant middle segment (skipping any black screens or static titles).
- * - Plays for 12 seconds of peak cinematic action, then loops continuously.
+ * - Instant playback on mount without waiting or seek latency.
  * - 100% full color vibrancy with ZERO grey wraps, dimming filters, or dark overlays.
- * - Fades in smoothly once loaded so there is never a black flash.
+ * - Forced GPU hardware clipping with WebKit mask and rounded borders so active front card
+ *   maintains silky smooth rounded edges identical to background cards.
  */
 function LoopingHighlightVideo({
   src,
@@ -234,7 +254,12 @@ function LoopingHighlightVideo({
     setIsReady(false);
     const video = videoRef.current;
     if (!video) return;
-    video.play().catch(() => {});
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => setIsReady(true))
+        .catch(() => {});
+    }
   }, [src]);
 
   return (
@@ -246,12 +271,18 @@ function LoopingHighlightVideo({
       muted
       loop
       playsInline
-      preload={priority ? 'auto' : 'metadata'}
+      preload="auto"
+      onCanPlay={() => setIsReady(true)}
       onPlaying={() => setIsReady(true)}
       onError={() => setIsReady(false)}
-      className={`absolute inset-0 object-cover w-full h-full pointer-events-none group-hover:scale-105 transition-all duration-500 ease-out ${
+      className={`absolute inset-0 object-cover w-full h-full pointer-events-none rounded-2xl sm:rounded-3xl transition-opacity duration-300 ease-out ${
         isReady ? 'opacity-100' : 'opacity-0'
       }`}
+      style={{
+        borderRadius: 'inherit',
+        WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+        maskImage: 'radial-gradient(white, black)',
+      }}
     />
   );
 }
@@ -393,10 +424,10 @@ export default function CoverflowReels() {
         onTouchMove={(e) => handlePointerMove(e.touches[0].clientX)}
         onTouchEnd={handlePointerEnd}
         onTouchCancel={handlePointerEnd}
-        className="relative w-full max-w-[1240px] mx-auto px-4 sm:px-8 py-2 select-none cursor-grab active:cursor-grabbing touch-pan-y"
+        className="relative w-full max-w-[1360px] mx-auto px-2 sm:px-6 py-2 select-none cursor-grab active:cursor-grabbing touch-pan-y"
       >
         {/* 3D Stage Viewport */}
-        <div className="coverflow-stage relative w-full h-[460px] sm:h-[530px] flex items-center justify-center overflow-hidden pointer-events-none">
+        <div className="coverflow-stage relative w-full h-[470px] sm:h-[540px] flex items-center justify-center overflow-hidden pointer-events-none">
           {FEATURED_MIX.map((item, idx) => {
             let diff = idx - currentIndex;
             if (diff > total / 2) diff -= total;
@@ -418,31 +449,40 @@ export default function CoverflowReels() {
               const scale = 1.04 - absDiff * 0.08;
               const rotateY = effectiveDiff * -14;
               const translateZ = 80 - absDiff * 60;
-              const translateX = effectiveDiff * (is169 ? 220 : 170);
+              const translateX = effectiveDiff * (is169 ? 240 : 180);
 
               transform = `translate(-50%, -50%) translate3d(${translateX}px, 0, ${translateZ}px) scale(${scale}) rotateY(${rotateY}deg)`;
-              zIndex = 35;
+              zIndex = 40;
               opacity = 1;
               pointerEvents = 'auto';
               isCenter = true;
-            } else if (absDiff <= 1.8) {
-              // Flanking visible cards (No artificial brightness dimming)
+            } else if (absDiff <= 3.2) {
+              // Flanking visible cards: 3 cards on left + 3 cards on right (7 cards visible total to fill horizontal space)
               const sign = effectiveDiff > 0 ? 1 : -1;
               const normDist = absDiff;
-              const spacing = is169 ? (240 + (normDist - 1) * 170) : (190 + (normDist - 1) * 140);
+
+              let spacing = 0;
+              if (normDist <= 1.2) {
+                spacing = is169 ? (270 * normDist) : (220 * normDist);
+              } else if (normDist <= 2.2) {
+                spacing = is169 ? (270 + (normDist - 1) * 190) : (220 + (normDist - 1) * 160);
+              } else {
+                spacing = is169 ? (270 + 190 + (normDist - 2) * 170) : (220 + 160 + (normDist - 2) * 140);
+              }
+
               const translateX = sign * spacing;
-              const rotateY = sign * -15;
-              const translateZ = -40 * normDist;
-              const scale = Math.max(0.78, 0.92 - normDist * 0.08);
-              const opacityVal = Math.max(0.65, 0.92 - normDist * 0.15);
+              const rotateY = sign * -(13 + normDist * 2.5);
+              const translateZ = -45 * normDist;
+              const scale = Math.max(0.62, 0.94 - normDist * 0.10);
+              const opacityVal = Math.max(0.38, 1.05 - normDist * 0.22);
 
               transform = `translate(-50%, -50%) translate3d(${translateX}px, 0, ${translateZ}px) scale(${scale}) rotateY(${rotateY}deg)`;
-              zIndex = Math.round(25 - absDiff * 5);
+              zIndex = Math.round(30 - absDiff * 6);
               opacity = opacityVal;
               pointerEvents = 'auto';
             } else {
               // Culled distant cards
-              transform = `translate(-50%, -50%) translate3d(0, 0, -280px) scale(0.55)`;
+              transform = `translate(-50%, -50%) translate3d(0, 0, -320px) scale(0.5)`;
               zIndex = 0;
               opacity = 0;
               pointerEvents = 'none';
@@ -452,56 +492,67 @@ export default function CoverflowReels() {
               ? 'w-[320px] sm:w-[460px] md:w-[500px] aspect-video'
               : 'w-[200px] sm:w-[250px] md:w-[270px] aspect-[9/16]';
 
-                const cardImage = item.image;
-                const cardVideo = item.videoUrl;
+            const cardImage = item.image;
+            const cardVideo = item.videoUrl;
 
-                return (
-                  <div
-                    key={`mix-${idx}`}
-                    onClick={(e) => {
-                      if (hasDraggedRef.current) {
-                        e.preventDefault();
-                        return;
-                      }
-                      if (currentIndex !== idx) {
-                        setCurrentIndex(idx);
-                      }
-                    }}
-                    style={{
-                      transform,
-                      zIndex,
-                      opacity,
-                      pointerEvents,
-                    }}
-                    className={`coverflow-card ${widthClass} rounded-2xl sm:rounded-3xl overflow-hidden bg-[#18181B] cursor-pointer group transition-[border,box-shadow] duration-300 ${
-                      isDragging ? 'is-dragging' : ''
-                    } ${
-                      isCenter
-                        ? 'border border-white/25 shadow-[0_24px_60px_rgba(0,0,0,0.25)] ring-1 ring-black/5'
-                        : 'border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.08)]'
-                    }`}
-                  >
-                    <div className="relative w-full h-full bg-[#18181B]">
-                      {/* Base Layer: Instant Sharp Rec.709 Poster frame (guarantees ZERO black frames) */}
-                      <img
-                        src={cardImage}
-                        alt=""
-                        className="absolute inset-0 object-cover w-full h-full pointer-events-none select-none transition-opacity duration-300"
-                        loading="eager"
-                        decoding="async"
-                      />
+            return (
+              <div
+                key={`mix-${idx}`}
+                onClick={(e) => {
+                  if (hasDraggedRef.current) {
+                    e.preventDefault();
+                    return;
+                  }
+                  if (currentIndex !== idx) {
+                    setCurrentIndex(idx);
+                  }
+                }}
+                style={{
+                  transform,
+                  zIndex,
+                  opacity,
+                  pointerEvents,
+                  borderRadius: '1.5rem',
+                  WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+                  maskImage: 'radial-gradient(white, black)',
+                }}
+                className={`coverflow-card ${widthClass} rounded-2xl sm:rounded-3xl overflow-hidden bg-[#18181B] cursor-pointer group transition-[border,box-shadow] duration-300 ${
+                  isDragging ? 'is-dragging' : ''
+                } ${
+                  isCenter
+                    ? 'border border-white/25 shadow-[0_24px_60px_rgba(0,0,0,0.25)] ring-1 ring-black/5'
+                    : 'border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.08)]'
+                }`}
+              >
+                <div
+                  className="relative w-full h-full bg-[#18181B] rounded-2xl sm:rounded-3xl overflow-hidden"
+                  style={{
+                    borderRadius: 'inherit',
+                    WebkitMaskImage: '-webkit-radial-gradient(white, black)',
+                    maskImage: 'radial-gradient(white, black)',
+                  }}
+                >
+                  {/* Base Layer: Instant Sharp Rec.709 Poster frame (guarantees ZERO black frames) */}
+                  <img
+                    src={cardImage}
+                    alt=""
+                    className="absolute inset-0 object-cover w-full h-full pointer-events-none select-none transition-opacity duration-300 rounded-2xl sm:rounded-3xl"
+                    style={{ borderRadius: 'inherit' }}
+                    loading="eager"
+                    decoding="async"
+                  />
 
-                      {/* Active Video Stream: Only mounted for centered active card and immediate neighbor to save bandwidth & decoders */}
-                      {absDiff < 1.2 && (
-                        <LoopingHighlightVideo
-                          src={cardVideo}
-                          poster={cardImage}
-                          priority={isCenter}
-                        />
-                      )}
-                    </div>
-                  </div>
-                );
+                  {/* Active Video Stream: Only mounted for centered active card and immediate neighbors */}
+                  {absDiff < 1.4 && (
+                    <LoopingHighlightVideo
+                      src={cardVideo}
+                      poster={cardImage}
+                      priority={isCenter}
+                    />
+                  )}
+                </div>
+              </div>
+            );
           })}
         </div>
       </div>

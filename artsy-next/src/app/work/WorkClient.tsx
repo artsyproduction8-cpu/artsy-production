@@ -525,7 +525,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                     onClick={(e) => e.stopPropagation()}
                     className="px-3 py-1.5 rounded-lg bg-[#1D1D1F] hover:bg-[#3B82F6] text-white text-[11px] font-semibold uppercase tracking-wider transition-colors shadow-xs"
                   >
-                    Book Cut →
+                    Order Edit →
                   </Link>
                 </div>
               </div>
@@ -596,7 +596,7 @@ export default function WorkClient({ initialVideos = [] }: WorkClientProps) {
                 href={`/book?category=${encodeURIComponent((selectedVideo.category || '').toLowerCase().includes('wedding') ? 'wedding' : 'brand')}`}
                 className="px-4 py-2 rounded-xl bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-semibold uppercase tracking-wider transition-colors shadow-sm shrink-0"
               >
-                Book This Cut →
+                Order Edit →
               </Link>
             </div>
           </div>

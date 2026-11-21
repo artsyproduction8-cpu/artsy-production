@@ -11,10 +11,6 @@ interface PortfolioWorkCard {
   id: string;
   title: string;
   genre: string;
-  badge: string;
-  badgeColor: string;
-  format: string;
-  duration: string;
   image: string;
   videoUrl?: string;
 }
@@ -26,10 +22,6 @@ const ROW_1_WORK: PortfolioWorkCard[] = [
     id: 'w1',
     title: 'Chandni & Harihar — Grand Reception',
     genre: 'Wedding Cinema',
-    badge: 'FEATURE CUT',
-    badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    format: 'Rec.709 Color Science',
-    duration: '04:30',
     image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
   },
@@ -37,10 +29,6 @@ const ROW_1_WORK: PortfolioWorkCard[] = [
     id: 'w2',
     title: 'Anoop & Ansa — Viral Wedding Reel',
     genre: 'Cinematic Reel',
-    badge: '9:16 VERTICAL',
-    badgeColor: 'bg-[#3B82F6]/20 text-[#60A5FA] border-[#3B82F6]/30',
-    format: 'Kinetic Pacing',
-    duration: '00:30',
     image: getStreamUrl('thumbnails/Reel_/ANOOP___ANSA_REEL_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
   },
@@ -48,10 +36,6 @@ const ROW_1_WORK: PortfolioWorkCard[] = [
     id: 'w3',
     title: 'Akash & Mayuri — Mumbai Wedding Film',
     genre: 'Wedding Cinema',
-    badge: 'HIGHLIGHTS',
-    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    format: 'Multi-Cam Sync',
-    duration: '03:45',
     image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
   },
@@ -59,10 +43,6 @@ const ROW_1_WORK: PortfolioWorkCard[] = [
     id: 'w4',
     title: 'Akshay & Jagruti — Wedding Teaser',
     genre: 'Teaser',
-    badge: 'FAST CUT',
-    badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    format: 'Beat-Matched Cut',
-    duration: '01:00',
     image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
   },
@@ -70,10 +50,6 @@ const ROW_1_WORK: PortfolioWorkCard[] = [
     id: 'w5',
     title: 'Juhi & Swapnil — Grand North Indian',
     genre: 'Wedding Cinema',
-    badge: 'ROYAL CINEMA',
-    badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-    format: 'Baraat Master',
-    duration: '05:15',
     image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
   },
@@ -81,10 +57,6 @@ const ROW_1_WORK: PortfolioWorkCard[] = [
     id: 'w6',
     title: 'Sanket & Rutuja — Sangeet Night Reel',
     genre: 'Cinematic Reel',
-    badge: '9:16 VERTICAL',
-    badgeColor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    format: 'Stage Audio Master',
-    duration: '00:35',
     image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
   },
@@ -95,10 +67,6 @@ const ROW_2_WORK: PortfolioWorkCard[] = [
     id: 'w7',
     title: 'Anoop & Ansa — Pre-Wedding Film',
     genre: 'Pre-Wedding',
-    badge: 'ROMANCE',
-    badgeColor: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
-    format: 'Scenic Drone Grade',
-    duration: '04:10',
     image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
   },
@@ -106,10 +74,6 @@ const ROW_2_WORK: PortfolioWorkCard[] = [
     id: 'w8',
     title: 'Jai & Aishwarya — Wedding Teaser',
     genre: 'Teaser',
-    badge: 'CINEMATIC',
-    badgeColor: 'bg-[#3B82F6]/20 text-[#60A5FA] border-[#3B82F6]/30',
-    format: 'Orchestral Score',
-    duration: '01:15',
     image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
   },
@@ -117,10 +81,6 @@ const ROW_2_WORK: PortfolioWorkCard[] = [
     id: 'w9',
     title: 'Rujuta & Abhyuday — Joy & Romance',
     genre: 'Wedding Cinema',
-    badge: 'FULL STORY',
-    badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    format: 'Warm Tone Curve',
-    duration: '03:50',
     image: getStreamUrl('thumbnails/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_preview.mp4'),
   },
@@ -128,10 +88,6 @@ const ROW_2_WORK: PortfolioWorkCard[] = [
     id: 'w10',
     title: 'Kuhu — Haldi Celebration Reel',
     genre: 'Cinematic Reel',
-    badge: '9:16 VERTICAL',
-    badgeColor: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-    format: 'High-Frame-Rate',
-    duration: '00:25',
     image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
   },
@@ -139,10 +95,6 @@ const ROW_2_WORK: PortfolioWorkCard[] = [
     id: 'w11',
     title: 'Akshay & Partner — Pre-Wedding',
     genre: 'Pre-Wedding',
-    badge: 'NARRATIVE',
-    badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    format: 'Landscape Pacing',
-    duration: '03:15',
     image: getStreamUrl('thumbnails/Pre_wedding/Akshay_Pre_wedding_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Pre_wedding/Akshay_Pre_wedding_Low_preview.mp4'),
   },
@@ -150,10 +102,6 @@ const ROW_2_WORK: PortfolioWorkCard[] = [
     id: 'w12',
     title: 'Khushboo & Tejas — Wedding Teaser',
     genre: 'Teaser',
-    badge: 'TEASER',
-    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    format: 'Dialogue Snippets',
-    duration: '01:05',
     image: getStreamUrl('thumbnails/Teaser/Khushboo___Tejas_Teaser_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Khushboo___Tejas_Teaser_Low_preview.mp4'),
   },
@@ -164,10 +112,6 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
     id: 'w13',
     title: 'Rajat & Nimisha — South Indian Wedding',
     genre: 'Wedding Cinema',
-    badge: 'TEMPLE RITUALS',
-    badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    format: 'Silk Color Science',
-    duration: '04:20',
     image: getStreamUrl('thumbnails/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
   },
@@ -175,10 +119,6 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
     id: 'w14',
     title: 'Monish & Jisha — Couple Reel',
     genre: 'Cinematic Reel',
-    badge: '9:16 VERTICAL',
-    badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    format: 'Moody Film Shadows',
-    duration: '00:30',
     image: getStreamUrl('thumbnails/Reel_/Monish___Jisha_Reel__Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Monish___Jisha_Reel__Low_preview.mp4'),
   },
@@ -186,10 +126,6 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
     id: 'w15',
     title: 'Matan & Lihi — Pre-Wedding Story',
     genre: 'Pre-Wedding',
-    badge: 'DESTINATION',
-    badgeColor: 'bg-[#3B82F6]/20 text-[#60A5FA] border-[#3B82F6]/30',
-    format: 'Coastal Warmth',
-    duration: '03:30',
     image: getStreamUrl('thumbnails/Pre_wedding/Matan___Lihi_cine_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Pre_wedding/Matan___Lihi_cine_Low_preview.mp4'),
   },
@@ -197,10 +133,6 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
     id: 'w16',
     title: 'Matan & Lihi — Cinematic Trailer',
     genre: 'Teaser',
-    badge: 'THEATRICAL',
-    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    format: 'Surround Sound',
-    duration: '01:20',
     image: getStreamUrl('thumbnails/Teaser/Matan___Lihi_Trailer_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Matan___Lihi_Trailer_Low_preview.mp4'),
   },
@@ -208,10 +140,6 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
     id: 'w17',
     title: 'Hufriya & Danesh — 16 Years of Love',
     genre: 'Wedding Cinema',
-    badge: 'RECEPTION',
-    badgeColor: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    format: 'Black-Tie Master',
-    duration: '04:45',
     image: getStreamUrl('thumbnails/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_preview.mp4'),
   },
@@ -219,27 +147,14 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
     id: 'w18',
     title: 'Shweta — Bridal Solo Reel',
     genre: 'Cinematic Reel',
-    badge: '9:16 VERTICAL',
-    badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-    format: 'Portrait Grade',
-    duration: '00:25',
     image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
   },
 ];
 
-// Rotating Taglines for Artsy headline
-const ROTATING_TAGLINES = [
-  'Frame Review',
-  'Cinematic Suite',
-  'Active Project',
-  'Studio Dashboard',
-  'Production Command',
-];
-
 function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
   return (
-    <div className="w-full h-[145px] sm:h-[165px] lg:h-[180px] xl:h-[200px] relative rounded-2xl overflow-hidden border border-white/10 bg-[#141416] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none">
+    <div className="w-full h-[145px] sm:h-[165px] lg:h-[185px] xl:h-[205px] relative rounded-2xl overflow-hidden border border-white/10 bg-[#0A0A0A] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none">
       {/* Background Live Video / Poster */}
       {item.videoUrl ? (
         <video
@@ -250,7 +165,7 @@ function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
           loop
           playsInline
           preload="none"
-          className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-80 group-hover/card:opacity-100 pointer-events-none"
+          className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-85 group-hover/card:opacity-100 pointer-events-none"
         />
       ) : (
         <Image
@@ -263,30 +178,16 @@ function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
       )}
 
       {/* Cinematic Gradient Vignette */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent pointer-events-none" />
 
-      {/* Top Badges */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1 z-10 pointer-events-none">
-        <span className="text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded bg-black/65 backdrop-blur-md text-white/90 border border-white/10 flex items-center gap-1 truncate max-w-[58%]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] shrink-0" />
-          <span className="truncate">{item.genre}</span>
+      {/* Clean Bottom Information */}
+      <div className="absolute bottom-3 left-3 right-3 z-10 pointer-events-none">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#3B82F6] block mb-0.5">
+          {item.genre}
         </span>
-        <span className={`text-[8.5px] font-extrabold tracking-wider uppercase px-1.5 py-0.5 rounded border backdrop-blur-md shrink-0 ${item.badgeColor}`}>
-          {item.badge}
-        </span>
-      </div>
-
-      {/* Bottom Information */}
-      <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 pointer-events-none">
-        <h4 className="text-[11px] sm:text-xs font-bold text-white tracking-tight leading-snug truncate drop-shadow-md">
+        <h4 className="text-xs sm:text-[13px] font-bold text-white tracking-tight leading-snug truncate drop-shadow-sm">
           {item.title}
         </h4>
-        <div className="flex items-center justify-between mt-0.5 text-[9.5px] text-[#A1A1A6] font-medium">
-          <span className="truncate">{item.format}</span>
-          <span className="font-mono text-white/90 bg-white/10 px-1 py-0.2 rounded text-[9px] shrink-0 ml-1">
-            {item.duration}
-          </span>
-        </div>
       </div>
     </div>
   );
@@ -336,10 +237,6 @@ function LoginFormContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Rotating Tagline State
-  const [taglineIdx, setTaglineIdx] = useState(0);
-  const [isCrossFading, setIsCrossFading] = useState(false);
-
   // Freelancer Intent
   const [isFreelancerIntent, setIsFreelancerIntent] = useState(false);
 
@@ -356,7 +253,7 @@ function LoginFormContent() {
         if (safeRedirect !== '/client') {
           sessionStorage.setItem('artsy_redirect', safeRedirect);
         }
-      } catch {}
+      } catch { }
     }
 
     const intentParam = searchParams.get('intent');
@@ -364,7 +261,7 @@ function LoginFormContent() {
     if (intentParam === 'freelancer' || roleParam === 'freelancer') {
       try {
         sessionStorage.setItem('artsy_signup_intent', 'freelancer');
-      } catch {}
+      } catch { }
       setIsFreelancerIntent(true);
     } else {
       try {
@@ -372,7 +269,7 @@ function LoginFormContent() {
         if (storedIntent === 'freelancer') {
           setIsFreelancerIntent(true);
         }
-      } catch {}
+      } catch { }
     }
 
     // Pre-populate if returning
@@ -383,23 +280,8 @@ function LoginFormContent() {
         if (pending.email) setEmailInput(pending.email);
         if (pending.phone) setPhoneInput(pending.phone.replace(/\D/g, '').slice(-10));
       }
-    } catch {}
+    } catch { }
   }, [searchParams]);
-
-  // Tagline rotation
-  useEffect(() => {
-    if (isFreelancerIntent || step === 'otp') return;
-
-    const timer = setInterval(() => {
-      setIsCrossFading(true);
-      setTimeout(() => {
-        setTaglineIdx((prev) => (prev + 1) % ROTATING_TAGLINES.length);
-        setIsCrossFading(false);
-      }, 400);
-    }, 3000);
-
-    return () => clearInterval(timer);
-  }, [isFreelancerIntent, step]);
 
   // OTP Countdown timer
   useEffect(() => {
@@ -426,7 +308,7 @@ function LoginFormContent() {
         sessionStorage.removeItem('artsy_redirect');
         router.replace('/auth/login');
       }
-    } catch {}
+    } catch { }
   };
 
   // Step 1: Send Single OTP to both Phone and Email
@@ -585,7 +467,7 @@ function LoginFormContent() {
           } else {
             localStorage.setItem('artsy_client_profile', JSON.stringify(data.user.studio_details));
           }
-        } catch {}
+        } catch { }
       }
 
       setCurrentUser(verifiedUser);
@@ -594,7 +476,7 @@ function LoginFormContent() {
       try {
         sessionStorage.removeItem('artsy_signup_intent');
         localStorage.removeItem('artsy_signup_intent');
-      } catch {}
+      } catch { }
 
       // Route strictly by REAL role:
       if (serverRole === 'admin' || serverRole === 'super_admin') {
@@ -616,7 +498,7 @@ function LoginFormContent() {
             }
             sessionStorage.removeItem('artsy_redirect');
           }
-        } catch {}
+        } catch { }
 
         // Strict state machine order for creators:
         if (uStatus === 'approved') {
@@ -642,7 +524,7 @@ function LoginFormContent() {
               redirectTarget = sanitizeInternalRedirect(stored);
               sessionStorage.removeItem('artsy_redirect');
             }
-          } catch {}
+          } catch { }
           router.push(redirectTarget);
         }
       }
@@ -703,15 +585,15 @@ function LoginFormContent() {
 
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col lg:flex-row w-full max-w-full overflow-hidden">
-      
+
       {/* ── LEFT PANEL (58-60% Width): 3 Straight Vertical Filmstrip Columns ── */}
       <div className="relative pt-4 pb-2 lg:pt-0 lg:pb-0 lg:w-[58%] xl:w-[60%] lg:flex-none p-4 sm:p-6 lg:p-6 xl:p-8 flex items-center justify-center">
         <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[calc(100vh-4rem)] max-h-[860px] rounded-[24px] sm:rounded-[36px] bg-[#0A0A0A] border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col justify-center">
-          
-          {/* Top Floating Glassmorphism Badge */}
-          <div className="absolute top-5 left-5 z-30 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-[11px] font-semibold text-white/90 shadow-xl">
-            <span className="w-2 h-2 rounded-full bg-[#3B82F6] animate-pulse" />
-            <span>ARTSY CINEMATIC PORTFOLIO • 4K HDR PROXIES</span>
+
+          {/* Top Floating Subtle Studio Watermark */}
+          <div className="absolute top-5 left-5 z-30 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-medium text-white/80 shadow-lg">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
+            <span>Selected Studio Work</span>
           </div>
 
           {/* Top & Bottom Cinematic Fade Vignettes */}
@@ -720,7 +602,7 @@ function LoginFormContent() {
 
           {/* 3 Straight Vertical Filmstrip Columns */}
           <div className="w-full h-full grid grid-cols-3 gap-2.5 sm:gap-3.5 xl:gap-4 p-2.5 sm:p-4 select-none overflow-hidden">
-            
+
             {/* COLUMN 1: Scrolling Upward */}
             <div className="overflow-hidden h-full flex flex-col justify-center">
               <div className="animate-marquee-up-fast flex flex-col gap-2.5 sm:gap-3.5 xl:gap-4 marquee-pause-hover">
@@ -756,7 +638,7 @@ function LoginFormContent() {
       {/* ── RIGHT PANEL: Dual-Credential Login & Single OTP UI ── */}
       <div className="flex-1 flex justify-center items-center px-5 py-6 sm:py-10 lg:px-8 xl:px-12 lg:w-[42%] xl:w-[40%] lg:flex-none bg-white">
         <div className="w-full max-w-[360px] space-y-4.5">
-          
+
           {/* 1. ARTSY Wordmark */}
           <div className="text-left">
             <Link href="/" className="inline-flex items-center group mb-2">
@@ -773,21 +655,14 @@ function LoginFormContent() {
                     Apply as <span className="text-[#3B82F6]">Creator</span>
                   </h1>
                 ) : (
-                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-tight flex items-baseline gap-1.5">
-                    <span>Access</span>
-                    <span
-                      className={`text-[#3B82F6] transition-opacity duration-400 ease-in-out ${
-                        isCrossFading ? 'opacity-0' : 'opacity-100'
-                      }`}
-                    >
-                      {ROTATING_TAGLINES[taglineIdx]}
-                    </span>
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-tight">
+                    Sign in to <span className="text-[#3B82F6]">Artsy</span>
                   </h1>
                 )}
                 <p className="text-xs text-[#86868B] mt-1 leading-normal">
                   {isFreelancerIntent
-                    ? 'Enter your mobile number and email. A single OTP will be sent to both.'
-                    : 'Enter your mobile number and email to receive a single verification code.'}
+                    ? 'Enter your mobile number and email to begin your vetting application.'
+                    : 'Enter your mobile number and email to access your studio portal.'}
                 </p>
               </>
             ) : (
@@ -830,7 +705,7 @@ function LoginFormContent() {
           {/* STEP 1: DUAL INPUT CREDENTIALS FORM */}
           {step === 'credentials' ? (
             <form onSubmit={handleSendOtp} className="space-y-3">
-              
+
               {/* Mobile Number Input */}
               <div>
                 <label htmlFor="login-phone-input" className="block text-[11px] font-medium text-[#1D1D1F] mb-1">

@@ -27,8 +27,8 @@ const ARCHIVE_ITEMS: ArchiveItem[] = [
     image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
     meta: [
-      { label: 'Assigned Lead', value: 'Senior Fellow Colorist' },
-      { label: 'Delivery Window', value: '05 Working Days' },
+      { label: 'Color Grading', value: 'Studio Rec.709 Master' },
+      { label: 'Turnaround', value: '5 Working Days' },
     ],
   },
   {
@@ -39,8 +39,8 @@ const ARCHIVE_ITEMS: ArchiveItem[] = [
     image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
     meta: [
-      { label: 'Lead Specialist', value: 'Cinematic Narrative Lead' },
-      { label: 'Deliverables', value: 'Full Highlight + Teaser' },
+      { label: 'Edit Narrative', value: 'Full Feature & Teaser' },
+      { label: 'Deliverables', value: '4K Master + Social Cut' },
     ],
   },
   {
@@ -51,8 +51,8 @@ const ARCHIVE_ITEMS: ArchiveItem[] = [
     image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
     meta: [
-      { label: 'Master Suite', value: 'DaVinci Resolve Studio' },
-      { label: 'Timeline SLA', value: '48h Priority Delivery' },
+      { label: 'Post Suite', value: 'Color & Acoustic Master' },
+      { label: 'Turnaround', value: 'Express Delivery' },
     ],
   },
 ];
@@ -67,11 +67,14 @@ export default function ProductionArchive() {
         {/* Section Header */}
         <div className="mb-12">
           <div className="max-w-2xl">
+            <span className="text-[11px] font-bold tracking-widest uppercase text-[#3B82F6] block mb-1.5">
+              Verified Delivery
+            </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#1D1D1F]">
-              Verified production archive
+              Production standards &amp; delivery
             </h2>
             <p className="mt-3 text-base text-[#86868B] font-normal leading-relaxed">
-              Real client deliverables logged with verified color specifications, audio sync, and strict studio turnaround.
+              Real studio deliverables crafted with emotive storytelling, deterministic color grading, and acoustic precision.
             </p>
           </div>
         </div>

@@ -182,9 +182,10 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
 
 /**
  * Looping Video Highlight Player:
- * - Automatically seeks to the middle of the video on load (skipping black frames & intro logos).
+ * - Automatically seeks to the high-energy middle segment on load (skipping black frames & intro logos).
  * - Plays the high-energy middle segment for 10-15 seconds.
  * - Loops back to the midpoint seamlessly for continuous dynamic playback.
+ * - 100% full color vibrancy with ZERO grey wraps, dimming filters, or dark overlays.
  */
 function LoopingHighlightVideo({
   src,
@@ -197,25 +198,18 @@ function LoopingHighlightVideo({
   const startMidRef = useRef<number>(0);
   const hasSeekedRef = useRef<boolean>(false);
 
-  const handleLoadedMetadata = () => {
-    const video = videoRef.current;
-    if (!video) return;
+  const initMidpoint = (video: HTMLVideoElement) => {
+    if (hasSeekedRef.current) return;
     const dur = video.duration;
-    if (dur && Number.isFinite(dur) && dur > 15) {
-      // Pick middle section (midpoint - 3s)
-      const mid = Math.max(0, Math.floor(dur / 2) - 3);
+    if (dur && Number.isFinite(dur) && dur > 4) {
+      const mid = Math.max(3.5, Math.floor(dur * 0.45));
       startMidRef.current = mid;
-      video.currentTime = mid;
-      hasSeekedRef.current = true;
-    } else if (dur && dur > 6) {
-      const mid = Math.floor(dur * 0.35);
-      startMidRef.current = mid;
-      video.currentTime = mid;
-      hasSeekedRef.current = true;
-    } else {
-      startMidRef.current = 0;
+      try {
+        video.currentTime = mid;
+        hasSeekedRef.current = true;
+      } catch {}
+      video.play().catch(() => {});
     }
-    video.play().catch(() => {});
   };
 
   const handleTimeUpdate = () => {
@@ -246,10 +240,12 @@ function LoopingHighlightVideo({
       loop
       playsInline
       preload="metadata"
-      onLoadedMetadata={handleLoadedMetadata}
+      onLoadedMetadata={(e) => initMidpoint(e.currentTarget)}
+      onLoadedData={(e) => initMidpoint(e.currentTarget)}
+      onCanPlay={(e) => initMidpoint(e.currentTarget)}
       onTimeUpdate={handleTimeUpdate}
       onEnded={handleEnded}
-      className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-90 group-hover/card:opacity-100 pointer-events-none"
+      className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-100 pointer-events-none"
     />
   );
 }
@@ -262,7 +258,7 @@ function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
 
   return (
     <div className={`w-full ${heightClass} relative rounded-2xl overflow-hidden border border-white/10 bg-[#0A0A0A] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none transition-all duration-300`}>
-      {/* Background Live Video / Poster */}
+      {/* Background Live Video / Poster - Pure color, ZERO grey wrap, ZERO titles */}
       {item.videoUrl ? (
         <LoopingHighlightVideo
           src={item.videoUrl}
@@ -274,19 +270,9 @@ function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
           alt={item.title}
           fill
           sizes="(max-width: 640px) 130px, (max-width: 1024px) 180px, 240px"
-          className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-85 group-hover/card:opacity-100"
+          className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-100"
         />
       )}
-
-      {/* Cinematic Gradient Vignette */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
-
-      {/* Clean Bottom Title - ZERO TAGS */}
-      <div className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-3 sm:left-3 sm:right-3 z-10 pointer-events-none">
-        <h4 className="text-[11px] sm:text-xs font-bold text-white tracking-tight leading-snug truncate drop-shadow-sm">
-          {item.title}
-        </h4>
-      </div>
     </div>
   );
 }

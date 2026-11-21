@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import Link from 'next/link';
 
 interface ReelCard {
   title: string;
@@ -29,20 +28,6 @@ const FEATURED_MIX: ReelCard[] = [
     videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
   },
   {
-    title: 'Akash & Mayuri — Mumbai Wedding Film',
-    category: 'Wedding Cinema',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
-  },
-  {
-    title: 'Sanket & Rutuja — Sangeet Night Reel',
-    category: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
-  },
-  {
     title: 'Juhi & Swapnil — Grand North Indian',
     category: 'Wedding Cinema',
     aspect: '16/9',
@@ -57,11 +42,11 @@ const FEATURED_MIX: ReelCard[] = [
     videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
   },
   {
-    title: 'Akshay & Jagruti — Wedding Teaser',
-    category: 'Teaser',
+    title: 'Rajat & Nimisha — South Indian Wedding',
+    category: 'Wedding Cinema',
     aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
+    image: getStreamUrl('thumbnails/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
   },
   {
     title: 'Shweta — Bridal Solo Reel',
@@ -69,16 +54,6 @@ const FEATURED_MIX: ReelCard[] = [
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
-  },
-];
-
-const MASTER_FILMS: ReelCard[] = [
-  {
-    title: 'Chandni & Harihar — Grand Reception',
-    category: 'Wedding Cinema',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
   },
   {
     title: 'Akash & Mayuri — Mumbai Wedding Film',
@@ -88,92 +63,19 @@ const MASTER_FILMS: ReelCard[] = [
     videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
   },
   {
-    title: 'Anoop & Ansa — Pre-Wedding Film',
-    category: 'Pre-Wedding',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
-  },
-  {
-    title: 'Juhi & Swapnil — Grand North Indian',
-    category: 'Wedding Cinema',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
-  },
-  {
-    title: 'Akshay & Jagruti — Wedding Teaser',
-    category: 'Teaser',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
-  },
-  {
-    title: 'Matan & Lihi — Pre-Wedding Romance',
-    category: 'Pre-Wedding',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Pre_wedding/Matan___Lihi_Pre_wedding_Film_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Pre_wedding/Matan___Lihi_Pre_wedding_Film_Low_preview.mp4'),
-  },
-  {
-    title: 'Jai & Aishwarya — Wedding Teaser',
-    category: 'Teaser',
-    aspect: '16/9',
-    image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
-  },
-];
-
-const VERTICAL_REELS: ReelCard[] = [
-  {
-    title: 'Anoop & Ansa — Viral Wedding Reel',
-    category: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/ANOOP___ANSA_REEL_low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
-  },
-  {
     title: 'Sanket & Rutuja — Sangeet Night Reel',
     category: 'Cinematic Reel',
     aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
-  },
-  {
-    title: 'Kuhu — Haldi Celebration Reel',
-    category: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
-  },
-  {
-    title: 'Shweta — Bridal Solo Reel',
-    category: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
-  },
-  {
-    title: 'Monish & Jisha — Couple Reel',
-    category: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Monish___Jisha_Reel_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Monish___Jisha_Reel_Low_preview.mp4'),
-  },
-  {
-    title: 'Matan & Lihi — Golden Hour Reel',
-    category: 'Cinematic Reel',
-    aspect: '9/16',
-    image: getStreamUrl('thumbnails/Reel_/Matan___Lihi_Reel_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Matan___Lihi_Reel_Low_preview.mp4'),
   },
 ];
 
 /**
- * Looping Video Highlight Player:
- * - Automatically seeks to the middle of the video on load.
- * - Plays the high-energy middle segment for 10-15 seconds.
- * - Loops back to the midpoint seamlessly for continuous dynamic playback.
+ * Crystal-Clear Looping Video Player:
+ * - Seeks to the vibrant middle segment (skipping any black screens or static titles).
+ * - Plays for 12 seconds of peak cinematic action, then loops continuously.
+ * - 100% full color vibrancy with ZERO grey wraps, dimming filters, or dark overlays.
  */
 function LoopingHighlightVideo({
   src,
@@ -188,24 +90,18 @@ function LoopingHighlightVideo({
   const startMidRef = useRef<number>(0);
   const hasSeekedRef = useRef<boolean>(false);
 
-  const handleLoadedMetadata = () => {
-    const video = videoRef.current;
-    if (!video) return;
+  const initMidpoint = (video: HTMLVideoElement) => {
+    if (hasSeekedRef.current) return;
     const dur = video.duration;
-    if (dur && Number.isFinite(dur) && dur > 15) {
-      const mid = Math.max(0, Math.floor(dur / 2) - 3);
+    if (dur && Number.isFinite(dur) && dur > 4) {
+      const mid = Math.max(3.5, Math.floor(dur * 0.45));
       startMidRef.current = mid;
-      video.currentTime = mid;
-      hasSeekedRef.current = true;
-    } else if (dur && dur > 6) {
-      const mid = Math.floor(dur * 0.35);
-      startMidRef.current = mid;
-      video.currentTime = mid;
-      hasSeekedRef.current = true;
-    } else {
-      startMidRef.current = 0;
+      try {
+        video.currentTime = mid;
+        hasSeekedRef.current = true;
+      } catch {}
+      video.play().catch(() => {});
     }
-    video.play().catch(() => {});
   };
 
   const handleTimeUpdate = () => {
@@ -235,16 +131,17 @@ function LoopingHighlightVideo({
       loop
       playsInline
       preload={priority ? 'auto' : 'metadata'}
-      onLoadedMetadata={handleLoadedMetadata}
+      onLoadedMetadata={(e) => initMidpoint(e.currentTarget)}
+      onLoadedData={(e) => initMidpoint(e.currentTarget)}
+      onCanPlay={(e) => initMidpoint(e.currentTarget)}
       onTimeUpdate={handleTimeUpdate}
       onEnded={handleEnded}
-      className="object-cover w-full h-full pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out"
+      className="object-cover w-full h-full pointer-events-none group-hover:scale-105 transition-transform duration-700 ease-out opacity-100"
     />
   );
 }
 
 export default function CoverflowReels() {
-  const [activeTab, setActiveTab] = useState<'mix' | 'films' | 'reels'>('mix');
   const [currentIndex, setCurrentIndex] = useState(2);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -256,15 +153,8 @@ export default function CoverflowReels() {
   const hasDraggedRef = useRef(false);
   const isHoveredRef = useRef(false);
 
-  const activeList =
-    activeTab === 'mix'
-      ? FEATURED_MIX
-      : activeTab === 'films'
-      ? MASTER_FILMS
-      : VERTICAL_REELS;
-
-  const total = activeList.length;
-  const AUTOPLAY_INTERVAL = 4500;
+  const total = FEATURED_MIX.length;
+  const AUTOPLAY_INTERVAL = 4200;
   const DRAG_SENSITIVITY = 260;
   const SWIPE_THRESHOLD = 40;
 
@@ -276,7 +166,7 @@ export default function CoverflowReels() {
     setCurrentIndex((prev) => (prev - 1 + total) % total);
   }, [total]);
 
-  // Autoplay
+  // Continuous auto-rotation
   useEffect(() => {
     const timer = setInterval(() => {
       if (!isHoveredRef.current && !isPointerDownRef.current) {
@@ -356,7 +246,7 @@ export default function CoverflowReels() {
       id="featured-reels"
     >
       {/* Section Header */}
-      <div className="max-w-[1200px] mx-auto px-6 sm:px-8 mb-6 text-center sm:text-left">
+      <div className="max-w-[1200px] mx-auto px-6 sm:px-8 mb-8 text-center sm:text-left">
         <span className="text-[11px] font-bold tracking-widest uppercase text-[#3B82F6] block mb-1.5">
           Selected Showcase
         </span>
@@ -368,58 +258,7 @@ export default function CoverflowReels() {
         </p>
       </div>
 
-      {/* Showcase Switcher */}
-      <div className="flex items-center justify-center mb-8 px-4">
-        <div className="inline-flex p-1 bg-[#F5F5F7] rounded-2xl border border-black/5 shadow-xs">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('mix');
-              setCurrentIndex(2);
-            }}
-            className={`px-3.5 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold tracking-tight transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 ${
-              activeTab === 'mix'
-                ? 'bg-white text-[#1D1D1F] shadow-sm font-bold'
-                : 'text-[#86868B] hover:text-[#1D1D1F]'
-            }`}
-          >
-            <span>🌟</span>
-            <span>Featured Mix</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('films');
-              setCurrentIndex(2);
-            }}
-            className={`px-3.5 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold tracking-tight transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 ${
-              activeTab === 'films'
-                ? 'bg-white text-[#1D1D1F] shadow-sm font-bold'
-                : 'text-[#86868B] hover:text-[#1D1D1F]'
-            }`}
-          >
-            <span>🎬</span>
-            <span>Master Films (16:9)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('reels');
-              setCurrentIndex(2);
-            }}
-            className={`px-3.5 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold tracking-tight transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 ${
-              activeTab === 'reels'
-                ? 'bg-white text-[#1D1D1F] shadow-sm font-bold'
-                : 'text-[#86868B] hover:text-[#1D1D1F]'
-            }`}
-          >
-            <span>📱</span>
-            <span>Vertical Reels (9:16)</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 3D Coverflow Container */}
+      {/* 3D Coverflow Container (Pure Mix, Auto-Rotating, Zero Clutter) */}
       <div
         ref={wrapperRef}
         onMouseEnter={() => {
@@ -443,7 +282,7 @@ export default function CoverflowReels() {
       >
         {/* 3D Stage Viewport */}
         <div className="coverflow-stage relative w-full h-[460px] sm:h-[530px] flex items-center justify-center overflow-hidden pointer-events-none">
-          {activeList.map((item, idx) => {
+          {FEATURED_MIX.map((item, idx) => {
             let diff = idx - currentIndex;
             if (diff > total / 2) diff -= total;
             if (diff < -total / 2) diff += total;
@@ -454,7 +293,6 @@ export default function CoverflowReels() {
             let transform = '';
             let zIndex = 0;
             let opacity = 0;
-            let filter = 'brightness(1)';
             let isCenter = false;
             let pointerEvents: 'auto' | 'none' = 'none';
 
@@ -470,11 +308,10 @@ export default function CoverflowReels() {
               transform = `translate(-50%, -50%) translate3d(${translateX}px, 0, ${translateZ}px) scale(${scale}) rotateY(${rotateY}deg)`;
               zIndex = 35;
               opacity = 1;
-              filter = 'brightness(1)';
               pointerEvents = 'auto';
               isCenter = true;
             } else if (absDiff <= 1.8) {
-              // Flanking visible cards
+              // Flanking visible cards (No artificial brightness dimming)
               const sign = effectiveDiff > 0 ? 1 : -1;
               const normDist = absDiff;
               const spacing = is169 ? (240 + (normDist - 1) * 170) : (190 + (normDist - 1) * 140);
@@ -482,13 +319,11 @@ export default function CoverflowReels() {
               const rotateY = sign * -15;
               const translateZ = -40 * normDist;
               const scale = Math.max(0.78, 0.92 - normDist * 0.08);
-              const opacityVal = Math.max(0.55, 0.9 - normDist * 0.2);
-              const brightnessVal = Math.max(0.78, 0.92 - normDist * 0.1);
+              const opacityVal = Math.max(0.65, 0.92 - normDist * 0.15);
 
               transform = `translate(-50%, -50%) translate3d(${translateX}px, 0, ${translateZ}px) scale(${scale}) rotateY(${rotateY}deg)`;
               zIndex = Math.round(25 - absDiff * 5);
               opacity = opacityVal;
-              filter = `brightness(${brightnessVal})`;
               pointerEvents = 'auto';
             } else {
               // Culled distant cards
@@ -504,7 +339,7 @@ export default function CoverflowReels() {
 
             return (
               <div
-                key={`${activeTab}-${idx}`}
+                key={`mix-${idx}`}
                 onClick={(e) => {
                   if (hasDraggedRef.current) {
                     e.preventDefault();
@@ -518,49 +353,27 @@ export default function CoverflowReels() {
                   transform,
                   zIndex,
                   opacity,
-                  filter,
                   pointerEvents,
                 }}
                 className={`coverflow-card ${widthClass} rounded-2xl sm:rounded-3xl overflow-hidden bg-[#0A0A0A] cursor-pointer group transition-[border,box-shadow] duration-300 ${
                   isDragging ? 'is-dragging' : ''
                 } ${
                   isCenter
-                    ? 'border border-white/20 shadow-[0_24px_60px_rgba(0,0,0,0.22)]'
-                    : 'border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.06)]'
+                    ? 'border border-white/25 shadow-[0_24px_60px_rgba(0,0,0,0.25)] ring-1 ring-black/5'
+                    : 'border border-white/10 shadow-[0_6px_20px_rgba(0,0,0,0.08)]'
                 }`}
               >
                 <div className="relative w-full h-full bg-black">
-                  {/* Live Looping Video Clip Playing from Middle for 10-15s */}
+                  {/* Crystal-Clear Live Looping Video Clip - Pure Color, NO Grey Overlays */}
                   <LoopingHighlightVideo
                     src={item.videoUrl}
                     poster={item.image}
                     priority={absDiff < 1.5}
                   />
-
-                  {/* Clean gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
-
-                  {/* Clean card bottom info - ZERO TAGS */}
-                  <div className="absolute bottom-3.5 left-3.5 right-3.5 sm:bottom-4 sm:left-4 sm:right-4 z-10 pointer-events-none">
-                    <h3 className="text-xs sm:text-sm md:text-[15px] font-bold text-white tracking-tight leading-snug truncate drop-shadow-md">
-                      {item.title}
-                    </h3>
-                  </div>
                 </div>
               </div>
             );
           })}
-        </div>
-
-        {/* View All Work Action */}
-        <div className="mt-8 text-center">
-          <Link
-            href="/work"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 hover:border-zinc-300 text-xs font-bold uppercase tracking-wider text-[#1D1D1F] transition-all shadow-xs group"
-          >
-            <span>View Full Portfolio</span>
-            <span className="text-[#3B82F6] group-hover:translate-x-1 transition-transform">→</span>
-          </Link>
         </div>
       </div>
     </section>

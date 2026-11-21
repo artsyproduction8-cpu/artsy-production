@@ -11,17 +11,28 @@ interface PortfolioWorkCard {
   id: string;
   title: string;
   genre: string;
+  aspect: '16/9' | '9/16';
   image: string;
   videoUrl?: string;
 }
 
 const getStreamUrl = (key: string) => `/api/portfolio/stream?key=${encodeURIComponent(key)}`;
 
+// Rotating Taglines for Artsy headline
+const ROTATING_TAGLINES = [
+  'Production Command',
+  'Cinematic Suite',
+  'Frame Review',
+  'Studio Dashboard',
+  'Active Project',
+];
+
 const ROW_1_WORK: PortfolioWorkCard[] = [
   {
     id: 'w1',
     title: 'Chandni & Harihar — Grand Reception',
     genre: 'Wedding Cinema',
+    aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Chandni__Harihar_s_Reception_Film___Shreyas_Iyer_Steals_the_Dance_Floor_preview.mp4'),
   },
@@ -29,6 +40,7 @@ const ROW_1_WORK: PortfolioWorkCard[] = [
     id: 'w2',
     title: 'Anoop & Ansa — Viral Wedding Reel',
     genre: 'Cinematic Reel',
+    aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/ANOOP___ANSA_REEL_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/ANOOP___ANSA_REEL_low_preview.mp4'),
   },
@@ -36,74 +48,84 @@ const ROW_1_WORK: PortfolioWorkCard[] = [
     id: 'w3',
     title: 'Akash & Mayuri — Mumbai Wedding Film',
     genre: 'Wedding Cinema',
+    aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Akash__Mayuri_Wedding_Film___Cinematic_Highlights__Mumbai_Wedding_Videographer_preview.mp4'),
   },
   {
     id: 'w4',
-    title: 'Akshay & Jagruti — Wedding Teaser',
-    genre: 'Teaser',
-    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
+    title: 'Sanket & Rutuja — Sangeet Night Reel',
+    genre: 'Cinematic Reel',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
   },
   {
     id: 'w5',
     title: 'Juhi & Swapnil — Grand North Indian',
     genre: 'Wedding Cinema',
+    aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Juhi__Swapnils_Grand_North_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
   },
   {
     id: 'w6',
-    title: 'Sanket & Rutuja — Sangeet Night Reel',
-    genre: 'Cinematic Reel',
-    image: getStreamUrl('thumbnails/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Sanket___Rutuja_-_Sangeet_Reel_Low__preview.mp4'),
+    title: 'Akshay & Jagruti — Wedding Teaser',
+    genre: 'Teaser',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Akshay___Jagruti__Wedding_Teaser_Low_preview.mp4'),
   },
 ];
 
 const ROW_2_WORK: PortfolioWorkCard[] = [
   {
     id: 'w7',
-    title: 'Anoop & Ansa — Pre-Wedding Film',
-    genre: 'Pre-Wedding',
-    image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
-  },
-  {
-    id: 'w8',
-    title: 'Jai & Aishwarya — Wedding Teaser',
-    genre: 'Teaser',
-    image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
-  },
-  {
-    id: 'w9',
-    title: 'Rujuta & Abhyuday — Joy & Romance',
-    genre: 'Wedding Cinema',
-    image: getStreamUrl('thumbnails/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_preview.mp4'),
-  },
-  {
-    id: 'w10',
     title: 'Kuhu — Haldi Celebration Reel',
     genre: 'Cinematic Reel',
+    aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Kuhu_Haldi_Reel_low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Kuhu_Haldi_Reel_low_preview.mp4'),
   },
   {
-    id: 'w11',
-    title: 'Akshay & Partner — Pre-Wedding',
+    id: 'w8',
+    title: 'Anoop & Ansa — Pre-Wedding Film',
     genre: 'Pre-Wedding',
-    image: getStreamUrl('thumbnails/Pre_wedding/Akshay_Pre_wedding_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Pre_wedding/Akshay_Pre_wedding_Low_preview.mp4'),
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Pre_wedding/ANOOP___ANSA_pre_wedding_Low_Res_preview.mp4'),
+  },
+  {
+    id: 'w9',
+    title: 'Shweta — Bridal Solo Reel',
+    genre: 'Cinematic Reel',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
+  },
+  {
+    id: 'w10',
+    title: 'Jai & Aishwarya — Wedding Teaser',
+    genre: 'Teaser',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Teaser/Jai___Aishwarya__Teaser__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Teaser/Jai___Aishwarya__Teaser__Low_preview.mp4'),
+  },
+  {
+    id: 'w11',
+    title: 'Monish & Jisha — Couple Reel',
+    genre: 'Cinematic Reel',
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Monish___Jisha_Reel__Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Monish___Jisha_Reel__Low_preview.mp4'),
   },
   {
     id: 'w12',
-    title: 'Khushboo & Tejas — Wedding Teaser',
-    genre: 'Teaser',
-    image: getStreamUrl('thumbnails/Teaser/Khushboo___Tejas_Teaser_Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Teaser/Khushboo___Tejas_Teaser_Low_preview.mp4'),
+    title: 'Rujuta & Abhyuday — Joy & Romance',
+    genre: 'Wedding Cinema',
+    aspect: '16/9',
+    image: getStreamUrl('thumbnails/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Wedding/Rujuta__Abhyudays_North_Indian_Wedding_Film___Joy__Dance__Romance_preview.mp4'),
   },
 ];
 
@@ -112,20 +134,23 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
     id: 'w13',
     title: 'Rajat & Nimisha — South Indian Wedding',
     genre: 'Wedding Cinema',
+    aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Rajat__Nimishas_South_Indian_Wedding_Film___Cinematic_Highlights_preview.mp4'),
   },
   {
     id: 'w14',
-    title: 'Monish & Jisha — Couple Reel',
+    title: 'Matan & Lihi — Golden Hour Reel',
     genre: 'Cinematic Reel',
-    image: getStreamUrl('thumbnails/Reel_/Monish___Jisha_Reel__Low_thumb.jpg'),
-    videoUrl: getStreamUrl('previews/Reel_/Monish___Jisha_Reel__Low_preview.mp4'),
+    aspect: '9/16',
+    image: getStreamUrl('thumbnails/Reel_/Matan___Lihi_Reel_Low_thumb.jpg'),
+    videoUrl: getStreamUrl('previews/Reel_/Matan___Lihi_Reel_Low_preview.mp4'),
   },
   {
     id: 'w15',
     title: 'Matan & Lihi — Pre-Wedding Story',
     genre: 'Pre-Wedding',
+    aspect: '16/9',
     image: getStreamUrl('thumbnails/Pre_wedding/Matan___Lihi_cine_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Pre_wedding/Matan___Lihi_cine_Low_preview.mp4'),
   },
@@ -133,6 +158,7 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
     id: 'w16',
     title: 'Matan & Lihi — Cinematic Trailer',
     genre: 'Teaser',
+    aspect: '16/9',
     image: getStreamUrl('thumbnails/Teaser/Matan___Lihi_Trailer_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Teaser/Matan___Lihi_Trailer_Low_preview.mp4'),
   },
@@ -140,6 +166,7 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
     id: 'w17',
     title: 'Hufriya & Danesh — 16 Years of Love',
     genre: 'Wedding Cinema',
+    aspect: '16/9',
     image: getStreamUrl('thumbnails/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Wedding/Hufriya__Danesh_Reception_Film___16_Years_of_Love_Finally_Sealed_preview.mp4'),
   },
@@ -147,25 +174,99 @@ const ROW_3_WORK: PortfolioWorkCard[] = [
     id: 'w18',
     title: 'Shweta — Bridal Solo Reel',
     genre: 'Cinematic Reel',
+    aspect: '9/16',
     image: getStreamUrl('thumbnails/Reel_/Shweta_Reel_Low_thumb.jpg'),
     videoUrl: getStreamUrl('previews/Reel_/Shweta_Reel_Low_preview.mp4'),
   },
 ];
 
-function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
+/**
+ * Looping Video Highlight Player:
+ * - Automatically seeks to the middle of the video on load (skipping black frames & intro logos).
+ * - Plays the high-energy middle segment for 10-15 seconds.
+ * - Loops back to the midpoint seamlessly for continuous dynamic playback.
+ */
+function LoopingHighlightVideo({
+  src,
+  poster,
+}: {
+  src: string;
+  poster?: string;
+}) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const startMidRef = useRef<number>(0);
+  const hasSeekedRef = useRef<boolean>(false);
+
+  const handleLoadedMetadata = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const dur = video.duration;
+    if (dur && Number.isFinite(dur) && dur > 15) {
+      // Pick middle section (midpoint - 3s)
+      const mid = Math.max(0, Math.floor(dur / 2) - 3);
+      startMidRef.current = mid;
+      video.currentTime = mid;
+      hasSeekedRef.current = true;
+    } else if (dur && dur > 6) {
+      const mid = Math.floor(dur * 0.35);
+      startMidRef.current = mid;
+      video.currentTime = mid;
+      hasSeekedRef.current = true;
+    } else {
+      startMidRef.current = 0;
+    }
+    video.play().catch(() => {});
+  };
+
+  const handleTimeUpdate = () => {
+    const video = videoRef.current;
+    if (!video || !hasSeekedRef.current) return;
+    // Loop for 12 seconds from the middle start point
+    const maxPlayTime = startMidRef.current + 12;
+    if (video.currentTime >= maxPlayTime || (video.duration && video.currentTime >= video.duration - 0.5)) {
+      video.currentTime = startMidRef.current;
+      video.play().catch(() => {});
+    }
+  };
+
+  const handleEnded = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = startMidRef.current;
+    video.play().catch(() => {});
+  };
+
   return (
-    <div className="w-full h-[145px] sm:h-[165px] lg:h-[185px] xl:h-[205px] relative rounded-2xl overflow-hidden border border-white/10 bg-[#0A0A0A] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none">
+    <video
+      ref={videoRef}
+      src={src}
+      poster={poster}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      onLoadedMetadata={handleLoadedMetadata}
+      onTimeUpdate={handleTimeUpdate}
+      onEnded={handleEnded}
+      className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-90 group-hover/card:opacity-100 pointer-events-none"
+    />
+  );
+}
+
+function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
+  const isVertical = item.aspect === '9/16';
+  const heightClass = isVertical
+    ? 'h-[200px] sm:h-[230px] lg:h-[260px] xl:h-[285px]'
+    : 'h-[125px] sm:h-[145px] lg:h-[160px] xl:h-[175px]';
+
+  return (
+    <div className={`w-full ${heightClass} relative rounded-2xl overflow-hidden border border-white/10 bg-[#0A0A0A] shrink-0 shadow-[0_8px_24px_rgba(0,0,0,0.4)] group/card select-none transition-all duration-300`}>
       {/* Background Live Video / Poster */}
       {item.videoUrl ? (
-        <video
+        <LoopingHighlightVideo
           src={item.videoUrl}
           poster={item.image}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="none"
-          className="object-cover w-full h-full transform transition-transform duration-700 ease-out group-hover/card:scale-105 opacity-85 group-hover/card:opacity-100 pointer-events-none"
         />
       ) : (
         <Image
@@ -178,14 +279,11 @@ function PortfolioMarqueeCard({ item }: { item: PortfolioWorkCard }) {
       )}
 
       {/* Cinematic Gradient Vignette */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
 
-      {/* Clean Bottom Information */}
-      <div className="absolute bottom-3 left-3 right-3 z-10 pointer-events-none">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#3B82F6] block mb-0.5">
-          {item.genre}
-        </span>
-        <h4 className="text-xs sm:text-[13px] font-bold text-white tracking-tight leading-snug truncate drop-shadow-sm">
+      {/* Clean Bottom Title - ZERO TAGS */}
+      <div className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-3 sm:left-3 sm:right-3 z-10 pointer-events-none">
+        <h4 className="text-[11px] sm:text-xs font-bold text-white tracking-tight leading-snug truncate drop-shadow-sm">
           {item.title}
         </h4>
       </div>
@@ -237,6 +335,10 @@ function LoginFormContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Rotating Tagline State
+  const [taglineIdx, setTaglineIdx] = useState(0);
+  const [isCrossFading, setIsCrossFading] = useState(false);
+
   // Freelancer Intent
   const [isFreelancerIntent, setIsFreelancerIntent] = useState(false);
 
@@ -282,6 +384,21 @@ function LoginFormContent() {
       }
     } catch { }
   }, [searchParams]);
+
+  // Tagline auto-rotation
+  useEffect(() => {
+    if (isFreelancerIntent || step === 'otp') return;
+
+    const timer = setInterval(() => {
+      setIsCrossFading(true);
+      setTimeout(() => {
+        setTaglineIdx((prev) => (prev + 1) % ROTATING_TAGLINES.length);
+        setIsCrossFading(false);
+      }, 400);
+    }, 2800);
+
+    return () => clearInterval(timer);
+  }, [isFreelancerIntent, step]);
 
   // OTP Countdown timer
   useEffect(() => {
@@ -590,12 +707,6 @@ function LoginFormContent() {
       <div className="relative pt-4 pb-2 lg:pt-0 lg:pb-0 lg:w-[58%] xl:w-[60%] lg:flex-none p-4 sm:p-6 lg:p-6 xl:p-8 flex items-center justify-center">
         <div className="relative w-full h-[400px] sm:h-[500px] lg:h-[calc(100vh-4rem)] max-h-[860px] rounded-[24px] sm:rounded-[36px] bg-[#0A0A0A] border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.35)] overflow-hidden flex flex-col justify-center">
 
-          {/* Top Floating Subtle Studio Watermark */}
-          <div className="absolute top-5 left-5 z-30 hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-medium text-white/80 shadow-lg">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6]" />
-            <span>Selected Studio Work</span>
-          </div>
-
           {/* Top & Bottom Cinematic Fade Vignettes */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-20 sm:h-24 bg-gradient-to-b from-[#0A0A0A] via-[#0A0A0A]/75 to-transparent z-20" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 sm:h-24 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/75 to-transparent z-20" />
@@ -655,8 +766,15 @@ function LoginFormContent() {
                     Apply as <span className="text-[#3B82F6]">Creator</span>
                   </h1>
                 ) : (
-                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-tight">
-                    Sign in to <span className="text-[#3B82F6]">Artsy</span>
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-tight flex items-baseline gap-1.5">
+                    <span>Access</span>
+                    <span
+                      className={`text-[#3B82F6] transition-opacity duration-400 ease-in-out ${
+                        isCrossFading ? 'opacity-0' : 'opacity-100'
+                      }`}
+                    >
+                      {ROTATING_TAGLINES[taglineIdx]}
+                    </span>
                   </h1>
                 )}
                 <p className="text-xs text-[#86868B] mt-1 leading-normal">

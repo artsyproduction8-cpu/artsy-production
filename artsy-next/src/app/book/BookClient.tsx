@@ -227,30 +227,103 @@ export default function BookClient() {
     }
   };
 
-  // Filter available SLAs based on category
-  // In the wedding section there should NOT be rush 48h SLA. It is strictly for brand, corporate, and personal only.
-  const availableSlas = useMemo(() => {
-    return deliverySlas.filter((s) => {
-      if (category === 'wedding') {
-        return s.id !== 'rush' && s.hours !== 48;
-      }
-      return true;
-    });
-  }, [deliverySlas, category]);
-
-  // Keep turnaround in sync if switching to wedding while rush was previously active
-  useEffect(() => {
-    if (category === 'wedding' && turnaround === 'rush') {
-      setTurnaround('priority');
-    }
-  }, [category, turnaround]);
-
-
-
   // Selected sub-category details
   const activeSubs = subCategoriesDict[category] || subCategoriesDict['wedding'] || Object.values(subCategoriesDict)[0] || [];
   const activeSub = activeSubs.find((s: any) => s.id === selectedSubId) || activeSubs[0] || { id: 'default', label: 'Standard', base: 3000, duration: 'Standard' };
   const baseServiceCost = activeSub.base || 3000;
+
+  // Filter and customize available SLAs based on category AND specific product selected
+  const availableSlas = useMemo(() => {
+    const subIdLower = (activeSub?.id || '').toLowerCase();
+    const subLabelLower = (activeSub?.label || '').toLowerCase();
+    const isReel = subIdLower.includes('reel') || subLabelLower.includes('reel');
+
+    // 1. Reel-specific SLAs (48h Express standard, 24h Express Rush)
+    if (isReel) {
+      const isMasterSuite = subIdLower === 'reel-master';
+      return [
+        {
+          id: 'standard',
+          label: 'Standard Reel SLA',
+          turnaroundDays: isMasterSuite ? '72 Hours SLA' : '48 Hours Express',
+          hours: isMasterSuite ? 72 : 48,
+          costWeddingPersonal: 0,
+          costBrandCorporate: 0,
+          description: isMasterSuite 
+            ? 'Full 5-reel suite sequenced with custom covers and sound design.' 
+            : 'Fast 48-hour turn with beat sync, dynamic motion, and color polish.',
+        },
+        {
+          id: 'priority',
+          label: '24h Express Rush',
+          turnaroundDays: '24 Hours Express',
+          hours: 24,
+          costWeddingPersonal: 1000,
+          costBrandCorporate: 1000,
+          description: 'Top-of-queue overnight priority dispatch for time-sensitive social drops.',
+        },
+      ];
+    }
+
+    // 2. Pre-Wedding couple films (5 Working Days standard)
+    const isPreWedding = subIdLower.includes('pre-wedding') || subLabelLower.includes('pre-wedding');
+    if (isPreWedding) {
+      return [
+        {
+          id: 'standard',
+          label: 'Standard Pre-Wedding SLA',
+          turnaroundDays: '5 Working Days',
+          hours: 120,
+          costWeddingPersonal: 0,
+          costBrandCorporate: 0,
+          description: 'Cinematic color conform, aerial drone stabilization, and dialogue audio mastering.',
+        },
+        {
+          id: 'priority',
+          label: 'Priority 48h Rush SLA',
+          turnaroundDays: '48 Hours Express',
+          hours: 48,
+          costWeddingPersonal: 2000,
+          costBrandCorporate: 1000,
+          description: 'Expedited timeline assembly for immediate Save-the-Date social announcement.',
+        },
+      ];
+    }
+
+    // 3. Studio / Agency Retainers (Dedicated SLA)
+    const isRetainer = subIdLower.includes('retainer') || subLabelLower.includes('retainer');
+    if (isRetainer) {
+      const isAgency = subIdLower.includes('10');
+      return [
+        {
+          id: 'standard',
+          label: isAgency ? 'Agency Scale Retainer SLA' : 'Studio Growth Retainer SLA',
+          turnaroundDays: isAgency ? '72 Hours SLA' : '5 Working Days Priority',
+          hours: isAgency ? 72 : 120,
+          costWeddingPersonal: 0,
+          costBrandCorporate: 0,
+          description: isAgency 
+            ? 'Dedicated two-editor cluster with 48–72h rush turnaround and raw project files.' 
+            : 'Dedicated senior cutter with priority 5-day SLA and 24h revision turnaround.',
+        },
+      ];
+    }
+
+    // 4. Standard Wedding Films (7–10 days standard, 4–5 days priority)
+    if (category === 'wedding') {
+      return deliverySlas.filter((s) => s.id !== 'rush' && s.hours !== 48);
+    }
+
+    // 5. Brand / Corporate / Personal defaults
+    return deliverySlas;
+  }, [deliverySlas, category, activeSub]);
+
+  // Keep turnaround in sync when switching between products with different SLA options
+  useEffect(() => {
+    if (!availableSlas.some((s) => s.id === turnaround)) {
+      setTurnaround(availableSlas[0]?.id || 'standard');
+    }
+  }, [availableSlas, turnaround]);
 
   // Add-ons computed dynamically from active pricing engine matrix
   const isWeddingPersonal = category === 'wedding' || category === 'personal';
@@ -290,6 +363,8 @@ export default function BookClient() {
         cameraAngle: angles,
         angles,
         turnaround,
+        turnaroundDays: selectedSlaRule.turnaroundDays,
+        turnaroundLabel: selectedSlaRule.label,
         isRush: turnaround === 'rush' || turnaround === 'priority',
         audioUrl: audioUrl.trim(),
         additionalUrls: additionalUrls.map((u) => u.trim()).filter(Boolean),
@@ -537,7 +612,7 @@ export default function BookClient() {
                   </h2>
                 </div>
 
-                <div className={`grid grid-cols-1 ${category === 'wedding' ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3`}>
+                <div className={`grid grid-cols-1 ${availableSlas.length === 1 ? 'sm:grid-cols-1' : availableSlas.length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'} gap-3`}>
                   {availableSlas.map((t) => {
                     const isSelected = turnaround === t.id;
                     const cost = isWeddingPersonal ? t.costWeddingPersonal : t.costBrandCorporate;

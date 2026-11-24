@@ -147,11 +147,11 @@ export const DEFAULT_PRICING_MATRIX: ServiceCategory[] = [
         name: 'Social Reel Only',
         duration: '30–60 sec',
         basePrice: 1500,
-        slaHours: 168,
-        standardDelivery: '7–10 working days',
-        rushOptions: '+₹2,000 (4–5 days)',
-        rushFee: 2000,
-        rushMultiplier: 2.3,
+        slaHours: 48,
+        standardDelivery: '48 hours express',
+        rushOptions: '+₹1,000 (24h Rush)',
+        rushFee: 1000,
+        rushMultiplier: 1.66,
         creatorSharePct: 70,
         description: 'Dynamic, high-velocity vertical reel optimized specifically for Instagram Reels and TikTok.',
         deliverables: ['30–60s Vertical 9:16 Cut', 'Beat-Synced Transitions', 'Speech Audio Polish', '1 Free Revision Pass'],
@@ -1041,6 +1041,10 @@ export function getBookSubCategories(matrix: ServiceCategory[]) {
         base: p.basePrice,
         duration: p.duration,
         tag: p.tag,
+        standardDelivery: p.standardDelivery,
+        slaHours: p.slaHours,
+        rushOptions: p.rushOptions,
+        rushFee: p.rushFee,
       }));
   }
   return result;

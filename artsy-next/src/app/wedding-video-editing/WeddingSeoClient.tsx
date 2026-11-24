@@ -331,7 +331,7 @@ export default function WeddingSeoClient({ faqs }: WeddingSeoClientProps) {
             {/* Action Buttons */}
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
-                href="/book?category=wedding"
+                href="/book?category=wedding&sub=highlight-teaser"
                 className="px-7 py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-sm hover:scale-[1.01]"
               >
                 Book an Edit (From ₹5,000) →
@@ -673,7 +673,7 @@ export default function WeddingSeoClient({ faqs }: WeddingSeoClientProps) {
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/book?category=wedding"
+              href="/book?category=wedding&sub=highlight-teaser"
               className="px-7 py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-colors shadow-sm"
             >
               Book an Edit (From ₹5,000) →

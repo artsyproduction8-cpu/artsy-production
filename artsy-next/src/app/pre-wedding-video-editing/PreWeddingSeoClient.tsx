@@ -167,7 +167,7 @@ const PACKAGES = [
     ],
     popular: false,
     ctaText: 'Book Teaser Cut',
-    ctaHref: '/book?category=wedding&sub=teaser-only',
+    ctaHref: '/book?category=wedding&sub=pre-wedding-teaser',
   },
   {
     name: 'Narrative Story Film',
@@ -187,7 +187,7 @@ const PACKAGES = [
     ],
     popular: true,
     ctaText: 'Book Story Film',
-    ctaHref: '/book?category=wedding&sub=highlight-teaser',
+    ctaHref: '/book?category=wedding&sub=pre-wedding-story',
   },
   {
     name: 'Complete Destination Suite',
@@ -207,7 +207,7 @@ const PACKAGES = [
     ],
     popular: false,
     ctaText: 'Book Destination Suite',
-    ctaHref: '/book?category=wedding&sub=trinity-bundle',
+    ctaHref: '/book?category=wedding&sub=pre-wedding-suite',
   },
 ];
 
@@ -325,7 +325,7 @@ export default function PreWeddingSeoClient({ faqs }: PreWeddingSeoClientProps) 
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
-                href="/book?category=wedding&sub=highlight-teaser"
+                href="/book?category=wedding&sub=pre-wedding-teaser"
                 className="px-7 py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-sm hover:scale-[1.01]"
               >
                 Book an Edit (From ₹2,000) →
@@ -512,7 +512,7 @@ export default function PreWeddingSeoClient({ faqs }: PreWeddingSeoClientProps) 
                       ▶ Watch Master Film
                     </button>
                     <Link
-                      href="/book?category=wedding&sub=highlight-teaser"
+                      href="/book?category=wedding&sub=pre-wedding-story"
                       className="px-5 py-2.5 rounded-xl bg-white hover:bg-[#F5F5F7] border border-[#E5E5E7] text-[#1D1D1F] text-xs font-bold transition-all"
                     >
                       Book This Edit Style →
@@ -657,7 +657,7 @@ export default function PreWeddingSeoClient({ faqs }: PreWeddingSeoClientProps) 
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/book?category=wedding&sub=highlight-teaser"
+              href="/book?category=wedding&sub=pre-wedding-teaser"
               className="px-7 py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-sm"
             >
               Book an Edit (From ₹2,000) →

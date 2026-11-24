@@ -155,7 +155,7 @@ const PACKAGES = [
     ],
     popular: true,
     ctaText: 'Book 3-Reel Bundle',
-    ctaHref: '/book?category=wedding&sub=trinity-bundle',
+    ctaHref: '/book?category=wedding&sub=reel-trio',
   },
   {
     name: 'Reel Master Suite (5 Reels)',
@@ -175,7 +175,7 @@ const PACKAGES = [
     ],
     popular: false,
     ctaText: 'Book 5-Reel Suite',
-    ctaHref: '/book?category=wedding&sub=master-package',
+    ctaHref: '/book?category=wedding&sub=reel-master',
   },
 ];
 

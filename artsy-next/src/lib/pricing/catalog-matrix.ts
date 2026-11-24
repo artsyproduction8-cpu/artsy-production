@@ -193,6 +193,133 @@ export const DEFAULT_PRICING_MATRIX: ServiceCategory[] = [
         tag: 'Archival Master',
         active: true,
       },
+      {
+        id: 'reel-trio',
+        categoryId: 'wedding',
+        name: 'Reel Trio Bundle (3 Reels)',
+        duration: '3x 30–60 sec',
+        basePrice: 5000,
+        slaHours: 48,
+        standardDelivery: '48 hours express',
+        rushOptions: '+₹2,000 (24h Rush)',
+        rushFee: 2000,
+        rushMultiplier: 1.4,
+        creatorSharePct: 70,
+        description: 'Complete 3-part social campaign with distinct emotional, party, and detail 9:16 vertical cuts.',
+        deliverables: ['3 Distinct 9:16 Vertical Video Reels', 'Emotional, Party & Detail Cuts', 'Trending Audio Beat Sync', 'Consistent Rec.709 Color Palette', '1 Free Revision Round per Reel'],
+        cameraProfiles: ['iPhone 15/16 Pro Log', 'Sony FX3', 'Mirrorless Log'],
+        popular: true,
+        tag: '3-Reel Trio',
+        active: true,
+      },
+      {
+        id: 'reel-master',
+        categoryId: 'wedding',
+        name: 'Reel Master Suite (5 Reels)',
+        duration: '5x 30–60 sec',
+        basePrice: 8000,
+        slaHours: 72,
+        standardDelivery: '72 hours SLA',
+        rushOptions: '+₹2,000 (48h Rush)',
+        rushFee: 2000,
+        rushMultiplier: 1.25,
+        creatorSharePct: 70,
+        description: 'Full 5-reel vertical social content slate covering entire sequence: Entry, Ceremony, Details, Dance, and Outro.',
+        deliverables: ['5 Complete Vertical 9:16 Social Edits', 'Full Sequence Coverage', 'Custom Instagram Grid Covers', 'Dynamic Speed Ramps & Foley SFX', '1 Free Revision Round per Reel'],
+        cameraProfiles: ['Sony S-Log3', 'Apple ProRes Log', 'Canon Log 3'],
+        tag: '5-Reel Suite',
+        active: true,
+      },
+      {
+        id: 'pre-wedding-teaser',
+        categoryId: 'wedding',
+        name: 'Pre-Wedding Teaser Cut',
+        duration: '60–90 sec',
+        basePrice: 2000,
+        slaHours: 120,
+        standardDelivery: '5 working days',
+        rushOptions: '+₹2,000 (48h Rush)',
+        rushFee: 2000,
+        rushMultiplier: 2.0,
+        creatorSharePct: 70,
+        description: 'High-impact 60–90s couple teaser for Save-the-Date announcements and Instagram premiere.',
+        deliverables: ['60–90s Cinematic Teaser', 'Dual Format (16:9 & 9:16)', 'Drone Sweep Speed Ramps', 'Rec.709 Film LUT Grade', '1 Free Revision Round'],
+        cameraProfiles: ['Sony FX3/A7S III', 'Canon R5/R6', 'DJI D-Log'],
+        active: true,
+      },
+      {
+        id: 'pre-wedding-story',
+        categoryId: 'wedding',
+        name: 'Pre-Wedding Story Film',
+        duration: '3–5 min',
+        basePrice: 5000,
+        slaHours: 120,
+        standardDelivery: '5 working days',
+        rushOptions: '+₹2,000 (48h Rush)',
+        rushFee: 2000,
+        rushMultiplier: 1.4,
+        creatorSharePct: 70,
+        description: 'Narrative 3–5 min cinematic love story with dialogue sync, aerial transitions, and acoustic scoring.',
+        deliverables: ['3–5 Min Narrative Pre-Wedding Film', 'Dual Format (16:9 + 9:16)', 'Dialogue & Speech Audio Sync', 'Drone & Ground Color Tone Match', '1 Free Revision Round'],
+        cameraProfiles: ['Sony S-Log3', 'Canon Log 2/3', 'Apple ProRes'],
+        popular: true,
+        tag: 'Most Popular',
+        active: true,
+      },
+      {
+        id: 'pre-wedding-suite',
+        categoryId: 'wedding',
+        name: 'Pre-Wedding Destination Suite',
+        duration: '3–5m + 60s + 30–60s',
+        basePrice: 8000,
+        slaHours: 120,
+        standardDelivery: '5 working days',
+        rushOptions: '+₹2,000 (48h Rush)',
+        rushFee: 2000,
+        rushMultiplier: 1.25,
+        creatorSharePct: 70,
+        description: 'Comprehensive destination suite with full narrative film, cinematic teaser, and vertical social reel.',
+        deliverables: ['3–5 Min Extended Love Story Film', '60s Cinematic Teaser', '30–60s Vertical Instagram Reel', 'Drone & Aerial Footage Conforming', '1 Free Revision Round'],
+        cameraProfiles: ['Sony FX3/FX6', 'RED IPP2', 'Canon Cinema RAW'],
+        tag: 'Full Suite',
+        active: true,
+      },
+      {
+        id: 'white-label-retainer-5',
+        categoryId: 'wedding',
+        name: 'Studio Growth Retainer (5 Projects/Mo)',
+        duration: '5 Full Projects',
+        basePrice: 22500,
+        slaHours: 120,
+        standardDelivery: '5 working days priority',
+        rushOptions: '+₹5,000 (Priority Lane)',
+        rushFee: 5000,
+        rushMultiplier: 1.22,
+        creatorSharePct: 70,
+        description: 'Monthly B2B studio volume retainer for 5 complete client edits (Highlight + Teaser) with dedicated senior editor.',
+        deliverables: ['5 Complete Client Deliverables (Highlight + Teaser)', 'Dedicated Lead Editor Matched to Studio Style', 'Custom LUT & Project Presets Logged', 'Priority 5-Day Delivery Window', 'Monthly GST Business Invoicing'],
+        cameraProfiles: ['Sony S-Log3', 'Canon Log 2/3', 'ARRI LogC'],
+        tag: 'Studio Retainer',
+        active: true,
+      },
+      {
+        id: 'white-label-retainer-10',
+        categoryId: 'wedding',
+        name: 'Agency Scale Retainer (10 Projects/Mo)',
+        duration: '10 Full Projects',
+        basePrice: 40000,
+        slaHours: 72,
+        standardDelivery: '72 hours SLA',
+        rushOptions: '+₹8,000 (Rush Lane)',
+        rushFee: 8000,
+        rushMultiplier: 1.2,
+        creatorSharePct: 72,
+        description: 'High-throughput B2B agency retainer for 10 complete wedding deliverables with 2-editor cluster and timeline handoffs.',
+        deliverables: ['10 Complete Wedding Deliverables (Full Suite + Reels)', 'Dedicated 2-Editor Cluster + QC Supervisor', '48–72 Hour Rush Turnaround Priority', 'Raw Timeline Project Handoff (PRPROJ/DRP)', 'Dedicated Account Manager'],
+        cameraProfiles: ['Sony S-Log3', 'RED IPP2', 'Canon Cinema RAW'],
+        tag: 'Enterprise Retainer',
+        active: true,
+      },
     ],
   },
   {
@@ -656,11 +783,29 @@ export const DEFAULT_DELIVERY_SLAS: DeliverySlaRule[] = [
   },
 ];
 
-export const LIVE_STORAGE_KEY = 'artsy_live_catalog_v3';
-export const ANGLES_STORAGE_KEY = 'artsy_live_angles_v3';
-export const SLAS_STORAGE_KEY = 'artsy_live_slas_v3';
+export const LIVE_STORAGE_KEY = 'artsy_live_catalog_v5';
+export const ANGLES_STORAGE_KEY = 'artsy_live_angles_v5';
+export const SLAS_STORAGE_KEY = 'artsy_live_slas_v5';
 export const DEPLOYMENT_TIMESTAMP_KEY = 'artsy_catalog_last_deployed_ts';
 export const DEPLOYMENT_VERSION_KEY = 'artsy_catalog_version';
+
+function mergeCatalogWithDefaults(saved: ServiceCategory[], defaults: ServiceCategory[]): ServiceCategory[] {
+  return defaults.map((defCat) => {
+    const savedCat = saved.find((s) => s.id === defCat.id);
+    if (!savedCat) return defCat;
+    const mergedProducts = [...savedCat.products];
+    for (const defProd of defCat.products) {
+      if (!mergedProducts.some((p) => p.id === defProd.id)) {
+        mergedProducts.push(defProd);
+      }
+    }
+    return {
+      ...defCat,
+      ...savedCat,
+      products: mergedProducts,
+    };
+  });
+}
 
 /**
  * Loads the active camera angles matrix.
@@ -727,7 +872,7 @@ export function loadPricingMatrix(): ServiceCategory[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        return mergeCatalogWithDefaults(parsed, DEFAULT_PRICING_MATRIX);
       }
     }
   } catch (err) {

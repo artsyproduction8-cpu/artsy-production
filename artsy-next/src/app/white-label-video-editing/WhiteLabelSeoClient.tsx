@@ -186,7 +186,7 @@ const PACKAGES = [
     ],
     popular: true,
     ctaText: 'Start Studio Retainer',
-    ctaHref: '/book?category=wedding&sub=trinity-bundle',
+    ctaHref: '/book?category=wedding&sub=white-label-retainer-5',
   },
   {
     name: 'Agency Scale (10 Projects/Mo)',
@@ -206,7 +206,7 @@ const PACKAGES = [
     ],
     popular: false,
     ctaText: 'Scale With Artsy',
-    ctaHref: '/book?category=wedding&sub=master-package',
+    ctaHref: '/book?category=wedding&sub=white-label-retainer-10',
   },
 ];
 
@@ -324,7 +324,7 @@ export default function WhiteLabelSeoClient({ faqs }: WhiteLabelSeoClientProps) 
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
-                href="/book?category=wedding"
+                href="/book?category=wedding&sub=highlight-teaser"
                 className="px-7 py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-sm hover:scale-[1.01]"
               >
                 Start an Edit (From ₹5,000) →
@@ -511,7 +511,7 @@ export default function WhiteLabelSeoClient({ faqs }: WhiteLabelSeoClientProps) 
                       ▶ Watch Master Film
                     </button>
                     <Link
-                      href="/book?category=wedding"
+                      href="/book?category=wedding&sub=highlight-teaser"
                       className="px-5 py-2.5 rounded-xl bg-white hover:bg-[#F5F5F7] border border-[#E5E5E7] text-[#1D1D1F] text-xs font-bold transition-all"
                     >
                       Outsource Your Edits →
@@ -656,7 +656,7 @@ export default function WhiteLabelSeoClient({ faqs }: WhiteLabelSeoClientProps) 
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/book?category=wedding"
+              href="/book?category=wedding&sub=highlight-teaser"
               className="px-7 py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-sm"
             >
               Start an Edit (From ₹5,000) →

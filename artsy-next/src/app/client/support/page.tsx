@@ -62,12 +62,12 @@ export default function ClientSupportPage() {
                     Chat directly with our team on WhatsApp for project updates or change requests.
                   </p>
                   <a
-                    href={`https://wa.me/${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || '').replace(/\D/g, '')}`}
+                    href={`https://wa.me/${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || '918369251112').replace(/\D/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs"
                   >
-                    Chat on WhatsApp {process.env.NEXT_PUBLIC_SUPPORT_PHONE ? `(${process.env.NEXT_PUBLIC_SUPPORT_PHONE})` : ''}
+                    Chat on WhatsApp {process.env.NEXT_PUBLIC_SUPPORT_PHONE ? `(${process.env.NEXT_PUBLIC_SUPPORT_PHONE})` : '(+91 83692 51112)'}
                   </a>
                 </div>
 

@@ -52,7 +52,7 @@ export function organizationSchema() {
     ],
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || process.env.SUPER_ADMIN_PHONE || '+91-XXXXXXXXXX',
+      telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+91 83692 51112',
       contactType: 'customer service',
       areaServed: ['IN', 'AE', 'US', 'GB'],
       availableLanguage: ['English', 'Hindi'],
@@ -67,7 +67,7 @@ export function localBusinessSchema() {
     name: 'Artsy Production',
     image: `${BASE_URL}/logo.png`,
     url: BASE_URL,
-    telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || process.env.SUPER_ADMIN_PHONE || '+91-XXXXXXXXXX',
+    telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+91 83692 51112',
     priceRange: '₹₹₹',
     address: {
       '@type': 'PostalAddress',
@@ -151,6 +151,26 @@ export function serviceSchema(s: ServiceSchemaInput) {
       priceCurrency: s.currency || 'INR',
       availability: 'https://schema.org/InStock',
     } : undefined,
+  };
+}
+
+export interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+export function faqPageSchema(faqs: FAQItem[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: f.answer,
+      },
+    })),
   };
 }
 

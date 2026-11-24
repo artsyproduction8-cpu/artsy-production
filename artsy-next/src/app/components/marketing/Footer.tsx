@@ -5,7 +5,7 @@ import Link from 'next/link';
 export default function Footer() {
   const youtubeUrl = process.env.NEXT_PUBLIC_YOUTUBE_URL || 'https://www.youtube.com/@artsyproduction';
   const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL || 'https://www.instagram.com/artsy__production/';
-  const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_URL || (process.env.NEXT_PUBLIC_SUPPORT_PHONE ? `https://wa.me/${process.env.NEXT_PUBLIC_SUPPORT_PHONE.replace(/[^0-9]/g, '')}` : 'https://wa.me/');
+  const whatsappUrl = process.env.NEXT_PUBLIC_WHATSAPP_URL || (process.env.NEXT_PUBLIC_SUPPORT_PHONE ? `https://wa.me/${process.env.NEXT_PUBLIC_SUPPORT_PHONE.replace(/[^0-9]/g, '')}` : 'https://wa.me/918369251112');
 
   return (
     <footer className="w-full bg-[#0A0A0A] border-t border-white/10 py-14 sm:py-16 text-white">
@@ -122,9 +122,9 @@ export default function Footer() {
                 <span className="text-white font-semibold">Phone:</span>{' '}
                 <a
                   className="text-[#3B82F6] hover:text-blue-400 hover:underline transition-colors"
-                  href={`tel:${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+917777078742').replace(/\s+/g, '')}`}
+                  href={`tel:${(process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+918369251112').replace(/\s+/g, '')}`}
                 >
-                  {process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+91 77770 78742'}
+                  {process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+91 83692 51112'}
                 </a>
               </p>
               <p className="text-xs text-[#DCDFE3]">

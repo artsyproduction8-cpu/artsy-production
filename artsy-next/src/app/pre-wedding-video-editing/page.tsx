@@ -62,7 +62,7 @@ const FAQ_ITEMS = [
   {
     question: 'What is the standard turnaround time for pre-wedding edits?',
     answer:
-      'Standard turnaround is 5 working days from footage ingest. Express 48-hour rush delivery is also available if your couple needs their film immediately for their invitations.',
+      'Standard turnaround is 5 working days per individual film from footage ingest (10 working days for the Complete Destination Suite bundle). Express rush delivery is also available if your couple needs their film urgently.',
   },
   {
     question: 'Do you provide color grading for destination and sunset shoots?',

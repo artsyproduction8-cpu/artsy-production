@@ -192,7 +192,7 @@ const PACKAGES = [
   {
     name: 'Complete Destination Suite',
     badge: 'FULL SUITE',
-    turnaround: '5 Working Days',
+    turnaround: '10 Working Days',
     price: '₹8,000',
     period: 'complete package',
     description: 'Comprehensive destination pre-wedding package including full film, cinematic teaser, and viral social reel.',
@@ -533,7 +533,7 @@ export default function PreWeddingSeoClient({ faqs }: PreWeddingSeoClientProps) 
               Transparent pre-wedding packages
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-[#86868B]">
-              Every edit includes 4K ProRes exports, drone stabilization, speed ramps, and 1 free revision round.
+              Standard 5-day delivery per film (10 working days for complete destination suites) with 1 free revision round.
             </p>
           </div>
 

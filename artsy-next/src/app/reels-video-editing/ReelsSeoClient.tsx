@@ -140,7 +140,7 @@ const PACKAGES = [
   {
     name: 'Reel Trio Bundle (3 Reels)',
     badge: 'MOST POPULAR',
-    turnaround: '48 Hours Express',
+    turnaround: '144 Hours SLA (6 Days)',
     price: '₹5,000',
     period: 'for 3 reels',
     description: 'Complete 3-part social campaign capturing emotional, energetic, and candid moments.',
@@ -160,7 +160,7 @@ const PACKAGES = [
   {
     name: 'Reel Master Suite (5 Reels)',
     badge: 'MAXIMUM VALUE',
-    turnaround: '72 Hours SLA',
+    turnaround: '240 Hours SLA (10 Days)',
     price: '₹8,000',
     period: 'for 5 reels',
     description: 'Full week social content slate for studios and brands looking for consistent viral reach.',
@@ -271,7 +271,7 @@ export default function ReelsSeoClient({ faqs }: ReelsSeoClientProps) {
             </h1>
 
             <p className="mt-4 sm:mt-6 text-sm sm:text-lg text-[#6E6E73] font-normal leading-relaxed sm:leading-[1.6] max-w-2xl">
-              Send us your raw clips. We cut to the beat, grade your colors, add kinetic captions, and deliver high-retention 9:16 vertical edits within 48 hours.
+              Send us your raw clips. We cut to the beat, grade your colors, add kinetic captions, and deliver high-retention 9:16 vertical edits starting from 48 hours per reel (scaled for bundles).
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -322,9 +322,9 @@ export default function ReelsSeoClient({ faqs }: ReelsSeoClientProps) {
 
             <div className="bg-white rounded-2xl p-5 sm:p-6 border border-[#E5E5E7] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between">
               <div>
-                <h3 className="font-bold text-base text-[#1D1D1F] mb-1.5">3. 48-Hour Ready-to-Post Delivery</h3>
+                <h3 className="font-bold text-base text-[#1D1D1F] mb-1.5">3. Fast Turnaround (From 48h/Reel)</h3>
                 <p className="text-xs sm:text-sm text-[#6E6E73] leading-relaxed">
-                  Review your reel draft, request any tweaks, and download optimized 1080x1920 MP4 files ready for social posting.
+                  Review your reel draft (48h per reel, scaled for bundles: 144h for 3 reels, 240h for 5 reels), request tweaks, and download optimized 1080x1920 MP4 files.
                 </p>
               </div>
             </div>
@@ -444,7 +444,7 @@ export default function ReelsSeoClient({ faqs }: ReelsSeoClientProps) {
               Simple, transparent reels pricing
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-[#86868B]">
-              No hidden retainers. 48-hour delivery SLA with 1 free revision round included with every reel.
+              No hidden retainers. 48-hour delivery SLA per reel (144h for 3 reels, 240h for 5 reels) with 1 free revision round included with every reel.
             </p>
           </div>
 

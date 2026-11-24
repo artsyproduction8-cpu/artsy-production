@@ -12,7 +12,7 @@ import {
 export const metadata: Metadata = {
   title: 'Instagram Reels & Social Video Editing Service | Artsy Production',
   description:
-    'Fast 48-hour Instagram Reels, YouTube Shorts, and TikTok video editing service for creators, brands, and videographers. Rhythmic audio cuts and viral hooks.',
+    'Fast 48-hour per reel Instagram Reels, YouTube Shorts, and TikTok video editing service for creators and studios. Proportional turnaround for multi-reel bundles.',
   keywords: [
     'instagram reels video editing',
     'reels editing service',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Instagram Reels & Social Video Editing Service | Artsy Production',
     description:
-      'High-retention 9:16 vertical cuts conformed to music rhythm, motion hooks, sound design, and color grading in 48 hours.',
+      'High-retention 9:16 vertical cuts conformed to music rhythm, motion hooks, sound design, and color grading from 48 hours per reel.',
     url: 'https://artsyproduction.com/reels-video-editing',
     siteName: 'Artsy Production',
     images: [
@@ -48,7 +48,7 @@ const FAQ_ITEMS = [
   {
     question: 'How fast do you deliver completed reels?',
     answer:
-      'Standard turnaround for individual reels is 48 hours. If you have urgent rush deadlines or live event turnarounds, same-day delivery is also available upon request.',
+      'Standard turnaround for individual reels is 48 hours. For bundles, delivery scales proportionally (144 hours / 6 days for 3 reels, and 240 hours / 10 days for 5 reels). Expedited rush delivery is also available upon request.',
   },
   {
     question: 'Can you edit both wedding reels and brand/product reels?',

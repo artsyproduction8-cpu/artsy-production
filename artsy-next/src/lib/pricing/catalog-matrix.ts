@@ -199,9 +199,9 @@ export const DEFAULT_PRICING_MATRIX: ServiceCategory[] = [
         name: 'Reel Trio Bundle (3 Reels)',
         duration: '3x 30–60 sec',
         basePrice: 5000,
-        slaHours: 48,
-        standardDelivery: '48 hours express',
-        rushOptions: '+₹2,000 (24h Rush)',
+        slaHours: 144,
+        standardDelivery: '144 hours SLA (6 days)',
+        rushOptions: '+₹2,000 (72h Rush)',
         rushFee: 2000,
         rushMultiplier: 1.4,
         creatorSharePct: 70,
@@ -218,10 +218,10 @@ export const DEFAULT_PRICING_MATRIX: ServiceCategory[] = [
         name: 'Reel Master Suite (5 Reels)',
         duration: '5x 30–60 sec',
         basePrice: 8000,
-        slaHours: 72,
-        standardDelivery: '72 hours SLA',
-        rushOptions: '+₹2,000 (48h Rush)',
-        rushFee: 2000,
+        slaHours: 240,
+        standardDelivery: '240 hours SLA (10 days)',
+        rushOptions: '+₹3,000 (120h Rush)',
+        rushFee: 3000,
         rushMultiplier: 1.25,
         creatorSharePct: 70,
         description: 'Full 5-reel vertical social content slate covering entire sequence: Entry, Ceremony, Details, Dance, and Outro.',
@@ -272,9 +272,9 @@ export const DEFAULT_PRICING_MATRIX: ServiceCategory[] = [
         name: 'Pre-Wedding Destination Suite',
         duration: '3–5m + 60s + 30–60s',
         basePrice: 8000,
-        slaHours: 120,
-        standardDelivery: '5 working days',
-        rushOptions: '+₹2,000 (48h Rush)',
+        slaHours: 240,
+        standardDelivery: '10 working days',
+        rushOptions: '+₹2,000 (5 days priority)',
         rushFee: 2000,
         rushMultiplier: 1.25,
         creatorSharePct: 70,
@@ -783,7 +783,7 @@ export const DEFAULT_DELIVERY_SLAS: DeliverySlaRule[] = [
   },
 ];
 
-export const LIVE_STORAGE_KEY = 'artsy_live_catalog_v5';
+export const LIVE_STORAGE_KEY = 'artsy_live_catalog_v6';
 export const ANGLES_STORAGE_KEY = 'artsy_live_angles_v5';
 export const SLAS_STORAGE_KEY = 'artsy_live_slas_v5';
 export const DEPLOYMENT_TIMESTAMP_KEY = 'artsy_catalog_last_deployed_ts';

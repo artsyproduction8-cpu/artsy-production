@@ -238,20 +238,64 @@ export default function BookClient() {
     const subLabelLower = (activeSub?.label || '').toLowerCase();
     const isReel = subIdLower.includes('reel') || subLabelLower.includes('reel');
 
-    // 1. Reel-specific SLAs (48h Express standard, 24h Express Rush)
+    // 1. Reel-specific SLAs (proportional bundle scaling: 48h per reel)
     if (isReel) {
-      const isMasterSuite = subIdLower === 'reel-master';
+      if (subIdLower === 'reel-trio') {
+        // 3 Reels: 3 x 48h = 144 Hours (6 Days)
+        return [
+          {
+            id: 'standard',
+            label: 'Standard Reel SLA (144h)',
+            turnaroundDays: '144 Hours SLA (6 Days)',
+            hours: 144,
+            costWeddingPersonal: 0,
+            costBrandCorporate: 0,
+            description: 'Complete 3-part social campaign conformed to music drops and color polish (48h/reel).',
+          },
+          {
+            id: 'priority',
+            label: '72h Express Rush',
+            turnaroundDays: '72 Hours Express',
+            hours: 72,
+            costWeddingPersonal: 2000,
+            costBrandCorporate: 2000,
+            description: 'Expedited 72-hour priority turnaround across all 3 vertical cuts.',
+          },
+        ];
+      }
+      if (subIdLower === 'reel-master') {
+        // 5 Reels: 5 x 48h = 240 Hours (10 Days)
+        return [
+          {
+            id: 'standard',
+            label: 'Standard Reel SLA (240h)',
+            turnaroundDays: '240 Hours SLA (10 Days)',
+            hours: 240,
+            costWeddingPersonal: 0,
+            costBrandCorporate: 0,
+            description: 'Full 5-reel suite sequenced with custom covers and sound design (48h/reel).',
+          },
+          {
+            id: 'priority',
+            label: '120h Express Rush',
+            turnaroundDays: '120 Hours Express (5 Days)',
+            hours: 120,
+            costWeddingPersonal: 3000,
+            costBrandCorporate: 3000,
+            description: 'Expedited 5-day rush turnaround across all 5 vertical reels.',
+          },
+        ];
+      }
+      // Single Reel: 48 Hours Express
       return [
         {
           id: 'standard',
-          label: 'Standard Reel SLA',
-          turnaroundDays: isMasterSuite ? '72 Hours SLA' : '48 Hours Express',
-          hours: isMasterSuite ? 72 : 48,
+          label: 'Standard Reel SLA (48h)',
+          turnaroundDays: '48 Hours Express',
+          hours: 48,
           costWeddingPersonal: 0,
           costBrandCorporate: 0,
-          description: isMasterSuite 
-            ? 'Full 5-reel suite sequenced with custom covers and sound design.' 
-            : 'Fast 48-hour turn with beat sync, dynamic motion, and color polish.',
+          description: 'Fast 48-hour turn with beat sync, dynamic motion, and color polish.',
         },
         {
           id: 'priority',
@@ -265,27 +309,32 @@ export default function BookClient() {
       ];
     }
 
-    // 2. Pre-Wedding couple films (5 Working Days standard)
+    // 2. Pre-Wedding couple films (5 Working Days standard, 10 days for complete suite)
     const isPreWedding = subIdLower.includes('pre-wedding') || subLabelLower.includes('pre-wedding');
     if (isPreWedding) {
+      const isSuite = subIdLower === 'pre-wedding-suite';
       return [
         {
           id: 'standard',
-          label: 'Standard Pre-Wedding SLA',
-          turnaroundDays: '5 Working Days',
-          hours: 120,
+          label: isSuite ? 'Standard Destination Suite SLA' : 'Standard Pre-Wedding SLA',
+          turnaroundDays: isSuite ? '10 Working Days' : '5 Working Days',
+          hours: isSuite ? 240 : 120,
           costWeddingPersonal: 0,
           costBrandCorporate: 0,
-          description: 'Cinematic color conform, aerial drone stabilization, and dialogue audio mastering.',
+          description: isSuite
+            ? 'Complete destination suite: 3–5m narrative story film, 60s teaser, and 9:16 social reel.'
+            : 'Cinematic color conform, aerial drone stabilization, and dialogue audio mastering.',
         },
         {
           id: 'priority',
-          label: 'Priority 48h Rush SLA',
-          turnaroundDays: '48 Hours Express',
-          hours: 48,
+          label: isSuite ? 'Priority 5-Day Rush SLA' : 'Priority 48h Rush SLA',
+          turnaroundDays: isSuite ? '5 Working Days Priority' : '48 Hours Express',
+          hours: isSuite ? 120 : 48,
           costWeddingPersonal: 2000,
           costBrandCorporate: 1000,
-          description: 'Expedited timeline assembly for immediate Save-the-Date social announcement.',
+          description: isSuite
+            ? 'Expedited 5-day rush delivery across all 3 destination deliverables.'
+            : 'Expedited timeline assembly for immediate Save-the-Date social announcement.',
         },
       ];
     }

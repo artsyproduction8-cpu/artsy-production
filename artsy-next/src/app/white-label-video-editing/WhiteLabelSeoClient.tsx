@@ -152,7 +152,7 @@ const PACKAGES = [
   {
     name: 'On-Demand Per Project',
     badge: 'FLEXIBLE',
-    turnaround: '5–7 Working Days',
+    turnaround: '7–10 Working Days',
     price: '₹5,000',
     period: 'per film',
     description: 'Pay as you go. Outsource individual client edits during peak volume without monthly commitments.',
@@ -171,7 +171,7 @@ const PACKAGES = [
   {
     name: 'Studio Growth (5 Projects/Mo)',
     badge: 'MOST POPULAR FOR STUDIOS',
-    turnaround: '5 Working Days Priority',
+    turnaround: '5 Working Days / Project',
     price: '₹22,500',
     period: '₹4,500 / project',
     description: 'Designed for active studios handling 4 to 8 weddings monthly wanting a dedicated senior cutter.',
@@ -191,7 +191,7 @@ const PACKAGES = [
   {
     name: 'Agency Scale (10 Projects/Mo)',
     badge: 'ENTERPRISE RETROFIT',
-    turnaround: '72h Express SLA',
+    turnaround: '48–72h / Project',
     price: '₹40,000',
     period: '₹4,000 / project',
     description: 'Maximum studio throughput for high-volume wedding cinematographers and production houses.',

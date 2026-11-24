@@ -12,7 +12,7 @@ import {
 export const metadata: Metadata = {
   title: 'Wedding Video Editing Service for Videographers | Artsy Production',
   description:
-    'Wedding video editing service for photographers and videographers. We sync your audio, balance your colors, and edit your wedding films in 5 days.',
+    'Wedding video editing service for photographers and videographers. We sync your audio, balance your colors, and deliver your wedding films on time in 7–10 working days.',
   keywords: [
     'wedding video editing service',
     'outsource wedding video editing',

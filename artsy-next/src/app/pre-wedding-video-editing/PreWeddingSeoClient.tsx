@@ -153,7 +153,7 @@ const PACKAGES = [
     name: 'Cinematic Teaser Cut',
     badge: 'QUICK PREMIERE',
     turnaround: '5 Working Days',
-    price: '₹3,000',
+    price: '₹2,000',
     period: 'per film',
     description: 'High-impact 60–90 second teaser designed for Save-the-Date announcements and Instagram premiere.',
     points: [
@@ -193,7 +193,7 @@ const PACKAGES = [
     name: 'Complete Destination Suite',
     badge: 'FULL SUITE',
     turnaround: '5 Working Days',
-    price: '₹7,500',
+    price: '₹8,000',
     period: 'complete package',
     description: 'Comprehensive destination pre-wedding package including full film, cinematic teaser, and viral social reel.',
     points: [
@@ -328,7 +328,7 @@ export default function PreWeddingSeoClient({ faqs }: PreWeddingSeoClientProps) 
                 href="/book?category=wedding&sub=highlight-teaser"
                 className="px-7 py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-sm hover:scale-[1.01]"
               >
-                Book an Edit (From ₹3,000) →
+                Book an Edit (From ₹2,000) →
               </Link>
               <a
                 href="#pricing"
@@ -660,7 +660,7 @@ export default function PreWeddingSeoClient({ faqs }: PreWeddingSeoClientProps) 
               href="/book?category=wedding&sub=highlight-teaser"
               className="px-7 py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-sm"
             >
-              Book an Edit (From ₹3,000) →
+              Book an Edit (From ₹2,000) →
             </Link>
             <a
               href="https://wa.me/918369251112"

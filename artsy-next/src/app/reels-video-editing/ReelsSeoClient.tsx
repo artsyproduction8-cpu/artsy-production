@@ -121,7 +121,7 @@ const PACKAGES = [
     name: 'Single Reel Cut',
     badge: 'STARTER',
     turnaround: '48 Hours Express',
-    price: '₹2,000',
+    price: '₹1,500',
     period: 'per reel',
     description: 'High-impact 9:16 vertical reel conformed for Instagram, TikTok, and YouTube Shorts.',
     points: [
@@ -279,7 +279,7 @@ export default function ReelsSeoClient({ faqs }: ReelsSeoClientProps) {
                 href="/book?category=wedding&sub=reel-only"
                 className="px-7 py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-sm hover:scale-[1.01]"
               >
-                Book a Reel (From ₹2,000) →
+                Book a Reel (From ₹1,500) →
               </Link>
               <a
                 href="#pricing"
@@ -571,7 +571,7 @@ export default function ReelsSeoClient({ faqs }: ReelsSeoClientProps) {
               href="/book?category=wedding&sub=reel-only"
               className="px-7 py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all shadow-sm"
             >
-              Book an Edit (From ₹2,000) →
+              Book a Reel (From ₹1,500) →
             </Link>
             <a
               href="https://wa.me/918369251112"

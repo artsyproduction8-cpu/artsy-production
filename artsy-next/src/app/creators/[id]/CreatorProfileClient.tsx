@@ -159,15 +159,6 @@ export default function CreatorProfileClient({
                     alt={activeVideo.title}
                     className="w-full h-full object-cover opacity-60"
                   />
-                  <div className="absolute top-4 right-4 text-[10px] font-mono text-white/70 bg-black/60 px-2 py-0.5 rounded backdrop-blur-xs">
-                    {new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC
-                  </div>
-                  <div className="absolute bottom-4 left-4 text-[10px] font-mono text-white/70 bg-black/60 px-2 py-0.5 rounded backdrop-blur-xs">
-                    Creator: {creatorName}
-                  </div>
-                  <div className="absolute bottom-4 right-4 text-[10px] font-mono text-white/70 bg-black/60 px-2 py-0.5 rounded backdrop-blur-xs">
-                    DRAFT — Artsy Production
-                  </div>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center p-4">
                       <div className="text-3xl mb-2">▶</div>

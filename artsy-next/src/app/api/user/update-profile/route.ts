@@ -3,7 +3,7 @@ import { getAuthenticatedUser, signAuthCookieValue, AUTH_COOKIE_NAME, AuthUserPa
 import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { setCachedUser, invalidateUserCache, invalidateCache, invalidateCreatorCache } from '@/lib/cache';
 import { formatPublicCreatorName } from '@/lib/masking';
-import { encryptPII } from '@/lib/crypto/pii';
+import { encryptPII, maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: Request) {
@@ -109,27 +109,39 @@ export async function POST(request: Request) {
   if (studio_details !== undefined && typeof studio_details === 'object' && studio_details !== null) {
     const cleanStudioDetails = { ...studio_details };
 
-    // Prevent masked PII from corrupting studio_details
+    // Prevent masked PII from corrupting studio_details, and ensure plain PII is masked
     const existingSd = authUser.studio_details || {};
-    if (cleanStudioDetails.pan && /[•*X]/.test(String(cleanStudioDetails.pan))) {
-      if (existingSd.pan && !/[•*X]/.test(String(existingSd.pan))) {
-        cleanStudioDetails.pan = existingSd.pan;
+    if (cleanStudioDetails.pan) {
+      if (/[•*X]/.test(String(cleanStudioDetails.pan))) {
+        if (existingSd.pan && !/[•*X]/.test(String(existingSd.pan))) {
+          cleanStudioDetails.pan = maskPAN(existingSd.pan);
+        } else {
+          delete cleanStudioDetails.pan;
+        }
       } else {
-        delete cleanStudioDetails.pan;
+        cleanStudioDetails.pan = maskPAN(String(cleanStudioDetails.pan));
       }
     }
-    if (cleanStudioDetails.bankAccount && /[•*X]/.test(String(cleanStudioDetails.bankAccount))) {
-      if (existingSd.bankAccount && !/[•*X]/.test(String(existingSd.bankAccount))) {
-        cleanStudioDetails.bankAccount = existingSd.bankAccount;
+    if (cleanStudioDetails.bankAccount) {
+      if (/[•*X]/.test(String(cleanStudioDetails.bankAccount))) {
+        if (existingSd.bankAccount && !/[•*X]/.test(String(existingSd.bankAccount))) {
+          cleanStudioDetails.bankAccount = maskBankAccount(existingSd.bankAccount);
+        } else {
+          delete cleanStudioDetails.bankAccount;
+        }
       } else {
-        delete cleanStudioDetails.bankAccount;
+        cleanStudioDetails.bankAccount = maskBankAccount(String(cleanStudioDetails.bankAccount));
       }
     }
-    if (cleanStudioDetails.ifsc && /[•*]/.test(String(cleanStudioDetails.ifsc))) {
-      if (existingSd.ifsc && !/[•*]/.test(String(existingSd.ifsc))) {
-        cleanStudioDetails.ifsc = existingSd.ifsc;
+    if (cleanStudioDetails.ifsc) {
+      if (/[•*]/.test(String(cleanStudioDetails.ifsc))) {
+        if (existingSd.ifsc && !/[•*]/.test(String(existingSd.ifsc))) {
+          cleanStudioDetails.ifsc = maskIFSC(existingSd.ifsc);
+        } else {
+          delete cleanStudioDetails.ifsc;
+        }
       } else {
-        delete cleanStudioDetails.ifsc;
+        cleanStudioDetails.ifsc = maskIFSC(String(cleanStudioDetails.ifsc));
       }
     }
 
@@ -236,10 +248,16 @@ export async function POST(request: Request) {
         }
         if (creatorPayload.bank_account_name) cpUpdates.bank_account_name = String(creatorPayload.bank_account_name).trim();
         if (creatorPayload.bank_account_number && !/[•*X]/.test(String(creatorPayload.bank_account_number))) {
-          cpUpdates.bank_account_number = String(creatorPayload.bank_account_number).trim();
+          const rawAcct = String(creatorPayload.bank_account_number).trim();
+          if (/^\d{9,18}$/.test(rawAcct)) {
+            cpUpdates.bank_account_number = encryptPII(rawAcct);
+          }
         }
         if (creatorPayload.bank_ifsc_code && !/[•*X]/.test(String(creatorPayload.bank_ifsc_code))) {
-          cpUpdates.bank_ifsc_code = String(creatorPayload.bank_ifsc_code).trim().toUpperCase();
+          const rawIfsc = String(creatorPayload.bank_ifsc_code).trim().toUpperCase();
+          if (/^[A-Z]{4}0[A-Z0-9]{6}$/.test(rawIfsc)) {
+            cpUpdates.bank_ifsc_code = encryptPII(rawIfsc);
+          }
         }
         if (creatorPayload.pan_number && !/[•*X]/.test(String(creatorPayload.pan_number))) {
           const rawPan = String(creatorPayload.pan_number).trim().toUpperCase();

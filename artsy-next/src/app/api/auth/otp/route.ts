@@ -9,6 +9,7 @@ const supabase = supabaseAdmin;
 import { signAuthCookieValue, AUTH_COOKIE_NAME, getAuthenticatedUser } from '@/lib/auth-cookie';
 import { createErrorResponse } from '@/lib/api-response';
 import { isSuperAdminAccount, CANONICAL_SUPER_ADMIN_PHONE, CANONICAL_SUPER_ADMIN_EMAIL } from '@/lib/auth-utils';
+import { maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
 
 // Helper for legacy sha256 fallback compatibility
 function legacyHashOtp(otp: string, identifier: string): string {
@@ -514,7 +515,15 @@ export async function POST(request: NextRequest) {
           email: userPayload.email,
           full_name: userPayload.full_name,
           display_name: resolvedUser.display_name || null,
-          studio_details: resolvedUser.studio_details || null,
+          studio_details: (() => {
+            const sd = resolvedUser.studio_details;
+            if (!sd || typeof sd !== 'object') return null;
+            const safeSd = { ...sd };
+            if (safeSd.pan) safeSd.pan = maskPAN(safeSd.pan);
+            if (safeSd.bankAccount) safeSd.bankAccount = maskBankAccount(safeSd.bankAccount);
+            if (safeSd.ifsc) safeSd.ifsc = maskIFSC(safeSd.ifsc);
+            return safeSd;
+          })(),
           avatar_url: resolvedUser.avatar_url || null,
           status: (resolvedUser.status === 'deleted' && onboarding_status === null) ? 'active' : (resolvedUser.status || 'active'),
           onboarded: userPayload.onboarded,

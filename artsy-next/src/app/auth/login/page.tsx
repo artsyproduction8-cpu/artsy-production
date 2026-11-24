@@ -645,10 +645,18 @@ function LoginFormContent() {
       if (data.user?.studio_details) {
         (verifiedUser as any).studio_details = data.user.studio_details;
         try {
+          const safeSd = { ...data.user.studio_details };
+          delete safeSd.pan;
+          delete safeSd.bankAccount;
+          delete safeSd.ifsc;
+          delete safeSd.bank_account_number;
+          delete safeSd.pan_number;
+          delete safeSd.bank_ifsc_code;
+
           if (serverRole === 'freelancer') {
-            localStorage.setItem('artsy_creator_profile', JSON.stringify(data.user.studio_details));
+            localStorage.setItem('artsy_creator_profile', JSON.stringify(safeSd));
           } else {
-            localStorage.setItem('artsy_client_profile', JSON.stringify(data.user.studio_details));
+            localStorage.setItem('artsy_client_profile', JSON.stringify(safeSd));
           }
         } catch { }
       }

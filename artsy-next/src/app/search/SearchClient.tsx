@@ -507,9 +507,6 @@ export default function SearchClient() {
                           </svg>
                         </div>
                       )}
-                      <div className="absolute top-2.5 left-2.5 bg-black/80 backdrop-blur-xs text-[10px] font-mono text-white px-2 py-0.5 rounded-md uppercase font-bold tracking-wider">
-                        {sample.category}
-                      </div>
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
                         <div className="w-10 h-10 rounded-full bg-white/95 text-[#1D1D1F] flex items-center justify-center pl-0.5 text-xs font-bold shadow-lg group-hover:scale-110 transition-transform">
                           ▶

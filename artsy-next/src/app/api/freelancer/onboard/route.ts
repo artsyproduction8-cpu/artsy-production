@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { dispatchNotification } from '@/lib/whatsapp/dispatcher';
 import { getAuthenticatedUser } from '@/lib/auth-cookie';
-import { encryptPII } from '@/lib/crypto/pii';
+import { encryptPII, maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
 import { invalidateCreatorCache, setCachedUser } from '@/lib/cache';
 import { formatPublicCreatorName } from '@/lib/masking';
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
@@ -258,9 +258,9 @@ export async function POST(req: NextRequest) {
           sample_url_3: cleanSample3,
           reels: reelUrls,
           bankName: body.bankName || '',
-          bankAccount: cleanBankAccount,
-          ifsc: cleanIfsc,
-          pan: cleanPan,
+          bankAccount: maskBankAccount(cleanBankAccount),
+          ifsc: maskIFSC(cleanIfsc),
+          pan: maskPAN(cleanPan),
           agreement_signed_at: agreementSignedAt,
           agreement_accepted: true,
         };

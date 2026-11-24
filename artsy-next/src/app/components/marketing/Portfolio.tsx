@@ -136,12 +136,6 @@ export default function Portfolio() {
                   alt={item.title}
                   className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-300"
                 />
-                <div className="absolute top-3 left-3 bg-[#1C1B1B]/90 text-white px-2.5 py-1 font-label-sm uppercase font-bold border border-white/20">
-                  {item.badge}
-                </div>
-                <div className={`absolute top-3 right-3 text-white px-2.5 py-1 font-label-sm uppercase font-black border border-[#1C1B1B] ${item.badgeBg}`}>
-                  {item.duration}
-                </div>
               </div>
 
               <div className="p-6 flex flex-col justify-between flex-1 bg-[#FFFFFF]">

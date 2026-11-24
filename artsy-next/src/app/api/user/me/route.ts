@@ -97,7 +97,15 @@ export async function GET(request: NextRequest) {
       avatar_url: dbUser?.avatar_url || authUser.avatar_url || '',
       status: dbUser?.status || 'active',
       onboarded: dbUser?.onboarded !== undefined ? Boolean(dbUser.onboarded) : Boolean(authUser.onboarded),
-      studio_details: dbUser?.studio_details || authUser.studio_details || null,
+      studio_details: (() => {
+        const sd = dbUser?.studio_details || authUser.studio_details;
+        if (!sd || typeof sd !== 'object') return null;
+        const safeSd = { ...sd };
+        if (safeSd.pan) safeSd.pan = maskPAN(safeSd.pan);
+        if (safeSd.bankAccount) safeSd.bankAccount = maskBankAccount(safeSd.bankAccount);
+        if (safeSd.ifsc) safeSd.ifsc = maskIFSC(safeSd.ifsc);
+        return safeSd;
+      })(),
       creator_profile: authUser.creator_profile || null,
       created_at: dbUser?.created_at || new Date().toISOString(),
       updated_at: dbUser?.updated_at || new Date().toISOString(),

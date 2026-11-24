@@ -286,17 +286,15 @@ export async function GET(
       reviewNotes,
       client: {
         full_name: clientUser?.full_name || order?.client_name || 'Verified Client',
-        email: clientUser?.email || order?.client_email || '',
-        phone: clientUser?.phone || order?.client_phone || '',
         studioName: sd.studioName || null,
       },
       orders: order
         ? {
             ...order,
+            client_phone: null,
+            client_email: null,
             clients: {
               full_name: clientUser?.full_name || order?.client_name || 'Verified Client',
-              email: clientUser?.email || order?.client_email || '',
-              phone: clientUser?.phone || order?.client_phone || '',
             },
           }
         : null,

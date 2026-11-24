@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import StudioVideoModal, { ModalVideoItem } from './StudioVideoModal';
 
@@ -66,15 +66,12 @@ const ARCHIVE_ITEMS: ArchiveItem[] = [
 export default function ProductionArchive() {
   const [activeModalVideo, setActiveModalVideo] = useState<ModalVideoItem | null>(null);
   const [modalStartTime, setModalStartTime] = useState(0);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
-  const handleOpenMaster = (item: ArchiveItem, e?: React.MouseEvent) => {
+  const handleOpenMaster = (item: ArchiveItem, idx?: number) => {
     let curTime = 0;
-    if (e) {
-      const container = (e.currentTarget as HTMLElement).closest('.group') || (e.currentTarget as HTMLElement);
-      const vid = container.querySelector('video');
-      if (vid && vid.currentTime > 0) {
-        curTime = vid.currentTime;
-      }
+    if (idx !== undefined && videoRefs.current[idx] && videoRefs.current[idx]!.currentTime > 0) {
+      curTime = videoRefs.current[idx]!.currentTime;
     }
     setModalStartTime(curTime);
     setActiveModalVideo({
@@ -117,12 +114,15 @@ export default function ProductionArchive() {
             >
               {/* Media Video Pane */}
               <div
-                onClick={(e) => handleOpenMaster(item, e)}
+                onClick={() => handleOpenMaster(item, idx)}
                 className="lg:col-span-6 relative h-64 sm:h-80 lg:h-auto overflow-hidden bg-black cursor-pointer group select-none"
                 title={`Click to watch ${item.title} in full studio master player`}
               >
                 <div className="relative w-full h-full min-h-[260px]">
                   <video
+                    ref={(el) => {
+                      videoRefs.current[idx] = el;
+                    }}
                     src={item.videoUrl}
                     poster={item.image}
                     autoPlay
@@ -142,11 +142,6 @@ export default function ProductionArchive() {
                       Play Full Master
                     </span>
                   </div>
-
-                  {/* Corner Badge */}
-                  <div className="absolute top-4 left-4 z-10 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md border border-white/10 text-white font-mono text-[10px] font-bold uppercase tracking-wider">
-                    Rec.709 Master
-                  </div>
                 </div>
               </div>
 
@@ -162,7 +157,7 @@ export default function ProductionArchive() {
                   <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1D1D1F] leading-snug">
                     <button
                       type="button"
-                      onClick={(e) => handleOpenMaster(item, e)}
+                      onClick={() => handleOpenMaster(item, idx)}
                       className="text-left hover:text-[#3B82F6] transition-colors focus:outline-none cursor-pointer"
                     >
                       {item.title}
@@ -176,7 +171,7 @@ export default function ProductionArchive() {
                   <div className="mt-4 flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={(e) => handleOpenMaster(item, e)}
+                      onClick={() => handleOpenMaster(item, idx)}
                       className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-semibold transition-colors shadow-xs cursor-pointer"
                     >
                       <span>Watch Master</span>

@@ -8,6 +8,7 @@ import {
 } from '@/lib/auth-cookie';
 import { supabaseAdmin, supabase } from '@/lib/supabase';
 import { isSuperAdminAccount } from '@/lib/auth-utils';
+import { maskPAN, maskBankAccount, maskIFSC } from '@/lib/crypto/pii';
 
 export async function POST(request: NextRequest) {
   try {
@@ -248,7 +249,13 @@ export async function GET(request: NextRequest) {
               resolvedUser.agreement_accepted = false;
               resolvedUser.tracking_id = null;
             }
-            resolvedUser.creator_profile = creatorProfile;
+            const safeCreatorProfile = {
+              ...creatorProfile,
+              pan_number: creatorProfile.pan_number ? maskPAN(creatorProfile.pan_number) : null,
+              bank_account_number: creatorProfile.bank_account_number ? maskBankAccount(creatorProfile.bank_account_number) : null,
+              bank_ifsc_code: creatorProfile.bank_ifsc_code ? maskIFSC(creatorProfile.bank_ifsc_code) : null,
+            };
+            resolvedUser.creator_profile = safeCreatorProfile;
           } else {
             resolvedUser.onboarding_status = null;
             resolvedUser.onboarded = false;
@@ -261,6 +268,15 @@ export async function GET(request: NextRequest) {
     } catch (err) {
       console.warn('[api/auth/session] DB query warning:', err);
     }
+  }
+
+  // Sanitize studio_details to ensure financial PII is never exposed in session JSON
+  if (resolvedUser && resolvedUser.studio_details && typeof resolvedUser.studio_details === 'object') {
+    const sd = { ...resolvedUser.studio_details };
+    if (sd.pan) sd.pan = maskPAN(sd.pan);
+    if (sd.bankAccount) sd.bankAccount = maskBankAccount(sd.bankAccount);
+    if (sd.ifsc) sd.ifsc = maskIFSC(sd.ifsc);
+    resolvedUser.studio_details = sd;
   }
 
   return NextResponse.json(

@@ -30,14 +30,6 @@ export const metadata: Metadata = {
       'Scale your studio output without full-time payroll. 100% confidential white-label editing under your brand name and strict mutual NDA.',
     url: 'https://artsyproduction.com/white-label-video-editing',
     siteName: 'Artsy Production',
-    images: [
-      {
-        url: 'https://artsyproduction.com/logo.png',
-        width: 1024,
-        height: 1024,
-        alt: 'Artsy Production — White-Label Video Editing',
-      },
-    ],
     locale: 'en_US',
     type: 'website',
   },

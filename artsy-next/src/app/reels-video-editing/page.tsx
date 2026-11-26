@@ -31,14 +31,6 @@ export const metadata: Metadata = {
       'High-retention 9:16 vertical cuts conformed to music rhythm, motion hooks, sound design, and color grading from 48 hours per reel.',
     url: 'https://artsyproduction.com/reels-video-editing',
     siteName: 'Artsy Production',
-    images: [
-      {
-        url: 'https://artsyproduction.com/logo.png',
-        width: 1024,
-        height: 1024,
-        alt: 'Artsy Production — Instagram Reels Video Editing',
-      },
-    ],
     locale: 'en_US',
     type: 'website',
   },

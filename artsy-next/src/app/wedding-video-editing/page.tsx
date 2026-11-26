@@ -26,17 +26,9 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Wedding Video Editing Service for Videographers | Artsy Production',
     description:
-      'Send us your raw footage. We sync your audio, balance your colors, and deliver your wedding films on time.',
+      'Send us your raw footage. We sync your audio, balance your colors, and deliver your wedding films on time in 7–10 working days.',
     url: 'https://artsyproduction.com/wedding-video-editing',
     siteName: 'Artsy Production',
-    images: [
-      {
-        url: 'https://artsyproduction.com/logo.png',
-        width: 1024,
-        height: 1024,
-        alt: 'Artsy Production — Wedding Video Editing',
-      },
-    ],
     locale: 'en_US',
     type: 'website',
   },

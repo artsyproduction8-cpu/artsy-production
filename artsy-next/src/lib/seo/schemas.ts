@@ -60,20 +60,28 @@ export function organizationSchema() {
   };
 }
 
-export function localBusinessSchema() {
+export function localBusinessSchema(cityContext?: {
+  cityName: string;
+  region: string;
+  areaServed: string;
+  locality?: string;
+  serviceUrl?: string;
+}) {
+  const isCity = !!cityContext;
   return {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    name: 'Artsy Production',
+    name: isCity ? `Artsy Production — Wedding Video Editing ${cityContext.cityName}` : 'Artsy Production',
     image: `${BASE_URL}/logo.png`,
-    url: BASE_URL,
+    url: cityContext?.serviceUrl ? `${BASE_URL}${cityContext.serviceUrl}` : BASE_URL,
     telephone: process.env.NEXT_PUBLIC_SUPPORT_PHONE || '+91 83692 51112',
     priceRange: '₹₹₹',
+    areaServed: cityContext?.areaServed || 'India',
     address: {
       '@type': 'PostalAddress',
       streetAddress: process.env.BUSINESS_ADDRESS || 'Artsy Production, Juinagar Railway Station',
-      addressLocality: 'Navi Mumbai',
-      addressRegion: 'Maharashtra',
+      addressLocality: cityContext?.locality || cityContext?.cityName || 'Navi Mumbai',
+      addressRegion: cityContext?.region || 'Maharashtra',
       postalCode: '400705',
       addressCountry: 'IN',
     },
@@ -106,16 +114,34 @@ export function websiteSchema() {
 }
 
 export function videoObjectSchema(v: VideoSchemaInput) {
+  const thumb = v.thumbnailUrl?.startsWith('http')
+    ? v.thumbnailUrl
+    : v.thumbnailUrl
+      ? `${BASE_URL}${v.thumbnailUrl.startsWith('/') ? '' : '/'}${v.thumbnailUrl}`
+      : `${BASE_URL}/logo.png`;
+
+  const content = v.contentUrl?.startsWith('http')
+    ? v.contentUrl
+    : v.contentUrl
+      ? `${BASE_URL}${v.contentUrl.startsWith('/') ? '' : '/'}${v.contentUrl}`
+      : undefined;
+
+  const embed = v.embedUrl?.startsWith('http')
+    ? v.embedUrl
+    : v.embedUrl
+      ? `${BASE_URL}${v.embedUrl.startsWith('/') ? '' : '/'}${v.embedUrl}`
+      : content;
+
   return {
     '@context': 'https://schema.org',
     '@type': 'VideoObject',
     name: v.name,
     description: v.description ? v.description.slice(0, 150) : v.name,
-    thumbnailUrl: [v.thumbnailUrl || `${BASE_URL}/logo.png`],
+    thumbnailUrl: [thumb],
     uploadDate: v.uploadDate || '2026-01-01T00:00:00Z',
-    duration: v.duration || 'PT0S', // Fallback ISO 8601 duration
-    contentUrl: v.contentUrl,
-    embedUrl: v.embedUrl || v.contentUrl,
+    duration: v.duration || 'PT3M30S',
+    ...(content ? { contentUrl: content } : {}),
+    ...(embed ? { embedUrl: embed } : {}),
   };
 }
 

@@ -320,7 +320,7 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
           </span>
         </Link>
 
-        {/* Center Nav Links: BOOK NOW - SERVICES - PORTFOLIO - CREATORS */}
+        {/* Center Nav Links: BOOK NOW - SERVICES - PRICING - PORTFOLIO - CREATORS */}
         <nav className="hidden md:flex items-center gap-6 lg:gap-8">
           <Link
             href="/book"
@@ -333,6 +333,12 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             className="text-xs font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
           >
             SERVICES
+          </Link>
+          <Link
+            href="/pricing"
+            className="text-xs font-semibold text-white hover:text-[#3B82F6] transition-colors uppercase tracking-wider py-1"
+          >
+            PRICING
           </Link>
           <Link
             href="/work"
@@ -629,6 +635,13 @@ export default function Navbar({ onSearch, searchTerm = '' }: NavbarProps) {
             className="block text-sm font-semibold text-white hover:text-blue-400"
           >
             SERVICES
+          </Link>
+          <Link
+            href="/pricing"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="block text-sm font-semibold text-white hover:text-blue-400"
+          >
+            PRICING
           </Link>
           <Link
             href="/work"

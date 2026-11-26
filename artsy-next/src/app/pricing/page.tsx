@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navbar from '../components/marketing/Navbar';
 import Footer from '../components/marketing/Footer';
-import { breadcrumbSchema } from '@/lib/seo/schemas';
+import { breadcrumbSchema, serviceSchema } from '@/lib/seo/schemas';
 import { DEFAULT_PRICING_MATRIX } from '@/lib/pricing/catalog-matrix';
 
 export const metadata: Metadata = {
@@ -10,7 +10,41 @@ export const metadata: Metadata = {
   description:
     'Transparent video post-production pricing. Explore packages for weddings, brands, and corporate cinema with guaranteed delivery SLAs and instant quotation.',
   alternates: {
-    canonical: '/pricing',
+    canonical: 'https://artsyproduction.com/pricing',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    title: 'Pricing & Plans — Transparent Post-Production | Artsy',
+    description:
+      'Transparent video post-production pricing. Explore packages for weddings, brands, and corporate cinema with guaranteed delivery SLAs and instant quotation.',
+    url: 'https://artsyproduction.com/pricing',
+    siteName: 'Artsy Production',
+    images: [
+      {
+        url: 'https://artsyproduction.com/logo.png',
+        width: 1200,
+        height: 630,
+        alt: 'Artsy Production Pricing',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Pricing & Plans — Transparent Post-Production | Artsy',
+    description: 'Transparent video post-production pricing for weddings, brands, and corporate cinema.',
+    images: ['https://artsyproduction.com/logo.png'],
   },
 };
 
@@ -81,11 +115,29 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F] flex flex-col font-sans selection:bg-[#3B82F6] selection:text-white">
-      {/* Structured Data: BreadcrumbList */}
+      {/* Structured Data: BreadcrumbList + Services */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }}
       />
+      {pricingTiers.map((tier, i) => (
+        <script
+          key={`schema-${i}`}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(
+              serviceSchema({
+                name: tier.name,
+                description: tier.desc,
+                category: tier.category,
+                price: parseInt(tier.price.replace(/[^0-9]/g, ''), 10),
+                currency: 'INR',
+                url: '/pricing',
+              })
+            ),
+          }}
+        />
+      ))}
 
       <Navbar />
 

@@ -30,14 +30,6 @@ export const metadata: Metadata = {
       'Turn destination drone shots and couple footage into emotional, cinematic love stories with Rec.709 color science and speed-ramp pacing.',
     url: 'https://artsyproduction.com/pre-wedding-video-editing',
     siteName: 'Artsy Production',
-    images: [
-      {
-        url: 'https://artsyproduction.com/logo.png',
-        width: 1024,
-        height: 1024,
-        alt: 'Artsy Production — Pre-Wedding Video Editing',
-      },
-    ],
     locale: 'en_US',
     type: 'website',
   },
